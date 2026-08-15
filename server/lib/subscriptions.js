@@ -1,0 +1,340 @@
+import prisma from "./prisma.js";
+
+function addBillingPeriod(
+  date,
+  billingCycle
+) {
+  const next =
+    new Date(date);
+
+  if (
+    billingCycle ===
+    "YEARLY"
+  ) {
+    next.setFullYear(
+      next.getFullYear() +
+        1
+    );
+  } else {
+    next.setMonth(
+      next.getMonth() +
+        1
+    );
+  }
+
+  return next;
+}
+
+export async function finalizeCapturedPayment({
+  transactionId,
+  providerPaymentId,
+}) {
+  const existing =
+    await prisma.paymentTransaction.findUnique({
+      where: {
+        id:
+          transactionId,
+      },
+      include: {
+        plan: {
+          include: {
+            planModules: {
+              include: {
+                module: {
+                  select: {
+                    id: true,
+                    active: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+  if (!existing) {
+    throw new Error(
+      "Payment transaction not found"
+    );
+  }
+
+  if (
+    existing.status ===
+    "CAPTURED"
+  ) {
+    return existing;
+  }
+
+  return prisma.$transaction(
+    async (tx) => {
+      const currentSubscription =
+        await tx.subscription.findFirst({
+          where: {
+            companyId:
+              existing.companyId,
+          },
+          orderBy: {
+            createdAt:
+              "desc",
+          },
+        });
+
+      const now =
+        new Date();
+
+      const samePlan =
+        currentSubscription?.planId ===
+          existing.planId &&
+        currentSubscription
+          ?.billingCycle ===
+          existing.billingCycle;
+
+      const renewalBase =
+        samePlan &&
+        currentSubscription
+          ?.renewalDate &&
+        new Date(
+          currentSubscription
+            .renewalDate
+        ) > now
+          ? new Date(
+              currentSubscription
+                .renewalDate
+            )
+          : now;
+
+      const renewalDate =
+        addBillingPeriod(
+          renewalBase,
+          existing.billingCycle
+        );
+
+      let subscription;
+
+      if (
+        currentSubscription
+      ) {
+        subscription =
+          await tx.subscription.update({
+            where: {
+              id:
+                currentSubscription.id,
+            },
+            data: {
+              planId:
+                existing.planId,
+              status:
+                "ACTIVE",
+              billingCycle:
+                existing.billingCycle,
+              amount:
+                existing.amount,
+              startDate:
+                samePlan
+                  ? currentSubscription.startDate
+                  : now,
+              renewalDate,
+              endDate:
+                null,
+            },
+          });
+      } else {
+        subscription =
+          await tx.subscription.create({
+            data: {
+              companyId:
+                existing.companyId,
+              planId:
+                existing.planId,
+              status:
+                "ACTIVE",
+              billingCycle:
+                existing.billingCycle,
+              amount:
+                existing.amount,
+              startDate:
+                now,
+              renewalDate,
+            },
+          });
+      }
+
+      if (
+        !samePlan
+      ) {
+        const allModules =
+          await tx.module.findMany({
+            select: {
+              id: true,
+              active: true,
+            },
+          });
+
+        const planModuleIds =
+          new Set(
+            existing.plan.planModules
+              .filter(
+                (item) =>
+                  item.module
+                    .active
+              )
+              .map(
+                (item) =>
+                  item.moduleId
+              )
+          );
+
+        for (
+          const crmModule of
+            allModules
+        ) {
+          const enabled =
+            crmModule.active &&
+            planModuleIds.has(
+              crmModule.id
+            );
+
+          await tx.companyModule.upsert({
+            where: {
+              companyId_moduleId: {
+                companyId:
+                  existing.companyId,
+                moduleId:
+                  crmModule.id,
+              },
+            },
+            update: {
+              enabled,
+            },
+            create: {
+              companyId:
+                existing.companyId,
+              moduleId:
+                crmModule.id,
+              enabled,
+            },
+          });
+        }
+      }
+
+      await tx.company.update({
+        where: {
+          id:
+            existing.companyId,
+        },
+        data: {
+          status:
+            "ACTIVE",
+        },
+      });
+
+      const payment =
+        await tx.paymentTransaction.update({
+          where: {
+            id:
+              existing.id,
+          },
+          data: {
+            status:
+              "CAPTURED",
+            providerPaymentId,
+            subscriptionId:
+              subscription.id,
+            paidAt:
+              now,
+            failureCode:
+              null,
+            failureReason:
+              null,
+          },
+        });
+
+      await tx.notification.create({
+        data: {
+          companyId:
+            existing.companyId,
+          userId:
+            existing.initiatedByUserId,
+          title:
+            "Subscription payment successful",
+          message:
+            `${existing.plan.name} ${existing.billingCycle.toLowerCase()} subscription payment of ₹${Number(existing.amount).toLocaleString("en-IN")} was successful.`,
+          type:
+            "BILLING",
+          actionModule:
+            "settings",
+          actionLabel:
+            "View subscription",
+        },
+      });
+
+      return payment;
+    }
+  );
+}
+
+export async function markPaymentFailed({
+  providerOrderId,
+  providerPaymentId = null,
+  failureCode = null,
+  failureReason = null,
+}) {
+  const payment =
+    await prisma.paymentTransaction.findUnique({
+      where: {
+        providerOrderId,
+      },
+    });
+
+  if (!payment) {
+    return null;
+  }
+
+  if (
+    payment.status ===
+    "CAPTURED"
+  ) {
+    return payment;
+  }
+
+  const updated =
+    await prisma.paymentTransaction.update({
+      where: {
+        id:
+          payment.id,
+      },
+      data: {
+        status:
+          "FAILED",
+        providerPaymentId:
+          providerPaymentId ||
+          payment.providerPaymentId,
+        failureCode,
+        failureReason,
+      },
+    });
+
+  await prisma.notification.create({
+    data: {
+      companyId:
+        payment.companyId,
+      userId:
+        payment.initiatedByUserId,
+      title:
+        "Subscription payment failed",
+      message:
+        failureReason
+          ? `Subscription payment failed: ${failureReason}`
+          : "Subscription payment failed. Please try again.",
+      type:
+        "BILLING",
+      actionModule:
+        "settings",
+      actionLabel:
+        "Review billing",
+    },
+  }).catch(() => {});
+
+  return updated;
+}
