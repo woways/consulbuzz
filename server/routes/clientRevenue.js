@@ -1,11 +1,21 @@
 import { Router } from "express";
 
 import prisma from "../lib/prisma.js";
-import { requireClientUser } from "../middleware/clientAuth.js";
+import {
+  requireClientUser,
+  requireClientPermission,
+} from "../middleware/clientAuth.js";
 
 const router = Router();
 
 router.use(requireClientUser);
+
+router.use(
+  requireClientPermission(
+    "canManageRevenue",
+    "You do not have permission to access revenue"
+  )
+);
 
 function monthKey(date) {
   return `${date.getFullYear()}-${String(

@@ -224,3 +224,52 @@ export async function requireClientUser(
       });
   }
 }
+
+export function requireClientPermission(
+  permission,
+  message =
+    "You do not have permission to access this resource"
+) {
+  return function clientPermissionMiddleware(
+    req,
+    res,
+    next
+  ) {
+    if (
+      !req.clientUser
+    ) {
+      return res
+        .status(401)
+        .json({
+          success: false,
+          message:
+            "Unauthorized",
+        });
+    }
+
+    if (
+      req.clientUser.role ===
+      "CLIENT_ADMIN"
+    ) {
+      return next();
+    }
+
+    if (
+      req.clientUser
+        .permissions?.[
+          permission
+        ] !== true
+    ) {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          forbidden: true,
+          permission,
+          message,
+        });
+    }
+
+    return next();
+  };
+}

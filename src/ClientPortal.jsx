@@ -126,6 +126,44 @@ const NAV_GROUPS = [
   },
 ];
 
+const MODULE_PERMISSION_MAP = {
+  dashboard:
+    "canViewAnalytics",
+  "utm-leads":
+    "canManageLeads",
+  "lead-store":
+    "canManageLeads",
+  admissions:
+    "canManageAdmissions",
+  walkins:
+    "canManageAdmissions",
+  counselling:
+    "canManageAdmissions",
+  revenue:
+    "canManageRevenue",
+  analytics:
+    "canViewAnalytics",
+  help:
+    "canManageSupport",
+  settings:
+    "canManageSettings",
+};
+
+const MODULE_PERMISSION_LABELS = {
+  canManageLeads:
+    "manage leads",
+  canManageAdmissions:
+    "manage admissions",
+  canManageRevenue:
+    "manage revenue",
+  canViewAnalytics:
+    "view analytics",
+  canManageSupport:
+    "manage support",
+  canManageSettings:
+    "manage company settings",
+};
+
 function getAccent(
   color
 ) {
@@ -319,6 +357,53 @@ export default function ClientPortal({
 
   const user =
     clientSession?.user;
+
+  const permissions =
+    user?.permissions ||
+    {};
+
+  function hasModulePermission(
+    moduleKey
+  ) {
+    if (
+      user?.role ===
+      "CLIENT_ADMIN"
+    ) {
+      return true;
+    }
+
+    const permission =
+      MODULE_PERMISSION_MAP[
+        moduleKey
+      ];
+
+    if (!permission) {
+      return true;
+    }
+
+    return (
+      permissions[
+        permission
+      ] === true
+    );
+  }
+
+  function permissionMessage(
+    moduleKey
+  ) {
+    const permission =
+      MODULE_PERMISSION_MAP[
+        moduleKey
+      ];
+
+    const label =
+      MODULE_PERMISSION_LABELS[
+        permission
+      ] ||
+      "access this module";
+
+    return `You don't have permission to ${label}.`;
+  }
 
   const enabledFeatures =
     useMemo(() => {
@@ -958,6 +1043,40 @@ export default function ClientPortal({
 
   function renderModule() {
     if (
+      !hasModulePermission(
+        module
+      )
+    ) {
+      return (
+        <div className="min-h-[420px] flex items-center justify-center">
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-sm p-8 text-center">
+            <div className="w-12 h-12 mx-auto rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <Lock
+                size={21}
+              />
+            </div>
+
+            <div className="mt-4 text-base font-bold text-slate-950">
+              Access restricted
+            </div>
+
+            <div className="mt-2 text-sm leading-6 text-slate-500">
+              {
+                permissionMessage(
+                  module
+                )
+              }
+            </div>
+
+            <div className="mt-4 text-xs text-slate-400">
+              Contact your Client Admin if you need access.
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (
       !enabledFeatures.includes(
         module
       )
@@ -1070,6 +1189,9 @@ export default function ClientPortal({
     const locked =
       !enabledFeatures.includes(
         key
+      ) ||
+      !hasModulePermission(
+        key
       );
 
     const Icon =
@@ -1165,6 +1287,9 @@ export default function ClientPortal({
 
     const locked =
       !enabledFeatures.includes(
+        key
+      ) ||
+      !hasModulePermission(
         key
       );
 
@@ -1613,36 +1738,46 @@ export default function ClientPortal({
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={openBilling}
-                      className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2 transition-colors"
-                    >
-                      <ReceiptIndianRupee
-                        size={14}
-                        className="text-slate-500"
-                      />
-                      Billing & Subscription
-                    </button>
+                    {(user.role ===
+                      "CLIENT_ADMIN" ||
+                      permissions.canManageBilling ===
+                        true) && (
+                      <button
+                        type="button"
+                        onClick={openBilling}
+                        className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2 transition-colors"
+                      >
+                        <ReceiptIndianRupee
+                          size={14}
+                          className="text-slate-500"
+                        />
+                        Billing & Subscription
+                      </button>
+                    )}
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setModule(
-                          "settings"
-                        );
-                        setProfileMenuOpen(
-                          false
-                        );
-                      }}
-                      className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2 transition-colors"
-                    >
-                      <Settings
-                        size={14}
-                        className="text-slate-500"
-                      />
-                      Company Settings
-                    </button>
+                    {(user.role ===
+                      "CLIENT_ADMIN" ||
+                      permissions.canManageSettings ===
+                        true) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModule(
+                            "settings"
+                          );
+                          setProfileMenuOpen(
+                            false
+                          );
+                        }}
+                        className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2 transition-colors"
+                      >
+                        <Settings
+                          size={14}
+                          className="text-slate-500"
+                        />
+                        Company Settings
+                      </button>
+                    )}
 
                     <button
                       type="button"
