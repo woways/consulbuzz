@@ -153,6 +153,22 @@ enum SupportTicketStatus {
   CLOSED
 }
 
+enum CalendarEventType {
+  MEETING
+  FOLLOW_UP
+  COUNSELLING
+  ADMISSION
+  PAYMENT
+  REMINDER
+  OTHER
+}
+
+enum CalendarEventStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
 model Company {
   id           String  @id @default(cuid())
   name         String
@@ -194,6 +210,8 @@ model Company {
   auditLogs               AuditLog[]
   walkIns                 WalkIn[]
   counsellingSessions     CounsellingSession[]
+  admissionPartners       AdmissionPartner[]
+  calendarEvents          CalendarEvent[]
 }
 
 model User {
@@ -230,6 +248,8 @@ model User {
   notificationPreference UserNotificationPreference?
   auditLogs              AuditLog[]
   assignedLeadDatasets   LeadDataset[]               @relation("LeadDatasetAssignee")
+  calendarEventsCreated  CalendarEvent[]             @relation("CalendarEventCreator")
+  calendarEventsAssigned CalendarEvent[]             @relation("CalendarEventAssignee")
 
   @@index([companyId])
   @@index([companyId, role])
@@ -511,6 +531,9 @@ model Admission {
   studentPhone String?
   studentEmail String?
 
+  partnerId String?
+  partner   AdmissionPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+
   college String
   course  String
 
@@ -533,6 +556,31 @@ model Admission {
   @@index([companyId])
   @@index([companyId, status])
   @@index([companyId, admissionDate])
+  @@index([partnerId])
+  @@index([companyId, partnerId])
+}
+
+model AdmissionPartner {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  name String
+  slug String
+
+  description String?
+  active      Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  admissions Admission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, slug])
+  @@index([companyId, active])
+  @@index([companyId, sortOrder])
 }
 
 model WalkIn {
@@ -963,4 +1011,39 @@ model SystemSettings {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model CalendarEvent {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+
+  type   CalendarEventType   @default(MEETING)
+  status CalendarEventStatus @default(SCHEDULED)
+
+  startAt DateTime
+  endAt   DateTime?
+
+  allDay Boolean @default(false)
+
+  location String?
+
+  createdByUserId String?
+  createdByUser   User?   @relation("CalendarEventCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  assignedToUserId String?
+  assignedToUser   User?   @relation("CalendarEventAssignee", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, startAt])
+  @@index([companyId, status])
+  @@index([companyId, type])
+  @@index([assignedToUserId, startAt])
+  @@index([createdByUserId])
 }

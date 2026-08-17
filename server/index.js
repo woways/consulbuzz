@@ -45,18 +45,15 @@ import clientSettingsRoutes from "./routes/clientSettings.js";
 import clientAuditLogsRoutes from "./routes/clientAuditLogs.js";
 import clientWalkinsRoutes from "./routes/clientWalkins.js";
 import clientCounsellingRoutes from "./routes/clientCounselling.js";
+import clientCalendarRoutes from "./routes/clientCalendar.js";
 
 import razorpayWebhook from "./routes/razorpayWebhook.js";
 
-const config =
-  loadServerConfig();
+const config = loadServerConfig();
 
-const app =
-  express();
+const app = express();
 
-if (
-  config.trustProxy
-) {
+if (config.trustProxy) {
   app.set(
     "trust proxy",
     1
@@ -206,37 +203,133 @@ app.get(
   }
 );
 
-app.use("/api/admin/auth", adminAuthRoutes);
-app.use("/api/admin/clients", adminClientsRoutes);
-app.use("/api/admin/support", adminSupportRoutes);
-app.use("/api/admin/usage", adminUsageRoutes);
-app.use("/api/admin/billing", adminBillingRoutes);
-app.use("/api/admin/plans", adminPlansRoutes);
-app.use("/api/admin/modules", adminModulesRoutes);
-app.use("/api/admin/global-usage", adminGlobalUsageRoutes);
-app.use("/api/admin/global-billing", adminGlobalBillingRoutes);
-app.use("/api/admin/analytics", adminAnalyticsRoutes);
-app.use("/api/admin/system-settings", adminSystemSettingsRoutes);
-app.use("/api/admin/payments", adminPaymentsRoutes);
-app.use("/api/admin/audit-logs", adminAuditLogsRoutes);
+app.use(
+  "/api/admin/auth",
+  adminAuthRoutes
+);
+app.use(
+  "/api/admin/clients",
+  adminClientsRoutes
+);
+app.use(
+  "/api/admin/support",
+  adminSupportRoutes
+);
+app.use(
+  "/api/admin/usage",
+  adminUsageRoutes
+);
+app.use(
+  "/api/admin/billing",
+  adminBillingRoutes
+);
+app.use(
+  "/api/admin/plans",
+  adminPlansRoutes
+);
+app.use(
+  "/api/admin/modules",
+  adminModulesRoutes
+);
+app.use(
+  "/api/admin/global-usage",
+  adminGlobalUsageRoutes
+);
+app.use(
+  "/api/admin/global-billing",
+  adminGlobalBillingRoutes
+);
+app.use(
+  "/api/admin/analytics",
+  adminAnalyticsRoutes
+);
+app.use(
+  "/api/admin/system-settings",
+  adminSystemSettingsRoutes
+);
+app.use(
+  "/api/admin/payments",
+  adminPaymentsRoutes
+);
+app.use(
+  "/api/admin/audit-logs",
+  adminAuditLogsRoutes
+);
 
-app.use("/api/client/auth", clientAuthRoutes);
-app.use("/api/client/leads", clientLeadsRoutes);
-app.use("/api/client/admissions", clientAdmissionsRoutes);
-app.use("/api/client/revenue", clientRevenueRoutes);
-app.use("/api/client/analytics", clientAnalyticsRoutes);
-app.use("/api/client/lead-store", clientLeadStoreRoutes);
-app.use("/api/client/support", clientSupportRoutes);
-app.use("/api/client/notifications", clientNotificationsRoutes);
-app.use("/api/client/billing", clientBillingRoutes);
-app.use("/api/client/users", clientUsersRoutes);
-app.use("/api/client/lead-sources", clientLeadSourcesRoutes);
-app.use("/api/client/custom-fields", clientCustomFieldsRoutes);
-app.use("/api/client/integrations", clientIntegrationsRoutes);
-app.use("/api/client/settings", clientSettingsRoutes);
-app.use("/api/client/audit-logs", clientAuditLogsRoutes);
-app.use("/api/client/walkins", clientWalkinsRoutes);
-app.use("/api/client/counselling", clientCounsellingRoutes);
+app.use(
+  "/api/client/auth",
+  clientAuthRoutes
+);
+app.use(
+  "/api/client/leads",
+  clientLeadsRoutes
+);
+app.use(
+  "/api/client/admissions",
+  clientAdmissionsRoutes
+);
+app.use(
+  "/api/client/revenue",
+  clientRevenueRoutes
+);
+app.use(
+  "/api/client/analytics",
+  clientAnalyticsRoutes
+);
+app.use(
+  "/api/client/lead-store",
+  clientLeadStoreRoutes
+);
+app.use(
+  "/api/client/support",
+  clientSupportRoutes
+);
+app.use(
+  "/api/client/notifications",
+  clientNotificationsRoutes
+);
+app.use(
+  "/api/client/billing",
+  clientBillingRoutes
+);
+app.use(
+  "/api/client/users",
+  clientUsersRoutes
+);
+app.use(
+  "/api/client/lead-sources",
+  clientLeadSourcesRoutes
+);
+app.use(
+  "/api/client/custom-fields",
+  clientCustomFieldsRoutes
+);
+app.use(
+  "/api/client/integrations",
+  clientIntegrationsRoutes
+);
+app.use(
+  "/api/client/settings",
+  clientSettingsRoutes
+);
+app.use(
+  "/api/client/audit-logs",
+  clientAuditLogsRoutes
+);
+app.use(
+  "/api/client/walkins",
+  clientWalkinsRoutes
+);
+app.use(
+  "/api/client/counselling",
+  clientCounsellingRoutes
+);
+
+/* CRM CALENDAR */
+app.use(
+  "/api/client/calendar",
+  clientCalendarRoutes
+);
 
 app.use(
   (req, res) =>

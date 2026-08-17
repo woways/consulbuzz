@@ -253,6 +253,7 @@ export default function ClientPortal({
     profileMenuOpen,
     setProfileMenuOpen,
   ] = useState(false);
+const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
   const profileMenuRef =
     useRef(null);
@@ -1107,6 +1108,9 @@ export default function ClientPortal({
             tenant={
               tenant
             }
+            user={
+              user
+            }
           />
         );
 
@@ -1374,6 +1378,17 @@ export default function ClientPortal({
     );
   }
 
+  const formatRole = (role) => {
+    if (!role) return "User";
+
+    return String(role)
+      .toLowerCase()
+      .split("_")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  };
+
   const initials =
     String(
       user.name
@@ -1400,475 +1415,64 @@ export default function ClientPortal({
   return (
     <div className="min-h-screen bg-[#f6f7fb] text-slate-900">
 
-      {/* HEADER */}
-
-      <header className="h-[70px] bg-white border-b border-slate-200 sticky top-0 z-40 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
-        <div className="h-full px-5 flex items-center justify-between">
-
-          {/* LEFT: STATIC COMPANY BRANDING */}
-
-          <div className="flex items-center gap-3 min-w-0">
-            <div
-              className={`w-10 h-10 rounded-xl ${getAccent(
-                company.primaryColor
-              )} text-white flex items-center justify-center text-sm font-bold shadow-sm flex-shrink-0`}
-            >
-              {company.shortName}
-            </div>
-
-            <div className="hidden sm:block min-w-0">
-              <div className="text-[15px] font-bold text-slate-900 truncate">
-                {company.brandName}
-              </div>
-
-              <div className="text-[11px] text-slate-500 mt-0.5 truncate">
-                {company.subdomain}
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT: NOTIFICATIONS + USER MENU */}
-
-          <div className="flex items-center gap-3">
-
-            {/* NOTIFICATIONS */}
-
-            <div
-              ref={notificationRef}
-              className="relative"
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  const nextOpen =
-                    !notificationsOpen;
-
-                  setNotificationsOpen(nextOpen);
-                  setProfileMenuOpen(false);
-
-                  if (nextOpen) {
-                    loadNotifications();
-                  }
-                }}
-                className={`relative w-9 h-9 flex items-center justify-center rounded-lg transition-colors ${
-                  notificationsOpen
-                    ? "bg-indigo-50 text-indigo-700"
-                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                }`}
-                aria-label="Notifications"
-              >
-                <Bell size={17} />
-
-                {unreadNotificationCount > 0 && (
-                  <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold leading-4 text-center ring-2 ring-white">
-                    {unreadNotificationCount > 99
-                      ? "99+"
-                      : unreadNotificationCount}
-                  </span>
-                )}
-              </button>
-
-              {notificationsOpen && (
-                <div className="absolute right-0 top-[44px] w-[380px] max-w-[calc(100vw-24px)] bg-white border border-slate-200 rounded-xl shadow-[0_16px_40px_rgba(15,23,42,0.14)] overflow-hidden z-50">
-                  <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-bold text-slate-950">
-                        Notifications
-                      </div>
-
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        Workspace updates and alerts
-                      </div>
-                    </div>
-
-                    {unreadNotificationCount > 0 && (
-                      <button
-                        type="button"
-                        onClick={
-                          markAllNotificationsRead
-                        }
-                        className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700"
-                      >
-                        Mark all read
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="max-h-[420px] overflow-y-auto divide-y divide-slate-100">
-                    {notificationsLoading ? (
-                      <div className="py-12 flex items-center justify-center gap-2 text-xs text-slate-500">
-                        <Loader2
-                          size={14}
-                          className="animate-spin text-indigo-600"
-                        />
-                        Loading notifications...
-                      </div>
-                    ) : notificationError ? (
-                      <div className="p-4">
-                        <div className="text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded-lg p-3">
-                          {notificationError}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={
-                            loadNotifications
-                          }
-                          className="mt-3 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
-                        >
-                          Try again
-                        </button>
-                      </div>
-                    ) : notifications.length === 0 ? (
-                      <div className="py-12 px-6 text-center">
-                        <Bell
-                          size={20}
-                          className="mx-auto text-slate-300"
-                        />
-
-                        <div className="text-xs font-semibold text-slate-700 mt-2">
-                          No notifications yet
-                        </div>
-
-                        <div className="text-[11px] text-slate-500 mt-1">
-                          Important workspace updates will appear here.
-                        </div>
-                      </div>
-                    ) : (
-                      notifications.map(
-                        (notification) => (
-                          <button
-                            key={
-                              notification.id
-                            }
-                            type="button"
-                            onClick={() =>
-                              markNotificationRead(
-                                notification
-                              )
-                            }
-                            className={`w-full p-4 text-left hover:bg-slate-50 transition-colors ${
-                              notification.read
-                                ? "bg-white"
-                                : "bg-indigo-50/35"
-                            }`}
-                          >
-                            <div className="flex gap-3">
-                              <div
-                                className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
-                                  notification.read
-                                    ? "bg-slate-200"
-                                    : "bg-indigo-500"
-                                }`}
-                              />
-
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div
-                                    className={`text-xs ${
-                                      notification.read
-                                        ? "font-medium text-slate-800"
-                                        : "font-bold text-slate-950"
-                                    }`}
-                                  >
-                                    {notification.title}
-                                  </div>
-
-                                  <div className="text-[10px] text-slate-400 whitespace-nowrap">
-                                    {new Date(
-                                      notification.createdAt
-                                    ).toLocaleDateString(
-                                      "en-IN",
-                                      {
-                                        day: "2-digit",
-                                        month: "short",
-                                      }
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div className="text-xs text-slate-500 mt-1 leading-5">
-                                  {notification.message}
-                                </div>
-
-                                {notification.actionLabel && (
-                                  <div className="text-[11px] font-semibold text-indigo-600 mt-2">
-                                    {notification.actionLabel}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </button>
-                        )
-                      )
-                    )}
-                  </div>
-
-                  <div className="px-4 py-2.5 bg-slate-50/70 border-t border-slate-100 text-[10px] text-slate-500">
-                    Notifications are isolated to this company workspace.
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="h-7 w-px bg-slate-200 hidden sm:block" />
-
-            {/* USER MENU */}
-
-            <div
-              ref={profileMenuRef}
-              className="relative"
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setProfileMenuOpen(
-                    (current) =>
-                      !current
-                  );
-                  setNotificationsOpen(false);
-                }}
-                className={`flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors ${
-                  profileMenuOpen
-                    ? "bg-slate-100"
-                    : "hover:bg-slate-50"
-                }`}
-                aria-label="Open user menu"
-              >
-                <div className="hidden sm:block text-right">
-                  <div className="text-xs font-semibold text-slate-800">
-                    {user.name}
-                  </div>
-
-                  <div className="text-[10px] text-slate-500">
-                    {user.role ===
-                    "CLIENT_ADMIN"
-                      ? "Client Admin"
-                      : user.role}
-                  </div>
-                </div>
-
-                <div
-                  className={`w-9 h-9 rounded-full ${getAccent(
-                    company.primaryColor
-                  )} text-white flex items-center justify-center text-xs font-semibold shadow-sm`}
-                >
-                  {initials}
-                </div>
-
-                <ChevronDown
-                  size={13}
-                  className={`hidden sm:block text-slate-400 transition-transform ${
-                    profileMenuOpen
-                      ? "rotate-180"
-                      : ""
-                  }`}
-                />
-              </button>
-
-              {profileMenuOpen && (
-                <div className="absolute right-0 top-[48px] w-[300px] max-w-[calc(100vw-24px)] bg-white border border-slate-200 rounded-xl shadow-[0_16px_40px_rgba(15,23,42,0.14)] overflow-hidden z-[70]">
-                  <div className="p-4 border-b border-slate-100 bg-slate-50/70">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 rounded-full ${getAccent(
-                          company.primaryColor
-                        )} text-white flex items-center justify-center text-xs font-bold`}
-                      >
-                        {initials}
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="text-sm font-bold text-slate-950 truncate">
-                          {user.name}
-                        </div>
-
-                        <div className="text-[11px] text-slate-500 truncate mt-0.5">
-                          {user.email}
-                        </div>
-
-                        <div className="text-[10px] font-semibold text-indigo-600 mt-1">
-                          {user.role ===
-                          "CLIENT_ADMIN"
-                            ? "Client Admin"
-                            : user.role}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-2">
-                    <div className="px-3 py-3 mb-1 rounded-lg bg-slate-50 border border-slate-100">
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">
-                        Company Information
-                      </div>
-
-                      <div className="text-xs font-bold text-slate-900 mt-1.5">
-                        {company.name}
-                      </div>
-
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        {company.business ||
-                          "Company workspace"}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 mt-3">
-                        <div>
-                          <div className="text-[10px] text-slate-400">
-                            Plan
-                          </div>
-
-                          <div className="text-[11px] font-semibold text-slate-700 mt-0.5">
-                            {company.subscription
-                              ?.plan?.name ||
-                              "No plan"}
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="text-[10px] text-slate-400">
-                            Status
-                          </div>
-
-                          <div className="text-[11px] font-semibold text-emerald-600 mt-0.5">
-                            {company.status ||
-                              "ACTIVE"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {(user.role ===
-                      "CLIENT_ADMIN" ||
-                      permissions.canManageBilling ===
-                        true) && (
-                      <button
-                        type="button"
-                        onClick={openBilling}
-                        className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2 transition-colors"
-                      >
-                        <ReceiptIndianRupee
-                          size={14}
-                          className="text-slate-500"
-                        />
-                        Billing & Subscription
-                      </button>
-                    )}
-
-                    {(user.role ===
-                      "CLIENT_ADMIN" ||
-                      permissions.canManageSettings ===
-                        true) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setModule(
-                            "settings"
-                          );
-                          setProfileMenuOpen(
-                            false
-                          );
-                        }}
-                        className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2 transition-colors"
-                      >
-                        <Settings
-                          size={14}
-                          className="text-slate-500"
-                        />
-                        Company Settings
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={
-                        openChangePassword
-                      }
-                      className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2 transition-colors"
-                    >
-                      <Lock
-                        size={14}
-                        className="text-slate-500"
-                      />
-                      Change Password
-                    </button>
-                  </div>
-
-                  <div className="border-t border-slate-100 p-2">
-                    <button
-                      type="button"
-                      onClick={
-                        signOut
-                      }
-                      disabled={
-                        signingOut
-                      }
-                      className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 inline-flex items-center gap-2 disabled:opacity-50 transition-colors"
-                    >
-                      {signingOut ? (
-                        <Loader2
-                          size={14}
-                          className="animate-spin"
-                        />
-                      ) : (
-                        <LogOut
-                          size={14}
-                        />
-                      )}
-
-                      {signingOut
-                        ? "Signing out..."
-                        : "Sign out"}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-          </div>
-        </div>
-      </header>
-
       <div className="flex">
 
         {/* SIDEBAR */}
 
         <aside
-          className={`relative bg-[#071321] text-slate-300 min-h-[calc(100vh-70px)] sticky top-[70px] self-start flex-shrink-0 border-r border-white/[0.04] transition-[width] duration-300 ${
+          className={`relative bg-[#071321] text-slate-300 min-h-screen sticky top-0 self-start flex-shrink-0 border-r border-white/[0.04] transition-[width] duration-300 ${
             sidebarCollapsed
               ? "w-[76px]"
               : "w-[258px]"
           }`}
         >
-          <div className="h-[calc(100vh-70px)] flex flex-col">
+          <div className="h-screen flex flex-col">
 
-            {/* PLAN */}
+            {/* WORKSPACE IDENTITY — shown once */}
 
-            {!sidebarCollapsed && (
-              <>
-                <div className="px-5 pt-5 pb-4">
-                  <PlanPill
-                    plan={
-                      plan
-                    }
-                  />
+            {!sidebarCollapsed ? (
+              <div className="px-4 pt-5 pb-4">
+                <div className="flex items-center gap-3 px-2">
+                  <div
+                    className={`w-9 h-9 rounded-xl ${getAccent(
+                      company.primaryColor
+                    )} text-white flex items-center justify-center text-xs font-bold shadow-sm flex-shrink-0`}
+                  >
+                    {company.shortName}
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-bold text-white truncate">
+                      {company.brandName}
+                    </div>
+                    <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                      {company.subdomain || "Company workspace"}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="px-5 pb-3">
-                  <div className="text-[10px] font-semibold tracking-[0.2em] uppercase text-slate-600">
+                <div className="px-2 pt-5 pb-2">
+                  <div className="text-[10px] font-semibold tracking-[0.18em] uppercase text-slate-600">
                     Workspace
                   </div>
                 </div>
-              </>
-            )}
-
-            {sidebarCollapsed && (
-              <div className="h-5" />
+              </div>
+            ) : (
+              <div className="pt-5 pb-4 flex justify-center">
+                <div
+                  className={`w-9 h-9 rounded-xl ${getAccent(
+                    company.primaryColor
+                  )} text-white flex items-center justify-center text-xs font-bold shadow-sm`}
+                  title={company.brandName}
+                >
+                  {company.shortName}
+                </div>
+              </div>
             )}
 
             {/* NAVIGATION */}
 
-            <nav className="flex-1 overflow-y-auto pb-4">
+            <nav className="flex-1 min-h-0 overflow-y-auto pb-3">
 
               {NAV_GROUPS.map(
                 (group) => {
@@ -2024,54 +1628,249 @@ export default function ClientPortal({
 
             </nav>
 
-            {/* FOOTER */}
+            {/* ACCOUNT — user + plan shown once */}
 
-            {!sidebarCollapsed && (
-              <div className="border-t border-slate-800 px-5 py-4">
+            <div className="border-t border-slate-800/80 p-3 pb-4 flex-shrink-0">
+            {!sidebarCollapsed ? (
+              <div className="relative">
+                {accountActionsOpen && (
+                  <div className="mb-2 rounded-xl border border-white/[0.07] bg-[#0b1a2b] p-1.5 shadow-xl">
+                    <div
+                      ref={notificationRef}
+                      className="relative"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextOpen = !notificationsOpen;
+                          setNotificationsOpen(nextOpen);
+                          setProfileMenuOpen(false);
 
-                <div className="text-[10px] uppercase tracking-[0.15em] text-slate-600 font-semibold">
-                  Signed in as
-                </div>
+                          if (nextOpen) {
+                            loadNotifications();
+                          }
+                        }}
+                        className={`w-full h-9 px-2.5 rounded-lg flex items-center gap-2.5 text-[11px] font-semibold transition-colors ${
+                          notificationsOpen
+                            ? "bg-white/[0.08] text-white"
+                            : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
+                        }`}
+                      >
+                        <div className="relative">
+                          <Bell size={14} />
+                          {unreadNotificationCount > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 min-w-[13px] h-[13px] px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-bold leading-[13px] text-center">
+                              {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
+                            </span>
+                          )}
+                        </div>
+                        <span className="flex-1 text-left">Notifications</span>
+                        {unreadNotificationCount > 0 && (
+                          <span className="text-[10px] text-slate-500">
+                            {unreadNotificationCount}
+                          </span>
+                        )}
+                      </button>
 
-                <div className="text-xs text-slate-400 mt-1 truncate">
-                  {
-                    user.email
-                  }
-                </div>
+                      {notificationsOpen && (
+                        <div className="absolute left-full bottom-0 ml-3 w-[380px] max-w-[calc(100vw-24px)] bg-white border border-slate-200 rounded-xl shadow-[0_16px_40px_rgba(15,23,42,0.14)] overflow-hidden z-50 text-slate-900">
+                          <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-bold text-slate-950">Notifications</div>
+                              <div className="text-[11px] text-slate-500 mt-0.5">
+                                Workspace updates and alerts
+                              </div>
+                            </div>
+                            {unreadNotificationCount > 0 && (
+                              <button
+                                type="button"
+                                onClick={markAllNotificationsRead}
+                                className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700"
+                              >
+                                Mark all read
+                              </button>
+                            )}
+                          </div>
 
-                <div className="flex items-center justify-between mt-3">
-
-                  <div>
-                    <div className="text-[10px] text-slate-600">
-                      Current plan
+                          <div className="max-h-[420px] overflow-y-auto divide-y divide-slate-100">
+                            {notificationsLoading ? (
+                              <div className="py-12 flex items-center justify-center gap-2 text-xs text-slate-500">
+                                <Loader2 size={14} className="animate-spin text-indigo-600" />
+                                Loading notifications...
+                              </div>
+                            ) : notificationError ? (
+                              <div className="p-4">
+                                <div className="text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded-lg p-3">
+                                  {notificationError}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={loadNotifications}
+                                  className="mt-3 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+                                >
+                                  Try again
+                                </button>
+                              </div>
+                            ) : notifications.length === 0 ? (
+                              <div className="py-12 px-6 text-center">
+                                <Bell size={20} className="mx-auto text-slate-300" />
+                                <div className="text-xs font-semibold text-slate-700 mt-2">
+                                  No notifications yet
+                                </div>
+                                <div className="text-[11px] text-slate-500 mt-1">
+                                  Important workspace updates will appear here.
+                                </div>
+                              </div>
+                            ) : (
+                              notifications.map((notification) => (
+                                <button
+                                  key={notification.id}
+                                  type="button"
+                                  onClick={() => markNotificationRead(notification)}
+                                  className={`w-full p-4 text-left hover:bg-slate-50 transition-colors ${
+                                    notification.read ? "bg-white" : "bg-indigo-50/35"
+                                  }`}
+                                >
+                                  <div className="flex gap-3">
+                                    <div
+                                      className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
+                                        notification.read ? "bg-slate-200" : "bg-indigo-500"
+                                      }`}
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div
+                                          className={`text-xs ${
+                                            notification.read
+                                              ? "font-medium text-slate-800"
+                                              : "font-bold text-slate-950"
+                                          }`}
+                                        >
+                                          {notification.title}
+                                        </div>
+                                        <div className="text-[10px] text-slate-400 whitespace-nowrap">
+                                          {new Date(notification.createdAt).toLocaleDateString(
+                                            "en-IN",
+                                            { day: "2-digit", month: "short" }
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="text-xs text-slate-500 mt-1 leading-5">
+                                        {notification.message}
+                                      </div>
+                                      {notification.actionLabel && (
+                                        <div className="text-[11px] font-semibold text-indigo-600 mt-2">
+                                          {notification.actionLabel}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="text-xs font-semibold text-slate-300 capitalize mt-0.5">
-                      {
-                        plan
-                      }
+                    {(user.role === "CLIENT_ADMIN" ||
+                      permissions.canManageBilling === true) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAccountActionsOpen(false);
+                          openBilling();
+                        }}
+                        className="w-full h-9 px-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] flex items-center gap-2.5 text-[11px] font-semibold transition-colors"
+                      >
+                        <ReceiptIndianRupee size={14} />
+                        <span>Billing & Subscription</span>
+                      </button>
+                    )}
+
+                    {(user.role === "CLIENT_ADMIN" ||
+                      permissions.canManageSettings === true) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAccountActionsOpen(false);
+                          setModule("settings");
+                        }}
+                        className="w-full h-9 px-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] flex items-center gap-2.5 text-[11px] font-semibold transition-colors"
+                      >
+                        <Settings size={14} />
+                        <span>Company Settings</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={signOut}
+                      disabled={signingOut}
+                      className="w-full h-9 px-2.5 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-white/[0.06] flex items-center gap-2.5 text-[11px] font-semibold transition-colors disabled:opacity-50"
+                    >
+                      {signingOut ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <LogOut size={14} />
+                      )}
+                      <span>Sign out</span>
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAccountActionsOpen((value) => !value);
+                    setNotificationsOpen(false);
+                  }}
+                  className={`w-full rounded-xl px-2.5 py-2.5 flex items-center gap-2.5 text-left transition-colors ${
+                    accountActionsOpen
+                      ? "bg-white/[0.08]"
+                      : "hover:bg-white/[0.06]"
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                    {initials}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[12px] font-semibold text-white truncate">
+                      {user.name || tenant.name}
+                    </div>
+                    <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                      {formatRole(user.role)} · {tenant.planName || tenant.plan}
                     </div>
                   </div>
 
-                  <Crown
-                    size={
-                      15
-                    }
-                    className={
-                      plan ===
-                      "advanced"
-                        ? "text-amber-400"
-                        : plan ===
-                          "pro"
-                        ? "text-indigo-400"
-                        : "text-slate-500"
-                    }
+                  <ChevronDown
+                    size={14}
+                    className={`text-slate-500 flex-shrink-0 transition-transform duration-200 ${
+                      accountActionsOpen ? "rotate-180" : ""
+                    }`}
                   />
-
-                </div>
-
+                </button>
               </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setSidebarCollapsed(false);
+                  setAccountActionsOpen(true);
+                }}
+                title={`${user.name || tenant.name} · ${formatRole(user.role)}`}
+                className="w-full flex items-center justify-center"
+              >
+                <div className="relative w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
+                  {initials}
+                  {unreadNotificationCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-[#071321]" />
+                  )}
+                </div>
+              </button>
             )}
+          </div>
 
           </div>
 

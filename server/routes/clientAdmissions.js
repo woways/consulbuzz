@@ -1,4 +1,6 @@
 import { Router } from "express";
+import multer from "multer";
+import ExcelJS from "exceljs";
 
 import prisma from "../lib/prisma.js";
 import {
@@ -9,7 +11,6 @@ import {
 const router = Router();
 
 router.use(requireClientUser);
-
 router.use(
   requireClientPermission(
     "canManageAdmissions",
@@ -31,66 +32,573 @@ const STATUS_LABELS = {
   CANCELLED: "Cancelled",
 };
 
-function formatAdmission(admission) {
-  const totalFee =
-    Number(admission.totalFee) || 0;
+const MAX_IMPORT_ROWS = 2000;
 
-  const paidAmount =
-    Number(admission.paidAmount) || 0;
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 1,
+  },
+  fileFilter(req, file, callback) {
+    const name = String(file.originalname || "").toLowerCase();
+    if (!name.endsWith(".csv") && !name.endsWith(".xlsx")) {
+      callback(new Error("Only CSV and XLSX files are supported"));
+      return;
+    }
+    callback(null, true);
+  },
+});
+
+function cleanOptional(value) {
+  const clean = String(value ?? "").trim();
+  return clean || null;
+}
+
+function slugify(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || `partner-${Date.now()}`;
+}
+
+function parseMoney(value, fallback = 0) {
+  if (value === null || value === undefined || value === "") return fallback;
+  const number = Number(String(value).replace(/[,₹\s]/g, ""));
+  return Number.isFinite(number) ? number : NaN;
+}
+
+function parseDate(value, fallback = new Date()) {
+  if (!value) return fallback;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function formatAdmission(admission) {
+  const totalFee = Number(admission.totalFee) || 0;
+  const paidAmount = Number(admission.paidAmount) || 0;
 
   return {
     id: admission.id,
-
     leadId: admission.leadId,
-
+    partnerId: admission.partnerId,
+    partner: admission.partner
+      ? {
+          id: admission.partner.id,
+          name: admission.partner.name,
+          slug: admission.partner.slug,
+        }
+      : null,
     name: admission.studentName,
-
     phone: admission.studentPhone,
-
     email: admission.studentEmail,
-
     college: admission.college,
-
     course: admission.course,
-
-    counsellor:
-      admission.counsellorName ||
-      "Unassigned",
-
+    counsellor: admission.counsellorName || "Unassigned",
+    counsellorName: admission.counsellorName,
     total: totalFee,
-
     paid: paidAmount,
-
-    pending: Math.max(
-      totalFee - paidAmount,
-      0
-    ),
-
-    status:
-      STATUS_LABELS[
-        admission.status
-      ] || admission.status,
-
+    pending: Math.max(totalFee - paidAmount, 0),
+    status: STATUS_LABELS[admission.status] || admission.status,
     statusKey: admission.status,
-
-    admissionDate:
-      admission.admissionDate,
-
+    admissionDate: admission.admissionDate,
     notes: admission.notes,
-
     createdAt: admission.createdAt,
-
+    updatedAt: admission.updatedAt,
     lead: admission.lead
       ? {
           id: admission.lead.id,
-          source:
-            admission.lead.source,
-          campaign:
-            admission.lead.campaign,
+          source: admission.lead.source,
+          campaign: admission.lead.campaign,
         }
       : null,
   };
 }
+
+async function uniquePartnerSlug(companyId, name, excludeId = null) {
+  const base = slugify(name);
+  let slug = base;
+  let suffix = 2;
+
+  while (true) {
+    const existing = await prisma.admissionPartner.findFirst({
+      where: {
+        companyId,
+        slug,
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      select: { id: true },
+    });
+
+    if (!existing) return slug;
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+}
+
+async function syncLegacyPartners(companyId) {
+  const legacy = await prisma.admission.findMany({
+    where: {
+      companyId,
+      partnerId: null,
+      college: { not: "" },
+    },
+    select: { college: true },
+    distinct: ["college"],
+  });
+
+  for (const item of legacy) {
+    const name = String(item.college || "").trim();
+    if (!name) continue;
+
+    const slug = slugify(name);
+    let partner = await prisma.admissionPartner.findFirst({
+      where: { companyId, slug },
+    });
+
+    if (!partner) {
+      partner = await prisma.admissionPartner.create({
+        data: { companyId, name, slug },
+      });
+    }
+
+    await prisma.admission.updateMany({
+      where: {
+        companyId,
+        partnerId: null,
+        college: name,
+      },
+      data: { partnerId: partner.id },
+    });
+  }
+}
+
+async function getPartner(companyId, partnerId) {
+  if (!partnerId) return null;
+  return prisma.admissionPartner.findFirst({
+    where: {
+      id: String(partnerId),
+      companyId,
+      active: true,
+    },
+  });
+}
+
+function partnerMetrics(partner) {
+  const admissions = partner.admissions || [];
+  const active = admissions.filter((item) => item.status !== "CANCELLED");
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  return {
+    id: partner.id,
+    name: partner.name,
+    slug: partner.slug,
+    description: partner.description,
+    active: partner.active,
+    sortOrder: partner.sortOrder,
+    totalAdmissions: admissions.length,
+    thisMonth: admissions.filter(
+      (item) => new Date(item.admissionDate) >= monthStart
+    ).length,
+    totalFees: active.reduce((sum, item) => sum + Number(item.totalFee || 0), 0),
+    received: active.reduce((sum, item) => sum + Number(item.paidAmount || 0), 0),
+    pending: active.reduce(
+      (sum, item) =>
+        sum + Math.max(Number(item.totalFee || 0) - Number(item.paidAmount || 0), 0),
+      0
+    ),
+    createdAt: partner.createdAt,
+  };
+}
+
+/* =========================================================
+   ADMISSION PARTNERS / COLLEGE CARDS
+========================================================= */
+
+router.get("/partners", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+    await syncLegacyPartners(companyId);
+
+    const partners = await prisma.admissionPartner.findMany({
+      where: { companyId, active: true },
+      include: {
+        admissions: {
+          select: {
+            status: true,
+            totalFee: true,
+            paidAmount: true,
+            admissionDate: true,
+          },
+        },
+      },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    });
+
+    return res.json({
+      success: true,
+      partners: partners.map(partnerMetrics),
+    });
+  } catch (error) {
+    console.error("Failed to fetch admission partners:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch admission colleges",
+    });
+  }
+});
+
+router.post("/partners", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+    const name = String(req.body?.name || "").trim();
+    const description = cleanOptional(req.body?.description);
+
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: "College / partner name is required",
+      });
+    }
+
+    const slug = await uniquePartnerSlug(companyId, name);
+    const partner = await prisma.admissionPartner.create({
+      data: {
+        companyId,
+        name,
+        slug,
+        description,
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Admission college added successfully",
+      partner: partnerMetrics({ ...partner, admissions: [] }),
+    });
+  } catch (error) {
+    console.error("Failed to create admission partner:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to add admission college",
+    });
+  }
+});
+
+router.patch("/partners/:id", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+    const existing = await prisma.admissionPartner.findFirst({
+      where: { id: req.params.id, companyId },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ success: false, message: "College not found" });
+    }
+
+    const data = {};
+    if (req.body?.name !== undefined) {
+      const name = String(req.body.name || "").trim();
+      if (!name) {
+        return res.status(400).json({ success: false, message: "College name is required" });
+      }
+      data.name = name;
+      data.slug = await uniquePartnerSlug(companyId, name, existing.id);
+    }
+    if (req.body?.description !== undefined) {
+      data.description = cleanOptional(req.body.description);
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const saved = await tx.admissionPartner.update({
+        where: { id: existing.id },
+        data,
+      });
+
+      if (data.name && data.name !== existing.name) {
+        await tx.admission.updateMany({
+          where: { companyId, partnerId: existing.id },
+          data: { college: data.name },
+        });
+      }
+
+      return saved;
+    });
+
+    return res.json({ success: true, message: "College updated", partner: updated });
+  } catch (error) {
+    console.error("Failed to update admission partner:", error);
+    return res.status(500).json({ success: false, message: "Unable to update college" });
+  }
+});
+
+router.delete("/partners/:id", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+    const existing = await prisma.admissionPartner.findFirst({
+      where: { id: req.params.id, companyId },
+      include: { _count: { select: { admissions: true } } },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ success: false, message: "College not found" });
+    }
+
+    if (existing._count.admissions > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "This college has admissions. Delete or move those admissions before removing the card.",
+      });
+    }
+
+    await prisma.admissionPartner.delete({ where: { id: existing.id } });
+    return res.json({ success: true, message: "College removed" });
+  } catch (error) {
+    console.error("Failed to delete admission partner:", error);
+    return res.status(500).json({ success: false, message: "Unable to remove college" });
+  }
+});
+
+/* =========================================================
+   BULK IMPORT INTO A COLLEGE
+========================================================= */
+
+const HEADER_ALIASES = {
+  studentName: ["name", "student", "student name", "student_name", "lead name", "lead_name"],
+  studentPhone: ["phone", "mobile", "mobile number", "phone number", "contact"],
+  studentEmail: ["email", "email id", "email address"],
+  course: ["course", "program", "programme", "interest"],
+  counsellorName: ["counsellor", "counselor", "counsellor name", "counselor name"],
+  totalFee: ["total fee", "total_fee", "fee", "amount"],
+  paidAmount: ["paid amount", "paid_amount", "paid", "received"],
+  status: ["status", "admission status"],
+  admissionDate: ["admission date", "admission_date", "date"],
+  notes: ["notes", "remarks", "comments"],
+};
+
+function normalizeHeader(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function headerIndex(headers, field) {
+  const aliases = HEADER_ALIASES[field] || [];
+  return headers.findIndex((header) => aliases.includes(normalizeHeader(header)));
+}
+
+async function parseAdmissionFile(file) {
+  if (!file) throw new Error("CSV or XLSX file is required");
+
+  const workbook = new ExcelJS.Workbook();
+  const filename = String(file.originalname || "").toLowerCase();
+
+  if (filename.endsWith(".csv")) {
+    await workbook.csv.read(file.buffer);
+  } else {
+    await workbook.xlsx.load(file.buffer);
+  }
+
+  const sheet = workbook.worksheets[0];
+  if (!sheet) throw new Error("Spreadsheet does not contain a worksheet");
+
+  const headerRow = sheet.getRow(1);
+  const headers = [];
+  for (let i = 1; i <= headerRow.cellCount; i += 1) {
+    headers.push(String(headerRow.getCell(i).text || "").trim());
+  }
+
+  const indexes = {};
+  for (const field of Object.keys(HEADER_ALIASES)) {
+    indexes[field] = headerIndex(headers, field);
+  }
+
+  if (indexes.studentName < 0 || indexes.course < 0) {
+    throw new Error('Spreadsheet must contain "Name" and "Course" columns');
+  }
+
+  const rows = [];
+  const maxRow = Math.min(sheet.rowCount, MAX_IMPORT_ROWS + 1);
+
+  for (let rowNumber = 2; rowNumber <= maxRow; rowNumber += 1) {
+    const row = sheet.getRow(rowNumber);
+    const valueAt = (field) =>
+      indexes[field] >= 0 ? row.getCell(indexes[field] + 1).text : "";
+
+    const studentName = cleanOptional(valueAt("studentName"));
+    const course = cleanOptional(valueAt("course"));
+    const phone = cleanOptional(valueAt("studentPhone"));
+    const email = cleanOptional(valueAt("studentEmail"));
+    const counsellorName = cleanOptional(valueAt("counsellorName"));
+    const totalFee = parseMoney(valueAt("totalFee"), 0);
+    const paidAmount = parseMoney(valueAt("paidAmount"), 0);
+    const rawStatus = String(valueAt("status") || "ONGOING").trim().toUpperCase().replace(/\s+/g, "_");
+    const admissionDate = valueAt("admissionDate")
+      ? parseDate(valueAt("admissionDate"), null)
+      : new Date();
+
+    if (!studentName && !course && !phone && !email) continue;
+
+    rows.push({
+      rowNumber,
+      studentName,
+      studentPhone: phone,
+      studentEmail: email ? email.toLowerCase() : null,
+      course,
+      counsellorName,
+      totalFee,
+      paidAmount,
+      status: VALID_STATUSES.includes(rawStatus) ? rawStatus : "ONGOING",
+      admissionDate,
+      notes: cleanOptional(valueAt("notes")),
+    });
+  }
+
+  return rows;
+}
+
+router.post(
+  "/partners/:id/import",
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      const companyId = req.clientUser.companyId;
+      const partner = await getPartner(companyId, req.params.id);
+
+      if (!partner) {
+        return res.status(404).json({ success: false, message: "College not found" });
+      }
+
+      const rows = await parseAdmissionFile(req.file);
+      if (!rows.length) {
+        return res.status(400).json({ success: false, message: "No admission rows found" });
+      }
+
+      const valid = [];
+      let invalid = 0;
+      let duplicates = 0;
+      const seenPhones = new Set();
+
+      const phones = rows.map((row) => row.studentPhone).filter(Boolean);
+      const existingPhones = phones.length
+        ? await prisma.admission.findMany({
+            where: {
+              companyId,
+              partnerId: partner.id,
+              studentPhone: { in: phones },
+            },
+            select: { studentPhone: true },
+          })
+        : [];
+      const existingPhoneSet = new Set(
+        existingPhones.map((item) => item.studentPhone).filter(Boolean)
+      );
+
+      for (const row of rows) {
+        if (
+          !row.studentName ||
+          !row.course ||
+          !Number.isFinite(row.totalFee) ||
+          row.totalFee < 0 ||
+          !Number.isFinite(row.paidAmount) ||
+          row.paidAmount < 0 ||
+          row.paidAmount > row.totalFee ||
+          !row.admissionDate
+        ) {
+          invalid += 1;
+          continue;
+        }
+
+        if (
+          row.studentPhone &&
+          (seenPhones.has(row.studentPhone) || existingPhoneSet.has(row.studentPhone))
+        ) {
+          duplicates += 1;
+          continue;
+        }
+
+        if (row.studentPhone) seenPhones.add(row.studentPhone);
+        valid.push(row);
+      }
+
+      if (!valid.length) {
+        return res.status(400).json({
+          success: false,
+          message: "No new valid admission records were found to import",
+          importSummary: { imported: 0, duplicates, invalid },
+        });
+      }
+
+      await prisma.admission.createMany({
+        data: valid.map((row) => ({
+          companyId,
+          partnerId: partner.id,
+          studentName: row.studentName,
+          studentPhone: row.studentPhone,
+          studentEmail: row.studentEmail,
+          college: partner.name,
+          course: row.course,
+          counsellorName: row.counsellorName,
+          totalFee: row.totalFee,
+          paidAmount: row.paidAmount,
+          status: row.status,
+          admissionDate: row.admissionDate,
+          notes: row.notes,
+        })),
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: `${valid.length} admissions imported into ${partner.name}`,
+        importSummary: {
+          imported: valid.length,
+          duplicates,
+          invalid,
+        },
+      });
+    } catch (error) {
+      console.error("Admission import failed:", error);
+      return res.status(400).json({
+        success: false,
+        message: error?.message || "Unable to import admissions",
+      });
+    }
+  }
+);
+
+/* =========================================================
+   GET LEADS AVAILABLE FOR ADMISSION
+========================================================= */
+
+router.get("/eligible-leads", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+    const leads = await prisma.lead.findMany({
+      where: {
+        companyId,
+        admission: { is: null },
+        stage: { not: "LOST" },
+      },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        email: true,
+        course: true,
+        assignedToName: true,
+        source: true,
+        campaign: true,
+        stage: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.json({ success: true, leads });
+  } catch (error) {
+    console.error("Failed to fetch eligible leads:", error);
+    return res.status(500).json({ success: false, message: "Unable to fetch eligible leads" });
+  }
+});
 
 /* =========================================================
    GET ADMISSIONS
@@ -98,174 +606,45 @@ function formatAdmission(admission) {
 
 router.get("/", async (req, res) => {
   try {
-    const companyId =
-      req.clientUser.companyId;
+    const companyId = req.clientUser.companyId;
+    await syncLegacyPartners(companyId);
 
-    const admissions =
-      await prisma.admission.findMany({
-        where: {
-          companyId,
-        },
+    const partnerId = cleanOptional(req.query.partnerId);
+    const where = { companyId };
+    if (partnerId) where.partnerId = partnerId;
 
-        include: {
-          lead: {
-            select: {
-              id: true,
-              source: true,
-              campaign: true,
-            },
-          },
-        },
+    const admissions = await prisma.admission.findMany({
+      where,
+      include: {
+        partner: { select: { id: true, name: true, slug: true } },
+        lead: { select: { id: true, source: true, campaign: true } },
+      },
+      orderBy: { admissionDate: "desc" },
+    });
 
-        orderBy: {
-          admissionDate: "desc",
-        },
-      });
-
-    const formatted =
-      admissions.map(
-        formatAdmission
-      );
-
+    const formatted = admissions.map(formatAdmission);
     const now = new Date();
-
-    const monthStart =
-      new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        1
-      );
-
-    const thisMonth =
-      admissions.filter(
-        (admission) =>
-          new Date(
-            admission.admissionDate
-          ) >= monthStart
-      ).length;
-
-    // Cancelled admissions stay visible in history, but they must not
-    // inflate fee collection or pending-payment totals.
-    const financialAdmissions =
-      formatted.filter(
-        (admission) =>
-          admission.statusKey !==
-          "CANCELLED"
-      );
-
-    const totalFees =
-      financialAdmissions.reduce(
-        (sum, admission) =>
-          sum + admission.total,
-        0
-      );
-
-    const received =
-      financialAdmissions.reduce(
-        (sum, admission) =>
-          sum + admission.paid,
-        0
-      );
-
-    const pending =
-      financialAdmissions.reduce(
-        (sum, admission) =>
-          sum + admission.pending,
-        0
-      );
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const financial = formatted.filter((item) => item.statusKey !== "CANCELLED");
 
     return res.json({
       success: true,
-
       admissions: formatted,
-
       summary: {
-        totalAdmissions:
-          formatted.length,
-
-        thisMonth,
-
-        totalFees,
-
-        received,
-
-        pending,
+        totalAdmissions: formatted.length,
+        thisMonth: admissions.filter(
+          (item) => new Date(item.admissionDate) >= monthStart
+        ).length,
+        totalFees: financial.reduce((sum, item) => sum + item.total, 0),
+        received: financial.reduce((sum, item) => sum + item.paid, 0),
+        pending: financial.reduce((sum, item) => sum + item.pending, 0),
       },
     });
   } catch (error) {
-    console.error(
-      "Failed to fetch admissions:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to fetch admissions",
-    });
+    console.error("Failed to fetch admissions:", error);
+    return res.status(500).json({ success: false, message: "Unable to fetch admissions" });
   }
 });
-
-/* =========================================================
-   GET LEADS AVAILABLE FOR ADMISSION
-========================================================= */
-
-router.get(
-  "/eligible-leads",
-  async (req, res) => {
-    try {
-      const companyId =
-        req.clientUser.companyId;
-
-      const leads =
-        await prisma.lead.findMany({
-          where: {
-            companyId,
-
-           admission: {
-  is: null,
-},
-
-            stage: {
-              not: "LOST",
-            },
-          },
-
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            email: true,
-            course: true,
-            assignedToName: true,
-            source: true,
-            campaign: true,
-            stage: true,
-          },
-
-          orderBy: {
-            createdAt: "desc",
-          },
-        });
-
-      return res.json({
-        success: true,
-        leads,
-      });
-    } catch (error) {
-      console.error(
-        "Failed to fetch eligible leads:",
-        error
-      );
-
-      return res.status(500).json({
-        success: false,
-        message:
-          "Unable to fetch eligible leads",
-      });
-    }
-  }
-);
 
 /* =========================================================
    CREATE ADMISSION
@@ -273,10 +652,9 @@ router.get(
 
 router.post("/", async (req, res) => {
   try {
-    const companyId =
-      req.clientUser.companyId;
-
+    const companyId = req.clientUser.companyId;
     const {
+      partnerId,
       leadId,
       studentName,
       studentPhone,
@@ -291,580 +669,282 @@ router.post("/", async (req, res) => {
       notes,
     } = req.body || {};
 
-    let cleanStudentName =
-      String(
-        studentName || ""
-      ).trim();
+    const partner = await getPartner(companyId, partnerId);
+    if (partnerId && !partner) {
+      return res.status(404).json({ success: false, message: "Admission college not found" });
+    }
 
-    let cleanStudentPhone =
-      studentPhone
-        ? String(
-            studentPhone
-          ).trim()
-        : null;
+    let cleanStudentName = String(studentName || "").trim();
+    let cleanStudentPhone = cleanOptional(studentPhone);
+    let cleanStudentEmail = cleanOptional(studentEmail)?.toLowerCase() || null;
+    let cleanCourse = String(course || "").trim();
+    let cleanCounsellor = cleanOptional(counsellorName);
+    let cleanCollege = partner?.name || String(college || "").trim();
 
-    let cleanStudentEmail =
-      studentEmail
-        ? String(
-            studentEmail
-          )
-            .trim()
-            .toLowerCase()
-        : null;
-
-    let cleanCourse =
-      String(course || "").trim();
-
-    let cleanCounsellor =
-      counsellorName
-        ? String(
-            counsellorName
-          ).trim()
-        : null;
-
-    const cleanCollege =
-      String(college || "").trim();
-
-    const statusKey =
-      String(
-        status || "ONGOING"
-      )
-        .trim()
-        .toUpperCase();
-
-    const parsedTotalFee =
-      Number(totalFee || 0);
-
-    const parsedPaidAmount =
-      Number(paidAmount || 0);
+    const statusKey = String(status || "ONGOING").trim().toUpperCase();
+    const parsedTotalFee = Number(totalFee || 0);
+    const parsedPaidAmount = Number(paidAmount || 0);
 
     if (!cleanCollege) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "College is required",
-      });
+      return res.status(400).json({ success: false, message: "College is required" });
     }
-
-    if (
-      !Number.isFinite(
-        parsedTotalFee
-      ) ||
-      parsedTotalFee < 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Total fee must be a valid amount",
-      });
+    if (!Number.isFinite(parsedTotalFee) || parsedTotalFee < 0) {
+      return res.status(400).json({ success: false, message: "Total fee must be a valid amount" });
     }
-
-    if (
-      !Number.isFinite(
-        parsedPaidAmount
-      ) ||
-      parsedPaidAmount < 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Paid amount must be a valid amount",
-      });
+    if (!Number.isFinite(parsedPaidAmount) || parsedPaidAmount < 0) {
+      return res.status(400).json({ success: false, message: "Paid amount must be a valid amount" });
     }
-
-    if (
-      parsedPaidAmount >
-      parsedTotalFee
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Paid amount cannot exceed total fee",
-      });
+    if (parsedPaidAmount > parsedTotalFee) {
+      return res.status(400).json({ success: false, message: "Paid amount cannot exceed total fee" });
     }
-
-    if (
-      !VALID_STATUSES.includes(
-        statusKey
-      )
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Invalid admission status",
-      });
+    if (!VALID_STATUSES.includes(statusKey)) {
+      return res.status(400).json({ success: false, message: "Invalid admission status" });
     }
 
     let selectedLead = null;
-
     if (leadId) {
-      selectedLead =
-        await prisma.lead.findFirst({
-          where: {
-            id: String(leadId),
-            companyId,
-          },
-
-          include: {
-            admission: true,
-          },
-        });
+      selectedLead = await prisma.lead.findFirst({
+        where: { id: String(leadId), companyId },
+        include: { admission: true },
+      });
 
       if (!selectedLead) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Lead not found for this company",
-        });
+        return res.status(404).json({ success: false, message: "Lead not found for this company" });
+      }
+      if (selectedLead.admission) {
+        return res.status(409).json({ success: false, message: "This lead already has an admission" });
       }
 
-      if (
-        selectedLead.admission
-      ) {
-        return res.status(409).json({
-          success: false,
-          message:
-            "This lead already has an admission",
-        });
-      }
-
-      cleanStudentName =
-        cleanStudentName ||
-        selectedLead.name;
-
-      cleanStudentPhone =
-        cleanStudentPhone ||
-        selectedLead.phone;
-
-      cleanStudentEmail =
-        cleanStudentEmail ||
-        selectedLead.email;
-
-      cleanCourse =
-        cleanCourse ||
-        selectedLead.course ||
-        "";
-
-      cleanCounsellor =
-        cleanCounsellor ||
-        selectedLead.assignedToName;
+      cleanStudentName = cleanStudentName || selectedLead.name;
+      cleanStudentPhone = cleanStudentPhone || selectedLead.phone;
+      cleanStudentEmail = cleanStudentEmail || selectedLead.email;
+      cleanCourse = cleanCourse || selectedLead.course || "";
+      cleanCounsellor = cleanCounsellor || selectedLead.assignedToName;
     }
 
     if (!cleanStudentName) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Student name is required",
-      });
+      return res.status(400).json({ success: false, message: "Student name is required" });
     }
-
     if (!cleanCourse) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Course is required",
-      });
+      return res.status(400).json({ success: false, message: "Course is required" });
     }
 
-    let parsedAdmissionDate =
-      new Date();
+    const parsedAdmissionDate = admissionDate
+      ? parseDate(admissionDate, null)
+      : new Date();
+    if (!parsedAdmissionDate) {
+      return res.status(400).json({ success: false, message: "Invalid admission date" });
+    }
 
-    if (admissionDate) {
-      parsedAdmissionDate =
-        new Date(admissionDate);
-
-      if (
-        Number.isNaN(
-          parsedAdmissionDate.getTime()
-        )
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Invalid admission date",
+    let resolvedPartner = partner;
+    if (!resolvedPartner) {
+      const slug = slugify(cleanCollege);
+      resolvedPartner = await prisma.admissionPartner.findFirst({ where: { companyId, slug } });
+      if (!resolvedPartner) {
+        resolvedPartner = await prisma.admissionPartner.create({
+          data: { companyId, name: cleanCollege, slug: await uniquePartnerSlug(companyId, cleanCollege) },
         });
       }
     }
 
-    const admission =
-      await prisma.$transaction(
-        async (tx) => {
-          const created =
-            await tx.admission.create({
-              data: {
-                companyId,
+    const admission = await prisma.$transaction(async (tx) => {
+      const created = await tx.admission.create({
+        data: {
+          companyId,
+          partnerId: resolvedPartner.id,
+          leadId: selectedLead?.id || null,
+          leadStageBeforeAdmission: selectedLead?.stage || null,
+          studentName: cleanStudentName,
+          studentPhone: cleanStudentPhone,
+          studentEmail: cleanStudentEmail,
+          college: resolvedPartner.name,
+          course: cleanCourse,
+          counsellorName: cleanCounsellor,
+          totalFee: parsedTotalFee,
+          paidAmount: parsedPaidAmount,
+          status: statusKey,
+          admissionDate: parsedAdmissionDate,
+          notes: cleanOptional(notes),
+        },
+        include: {
+          partner: { select: { id: true, name: true, slug: true } },
+          lead: { select: { id: true, source: true, campaign: true } },
+        },
+      });
 
-                leadId:
-                  selectedLead?.id ||
-                  null,
-
-                leadStageBeforeAdmission:
-                  selectedLead?.stage ||
-                  null,
-
-                studentName:
-                  cleanStudentName,
-
-                studentPhone:
-                  cleanStudentPhone,
-
-                studentEmail:
-                  cleanStudentEmail,
-
-                college:
-                  cleanCollege,
-
-                course:
-                  cleanCourse,
-
-                counsellorName:
-                  cleanCounsellor,
-
-                totalFee:
-                  parsedTotalFee,
-
-                paidAmount:
-                  parsedPaidAmount,
-
-                status:
-                  statusKey,
-
-                admissionDate:
-                  parsedAdmissionDate,
-
-                notes: notes
-                  ? String(
-                      notes
-                    ).trim()
-                  : null,
-              },
-
-              include: {
-                lead: {
-                  select: {
-                    id: true,
-                    source: true,
-                    campaign: true,
-                  },
-                },
-              },
-            });
-
-          if (selectedLead) {
-            await tx.lead.update({
-              where: {
-                id:
-                  selectedLead.id,
-              },
-
-              data: {
-                stage:
-                  statusKey ===
-                  "CANCELLED"
-                    ? selectedLead.stage
-                    : "ADMITTED",
-              },
-            });
-          }
-
-          return created;
-        }
-      );
+      if (selectedLead) {
+        await tx.lead.update({
+          where: { id: selectedLead.id },
+          data: {
+            stage: statusKey === "CANCELLED" ? selectedLead.stage : "ADMITTED",
+          },
+        });
+      }
+      return created;
+    });
 
     return res.status(201).json({
       success: true,
-
-      message:
-        "Admission created successfully",
-
-      admission:
-        formatAdmission(
-          admission
-        ),
+      message: "Admission created successfully",
+      admission: formatAdmission(admission),
     });
   } catch (error) {
-    console.error(
-      "Failed to create admission:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to create admission",
-    });
+    console.error("Failed to create admission:", error);
+    return res.status(500).json({ success: false, message: "Unable to create admission" });
   }
 });
-
 
 /* =========================================================
    UPDATE ADMISSION
 ========================================================= */
 
-router.patch(
-  "/:id",
-  async (req, res) => {
-    try {
-      const companyId =
-        req.clientUser.companyId;
+router.patch("/:id", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+    const existing = await prisma.admission.findFirst({
+      where: { id: req.params.id, companyId },
+    });
 
-      const existing =
-        await prisma.admission.findFirst({
-          where: {
-            id: req.params.id,
-            companyId,
+    if (!existing) {
+      return res.status(404).json({ success: false, message: "Admission not found" });
+    }
+
+    const data = {};
+
+    if (req.body?.partnerId !== undefined) {
+      const partner = await getPartner(companyId, req.body.partnerId);
+      if (!partner) {
+        return res.status(400).json({ success: false, message: "Selected college is invalid" });
+      }
+      data.partnerId = partner.id;
+      data.college = partner.name;
+    }
+
+    const stringFields = [
+      ["studentName", true],
+      ["studentPhone", false],
+      ["studentEmail", false],
+      ["course", true],
+      ["counsellorName", false],
+      ["notes", false],
+    ];
+
+    for (const [field, required] of stringFields) {
+      if (req.body?.[field] !== undefined) {
+        const value = String(req.body[field] || "").trim();
+        if (required && !value) {
+          return res.status(400).json({ success: false, message: `${field} is required` });
+        }
+        data[field] = value || null;
+      }
+    }
+
+    if (data.studentEmail) data.studentEmail = data.studentEmail.toLowerCase();
+
+    const nextTotalFee =
+      req.body?.totalFee !== undefined ? Number(req.body.totalFee) : Number(existing.totalFee);
+    const nextPaidAmount =
+      req.body?.paidAmount !== undefined ? Number(req.body.paidAmount) : Number(existing.paidAmount);
+
+    if (!Number.isFinite(nextTotalFee) || nextTotalFee < 0) {
+      return res.status(400).json({ success: false, message: "Total fee must be a valid amount" });
+    }
+    if (!Number.isFinite(nextPaidAmount) || nextPaidAmount < 0) {
+      return res.status(400).json({ success: false, message: "Paid amount must be a valid amount" });
+    }
+    if (nextPaidAmount > nextTotalFee) {
+      return res.status(400).json({ success: false, message: "Paid amount cannot exceed total fee" });
+    }
+
+    if (req.body?.totalFee !== undefined) data.totalFee = nextTotalFee;
+    if (req.body?.paidAmount !== undefined) data.paidAmount = nextPaidAmount;
+
+    let nextStatus = existing.status;
+    if (req.body?.status !== undefined) {
+      nextStatus = String(req.body.status || "").trim().toUpperCase();
+      if (!VALID_STATUSES.includes(nextStatus)) {
+        return res.status(400).json({ success: false, message: "Invalid admission status" });
+      }
+      data.status = nextStatus;
+    }
+
+    if (req.body?.admissionDate !== undefined) {
+      const date = parseDate(req.body.admissionDate, null);
+      if (!date) {
+        return res.status(400).json({ success: false, message: "Invalid admission date" });
+      }
+      data.admissionDate = date;
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const saved = await tx.admission.update({
+        where: { id: existing.id },
+        data,
+        include: {
+          partner: { select: { id: true, name: true, slug: true } },
+          lead: { select: { id: true, source: true, campaign: true } },
+        },
+      });
+
+      if (existing.leadId) {
+        await tx.lead.update({
+          where: { id: existing.leadId },
+          data: {
+            stage:
+              nextStatus === "CANCELLED"
+                ? existing.leadStageBeforeAdmission || "COUNSELLING"
+                : "ADMITTED",
           },
         });
-
-      if (!existing) {
-        return res.status(404).json({
-          success: false,
-          message: "Admission not found",
-        });
       }
 
-      const data = {};
+      return saved;
+    });
 
-      const stringFields = [
-        ["studentName", true],
-        ["studentPhone", false],
-        ["studentEmail", false],
-        ["college", true],
-        ["course", true],
-        ["counsellorName", false],
-        ["notes", false],
-      ];
-
-      for (const [field, required] of stringFields) {
-        if (req.body?.[field] !== undefined) {
-          const value = String(
-            req.body[field] || ""
-          ).trim();
-
-          if (required && !value) {
-            return res.status(400).json({
-              success: false,
-              message: `${field} is required`,
-            });
-          }
-
-          data[field] =
-            value || null;
-        }
-      }
-
-      if (data.studentEmail) {
-        data.studentEmail =
-          data.studentEmail.toLowerCase();
-      }
-
-      const nextTotalFee =
-        req.body?.totalFee !== undefined
-          ? Number(req.body.totalFee)
-          : Number(existing.totalFee);
-
-      const nextPaidAmount =
-        req.body?.paidAmount !== undefined
-          ? Number(req.body.paidAmount)
-          : Number(existing.paidAmount);
-
-      if (
-        !Number.isFinite(nextTotalFee) ||
-        nextTotalFee < 0
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "Total fee must be a valid amount",
-        });
-      }
-
-      if (
-        !Number.isFinite(nextPaidAmount) ||
-        nextPaidAmount < 0
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "Paid amount must be a valid amount",
-        });
-      }
-
-      if (nextPaidAmount > nextTotalFee) {
-        return res.status(400).json({
-          success: false,
-          message: "Paid amount cannot exceed total fee",
-        });
-      }
-
-      if (req.body?.totalFee !== undefined) {
-        data.totalFee =
-          nextTotalFee;
-      }
-
-      if (req.body?.paidAmount !== undefined) {
-        data.paidAmount =
-          nextPaidAmount;
-      }
-
-      let nextStatus =
-        existing.status;
-
-      if (req.body?.status !== undefined) {
-        nextStatus = String(
-          req.body.status || ""
-        )
-          .trim()
-          .toUpperCase();
-
-        if (!VALID_STATUSES.includes(nextStatus)) {
-          return res.status(400).json({
-            success: false,
-            message: "Invalid admission status",
-          });
-        }
-
-        data.status =
-          nextStatus;
-      }
-
-      if (req.body?.admissionDate !== undefined) {
-        const parsedDate =
-          new Date(req.body.admissionDate);
-
-        if (Number.isNaN(parsedDate.getTime())) {
-          return res.status(400).json({
-            success: false,
-            message: "Invalid admission date",
-          });
-        }
-
-        data.admissionDate =
-          parsedDate;
-      }
-
-      const updated =
-        await prisma.$transaction(
-          async (tx) => {
-            const saved =
-              await tx.admission.update({
-                where: {
-                  id: existing.id,
-                },
-                data,
-                include: {
-                  lead: {
-                    select: {
-                      id: true,
-                      source: true,
-                      campaign: true,
-                    },
-                  },
-                },
-              });
-
-            if (existing.leadId) {
-              await tx.lead.update({
-                where: {
-                  id: existing.leadId,
-                },
-                data: {
-                  stage:
-                    nextStatus ===
-                    "CANCELLED"
-                      ? existing.leadStageBeforeAdmission ||
-                        "COUNSELLING"
-                      : "ADMITTED",
-                },
-              });
-            }
-
-            return saved;
-          }
-        );
-
-      return res.json({
-        success: true,
-        message: "Admission updated successfully",
-        admission: formatAdmission(updated),
-      });
-    } catch (error) {
-      console.error(
-        "Failed to update admission:",
-        error
-      );
-
-      return res.status(500).json({
-        success: false,
-        message: "Unable to update admission",
-      });
-    }
+    return res.json({
+      success: true,
+      message: "Admission updated successfully",
+      admission: formatAdmission(updated),
+    });
+  } catch (error) {
+    console.error("Failed to update admission:", error);
+    return res.status(500).json({ success: false, message: "Unable to update admission" });
   }
-);
+});
 
 /* =========================================================
    DELETE ADMISSION
 ========================================================= */
 
-router.delete(
-  "/:id",
-  async (req, res) => {
-    try {
-      const companyId =
-        req.clientUser.companyId;
+router.delete("/:id", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+    const existing = await prisma.admission.findFirst({
+      where: { id: req.params.id, companyId },
+    });
 
-      const existing =
-        await prisma.admission.findFirst({
-          where: {
-            id: req.params.id,
-            companyId,
+    if (!existing) {
+      return res.status(404).json({ success: false, message: "Admission not found" });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.admission.delete({ where: { id: existing.id } });
+
+      if (existing.leadId) {
+        await tx.lead.update({
+          where: { id: existing.leadId },
+          data: {
+            stage: existing.leadStageBeforeAdmission || "COUNSELLING",
           },
         });
-
-      if (!existing) {
-        return res.status(404).json({
-          success: false,
-          message: "Admission not found",
-        });
       }
+    });
 
-      await prisma.$transaction(
-        async (tx) => {
-          await tx.admission.delete({
-            where: {
-              id: existing.id,
-            },
-          });
-
-          if (existing.leadId) {
-            await tx.lead.update({
-              where: {
-                id: existing.leadId,
-              },
-              data: {
-                stage:
-                  existing.leadStageBeforeAdmission ||
-                  "COUNSELLING",
-              },
-            });
-          }
-        }
-      );
-
-      return res.json({
-        success: true,
-        message: "Admission deleted successfully",
-      });
-    } catch (error) {
-      console.error(
-        "Failed to delete admission:",
-        error
-      );
-
-      return res.status(500).json({
-        success: false,
-        message: "Unable to delete admission",
-      });
-    }
+    return res.json({ success: true, message: "Admission deleted successfully" });
+  } catch (error) {
+    console.error("Failed to delete admission:", error);
+    return res.status(500).json({ success: false, message: "Unable to delete admission" });
   }
-);
+});
 
 export default router;
