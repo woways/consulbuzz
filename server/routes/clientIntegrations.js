@@ -3,11 +3,19 @@ import { Router } from "express";
 import prisma from "../lib/prisma.js";
 import {
   requireClientUser,
+  requireClientPermission,
 } from "../middleware/clientAuth.js";
 
 const router = Router();
 
 router.use(requireClientUser);
+
+router.use(
+  requireClientPermission(
+    "canManageSettings",
+    "You do not have permission to manage integrations"
+  )
+);
 
 const PROVIDERS = {
   WEBSITE_API: {

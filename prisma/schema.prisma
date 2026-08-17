@@ -503,6 +503,10 @@ model Admission {
   leadId String? @unique
   lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
 
+  // Stores the lead stage that existed before this admission was created.
+  // This lets cancellation/deletion restore the CRM lead correctly.
+  leadStageBeforeAdmission LeadStage?
+
   studentName  String
   studentPhone String?
   studentEmail String?

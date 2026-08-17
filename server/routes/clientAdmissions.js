@@ -144,22 +144,31 @@ router.get("/", async (req, res) => {
           ) >= monthStart
       ).length;
 
+    // Cancelled admissions stay visible in history, but they must not
+    // inflate fee collection or pending-payment totals.
+    const financialAdmissions =
+      formatted.filter(
+        (admission) =>
+          admission.statusKey !==
+          "CANCELLED"
+      );
+
     const totalFees =
-      formatted.reduce(
+      financialAdmissions.reduce(
         (sum, admission) =>
           sum + admission.total,
         0
       );
 
     const received =
-      formatted.reduce(
+      financialAdmissions.reduce(
         (sum, admission) =>
           sum + admission.paid,
         0
       );
 
     const pending =
-      formatted.reduce(
+      financialAdmissions.reduce(
         (sum, admission) =>
           sum + admission.pending,
         0
@@ -489,6 +498,10 @@ router.post("/", async (req, res) => {
                   selectedLead?.id ||
                   null,
 
+                leadStageBeforeAdmission:
+                  selectedLead?.stage ||
+                  null,
+
                 studentName:
                   cleanStudentName,
 
@@ -545,7 +558,11 @@ router.post("/", async (req, res) => {
               },
 
               data: {
-                stage: "ADMITTED",
+                stage:
+                  statusKey ===
+                  "CANCELLED"
+                    ? selectedLead.stage
+                    : "ADMITTED",
               },
             });
           }
@@ -578,5 +595,276 @@ router.post("/", async (req, res) => {
     });
   }
 });
+
+
+/* =========================================================
+   UPDATE ADMISSION
+========================================================= */
+
+router.patch(
+  "/:id",
+  async (req, res) => {
+    try {
+      const companyId =
+        req.clientUser.companyId;
+
+      const existing =
+        await prisma.admission.findFirst({
+          where: {
+            id: req.params.id,
+            companyId,
+          },
+        });
+
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: "Admission not found",
+        });
+      }
+
+      const data = {};
+
+      const stringFields = [
+        ["studentName", true],
+        ["studentPhone", false],
+        ["studentEmail", false],
+        ["college", true],
+        ["course", true],
+        ["counsellorName", false],
+        ["notes", false],
+      ];
+
+      for (const [field, required] of stringFields) {
+        if (req.body?.[field] !== undefined) {
+          const value = String(
+            req.body[field] || ""
+          ).trim();
+
+          if (required && !value) {
+            return res.status(400).json({
+              success: false,
+              message: `${field} is required`,
+            });
+          }
+
+          data[field] =
+            value || null;
+        }
+      }
+
+      if (data.studentEmail) {
+        data.studentEmail =
+          data.studentEmail.toLowerCase();
+      }
+
+      const nextTotalFee =
+        req.body?.totalFee !== undefined
+          ? Number(req.body.totalFee)
+          : Number(existing.totalFee);
+
+      const nextPaidAmount =
+        req.body?.paidAmount !== undefined
+          ? Number(req.body.paidAmount)
+          : Number(existing.paidAmount);
+
+      if (
+        !Number.isFinite(nextTotalFee) ||
+        nextTotalFee < 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Total fee must be a valid amount",
+        });
+      }
+
+      if (
+        !Number.isFinite(nextPaidAmount) ||
+        nextPaidAmount < 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Paid amount must be a valid amount",
+        });
+      }
+
+      if (nextPaidAmount > nextTotalFee) {
+        return res.status(400).json({
+          success: false,
+          message: "Paid amount cannot exceed total fee",
+        });
+      }
+
+      if (req.body?.totalFee !== undefined) {
+        data.totalFee =
+          nextTotalFee;
+      }
+
+      if (req.body?.paidAmount !== undefined) {
+        data.paidAmount =
+          nextPaidAmount;
+      }
+
+      let nextStatus =
+        existing.status;
+
+      if (req.body?.status !== undefined) {
+        nextStatus = String(
+          req.body.status || ""
+        )
+          .trim()
+          .toUpperCase();
+
+        if (!VALID_STATUSES.includes(nextStatus)) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid admission status",
+          });
+        }
+
+        data.status =
+          nextStatus;
+      }
+
+      if (req.body?.admissionDate !== undefined) {
+        const parsedDate =
+          new Date(req.body.admissionDate);
+
+        if (Number.isNaN(parsedDate.getTime())) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid admission date",
+          });
+        }
+
+        data.admissionDate =
+          parsedDate;
+      }
+
+      const updated =
+        await prisma.$transaction(
+          async (tx) => {
+            const saved =
+              await tx.admission.update({
+                where: {
+                  id: existing.id,
+                },
+                data,
+                include: {
+                  lead: {
+                    select: {
+                      id: true,
+                      source: true,
+                      campaign: true,
+                    },
+                  },
+                },
+              });
+
+            if (existing.leadId) {
+              await tx.lead.update({
+                where: {
+                  id: existing.leadId,
+                },
+                data: {
+                  stage:
+                    nextStatus ===
+                    "CANCELLED"
+                      ? existing.leadStageBeforeAdmission ||
+                        "COUNSELLING"
+                      : "ADMITTED",
+                },
+              });
+            }
+
+            return saved;
+          }
+        );
+
+      return res.json({
+        success: true,
+        message: "Admission updated successfully",
+        admission: formatAdmission(updated),
+      });
+    } catch (error) {
+      console.error(
+        "Failed to update admission:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to update admission",
+      });
+    }
+  }
+);
+
+/* =========================================================
+   DELETE ADMISSION
+========================================================= */
+
+router.delete(
+  "/:id",
+  async (req, res) => {
+    try {
+      const companyId =
+        req.clientUser.companyId;
+
+      const existing =
+        await prisma.admission.findFirst({
+          where: {
+            id: req.params.id,
+            companyId,
+          },
+        });
+
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: "Admission not found",
+        });
+      }
+
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.admission.delete({
+            where: {
+              id: existing.id,
+            },
+          });
+
+          if (existing.leadId) {
+            await tx.lead.update({
+              where: {
+                id: existing.leadId,
+              },
+              data: {
+                stage:
+                  existing.leadStageBeforeAdmission ||
+                  "COUNSELLING",
+              },
+            });
+          }
+        }
+      );
+
+      return res.json({
+        success: true,
+        message: "Admission deleted successfully",
+      });
+    } catch (error) {
+      console.error(
+        "Failed to delete admission:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to delete admission",
+      });
+    }
+  }
+);
 
 export default router;

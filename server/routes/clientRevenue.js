@@ -49,6 +49,35 @@ function expenseResponse(expense) {
   };
 }
 
+
+async function getActor(req) {
+  return prisma.user.findFirst({
+    where: {
+      id: req.clientUser.userId,
+      companyId: req.clientUser.companyId,
+      active: true,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+    },
+  });
+}
+
+function parseOptionalDate(value) {
+  if (!value) {
+    return new Date();
+  }
+
+  const parsed = new Date(value);
+
+  return Number.isNaN(parsed.getTime())
+    ? null
+    : parsed;
+}
+
 function incentiveResponse(incentive) {
   return {
     id: incentive.id,
@@ -382,6 +411,26 @@ router.post(
           });
       }
 
+      const actor =
+        await getActor(req);
+
+      if (!actor) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      const parsedExpenseDate =
+        parseOptionalDate(expenseDate);
+
+      if (!parsedExpenseDate) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid expense date",
+        });
+      }
+
       const expense =
         await prisma.expense.create({
           data: {
@@ -403,14 +452,10 @@ router.post(
               parsedAmount,
 
             expenseDate:
-              expenseDate
-                ? new Date(
-                    expenseDate
-                  )
-                : new Date(),
+              parsedExpenseDate,
 
             submittedByName:
-              req.clientUser.role,
+              actor.name,
 
             paymentMode:
               paymentMode
@@ -534,6 +579,16 @@ router.patch(
           });
       }
 
+      const actor =
+        await getActor(req);
+
+      if (!actor) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
       const updated =
         await prisma.expense.update({
           where: {
@@ -544,7 +599,7 @@ router.patch(
             status,
 
             approvedByName:
-              req.clientUser.role,
+              actor.name,
           },
         });
 
@@ -655,6 +710,16 @@ router.post(
           admission.id;
       }
 
+      const parsedIncentiveDate =
+        parseOptionalDate(incentiveDate);
+
+      if (!parsedIncentiveDate) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid incentive date",
+        });
+      }
+
       const incentive =
         await prisma.incentive.create({
           data: {
@@ -683,11 +748,7 @@ router.post(
               parsedAmount,
 
             incentiveDate:
-              incentiveDate
-                ? new Date(
-                    incentiveDate
-                  )
-                : new Date(),
+              parsedIncentiveDate,
 
             status: "PENDING",
           },
@@ -794,6 +855,16 @@ router.patch(
           });
       }
 
+      const actor =
+        await getActor(req);
+
+      if (!actor) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
       const updated =
         await prisma.incentive.update({
           where: {
@@ -804,12 +875,13 @@ router.patch(
             status,
 
             approvedByName:
-              req.clientUser.role,
+              actor.name,
 
             paidDate:
               status === "PAID"
-                ? new Date()
-                : incentive.paidDate,
+                ? incentive.paidDate ||
+                  new Date()
+                : null,
           },
 
           include: {

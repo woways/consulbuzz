@@ -1,7 +1,10 @@
 import { Router } from "express";
 
 import prisma from "../lib/prisma.js";
-import { requireClientUser } from "../middleware/clientAuth.js";
+import {
+  requireClientUser,
+  requireClientPermission,
+} from "../middleware/clientAuth.js";
 
 const router = Router();
 
@@ -68,6 +71,14 @@ async function findCompanyField(companyId, id) {
   });
 }
 
+
+function requireSettingsManager(req, res, next) {
+  return requireClientPermission(
+    "canManageSettings",
+    "You do not have permission to manage custom fields"
+  )(req, res, next);
+}
+
 /* =========================================================
    GET CUSTOM FIELDS
 ========================================================= */
@@ -131,7 +142,7 @@ router.get("/", async (req, res) => {
    CREATE CUSTOM FIELD
 ========================================================= */
 
-router.post("/", async (req, res) => {
+router.post("/", requireSettingsManager, async (req, res) => {
   try {
     const companyId = req.clientUser.companyId;
 
@@ -243,7 +254,7 @@ router.post("/", async (req, res) => {
    UPDATE CUSTOM FIELD
 ========================================================= */
 
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", requireSettingsManager, async (req, res) => {
   try {
     const companyId = req.clientUser.companyId;
 
@@ -399,7 +410,7 @@ router.patch("/:id", async (req, res) => {
    DELETE CUSTOM FIELD
 ========================================================= */
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireSettingsManager, async (req, res) => {
   try {
     const companyId = req.clientUser.companyId;
 

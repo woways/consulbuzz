@@ -23,6 +23,9 @@ const SOURCE_LABELS = {
   IM_LEADS: "IM Leads",
   DM_LEADS: "DM Leads",
   OTHER: "Other",
+  REFERRAL: "Referral",
+  OFFLINE: "Offline",
+  LEAD_STORE: "Lead Store",
 };
 
 const STAGE_LABELS = {
@@ -395,11 +398,19 @@ router.get("/", async (req, res) => {
     const totalAdmissions =
       admissions.length;
 
+    // Direct admissions do not represent a lead conversion.
+    // Only admissions linked to a CRM lead are used for conversion rate.
+    const linkedAdmissions =
+      admissions.filter(
+        (admission) =>
+          Boolean(admission.leadId)
+      ).length;
+
     const conversionRate =
       totalLeads > 0
         ? Number(
             (
-              (totalAdmissions /
+              (linkedAdmissions /
                 totalLeads) *
               100
             ).toFixed(1)

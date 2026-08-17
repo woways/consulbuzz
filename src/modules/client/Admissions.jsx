@@ -17,6 +17,8 @@ import {
   Search,
   WalletCards,
   CircleDollarSign,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 import {
@@ -581,6 +583,185 @@ function AdmissionModal({
 }
 
 
+function EditAdmissionModal({
+  admission,
+  onClose,
+  onSaved,
+}) {
+  const [saving, setSaving] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [form, setForm] =
+    useState({
+      studentName:
+        admission.name || "",
+      studentPhone:
+        admission.phone || "",
+      studentEmail:
+        admission.email || "",
+      college:
+        admission.college || "",
+      course:
+        admission.course || "",
+      counsellorName:
+        admission.counsellor === "Unassigned"
+          ? ""
+          : admission.counsellor || "",
+      totalFee:
+        String(admission.total ?? ""),
+      paidAmount:
+        String(admission.paid ?? ""),
+      status:
+        admission.statusKey || "ONGOING",
+      admissionDate:
+        admission.admissionDate
+          ? new Date(admission.admissionDate)
+              .toISOString()
+              .slice(0, 10)
+          : "",
+      notes:
+        admission.notes || "",
+    });
+
+  function update(field, value) {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  async function submit(event) {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+
+    try {
+      await apiRequest(
+        `/api/client/admissions/${admission.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            ...form,
+            totalFee: Number(form.totalFee || 0),
+            paidAmount: Number(form.paidAmount || 0),
+          }),
+        }
+      );
+
+      onSaved();
+    } catch (error) {
+      setError(
+        error?.data?.message ||
+          "Unable to update admission"
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-[2px] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-hidden border border-white/70">
+        <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900">
+              Edit Admission
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Update student, payment and admission status details.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-500"
+          >
+            <X size={17} />
+          </button>
+        </div>
+
+        <form
+          onSubmit={submit}
+          className="overflow-y-auto max-h-[calc(92vh-72px)]"
+        >
+          <div className="p-6 space-y-5">
+            {error && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-rose-50 border border-rose-200 rounded-md text-sm text-rose-700">
+                <AlertCircle size={14} />
+                {error}
+              </div>
+            )}
+
+            {admission.leadId && (
+              <div className="px-3 py-2.5 rounded-lg border border-indigo-100 bg-indigo-50/60 text-xs text-indigo-800">
+                This admission is linked to a CRM lead. Cancelling or deleting it will restore that lead to its previous stage.
+              </div>
+            )}
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <Field label="Student Name" required value={form.studentName} onChange={(value) => update("studentName", value)} />
+              <Field label="Phone" value={form.studentPhone} onChange={(value) => update("studentPhone", value)} />
+              <Field label="Email" type="email" value={form.studentEmail} onChange={(value) => update("studentEmail", value)} />
+              <Field label="Course" required value={form.course} onChange={(value) => update("course", value)} />
+              <Field label="College / University" required value={form.college} onChange={(value) => update("college", value)} />
+              <Field label="Counsellor" value={form.counsellorName} onChange={(value) => update("counsellorName", value)} />
+              <Field label="Total Fee" required type="number" min="0" value={form.totalFee} onChange={(value) => update("totalFee", value)} />
+              <Field label="Paid Amount" required type="number" min="0" value={form.paidAmount} onChange={(value) => update("paidAmount", value)} />
+
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Admission Status
+                </label>
+                <select
+                  value={form.status}
+                  onChange={(event) => update("status", event.target.value)}
+                  className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                >
+                  {STATUS_OPTIONS.map((status) => (
+                    <option key={status.value} value={status.value}>
+                      {status.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <Field label="Admission Date" required type="date" value={form.admissionDate} onChange={(value) => update("admissionDate", value)} />
+
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Notes
+                </label>
+                <textarea
+                  rows={3}
+                  value={form.notes}
+                  onChange={(event) => update("notes", event.target.value)}
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="sticky bottom-0 px-6 py-4 border-t border-slate-200 bg-white/95 backdrop-blur flex justify-end gap-2">
+            <button type="button" disabled={saving} onClick={onClose} className="h-9 px-4 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving} className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2 shadow-sm">
+              {saving && <Loader2 size={14} className="animate-spin" />}
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+
 function AdmissionMetric({
   label,
   value,
@@ -643,6 +824,12 @@ export default function Admissions() {
     showAdmissionModal,
     setShowAdmissionModal,
   ] = useState(false);
+
+  const [editingAdmission, setEditingAdmission] =
+    useState(null);
+
+  const [actionId, setActionId] =
+    useState("");
 
   async function loadAdmissions() {
     setLoading(true);
@@ -721,6 +908,42 @@ export default function Admissions() {
     );
 
     await loadAdmissions();
+  }
+
+  async function handleUpdated() {
+    setEditingAdmission(null);
+    await loadAdmissions();
+  }
+
+  async function deleteAdmission(admission) {
+    const confirmed = window.confirm(
+      `Delete admission for ${admission.name}?\n\nIf it is linked to a lead, the lead will be restored to its previous stage.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setActionId(admission.id);
+    setError("");
+
+    try {
+      await apiRequest(
+        `/api/client/admissions/${admission.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      await loadAdmissions();
+    } catch (error) {
+      setError(
+        error?.data?.message ||
+          "Unable to delete admission"
+      );
+    } finally {
+      setActionId("");
+    }
   }
 
   return (
@@ -868,6 +1091,7 @@ export default function Admissions() {
             "Status",
             "Counsellor",
             "Date",
+            "Actions",
           ]}
           empty="No admissions found"
           rows={filtered.map(
@@ -932,6 +1156,37 @@ export default function Admissions() {
                     admission.admissionDate
                   )}
                 </td>
+
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      title="Edit admission"
+                      onClick={() =>
+                        setEditingAdmission(admission)
+                      }
+                      className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"
+                    >
+                      <Pencil size={14} />
+                    </button>
+
+                    <button
+                      type="button"
+                      title="Delete admission"
+                      disabled={actionId === admission.id}
+                      onClick={() =>
+                        deleteAdmission(admission)
+                      }
+                      className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-rose-500 hover:text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                    >
+                      {actionId === admission.id ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={14} />
+                      )}
+                    </button>
+                  </div>
+                </td>
               </tr>
             )
           )}
@@ -949,6 +1204,16 @@ export default function Admissions() {
           onCreated={
             handleCreated
           }
+        />
+      )}
+
+      {editingAdmission && (
+        <EditAdmissionModal
+          admission={editingAdmission}
+          onClose={() =>
+            setEditingAdmission(null)
+          }
+          onSaved={handleUpdated}
         />
       )}
     </div>

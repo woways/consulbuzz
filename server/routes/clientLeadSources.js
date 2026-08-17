@@ -136,14 +136,13 @@ function requireSourceManager(
     return false;
   }
 
+  // Reading lead sources is allowed for lead forms, but changing the
+  // company's source configuration is a Settings-level operation.
   const allowed =
     clientUser.role ===
       "CLIENT_ADMIN" ||
     clientUser.permissions
       ?.canManageSettings ===
-      true ||
-    clientUser.permissions
-      ?.canManageLeads ===
       true;
 
   if (!allowed) {
