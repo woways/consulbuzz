@@ -18,6 +18,9 @@ import {
   Ticket,
   Clock3,
   CheckCircle2,
+  Search,
+  Eye,
+  MessageSquareText,
 } from "lucide-react";
 
 import {
@@ -641,6 +644,163 @@ function NewTicketModal({
   );
 }
 
+
+function TicketDetailsModal({
+  ticket,
+  onClose,
+}) {
+  if (!ticket) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-[90] bg-slate-950/55 backdrop-blur-[2px] flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl max-h-[92vh] overflow-hidden bg-white border border-white/70 rounded-2xl shadow-2xl">
+        <div className="px-6 py-5 border-b border-slate-200 flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-[11px] font-mono font-semibold text-slate-500">
+              {ticket.ticketNumber}
+            </div>
+
+            <h2 className="mt-1 text-lg font-bold text-slate-950 break-words">
+              {ticket.title}
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            onClick={
+              onClose
+            }
+            className="w-8 h-8 flex-shrink-0 rounded-lg inline-flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+          >
+            <X
+              size={17}
+            />
+          </button>
+        </div>
+
+        <div className="p-6 overflow-y-auto max-h-[calc(92vh-80px)] space-y-5">
+          <div className="flex flex-wrap gap-2">
+            <Badge tone="slate">
+              {ticket.typeLabel}
+            </Badge>
+
+            <Badge
+              tone={priorityTone(
+                ticket.priority
+              )}
+            >
+              {ticket.priorityLabel}
+            </Badge>
+
+            <Badge
+              tone={ticketStatusTone(
+                ticket.status
+              )}
+            >
+              {ticket.statusLabel}
+            </Badge>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4 text-xs">
+            <DetailItem
+              label="Submitted By"
+              value={
+                ticket.submittedByName ||
+                "—"
+              }
+            />
+
+            <DetailItem
+              label="Submitted Email"
+              value={
+                ticket.submittedByEmail ||
+                "—"
+              }
+            />
+
+            <DetailItem
+              label="Created"
+              value={
+                formatDate(
+                  ticket.createdAt
+                )
+              }
+            />
+
+            <DetailItem
+              label="Last Updated"
+              value={
+                formatDate(
+                  ticket.updatedAt
+                )
+              }
+            />
+
+            {ticket.resolvedAt && (
+              <DetailItem
+                label="Resolved"
+                value={
+                  formatDate(
+                    ticket.resolvedAt
+                  )
+                }
+              />
+            )}
+          </div>
+
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-400">
+              Description
+            </div>
+
+            <div className="mt-2 text-sm leading-6 text-slate-700 whitespace-pre-wrap bg-slate-50 border border-slate-200 rounded-xl p-4">
+              {ticket.description}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-400 inline-flex items-center gap-1.5">
+              <MessageSquareText
+                size={12}
+              />
+              ConsulBuzz Response
+            </div>
+
+            {ticket.adminRemarks ? (
+              <div className="mt-2 text-sm leading-6 text-slate-700 whitespace-pre-wrap bg-indigo-50/60 border border-indigo-100 rounded-xl p-4">
+                {ticket.adminRemarks}
+              </div>
+            ) : (
+              <div className="mt-2 text-sm text-slate-500 bg-white border border-dashed border-slate-200 rounded-xl p-4">
+                No support response has been added yet.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DetailItem({
+  label,
+  value,
+}) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg p-3">
+      <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-400">
+        {label}
+      </div>
+
+      <div className="mt-1 text-xs font-semibold text-slate-700 break-words">
+        {value}
+      </div>
+    </div>
+  );
+}
+
 export default function Help({
   plan = "basic",
 }) {
@@ -674,6 +834,38 @@ export default function Help({
   ] = useState(
     null
   );
+
+  const [
+    selectedTicket,
+    setSelectedTicket,
+  ] = useState(
+    null
+  );
+
+  const [
+    search,
+    setSearch,
+  ] = useState("");
+
+  const [
+    statusFilter,
+    setStatusFilter,
+  ] = useState("");
+
+  const [
+    typeFilter,
+    setTypeFilter,
+  ] = useState("");
+
+  const [
+    priorityFilter,
+    setPriorityFilter,
+  ] = useState("");
+
+  const [
+    successMessage,
+    setSuccessMessage,
+  ] = useState("");
 
   const isAdvanced =
     plan ===
@@ -776,6 +968,79 @@ export default function Help({
           ticket.status
         )
     ).length;
+
+  const filteredTickets =
+    useMemo(
+      () => {
+        const query =
+          search
+            .trim()
+            .toLowerCase();
+
+        return tickets.filter(
+          (
+            ticket
+          ) => {
+            const searchMatches =
+              !query ||
+              [
+                ticket.ticketNumber,
+                ticket.title,
+                ticket.description,
+                ticket.typeLabel,
+                ticket.statusLabel,
+                ticket.submittedByName,
+                ticket.submittedByEmail,
+                ticket.adminRemarks,
+              ]
+                .filter(
+                  Boolean
+                )
+                .some(
+                  (
+                    value
+                  ) =>
+                    String(
+                      value
+                    )
+                      .toLowerCase()
+                      .includes(
+                        query
+                      )
+                );
+
+            const statusMatches =
+              !statusFilter ||
+              ticket.status ===
+                statusFilter;
+
+            const typeMatches =
+              !typeFilter ||
+              ticket.type ===
+                typeFilter;
+
+            const priorityMatches =
+              !priorityFilter ||
+              ticket.priority ===
+                priorityFilter;
+
+            return (
+              searchMatches &&
+              statusMatches &&
+              typeMatches &&
+              priorityMatches
+            );
+          }
+        );
+      },
+      [
+        tickets,
+        search,
+        statusFilter,
+        typeFilter,
+        priorityFilter,
+      ]
+    );
 
   return (
     <div className="space-y-4">
@@ -981,6 +1246,146 @@ export default function Help({
         </div>
       )}
 
+      {successMessage && (
+        <div className="px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-sm inline-flex items-center gap-2">
+          <CheckCircle2
+            size={15}
+          />
+          {successMessage}
+        </div>
+      )}
+
+      {/* SEARCH / FILTERS */}
+
+      <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-col xl:flex-row xl:items-center gap-2">
+        <div className="relative flex-1 min-w-0">
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+
+          <input
+            value={
+              search
+            }
+            onChange={(
+              event
+            ) =>
+              setSearch(
+                event.target.value
+              )
+            }
+            placeholder="Search ticket number, title, description or response..."
+            className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+          />
+        </div>
+
+        <select
+          value={
+            statusFilter
+          }
+          onChange={(
+            event
+          ) =>
+            setStatusFilter(
+              event.target.value
+            )
+          }
+          className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700"
+        >
+          <option value="">
+            All Statuses
+          </option>
+          <option value="NEW">
+            New
+          </option>
+          <option value="UNDER_REVIEW">
+            Under Review
+          </option>
+          <option value="APPROVED">
+            Approved
+          </option>
+          <option value="IN_PROGRESS">
+            In Progress
+          </option>
+          <option value="DEVELOPMENT">
+            Development
+          </option>
+          <option value="COMPLETED">
+            Completed
+          </option>
+          <option value="REJECTED">
+            Rejected
+          </option>
+          <option value="CLOSED">
+            Closed
+          </option>
+        </select>
+
+        <select
+          value={
+            typeFilter
+          }
+          onChange={(
+            event
+          ) =>
+            setTypeFilter(
+              event.target.value
+            )
+          }
+          className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700"
+        >
+          <option value="">
+            All Types
+          </option>
+          <option value="TECHNICAL_ISSUE">
+            Technical Issue
+          </option>
+          <option value="BILLING">
+            Billing Support
+          </option>
+          <option value="CUSTOMIZATION">
+            Customization Request
+          </option>
+        </select>
+
+        <select
+          value={
+            priorityFilter
+          }
+          onChange={(
+            event
+          ) =>
+            setPriorityFilter(
+              event.target.value
+            )
+          }
+          className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700"
+        >
+          <option value="">
+            All Priorities
+          </option>
+          {PRIORITIES.map(
+            (
+              priority
+            ) => (
+              <option
+                key={
+                  priority.value
+                }
+                value={
+                  priority.value
+                }
+              >
+                {
+                  priority.label
+                }
+              </option>
+            )
+          )}
+        </select>
+      </div>
+
       {/* TICKETS */}
 
       {loading ? (
@@ -1010,7 +1415,7 @@ export default function Help({
 
             <div className="text-xs text-slate-500">
               {
-                tickets.length
+                filteredTickets.length
               }{" "}
               records
             </div>
@@ -1024,9 +1429,10 @@ export default function Help({
               "Priority",
               "Status",
               "Created",
+              "",
             ]}
             empty="No support tickets yet"
-            rows={tickets.map(
+            rows={filteredTickets.map(
               (
                 ticket
               ) => (
@@ -1095,6 +1501,23 @@ export default function Help({
                       ticket.createdAt
                     )}
                   </td>
+
+                  <td className="px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedTicket(
+                          ticket
+                        )
+                      }
+                      className="h-8 px-2.5 rounded-lg inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100"
+                    >
+                      <Eye
+                        size={12}
+                      />
+                      View
+                    </button>
+                  </td>
                 </tr>
               )
             )}
@@ -1130,8 +1553,25 @@ export default function Help({
               null
             );
 
+            setSuccessMessage(
+              "Support ticket submitted successfully"
+            );
+
             await loadTickets();
           }}
+        />
+      )}
+
+      {selectedTicket && (
+        <TicketDetailsModal
+          ticket={
+            selectedTicket
+          }
+          onClose={() =>
+            setSelectedTicket(
+              null
+            )
+          }
         />
       )}
     </div>

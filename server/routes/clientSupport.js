@@ -1,11 +1,15 @@
 import {
   Router,
 } from "express";
+import {
+  randomInt,
+} from "crypto";
 
 import prisma from "../lib/prisma.js";
 
 import {
   requireClientUser,
+  requireClientPermission,
 } from "../middleware/clientAuth.js";
 
 import {
@@ -17,6 +21,13 @@ const router =
 
 router.use(
   requireClientUser
+);
+
+router.use(
+  requireClientPermission(
+    "canManageSupport",
+    "You do not have permission to manage support"
+  )
 );
 
 const TYPE_LABELS = {
@@ -150,22 +161,91 @@ function formatTicket(
   };
 }
 
-async function generateTicketNumber() {
+function generateTicketNumber() {
+  const now =
+    new Date();
+
   const year =
-    new Date()
-      .getFullYear();
+    now.getFullYear();
 
-  const count =
-    await prisma
-      .supportTicket
-      .count();
+  const month =
+    String(
+      now.getMonth() +
+        1
+    ).padStart(
+      2,
+      "0"
+    );
 
-  return `T-${year}-${String(
-    count + 1
-  ).padStart(
-    5,
-    "0"
-  )}`;
+  const day =
+    String(
+      now.getDate()
+    ).padStart(
+      2,
+      "0"
+    );
+
+  const time =
+    [
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds(),
+    ]
+      .map(
+        (value) =>
+          String(
+            value
+          ).padStart(
+            2,
+            "0"
+          )
+      )
+      .join("");
+
+  const suffix =
+    String(
+      randomInt(
+        1000,
+        10000
+      )
+    );
+
+  return `T-${year}${month}${day}-${time}-${suffix}`;
+}
+
+async function createTicketWithUniqueNumber(
+  data
+) {
+  for (
+    let attempt = 0;
+    attempt < 5;
+    attempt += 1
+  ) {
+    try {
+      return await prisma.supportTicket.create({
+        data: {
+          ...data,
+          ticketNumber:
+            generateTicketNumber(),
+        },
+      });
+    } catch (error) {
+      const isUniqueConflict =
+        error?.code ===
+        "P2002";
+
+      if (
+        !isUniqueConflict ||
+        attempt === 4
+      ) {
+        throw error;
+      }
+    }
+  }
+
+  throw new Error(
+    "Unable to generate a unique ticket number"
+  );
 }
 
 async function getCurrentPlan(
@@ -288,8 +368,30 @@ router.post(
 
               email:
                 true,
+
+              active:
+                true,
+
+              companyId:
+                true,
             },
           });
+
+      if (
+        !user ||
+        !user.active ||
+        user.companyId !==
+          companyId
+      ) {
+        return res
+          .status(401)
+          .json({
+            success:
+              false,
+            message:
+              "Unauthorized",
+          });
+      }
 
       const {
         title,
@@ -411,61 +513,31 @@ router.post(
         }
       }
 
-      let ticketNumber =
-        await generateTicketNumber();
-
-      let existing =
-        await prisma
-          .supportTicket
-          .findUnique({
-            where: {
-              ticketNumber,
-            },
-          });
-
-      while (
-        existing
-      ) {
-        ticketNumber =
-          `T-${new Date().getFullYear()}-${Date.now()}`;
-
-        existing =
-          null;
-      }
-
       const ticket =
-        await prisma
-          .supportTicket
-          .create({
-            data: {
-              companyId,
+        await createTicketWithUniqueNumber({
+          companyId,
 
-              ticketNumber,
+          title:
+            cleanTitle,
 
-              title:
-                cleanTitle,
+          description:
+            cleanDescription,
 
-              description:
-                cleanDescription,
+          type:
+            typeKey,
 
-              type:
-                typeKey,
+          priority:
+            priorityKey,
 
-              priority:
-                priorityKey,
+          status:
+            "NEW",
 
-              status:
-                "NEW",
+          submittedByName:
+            user.name,
 
-              submittedByName:
-                user?.name ||
-                null,
-
-              submittedByEmail:
-                user?.email ||
-                null,
-            },
-          });
+          submittedByEmail:
+            user.email,
+        });
 
       await createSupportTicketCreatedNotification({
         companyId,

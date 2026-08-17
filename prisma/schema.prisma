@@ -229,6 +229,7 @@ model User {
   payments               PaymentTransaction[]
   notificationPreference UserNotificationPreference?
   auditLogs              AuditLog[]
+  assignedLeadDatasets   LeadDataset[]               @relation("LeadDatasetAssignee")
 
   @@index([companyId])
   @@index([companyId, role])
@@ -478,6 +479,9 @@ model Lead {
   admission         Admission?
   customFieldValues CustomFieldValue[]
 
+  leadDatasetId String?
+  leadDataset   LeadDataset? @relation(fields: [leadDatasetId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -486,6 +490,8 @@ model Lead {
   @@index([companyId, stage])
   @@index([companyId, createdAt])
   @@index([utmLinkId])
+  @@index([leadDatasetId])
+  @@index([companyId, leadDatasetId])
 }
 
 model Admission {
@@ -675,15 +681,22 @@ model LeadDataset {
 
   sourceName String?
 
-  leadCount Int @default(0)
+  sourceFileName String?
 
-  assignedTo String?
-
+  leadCount      Int @default(0)
+  importedCount  Int @default(0)
+  duplicateCount Int @default(0)
+  failedCount    Int @default(0)
   convertedCount Int @default(0)
+
+  assignedToUserId String?
+  assignedToUser   User?   @relation("LeadDatasetAssignee", fields: [assignedToUserId], references: [id], onDelete: SetNull)
 
   notes String?
 
   uploadedAt DateTime @default(now())
+
+  leads Lead[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -691,6 +704,7 @@ model LeadDataset {
   @@index([companyId])
   @@index([companyId, type])
   @@index([companyId, uploadedAt])
+  @@index([assignedToUserId])
 }
 
 model SupportTicket {

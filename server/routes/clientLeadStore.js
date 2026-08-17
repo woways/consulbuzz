@@ -1,262 +1,1749 @@
-import { Router } from "express";
+import {
+  Router,
+} from "express";
+import multer from "multer";
+import ExcelJS from "exceljs";
 
 import prisma from "../lib/prisma.js";
-import { requireClientUser } from "../middleware/clientAuth.js";
+import {
+  requireClientUser,
+  requireClientPermission,
+} from "../middleware/clientAuth.js";
 
-const router = Router();
+const router =
+  Router();
 
-router.use(requireClientUser);
+router.use(
+  requireClientUser
+);
+
+router.use(
+  requireClientPermission(
+    "canManageLeads",
+    "You do not have permission to manage Lead Store"
+  )
+);
 
 const TYPE_LABELS = {
-  EXTERNAL_DATA: "External Data",
-  OFFLINE_LEADGEN: "Offline LeadGen",
-  PURCHASED: "Purchased",
-  UPLOADED: "Uploaded",
-  ASSIGNED: "Assigned",
+  EXTERNAL_DATA:
+    "External Data",
+  OFFLINE_LEADGEN:
+    "Offline LeadGen",
+  PURCHASED:
+    "Purchased",
+  UPLOADED:
+    "Uploaded",
+  ASSIGNED:
+    "Assigned",
 };
 
-const VALID_TYPES = Object.keys(TYPE_LABELS);
+const VALID_TYPES =
+  Object.keys(
+    TYPE_LABELS
+  );
 
-function formatDataset(dataset) {
+const MAX_IMPORT_ROWS =
+  5000;
+
+const upload =
+  multer({
+    storage:
+      multer.memoryStorage(),
+
+    limits: {
+      fileSize:
+        5 *
+        1024 *
+        1024,
+      files: 1,
+    },
+
+    fileFilter(
+      req,
+      file,
+      callback
+    ) {
+      const name =
+        String(
+          file.originalname ||
+            ""
+        ).toLowerCase();
+
+      const allowed =
+        name.endsWith(
+          ".csv"
+        ) ||
+        name.endsWith(
+          ".xlsx"
+        );
+
+      if (!allowed) {
+        callback(
+          new Error(
+            "Only CSV and XLSX files are supported"
+          )
+        );
+        return;
+      }
+
+      callback(
+        null,
+        true
+      );
+    },
+  });
+
+const HEADER_ALIASES = {
+  name: [
+    "name",
+    "student",
+    "student name",
+    "student_name",
+    "lead name",
+    "lead_name",
+    "full name",
+    "full_name",
+  ],
+
+  phone: [
+    "phone",
+    "mobile",
+    "mobile number",
+    "mobile_number",
+    "phone number",
+    "phone_number",
+    "contact",
+    "contact number",
+    "contact_number",
+  ],
+
+  email: [
+    "email",
+    "email id",
+    "email_id",
+    "email address",
+    "email_address",
+  ],
+
+  course: [
+    "course",
+    "interest",
+    "program",
+    "programme",
+    "course interest",
+    "course_interest",
+  ],
+
+  notes: [
+    "notes",
+    "note",
+    "remarks",
+    "remark",
+    "comments",
+    "comment",
+  ],
+};
+
+function normalizeHeader(
+  value
+) {
+  return String(
+    value || ""
+  )
+    .trim()
+    .toLowerCase()
+    .replace(
+      /\s+/g,
+      " "
+    );
+}
+
+function cleanString(
+  value
+) {
+  const clean =
+    String(
+      value ?? ""
+    ).trim();
+
+  return clean ||
+    null;
+}
+
+function normalizePhone(
+  value
+) {
+  const raw =
+    String(
+      value ?? ""
+    ).trim();
+
+  if (!raw) {
+    return "";
+  }
+
+  const digits =
+    raw.replace(
+      /\D/g,
+      ""
+    );
+
+  if (
+    digits.length >
+      10 &&
+    digits.startsWith(
+      "91"
+    )
+  ) {
+    return digits.slice(
+      -10
+    );
+  }
+
+  return digits;
+}
+
+function normalizeEmail(
+  value
+) {
+  return String(
+    value ?? ""
+  )
+    .trim()
+    .toLowerCase();
+}
+
+function formatDataset(
+  dataset,
+  conversionCount =
+    0
+) {
+  const assignee =
+    dataset.assignedToUser
+      ? {
+          id:
+            dataset.assignedToUser.id,
+          name:
+            dataset.assignedToUser.name,
+          email:
+            dataset.assignedToUser.email,
+          role:
+            dataset.assignedToUser.role,
+        }
+      : null;
+
   return {
-    id: dataset.id,
-    name: dataset.name,
-    type: dataset.type,
-    typeLabel:
-      TYPE_LABELS[dataset.type] ||
+    id:
+      dataset.id,
+    name:
+      dataset.name,
+    type:
       dataset.type,
-    sourceName: dataset.sourceName,
-    count: dataset.leadCount,
+    typeLabel:
+      TYPE_LABELS[
+        dataset.type
+      ] ||
+      dataset.type,
+    sourceName:
+      dataset.sourceName,
+    sourceFileName:
+      dataset.sourceFileName,
+    count:
+      dataset.leadCount,
+    importedCount:
+      dataset.importedCount,
+    duplicateCount:
+      dataset.duplicateCount,
+    failedCount:
+      dataset.failedCount,
     assignedTo:
-      dataset.assignedTo ||
+      assignee?.name ||
       "Unassigned",
+    assignedToUser:
+      assignee,
     converted:
-      dataset.convertedCount,
-    notes: dataset.notes,
+      conversionCount,
+    notes:
+      dataset.notes,
     uploadedAt:
       dataset.uploadedAt,
     createdAt:
       dataset.createdAt,
+    updatedAt:
+      dataset.updatedAt,
   };
 }
 
-router.get("/", async (req, res) => {
-  try {
-    const companyId =
-      req.clientUser.companyId;
+function findHeaderIndex(
+  headers,
+  field
+) {
+  const aliases =
+    HEADER_ALIASES[
+      field
+    ] ||
+    [];
 
-    const type =
-      String(req.query.type || "")
-        .trim()
-        .toUpperCase();
+  return headers.findIndex(
+    (header) =>
+      aliases.includes(
+        normalizeHeader(
+          header
+        )
+      )
+  );
+}
 
-    const where = {
-      companyId,
-    };
+async function parseSpreadsheet(
+  file
+) {
+  if (!file) {
+    throw new Error(
+      "CSV or XLSX file is required"
+    );
+  }
 
-    if (
-      type &&
-      VALID_TYPES.includes(type)
-    ) {
-      where.type = type;
-    }
+  const workbook =
+    new ExcelJS.Workbook();
 
-    const datasets =
-      await prisma.leadDataset.findMany({
-        where,
+  const filename =
+    String(
+      file.originalname ||
+        ""
+    ).toLowerCase();
 
-        orderBy: {
-          uploadedAt: "desc",
-        },
-      });
+  if (
+    filename.endsWith(
+      ".csv"
+    )
+  ) {
+    await workbook.csv.read(
+      file.buffer
+    );
+  } else {
+    await workbook.xlsx.load(
+      file.buffer
+    );
+  }
 
-    return res.json({
-      success: true,
-      datasets:
-        datasets.map(
-          formatDataset
-        ),
-    });
-  } catch (error) {
-    console.error(
-      "Failed to fetch lead datasets:",
-      error
+  const worksheet =
+    workbook.worksheets[
+      0
+    ];
+
+  if (!worksheet) {
+    throw new Error(
+      "The spreadsheet does not contain a worksheet"
+    );
+  }
+
+  const headerRow =
+    worksheet.getRow(
+      1
     );
 
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to fetch lead datasets",
-    });
+  const headers = [];
+
+  for (
+    let column = 1;
+    column <=
+    headerRow.cellCount;
+    column += 1
+  ) {
+    headers.push(
+      String(
+        headerRow.getCell(
+          column
+        ).text ||
+          ""
+      ).trim()
+    );
   }
-});
 
-router.post("/", async (req, res) => {
-  try {
-    const companyId =
-      req.clientUser.companyId;
+  const indexes = {
+    name:
+      findHeaderIndex(
+        headers,
+        "name"
+      ),
+    phone:
+      findHeaderIndex(
+        headers,
+        "phone"
+      ),
+    email:
+      findHeaderIndex(
+        headers,
+        "email"
+      ),
+    course:
+      findHeaderIndex(
+        headers,
+        "course"
+      ),
+    notes:
+      findHeaderIndex(
+        headers,
+        "notes"
+      ),
+  };
 
-    const {
-      name,
-      type,
-      sourceName,
-      leadCount,
-      assignedTo,
-      convertedCount,
-      notes,
-      uploadedAt,
-    } = req.body || {};
+  if (
+    indexes.name <
+      0 ||
+    indexes.phone <
+      0
+  ) {
+    throw new Error(
+      'Spreadsheet must contain "Name" and "Phone" columns'
+    );
+  }
 
-    const cleanName =
-      String(name || "").trim();
+  const rows = [];
 
-    const typeKey =
-      String(type || "")
-        .trim()
-        .toUpperCase();
+  const limit =
+    Math.min(
+      worksheet.rowCount,
+      MAX_IMPORT_ROWS +
+        1
+    );
 
-    const parsedLeadCount =
-      Number(leadCount || 0);
-
-    const parsedConvertedCount =
-      Number(
-        convertedCount || 0
+  for (
+    let rowNumber = 2;
+    rowNumber <=
+    limit;
+    rowNumber += 1
+  ) {
+    const row =
+      worksheet.getRow(
+        rowNumber
       );
 
-    if (!cleanName) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Dataset name is required",
+    const valueAt =
+      (index) =>
+        index >= 0
+          ? row.getCell(
+              index +
+                1
+            ).text
+          : "";
+
+    const raw = {
+      rowNumber,
+      name:
+        cleanString(
+          valueAt(
+            indexes.name
+          )
+        ),
+      phone:
+        normalizePhone(
+          valueAt(
+            indexes.phone
+          )
+        ),
+      email:
+        normalizeEmail(
+          valueAt(
+            indexes.email
+          )
+        ),
+      course:
+        cleanString(
+          valueAt(
+            indexes.course
+          )
+        ),
+      notes:
+        cleanString(
+          valueAt(
+            indexes.notes
+          )
+        ),
+    };
+
+    const hasContent =
+      raw.name ||
+      raw.phone ||
+      raw.email ||
+      raw.course ||
+      raw.notes;
+
+    if (
+      hasContent
+    ) {
+      rows.push(
+        raw
+      );
+    }
+  }
+
+  if (
+    rows.length >
+    MAX_IMPORT_ROWS
+  ) {
+    throw new Error(
+      `A maximum of ${MAX_IMPORT_ROWS} lead rows can be imported at once`
+    );
+  }
+
+  return {
+    headers,
+    rows,
+  };
+}
+
+function validateRows(
+  rows
+) {
+  const valid = [];
+  const invalid = [];
+  const seenPhones =
+    new Set();
+  const seenEmails =
+    new Set();
+  let duplicateInFile =
+    0;
+
+  for (const row of rows) {
+    if (
+      !row.name ||
+      !row.phone
+    ) {
+      invalid.push({
+        ...row,
+        reason:
+          !row.name
+            ? "Name is required"
+            : "Phone is required",
       });
+      continue;
     }
 
     if (
-      !VALID_TYPES.includes(
-        typeKey
+      row.phone.length <
+      7
+    ) {
+      invalid.push({
+        ...row,
+        reason:
+          "Phone number is invalid",
+      });
+      continue;
+    }
+
+    const emailKey =
+      row.email ||
+      null;
+
+    if (
+      seenPhones.has(
+        row.phone
+      ) ||
+      (
+        emailKey &&
+        seenEmails.has(
+          emailKey
+        )
       )
     ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Invalid dataset type",
-      });
+      duplicateInFile +=
+        1;
+      continue;
     }
 
-    if (
-      !Number.isInteger(
-        parsedLeadCount
-      ) ||
-      parsedLeadCount < 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Lead count must be a valid whole number",
-      });
-    }
-
-    if (
-      !Number.isInteger(
-        parsedConvertedCount
-      ) ||
-      parsedConvertedCount < 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Converted count must be a valid whole number",
-      });
-    }
-
-    if (
-      parsedConvertedCount >
-      parsedLeadCount
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Converted count cannot exceed lead count",
-      });
-    }
-
-    let parsedUploadedAt =
-      new Date();
-
-    if (uploadedAt) {
-      parsedUploadedAt =
-        new Date(uploadedAt);
-
-      if (
-        Number.isNaN(
-          parsedUploadedAt.getTime()
-        )
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Invalid upload date",
-        });
-      }
-    }
-
-    const dataset =
-      await prisma.leadDataset.create({
-        data: {
-          companyId,
-          name: cleanName,
-          type: typeKey,
-          sourceName:
-            sourceName
-              ? String(
-                  sourceName
-                ).trim()
-              : null,
-          leadCount:
-            parsedLeadCount,
-          assignedTo:
-            assignedTo
-              ? String(
-                  assignedTo
-                ).trim()
-              : null,
-          convertedCount:
-            parsedConvertedCount,
-          notes:
-            notes
-              ? String(
-                  notes
-                ).trim()
-              : null,
-          uploadedAt:
-            parsedUploadedAt,
-        },
-      });
-
-    return res.status(201).json({
-      success: true,
-      message:
-        "Dataset created successfully",
-      dataset:
-        formatDataset(dataset),
-    });
-  } catch (error) {
-    console.error(
-      "Failed to create lead dataset:",
-      error
+    seenPhones.add(
+      row.phone
     );
 
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to create lead dataset",
+    if (emailKey) {
+      seenEmails.add(
+        emailKey
+      );
+    }
+
+    valid.push(
+      row
+    );
+  }
+
+  return {
+    valid,
+    invalid,
+    duplicateInFile,
+  };
+}
+
+async function getExistingDuplicateSets(
+  companyId,
+  rows
+) {
+  const phones =
+    [
+      ...new Set(
+        rows
+          .map(
+            (row) =>
+              row.phone
+          )
+          .filter(
+            Boolean
+          )
+      ),
+    ];
+
+  const emails =
+    [
+      ...new Set(
+        rows
+          .map(
+            (row) =>
+              row.email
+          )
+          .filter(
+            Boolean
+          )
+      ),
+    ];
+
+  if (
+    phones.length ===
+      0 &&
+    emails.length ===
+      0
+  ) {
+    return {
+      phones:
+        new Set(),
+      emails:
+        new Set(),
+    };
+  }
+
+  const OR = [];
+
+  if (
+    phones.length
+  ) {
+    OR.push({
+      phone: {
+        in:
+          phones,
+      },
     });
   }
-});
+
+  if (
+    emails.length
+  ) {
+    OR.push({
+      email: {
+        in:
+          emails,
+      },
+    });
+  }
+
+  const existing =
+    await prisma.lead.findMany({
+      where: {
+        companyId,
+        OR,
+      },
+
+      select: {
+        phone:
+          true,
+        email:
+          true,
+      },
+    });
+
+  return {
+    phones:
+      new Set(
+        existing
+          .map(
+            (lead) =>
+              normalizePhone(
+                lead.phone
+              )
+          )
+          .filter(
+            Boolean
+          )
+      ),
+
+    emails:
+      new Set(
+        existing
+          .map(
+            (lead) =>
+              normalizeEmail(
+                lead.email
+              )
+          )
+          .filter(
+            Boolean
+          )
+      ),
+  };
+}
+
+async function getAssignee(
+  companyId,
+  assignedToUserId
+) {
+  if (
+    !assignedToUserId
+  ) {
+    return null;
+  }
+
+  return prisma.user.findFirst({
+    where: {
+      id:
+        String(
+          assignedToUserId
+        ),
+      companyId,
+      active:
+        true,
+      role: {
+        not:
+          "SUPER_ADMIN",
+      },
+    },
+
+    select: {
+      id:
+        true,
+      name:
+        true,
+      email:
+        true,
+      role:
+        true,
+    },
+  });
+}
+
+/* =========================================================
+   LIST DATASETS
+========================================================= */
+
+router.get(
+  "/",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const companyId =
+        req.clientUser.companyId;
+
+      const type =
+        String(
+          req.query.type ||
+            ""
+        )
+          .trim()
+          .toUpperCase();
+
+      const search =
+        String(
+          req.query.search ||
+            ""
+        ).trim();
+
+      const where = {
+        companyId,
+      };
+
+      if (
+        type &&
+        VALID_TYPES.includes(
+          type
+        )
+      ) {
+        where.type =
+          type;
+      }
+
+      if (search) {
+        where.OR = [
+          {
+            name: {
+              contains:
+                search,
+              mode:
+                "insensitive",
+            },
+          },
+          {
+            sourceName: {
+              contains:
+                search,
+              mode:
+                "insensitive",
+            },
+          },
+          {
+            sourceFileName: {
+              contains:
+                search,
+              mode:
+                "insensitive",
+            },
+          },
+          {
+            notes: {
+              contains:
+                search,
+              mode:
+                "insensitive",
+            },
+          },
+        ];
+      }
+
+      const [
+        datasets,
+        conversionGroups,
+      ] =
+        await Promise.all([
+          prisma.leadDataset.findMany({
+            where,
+
+            include: {
+              assignedToUser: {
+                select: {
+                  id:
+                    true,
+                  name:
+                    true,
+                  email:
+                    true,
+                  role:
+                    true,
+                },
+              },
+            },
+
+            orderBy: {
+              uploadedAt:
+                "desc",
+            },
+          }),
+
+          prisma.lead.groupBy({
+            by: [
+              "leadDatasetId",
+              "stage",
+            ],
+
+            where: {
+              companyId,
+              leadDatasetId: {
+                not:
+                  null,
+              },
+              stage:
+                "ADMITTED",
+            },
+
+            _count: {
+              _all:
+                true,
+            },
+          }),
+        ]);
+
+      const convertedMap =
+        new Map();
+
+      for (
+        const item of
+        conversionGroups
+      ) {
+        convertedMap.set(
+          item.leadDatasetId,
+          item._count
+            ?._all ||
+            0
+        );
+      }
+
+      return res.json({
+        success:
+          true,
+
+        datasets:
+          datasets.map(
+            (dataset) =>
+              formatDataset(
+                dataset,
+                convertedMap.get(
+                  dataset.id
+                ) ||
+                  0
+              )
+          ),
+      });
+    } catch (error) {
+      console.error(
+        "Failed to fetch lead datasets:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success:
+            false,
+          message:
+            "Unable to fetch Lead Store",
+        });
+    }
+  }
+);
+
+/* =========================================================
+   ASSIGNEES
+========================================================= */
+
+router.get(
+  "/meta/assignees",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const users =
+        await prisma.user.findMany({
+          where: {
+            companyId:
+              req.clientUser.companyId,
+            active:
+              true,
+            role: {
+              not:
+                "SUPER_ADMIN",
+            },
+          },
+
+          select: {
+            id:
+              true,
+            name:
+              true,
+            email:
+              true,
+            role:
+              true,
+            department:
+              true,
+          },
+
+          orderBy: {
+            name:
+              "asc",
+          },
+        });
+
+      return res.json({
+        success:
+          true,
+        users,
+      });
+    } catch (error) {
+      console.error(
+        "Failed to load Lead Store assignees:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success:
+            false,
+          message:
+            "Unable to load users",
+        });
+    }
+  }
+);
+
+
+/* =========================================================
+   ADD INDIVIDUAL LEAD
+   Single leads are stored directly in the main Lead table.
+   We do NOT create a fake one-row dataset.
+========================================================= */
+
+router.post(
+  "/manual",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const companyId =
+        req.clientUser.companyId;
+
+      const name =
+        String(
+          req.body?.name ||
+            ""
+        ).trim();
+
+      const phone =
+        normalizePhone(
+          req.body?.phone
+        );
+
+      const email =
+        normalizeEmail(
+          req.body?.email
+        );
+
+      const course =
+        cleanString(
+          req.body?.course
+        );
+
+      const type =
+        String(
+          req.body?.type ||
+            "EXTERNAL_DATA"
+        )
+          .trim()
+          .toUpperCase();
+
+      const sourceName =
+        cleanString(
+          req.body?.sourceName
+        );
+
+      const notes =
+        cleanString(
+          req.body?.notes
+        );
+
+      const assignedToUserId =
+        cleanString(
+          req.body
+            ?.assignedToUserId
+        );
+
+      if (!name) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Lead name is required",
+          });
+      }
+
+      if (!phone) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Phone number is required",
+          });
+      }
+
+      if (
+        phone.length <
+        7
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Phone number is invalid",
+          });
+      }
+
+      if (
+        !VALID_TYPES.includes(
+          type
+        )
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Invalid lead type",
+          });
+      }
+
+      const assignee =
+        await getAssignee(
+          companyId,
+          assignedToUserId
+        );
+
+      if (
+        assignedToUserId &&
+        !assignee
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Selected assignee is invalid",
+          });
+      }
+
+      const OR = [
+        {
+          phone,
+        },
+      ];
+
+      if (email) {
+        OR.push({
+          email,
+        });
+      }
+
+      const duplicate =
+        await prisma.lead.findFirst({
+          where: {
+            companyId,
+            OR,
+          },
+
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+          },
+        });
+
+      if (duplicate) {
+        return res
+          .status(409)
+          .json({
+            success: false,
+            duplicate: true,
+            message:
+              `A lead already exists with this ${
+                duplicate.phone ===
+                phone
+                  ? "phone number"
+                  : "email address"
+              }`,
+            existingLead: duplicate,
+          });
+      }
+
+      const lead =
+        await prisma.$transaction(
+          async (
+            tx
+          ) => {
+            await tx.leadSourceConfig.upsert({
+              where: {
+                companyId_key: {
+                  companyId,
+                  key:
+                    "LEAD_STORE",
+                },
+              },
+
+              update: {
+                active:
+                  true,
+                showInForms:
+                  true,
+              },
+
+              create: {
+                companyId,
+                key:
+                  "LEAD_STORE",
+                name:
+                  "Lead Store",
+                description:
+                  "Leads added manually or imported through Lead Store",
+                active:
+                  true,
+                showInForms:
+                  true,
+                system:
+                  true,
+                sortOrder:
+                  80,
+              },
+            });
+
+            return tx.lead.create({
+              data: {
+                companyId,
+                name,
+                phone,
+                email:
+                  email ||
+                  null,
+                course,
+                source:
+                  "LEAD_STORE",
+                stage:
+                  "NEW",
+                campaign:
+                  "Individual Lead",
+                medium:
+                  type,
+                assignedToName:
+                  assignee?.name ||
+                  null,
+                notes:
+                  [
+                    notes,
+                    sourceName
+                      ? `Lead Store source: ${sourceName}`
+                      : null,
+                    `Lead Store type: ${
+                      TYPE_LABELS[
+                        type
+                      ] ||
+                      type
+                    }`,
+                    "Added individually from Lead Store",
+                  ]
+                    .filter(
+                      Boolean
+                    )
+                    .join(
+                      "\n"
+                    ),
+              },
+            });
+          }
+        );
+
+      return res
+        .status(201)
+        .json({
+          success: true,
+          message:
+            "Lead added successfully",
+          lead: {
+            id:
+              lead.id,
+            name:
+              lead.name,
+            phone:
+              lead.phone,
+            email:
+              lead.email,
+            course:
+              lead.course,
+            source:
+              lead.source,
+            stage:
+              lead.stage,
+            assignedToName:
+              lead.assignedToName,
+            createdAt:
+              lead.createdAt,
+          },
+        });
+    } catch (error) {
+      console.error(
+        "Failed to add individual Lead Store lead:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Unable to add lead",
+        });
+    }
+  }
+);
+
+/* =========================================================
+   PREVIEW SPREADSHEET
+========================================================= */
+
+router.post(
+  "/preview",
+  upload.single(
+    "file"
+  ),
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const parsed =
+        await parseSpreadsheet(
+          req.file
+        );
+
+      const validated =
+        validateRows(
+          parsed.rows
+        );
+
+      const duplicates =
+        await getExistingDuplicateSets(
+          req.clientUser.companyId,
+          validated.valid
+        );
+
+      const existingDuplicateCount =
+        validated.valid.filter(
+          (row) =>
+            duplicates.phones.has(
+              row.phone
+            ) ||
+            (
+              row.email &&
+              duplicates.emails.has(
+                row.email
+              )
+            )
+        ).length;
+
+      const importableCount =
+        Math.max(
+          validated.valid.length -
+            existingDuplicateCount,
+          0
+        );
+
+      return res.json({
+        success:
+          true,
+
+        file: {
+          name:
+            req.file.originalname,
+          size:
+            req.file.size,
+        },
+
+        summary: {
+          totalRows:
+            parsed.rows.length,
+          importableCount,
+          invalidCount:
+            validated.invalid.length,
+          duplicateCount:
+            validated.duplicateInFile +
+            existingDuplicateCount,
+        },
+
+        sample:
+          parsed.rows
+            .slice(
+              0,
+              8
+            )
+            .map(
+              (row) => ({
+                rowNumber:
+                  row.rowNumber,
+                name:
+                  row.name ||
+                  "",
+                phone:
+                  row.phone ||
+                  "",
+                email:
+                  row.email ||
+                  "",
+                course:
+                  row.course ||
+                  "",
+              })
+            ),
+
+        invalidSample:
+          validated.invalid.slice(
+            0,
+            5
+          ),
+      });
+    } catch (error) {
+      console.error(
+        "Lead Store preview failed:",
+        error
+      );
+
+      return res
+        .status(400)
+        .json({
+          success:
+            false,
+          message:
+            error?.message ||
+            "Unable to preview spreadsheet",
+        });
+    }
+  }
+);
+
+/* =========================================================
+   IMPORT SPREADSHEET
+========================================================= */
+
+router.post(
+  "/import",
+  upload.single(
+    "file"
+  ),
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const companyId =
+        req.clientUser.companyId;
+
+      const name =
+        String(
+          req.body?.name ||
+            ""
+        ).trim();
+
+      const type =
+        String(
+          req.body?.type ||
+            ""
+        )
+          .trim()
+          .toUpperCase();
+
+      const sourceName =
+        cleanString(
+          req.body
+            ?.sourceName
+        );
+
+      const notes =
+        cleanString(
+          req.body?.notes
+        );
+
+      const assignedToUserId =
+        cleanString(
+          req.body
+            ?.assignedToUserId
+        );
+
+      if (!name) {
+        return res
+          .status(400)
+          .json({
+            success:
+              false,
+            message:
+              "Dataset name is required",
+          });
+      }
+
+      if (
+        !VALID_TYPES.includes(
+          type
+        )
+      ) {
+        return res
+          .status(400)
+          .json({
+            success:
+              false,
+            message:
+              "Invalid dataset type",
+          });
+      }
+
+      const assignee =
+        await getAssignee(
+          companyId,
+          assignedToUserId
+        );
+
+      if (
+        assignedToUserId &&
+        !assignee
+      ) {
+        return res
+          .status(400)
+          .json({
+            success:
+              false,
+            message:
+              "Selected assignee is invalid",
+          });
+      }
+
+      const parsed =
+        await parseSpreadsheet(
+          req.file
+        );
+
+      const validated =
+        validateRows(
+          parsed.rows
+        );
+
+      const duplicates =
+        await getExistingDuplicateSets(
+          companyId,
+          validated.valid
+        );
+
+      const importable = [];
+      let existingDuplicateCount =
+        0;
+
+      for (
+        const row of
+        validated.valid
+      ) {
+        const duplicate =
+          duplicates.phones.has(
+            row.phone
+          ) ||
+          (
+            row.email &&
+            duplicates.emails.has(
+              row.email
+            )
+          );
+
+        if (duplicate) {
+          existingDuplicateCount +=
+            1;
+          continue;
+        }
+
+        importable.push(
+          row
+        );
+      }
+
+      if (
+        importable.length ===
+        0
+      ) {
+        return res
+          .status(400)
+          .json({
+            success:
+              false,
+            message:
+              "No new valid leads were found to import",
+          });
+      }
+
+      const duplicateCount =
+        validated.duplicateInFile +
+        existingDuplicateCount;
+
+      const failedCount =
+        validated.invalid.length;
+
+      const dataset =
+        await prisma.$transaction(
+          async (
+            tx
+          ) => {
+            await tx.leadSourceConfig.upsert({
+              where: {
+                companyId_key: {
+                  companyId,
+                  key:
+                    "LEAD_STORE",
+                },
+              },
+
+              update: {
+                active:
+                  true,
+              },
+
+              create: {
+                companyId,
+                key:
+                  "LEAD_STORE",
+                name:
+                  "Lead Store",
+                description:
+                  "Leads imported from Lead Store datasets",
+                active:
+                  true,
+                showInForms:
+                  true,
+                system:
+                  true,
+                sortOrder:
+                  80,
+              },
+            });
+
+            const createdDataset =
+              await tx.leadDataset.create({
+                data: {
+                  companyId,
+                  name,
+                  type,
+                  sourceName,
+                  sourceFileName:
+                    req.file.originalname,
+                  leadCount:
+                    importable.length,
+                  importedCount:
+                    importable.length,
+                  duplicateCount,
+                  failedCount,
+                  assignedToUserId:
+                    assignee?.id ||
+                    null,
+                  notes,
+                  uploadedAt:
+                    new Date(),
+                },
+              });
+
+            await tx.lead.createMany({
+              data:
+                importable.map(
+                  (row) => ({
+                    companyId,
+                    leadDatasetId:
+                      createdDataset.id,
+                    name:
+                      row.name,
+                    phone:
+                      row.phone,
+                    email:
+                      row.email ||
+                      null,
+                    course:
+                      row.course,
+                    source:
+                      "LEAD_STORE",
+                    stage:
+                      "NEW",
+                    campaign:
+                      name,
+                    medium:
+                      type,
+                    assignedToName:
+                      assignee?.name ||
+                      null,
+                    notes:
+                      [
+                        row.notes,
+                        sourceName
+                          ? `Lead Store source: ${sourceName}`
+                          : null,
+                        `Imported from ${req.file.originalname}`,
+                      ]
+                        .filter(
+                          Boolean
+                        )
+                        .join(
+                          "\n"
+                        ) ||
+                      null,
+                  })
+                ),
+            });
+
+            return createdDataset;
+          }
+        );
+
+      const fullDataset =
+        await prisma.leadDataset.findUnique({
+          where: {
+            id:
+              dataset.id,
+          },
+
+          include: {
+            assignedToUser: {
+              select: {
+                id:
+                  true,
+                name:
+                  true,
+                email:
+                  true,
+                role:
+                  true,
+              },
+            },
+          },
+        });
+
+      return res
+        .status(201)
+        .json({
+          success:
+            true,
+          message:
+            `${importable.length} leads imported successfully`,
+          dataset:
+            formatDataset(
+              fullDataset,
+              0
+            ),
+          importSummary: {
+            imported:
+              importable.length,
+            duplicates:
+              duplicateCount,
+            failed:
+              failedCount,
+          },
+        });
+    } catch (error) {
+      console.error(
+        "Lead Store import failed:",
+        error
+      );
+
+      return res
+        .status(400)
+        .json({
+          success:
+            false,
+          message:
+            error?.message ||
+            "Unable to import Lead Store file",
+        });
+    }
+  }
+);
+
+/* =========================================================
+   UPDATE DATASET
+========================================================= */
 
 router.patch(
   "/:id",
-  async (req, res) => {
+  async (
+    req,
+    res
+  ) => {
     try {
       const companyId =
         req.clientUser.companyId;
@@ -264,127 +1751,249 @@ router.patch(
       const existing =
         await prisma.leadDataset.findFirst({
           where: {
-            id: req.params.id,
+            id:
+              req.params.id,
             companyId,
           },
         });
 
       if (!existing) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Dataset not found",
-        });
+        return res
+          .status(404)
+          .json({
+            success:
+              false,
+            message:
+              "Dataset not found",
+          });
       }
 
       const data = {};
 
       if (
-        req.body.name !==
+        req.body?.name !==
         undefined
       ) {
         const name =
           String(
-            req.body.name || ""
+            req.body.name ||
+              ""
           ).trim();
 
         if (!name) {
-          return res.status(400).json({
-            success: false,
-            message:
-              "Dataset name cannot be empty",
-          });
+          return res
+            .status(400)
+            .json({
+              success:
+                false,
+              message:
+                "Dataset name cannot be empty",
+            });
         }
 
-        data.name = name;
+        data.name =
+          name;
       }
 
       if (
-        req.body.assignedTo !==
+        req.body?.type !==
         undefined
       ) {
-        data.assignedTo =
-          req.body.assignedTo
-            ? String(
-                req.body.assignedTo
-              ).trim()
-            : null;
-      }
-
-      if (
-        req.body.convertedCount !==
-        undefined
-      ) {
-        const convertedCount =
-          Number(
-            req.body.convertedCount
-          );
+        const type =
+          String(
+            req.body.type ||
+              ""
+          )
+            .trim()
+            .toUpperCase();
 
         if (
-          !Number.isInteger(
-            convertedCount
-          ) ||
-          convertedCount < 0 ||
-          convertedCount >
-            existing.leadCount
+          !VALID_TYPES.includes(
+            type
+          )
         ) {
-          return res.status(400).json({
-            success: false,
-            message:
-              "Invalid converted count",
-          });
+          return res
+            .status(400)
+            .json({
+              success:
+                false,
+              message:
+                "Invalid dataset type",
+            });
         }
 
-        data.convertedCount =
-          convertedCount;
+        data.type =
+          type;
       }
 
       if (
-        req.body.notes !==
+        req.body
+          ?.sourceName !==
+        undefined
+      ) {
+        data.sourceName =
+          cleanString(
+            req.body
+              .sourceName
+          );
+      }
+
+      if (
+        req.body?.notes !==
         undefined
       ) {
         data.notes =
-          req.body.notes
-            ? String(
-                req.body.notes
-              ).trim()
-            : null;
+          cleanString(
+            req.body.notes
+          );
       }
 
+      let assignee =
+        undefined;
+
+      if (
+        req.body
+          ?.assignedToUserId !==
+        undefined
+      ) {
+        const assignedToUserId =
+          cleanString(
+            req.body
+              .assignedToUserId
+          );
+
+        assignee =
+          await getAssignee(
+            companyId,
+            assignedToUserId
+          );
+
+        if (
+          assignedToUserId &&
+          !assignee
+        ) {
+          return res
+            .status(400)
+            .json({
+              success:
+                false,
+              message:
+                "Selected assignee is invalid",
+            });
+        }
+
+        data.assignedToUserId =
+          assignee?.id ||
+          null;
+      }
+
+      await prisma.$transaction(
+        async (
+          tx
+        ) => {
+          await tx.leadDataset.update({
+            where: {
+              id:
+                existing.id,
+            },
+            data,
+          });
+
+          if (
+            assignee !==
+            undefined
+          ) {
+            await tx.lead.updateMany({
+              where: {
+                companyId,
+                leadDatasetId:
+                  existing.id,
+              },
+
+              data: {
+                assignedToName:
+                  assignee?.name ||
+                  null,
+              },
+            });
+          }
+        }
+      );
+
       const updated =
-        await prisma.leadDataset.update({
+        await prisma.leadDataset.findUnique({
           where: {
-            id: existing.id,
+            id:
+              existing.id,
           },
 
-          data,
+          include: {
+            assignedToUser: {
+              select: {
+                id:
+                  true,
+                name:
+                  true,
+                email:
+                  true,
+                role:
+                  true,
+              },
+            },
+          },
+        });
+
+      const converted =
+        await prisma.lead.count({
+          where: {
+            companyId,
+            leadDatasetId:
+              existing.id,
+            stage:
+              "ADMITTED",
+          },
         });
 
       return res.json({
-        success: true,
+        success:
+          true,
         message:
-          "Dataset updated",
+          "Dataset updated successfully",
         dataset:
-          formatDataset(updated),
+          formatDataset(
+            updated,
+            converted
+          ),
       });
     } catch (error) {
       console.error(
-        "Failed to update dataset:",
+        "Failed to update Lead Store dataset:",
         error
       );
 
-      return res.status(500).json({
-        success: false,
-        message:
-          "Unable to update dataset",
-      });
+      return res
+        .status(500)
+        .json({
+          success:
+            false,
+          message:
+            "Unable to update dataset",
+        });
     }
   }
 );
 
+/* =========================================================
+   DELETE DATASET
+   Imported CRM leads are preserved and detached.
+========================================================= */
+
 router.delete(
   "/:id",
-  async (req, res) => {
+  async (
+    req,
+    res
+  ) => {
     try {
       const companyId =
         req.clientUser.companyId;
@@ -392,41 +2001,69 @@ router.delete(
       const existing =
         await prisma.leadDataset.findFirst({
           where: {
-            id: req.params.id,
+            id:
+              req.params.id,
             companyId,
           },
         });
 
       if (!existing) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Dataset not found",
-        });
+        return res
+          .status(404)
+          .json({
+            success:
+              false,
+            message:
+              "Dataset not found",
+          });
       }
 
-      await prisma.leadDataset.delete({
-        where: {
-          id: existing.id,
-        },
-      });
+      await prisma.$transaction(
+        async (
+          tx
+        ) => {
+          await tx.lead.updateMany({
+            where: {
+              companyId,
+              leadDatasetId:
+                existing.id,
+            },
+
+            data: {
+              leadDatasetId:
+                null,
+            },
+          });
+
+          await tx.leadDataset.delete({
+            where: {
+              id:
+                existing.id,
+            },
+          });
+        }
+      );
 
       return res.json({
-        success: true,
+        success:
+          true,
         message:
-          "Dataset deleted",
+          "Dataset deleted. Imported CRM leads were preserved.",
       });
     } catch (error) {
       console.error(
-        "Failed to delete dataset:",
+        "Failed to delete Lead Store dataset:",
         error
       );
 
-      return res.status(500).json({
-        success: false,
-        message:
-          "Unable to delete dataset",
-      });
+      return res
+        .status(500)
+        .json({
+          success:
+            false,
+          message:
+            "Unable to delete dataset",
+        });
     }
   }
 );
