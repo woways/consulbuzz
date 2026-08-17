@@ -61,6 +61,21 @@ enum AdmissionStatus {
   CANCELLED
 }
 
+enum WalkInStatus {
+  NEW
+  IN_PROGRESS
+  CONVERTED
+  LOST
+}
+
+enum CounsellingStatus {
+  SCHEDULED
+  FOLLOW_UP
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+}
+
 enum ExpenseStatus {
   PENDING
   APPROVED
@@ -177,6 +192,8 @@ model Company {
   integrations            CompanyIntegration[]
   notificationPreferences UserNotificationPreference[]
   auditLogs               AuditLog[]
+  walkIns                 WalkIn[]
+  counsellingSessions     CounsellingSession[]
 }
 
 model User {
@@ -506,6 +523,75 @@ model Admission {
   @@index([companyId])
   @@index([companyId, status])
   @@index([companyId, admissionDate])
+}
+
+model WalkIn {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  visitorName String
+  phone       String
+  email       String?
+  course      String?
+
+  purpose        String
+  accompaniedBy  String?
+  counsellorName String?
+  outcome        String?
+
+  status WalkInStatus @default(NEW)
+
+  arrivedAt DateTime @default(now())
+
+  convertedLeadId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([companyId, status])
+  @@index([companyId, arrivedAt])
+  @@index([companyId, phone])
+  @@index([convertedLeadId])
+}
+
+model CounsellingSession {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  leadId String?
+
+  studentName  String
+  studentPhone String?
+  studentEmail String?
+
+  course         String?
+  counsellorName String?
+  mode           String  @default("IN_PERSON")
+  meetingLink    String?
+  accompaniedBy  String?
+
+  scheduledAt DateTime
+
+  status CounsellingStatus @default(SCHEDULED)
+
+  remarks    String?
+  followUpAt DateTime?
+
+  converted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([companyId, status])
+  @@index([companyId, scheduledAt])
+  @@index([companyId, leadId])
+  @@index([companyId, counsellorName])
 }
 
 model Expense {

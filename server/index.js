@@ -43,6 +43,8 @@ import clientCustomFieldsRoutes from "./routes/clientCustomFields.js";
 import clientIntegrationsRoutes from "./routes/clientIntegrations.js";
 import clientSettingsRoutes from "./routes/clientSettings.js";
 import clientAuditLogsRoutes from "./routes/clientAuditLogs.js";
+import clientWalkinsRoutes from "./routes/clientWalkins.js";
+import clientCounsellingRoutes from "./routes/clientCounselling.js";
 
 import razorpayWebhook from "./routes/razorpayWebhook.js";
 
@@ -233,6 +235,8 @@ app.use("/api/client/custom-fields", clientCustomFieldsRoutes);
 app.use("/api/client/integrations", clientIntegrationsRoutes);
 app.use("/api/client/settings", clientSettingsRoutes);
 app.use("/api/client/audit-logs", clientAuditLogsRoutes);
+app.use("/api/client/walkins", clientWalkinsRoutes);
+app.use("/api/client/counselling", clientCounsellingRoutes);
 
 app.use(
   (req, res) =>
