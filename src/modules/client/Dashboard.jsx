@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   UserCheck,
@@ -41,136 +37,68 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import {
-  apiRequest,
-} from "../../lib/api";
+import { apiRequest } from "../../lib/api";
 
 const PIE_COLORS = [
-  "#6366f1",
-  "#10b981",
-  "#f59e0b",
-  "#ec4899",
-  "#8b5cf6",
-  "#14b8a6",
+  "#1d4ed8",
+  "#3b82f6",
+  "#60a5fa",
+  "#93c5fd",
+  "#334155",
+  "#94a3b8",
 ];
 
 const EVENT_TYPES = [
-  {
-    value: "MEETING",
-    label: "Meeting",
-  },
-  {
-    value: "FOLLOW_UP",
-    label: "Follow-up",
-  },
-  {
-    value: "COUNSELLING",
-    label: "Counselling",
-  },
-  {
-    value: "ADMISSION",
-    label: "Admission",
-  },
-  {
-    value: "PAYMENT",
-    label: "Payment",
-  },
-  {
-    value: "REMINDER",
-    label: "Reminder",
-  },
-  {
-    value: "OTHER",
-    label: "Other",
-  },
+  { value: "MEETING", label: "Meeting" },
+  { value: "FOLLOW_UP", label: "Follow-up" },
+  { value: "COUNSELLING", label: "Counselling" },
+  { value: "ADMISSION", label: "Admission" },
+  { value: "PAYMENT", label: "Payment" },
+  { value: "REMINDER", label: "Reminder" },
+  { value: "OTHER", label: "Other" },
 ];
 
 const EVENT_TYPE_STYLES = {
   MEETING:
     "bg-indigo-50 text-indigo-700 border-indigo-100",
-
   FOLLOW_UP:
     "bg-amber-50 text-amber-700 border-amber-100",
-
   COUNSELLING:
     "bg-violet-50 text-violet-700 border-violet-100",
-
   ADMISSION:
-    "bg-emerald-50 text-emerald-700 border-emerald-100",
-
+    "bg-indigo-50 text-indigo-700 border-indigo-100",
   PAYMENT:
     "bg-cyan-50 text-cyan-700 border-cyan-100",
-
   REMINDER:
     "bg-rose-50 text-rose-700 border-rose-100",
-
   OTHER:
     "bg-slate-100 text-slate-700 border-slate-200",
 };
 
-function money(
-  value
-) {
-  return `₹${Number(
-    value || 0
-  ).toLocaleString(
-    "en-IN"
-  )}`;
+function money(value) {
+  return `₹${Number(value || 0).toLocaleString("en-IN")}`;
 }
 
-function axisMoney(
-  value
-) {
-  const amount =
-    Number(
-      value || 0
-    );
+function axisMoney(value) {
+  const amount = Number(value || 0);
 
-  if (
-    amount >=
-    10000000
-  ) {
-    return `₹${(
-      amount /
-      10000000
-    ).toFixed(
-      1
-    )}Cr`;
+  if (amount >= 10000000) {
+    return `₹${(amount / 10000000).toFixed(1)}Cr`;
   }
 
-  if (
-    amount >=
-    100000
-  ) {
-    return `₹${(
-      amount /
-      100000
-    ).toFixed(
-      1
-    )}L`;
+  if (amount >= 100000) {
+    return `₹${(amount / 100000).toFixed(1)}L`;
   }
 
-  if (
-    amount >=
-    1000
-  ) {
-    return `₹${(
-      amount /
-      1000
-    ).toFixed(
-      0
-    )}k`;
+  if (amount >= 1000) {
+    return `₹${(amount / 1000).toFixed(0)}k`;
   }
 
   return `₹${amount}`;
 }
 
 function LayoutDashboardIcon() {
-  return (
-    <Activity
-      size={13}
-    />
-  );
+  return <Activity size={13} />;
 }
 
 function MetricCard({
@@ -183,49 +111,40 @@ function MetricCard({
   const tones = {
     indigo:
       "bg-indigo-50 text-indigo-600 border-indigo-100",
-
     emerald:
-      "bg-emerald-50 text-emerald-600 border-emerald-100",
-
+      "bg-indigo-50 text-indigo-600 border-indigo-100",
     amber:
       "bg-amber-50 text-amber-600 border-amber-100",
-
     rose:
       "bg-rose-50 text-rose-600 border-rose-100",
-
     slate:
       "bg-slate-50 text-slate-600 border-slate-200",
   };
 
   return (
-    <div className="group bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all">
+    <div className="group bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+        <div className="min-w-0">
+          <div className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
             {label}
           </div>
 
-          <div className="mt-2 text-[24px] leading-none font-bold tracking-tight text-slate-950">
+          <div className="mt-2 text-[20px] sm:text-[24px] leading-none font-bold tracking-tight text-slate-950 break-words">
             {value}
           </div>
         </div>
 
         <div
-          className={`w-9 h-9 rounded-lg border flex items-center justify-center ${
-            tones[
-              accent
-            ] ||
-            tones.indigo
+          className={`w-9 h-9 rounded-lg border flex items-center justify-center flex-shrink-0 ${
+            tones[accent] || tones.indigo
           }`}
         >
-          <Icon
-            size={17}
-          />
+          <Icon size={17} />
         </div>
       </div>
 
       {detail && (
-        <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+        <div className="mt-3 pt-3 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-500">
           {detail}
         </div>
       )}
@@ -233,296 +152,202 @@ function MetricCard({
   );
 }
 
-function dateKey(
-  date
-) {
+function dateKey(date) {
   return `${date.getFullYear()}-${String(
-    date.getMonth() +
-      1
-  ).padStart(
-    2,
-    "0"
-  )}-${String(
+    date.getMonth() + 1
+  ).padStart(2, "0")}-${String(
     date.getDate()
-  ).padStart(
-    2,
-    "0"
-  )}`;
+  ).padStart(2, "0")}`;
 }
 
-function localDateTimeValue(
-  value
-) {
+function localDateTimeValue(value) {
   if (!value) {
     return "";
   }
 
-  const date =
-    new Date(
-      value
-    );
+  const date = new Date(value);
 
-  const year =
-    date.getFullYear();
+  const year = date.getFullYear();
 
-  const month =
-    String(
-      date.getMonth() +
-        1
-    ).padStart(
-      2,
-      "0"
-    );
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, "0");
 
-  const day =
-    String(
-      date.getDate()
-    ).padStart(
-      2,
-      "0"
-    );
+  const day = String(
+    date.getDate()
+  ).padStart(2, "0");
 
-  const hour =
-    String(
-      date.getHours()
-    ).padStart(
-      2,
-      "0"
-    );
+  const hour = String(
+    date.getHours()
+  ).padStart(2, "0");
 
-  const minute =
-    String(
-      date.getMinutes()
-    ).padStart(
-      2,
-      "0"
-    );
+  const minute = String(
+    date.getMinutes()
+  ).padStart(2, "0");
 
   return `${year}-${month}-${day}T${hour}:${minute}`;
 }
 
-function eventDateKey(
-  event
-) {
+function eventDateKey(event) {
   return dateKey(
-    new Date(
-      event.startAt
-    )
+    new Date(event.startAt)
   );
 }
 
-function eventTime(
-  event
-) {
-  if (
-    event.allDay
-  ) {
+function eventTime(event) {
+  if (event.allDay) {
     return "All day";
   }
 
   return new Date(
     event.startAt
-  ).toLocaleTimeString(
-    "en-IN",
-    {
-      hour:
-        "2-digit",
-
-      minute:
-        "2-digit",
-    }
-  );
+  ).toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-function typeLabel(
-  value
-) {
+function typeLabel(value) {
   return (
     EVENT_TYPES.find(
-      (item) =>
-        item.value ===
-        value
-    )?.label ||
-    value
+      (item) => item.value === value
+    )?.label || value
   );
 }
 
 function emptyEventForm() {
   return {
-    title:
-      "",
-
-    startAt:
-      "",
-
-    endAt:
-      "",
-
-    type:
-      "MEETING",
-
-    status:
-      "SCHEDULED",
-
-    assignedToUserId:
-      "",
-
-    location:
-      "",
-
-    description:
-      "",
-
-    allDay:
-      false,
+    title: "",
+    startAt: "",
+    endAt: "",
+    type: "MEETING",
+    status: "SCHEDULED",
+    assignedToUserId: "",
+    location: "",
+    description: "",
+    allDay: false,
   };
 }
 
 export default function Dashboard({
   tenant,
   user,
+  selectedYear = "all",
 }) {
-  const [
-    data,
-    setData,
-  ] =
-    useState({
-      summary:
-        {},
+  const [data, setData] = useState({
+    summary: {},
+    revenueTrend: [],
+    leadsBySource: [],
+    teamPerformance: [],
+  });
 
-      revenueTrend:
-        [],
+  const [loading, setLoading] =
+    useState(true);
 
-      leadsBySource:
-        [],
-
-      teamPerformance:
-        [],
-    });
-
-  const [
-    loading,
-    setLoading,
-  ] =
-    useState(
-      true
-    );
-
-  const [
-    error,
-    setError,
-  ] =
+  const [error, setError] =
     useState("");
+
 
   const [
     calendarMonth,
     setCalendarMonth,
-  ] =
-    useState(
-      () => {
-        const now =
-          new Date();
+  ] = useState(() => {
+    const now = new Date();
 
-        return new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          1
-        );
-      }
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1
     );
+  });
+
+  const [
+    agendaDate,
+    setAgendaDate,
+  ] = useState(() => new Date());
+
+  const [
+    fullCalendarOpen,
+    setFullCalendarOpen,
+  ] = useState(false);
 
   const [
     calendarEvents,
     setCalendarEvents,
-  ] =
-    useState([]);
+  ] = useState([]);
 
   const [
     calendarUsers,
     setCalendarUsers,
-  ] =
-    useState([]);
+  ] = useState([]);
 
   const [
     calendarLoading,
     setCalendarLoading,
-  ] =
-    useState(
-      true
-    );
+  ] = useState(true);
 
   const [
     calendarError,
     setCalendarError,
-  ] =
-    useState("");
+  ] = useState("");
 
   const [
     eventModalOpen,
     setEventModalOpen,
-  ] =
-    useState(
-      false
-    );
+  ] = useState(false);
 
   const [
     editingEvent,
     setEditingEvent,
-  ] =
-    useState(
-      null
-    );
+  ] = useState(null);
 
   const [
     eventForm,
     setEventForm,
-  ] =
-    useState(
-      emptyEventForm
-    );
+  ] = useState(emptyEventForm);
 
   const [
     savingEvent,
     setSavingEvent,
-  ] =
-    useState(
-      false
-    );
+  ] = useState(false);
 
   const [
     deletingEventId,
     setDeletingEventId,
-  ] =
-    useState(
-      ""
-    );
+  ] = useState("");
 
-  async function loadDashboard() {
-    setLoading(
-      true
-    );
-
+  async function loadDashboard(
+    year = selectedYear
+  ) {
+    setLoading(true);
     setError("");
 
     try {
       const result =
         await apiRequest(
-          "/api/client/analytics/dashboard"
+          `/api/client/analytics/dashboard?year=${encodeURIComponent(
+            year
+          )}`
         );
 
-      setData(
-        result
-      );
+      setData({
+        summary:
+          result.summary || {},
+        revenueTrend:
+          result.revenueTrend || [],
+        leadsBySource:
+          result.leadsBySource || [],
+        teamPerformance:
+          result.teamPerformance || [],
+      });
+
     } catch (error) {
       setError(
-        error?.data
-          ?.message ||
+        error?.data?.message ||
           "Unable to load dashboard"
       );
     } finally {
-      setLoading(
-        false
-      );
+      setLoading(false);
     }
   }
 
@@ -534,8 +359,7 @@ export default function Dashboard({
         );
 
       setCalendarUsers(
-        result.users ||
-          []
+        result.users || []
       );
     } catch (error) {
       console.error(
@@ -546,13 +370,8 @@ export default function Dashboard({
   }
 
   async function loadCalendar() {
-    setCalendarLoading(
-      true
-    );
-
-    setCalendarError(
-      ""
-    );
+    setCalendarLoading(true);
+    setCalendarError("");
 
     try {
       const year =
@@ -561,26 +380,23 @@ export default function Dashboard({
       const month =
         calendarMonth.getMonth();
 
-      const from =
-        new Date(
-          year,
-          month,
-          1,
-          0,
-          0,
-          0
-        );
+      const from = new Date(
+        year,
+        month,
+        1,
+        0,
+        0,
+        0
+      );
 
-      const to =
-        new Date(
-          year,
-          month +
-            1,
-          7,
-          23,
-          59,
-          59
-        );
+      const to = new Date(
+        year,
+        month + 1,
+        7,
+        23,
+        59,
+        59
+      );
 
       const result =
         await apiRequest(
@@ -592,47 +408,35 @@ export default function Dashboard({
         );
 
       setCalendarEvents(
-        result.events ||
-          []
+        result.events || []
       );
     } catch (error) {
       setCalendarError(
-        error?.data
-          ?.message ||
+        error?.data?.message ||
           "Unable to load calendar"
       );
     } finally {
-      setCalendarLoading(
-        false
-      );
+      setCalendarLoading(false);
     }
   }
 
-  useEffect(
-    () => {
-      loadDashboard();
-      loadCalendarUsers();
-    },
-    []
-  );
+  useEffect(() => {
+    loadCalendarUsers();
+  }, []);
 
-  useEffect(
-    () => {
-      loadCalendar();
-    },
-    [
-      calendarMonth,
-    ]
-  );
+  useEffect(() => {
+    loadDashboard(selectedYear);
+  }, [selectedYear]);
+
+  useEffect(() => {
+    loadCalendar();
+  }, [calendarMonth]);
 
   function openCreateEvent(
-    date =
-      new Date()
+    date = new Date()
   ) {
     const selected =
-      new Date(
-        date
-      );
+      new Date(date);
 
     selected.setHours(
       9,
@@ -642,9 +446,7 @@ export default function Dashboard({
     );
 
     const end =
-      new Date(
-        selected
-      );
+      new Date(selected);
 
     end.setHours(
       10,
@@ -653,88 +455,58 @@ export default function Dashboard({
       0
     );
 
-    setEditingEvent(
-      null
-    );
+    setEditingEvent(null);
 
     setEventForm({
       ...emptyEventForm(),
-
       startAt:
         localDateTimeValue(
           selected
         ),
-
       endAt:
-        localDateTimeValue(
-          end
-        ),
-
+        localDateTimeValue(end),
       assignedToUserId:
-        user?.id ||
-        "",
+        user?.id || "",
     });
 
-    setEventModalOpen(
-      true
-    );
+    setEventModalOpen(true);
   }
 
-  function openEditEvent(
-    event
-  ) {
-    setEditingEvent(
-      event
-    );
+  function openEditEvent(event) {
+    setEditingEvent(event);
 
     setEventForm({
       title:
-        event.title ||
-        "",
-
+        event.title || "",
       startAt:
         localDateTimeValue(
           event.startAt
         ),
-
       endAt:
         localDateTimeValue(
           event.endAt
         ),
-
       type:
         event.type ||
         "MEETING",
-
       status:
         event.status ||
         "SCHEDULED",
-
       assignedToUserId:
         event.assignedToUserId ||
         "",
-
       location:
-        event.location ||
-        "",
-
+        event.location || "",
       description:
-        event.description ||
-        "",
-
+        event.description || "",
       allDay:
-        event.allDay ===
-        true,
+        event.allDay === true,
     });
 
-    setEventModalOpen(
-      true
-    );
+    setEventModalOpen(true);
   }
 
-  async function saveEvent(
-    event
-  ) {
+  async function saveEvent(event) {
     event.preventDefault();
 
     if (
@@ -744,22 +516,15 @@ export default function Dashboard({
       return;
     }
 
-    setSavingEvent(
-      true
-    );
-
-    setCalendarError(
-      ""
-    );
+    setSavingEvent(true);
+    setCalendarError("");
 
     try {
       const payload = {
         title:
           eventForm.title.trim(),
-
         type:
           eventForm.type,
-
         status:
           eventForm.status,
 
@@ -791,39 +556,26 @@ export default function Dashboard({
           eventForm.allDay,
       };
 
-      if (
-        editingEvent
-      ) {
+      if (editingEvent) {
         await apiRequest(
           `/api/client/calendar/${editingEvent.id}`,
           {
-            method:
-              "PATCH",
-
-            body:
-              payload,
+            method: "PATCH",
+            body: payload,
           }
         );
       } else {
         await apiRequest(
           "/api/client/calendar",
           {
-            method:
-              "POST",
-
-            body:
-              payload,
+            method: "POST",
+            body: payload,
           }
         );
       }
 
-      setEventModalOpen(
-        false
-      );
-
-      setEditingEvent(
-        null
-      );
+      setEventModalOpen(false);
+      setEditingEvent(null);
 
       setEventForm(
         emptyEventForm()
@@ -832,20 +584,15 @@ export default function Dashboard({
       await loadCalendar();
     } catch (error) {
       setCalendarError(
-        error?.data
-          ?.message ||
+        error?.data?.message ||
           "Unable to save calendar event"
       );
     } finally {
-      setSavingEvent(
-        false
-      );
+      setSavingEvent(false);
     }
   }
 
-  async function deleteEvent(
-    id
-  ) {
+  async function deleteEvent(id) {
     if (
       !window.confirm(
         "Delete this calendar event?"
@@ -854,193 +601,173 @@ export default function Dashboard({
       return;
     }
 
-    setDeletingEventId(
-      id
-    );
+    setDeletingEventId(id);
 
     try {
       await apiRequest(
         `/api/client/calendar/${id}`,
         {
-          method:
-            "DELETE",
+          method: "DELETE",
         }
       );
 
       if (
-        editingEvent?.id ===
-        id
+        editingEvent?.id === id
       ) {
-        setEventModalOpen(
-          false
-        );
-
-        setEditingEvent(
-          null
-        );
+        setEventModalOpen(false);
+        setEditingEvent(null);
       }
 
       await loadCalendar();
     } catch (error) {
       setCalendarError(
-        error?.data
-          ?.message ||
+        error?.data?.message ||
           "Unable to delete event"
       );
     } finally {
-      setDeletingEventId(
-        ""
-      );
+      setDeletingEventId("");
     }
   }
 
   const summary =
-    data.summary ||
-    {};
+    data.summary || {};
 
   const todayKey =
-    dateKey(
-      new Date()
-    );
+    dateKey(new Date());
 
   const todayEvents =
-    useMemo(
-      () =>
-        calendarEvents
-          .filter(
-            (event) =>
-              eventDateKey(
-                event
-              ) ===
-                todayKey &&
-              event.status !==
-                "CANCELLED"
-          )
-          .sort(
-            (
-              a,
-              b
-            ) =>
-              new Date(
-                a.startAt
-              ) -
-              new Date(
-                b.startAt
-              )
-          ),
-      [
-        calendarEvents,
-        todayKey,
-      ]
-    );
+    useMemo(() => {
+      return calendarEvents
+        .filter(
+          (event) =>
+            eventDateKey(event) ===
+              todayKey &&
+            event.status !==
+              "CANCELLED"
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.startAt) -
+            new Date(b.startAt)
+        );
+    }, [
+      calendarEvents,
+      todayKey,
+    ]);
 
   const upcomingEvents =
-    useMemo(
-      () => {
-        const now =
-          new Date();
+    useMemo(() => {
+      const now = new Date();
 
-        return calendarEvents
-          .filter(
-            (event) =>
-              new Date(
-                event.startAt
-              ) >
-                now &&
-              event.status !==
-                "CANCELLED" &&
-              eventDateKey(
-                event
-              ) !==
-                todayKey
-          )
-          .sort(
-            (
-              a,
-              b
-            ) =>
-              new Date(
-                a.startAt
-              ) -
-              new Date(
-                b.startAt
-              )
-          )
-          .slice(
-            0,
-            6
-          );
-      },
-      [
-        calendarEvents,
-        todayKey,
-      ]
+      return calendarEvents
+        .filter(
+          (event) =>
+            new Date(
+              event.startAt
+            ) > now &&
+            event.status !==
+              "CANCELLED" &&
+            eventDateKey(event) !==
+              todayKey
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.startAt) -
+            new Date(b.startAt)
+        )
+        .slice(0, 6);
+    }, [
+      calendarEvents,
+      todayKey,
+    ]);
+
+  const agendaEvents =
+    useMemo(() => {
+      const key =
+        dateKey(agendaDate);
+
+      return calendarEvents
+        .filter(
+          (event) =>
+            eventDateKey(event) ===
+              key &&
+            event.status !==
+              "CANCELLED"
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.startAt) -
+            new Date(b.startAt)
+        );
+    }, [
+      calendarEvents,
+      agendaDate,
+    ]);
+
+  function moveAgendaDay(offset) {
+    const next =
+      new Date(agendaDate);
+
+    next.setDate(
+      next.getDate() + offset
     );
+
+    setAgendaDate(next);
+
+    if (
+      next.getFullYear() !==
+        calendarMonth.getFullYear() ||
+      next.getMonth() !==
+        calendarMonth.getMonth()
+    ) {
+      setCalendarMonth(
+        new Date(
+          next.getFullYear(),
+          next.getMonth(),
+          1
+        )
+      );
+    }
+  }
+
 
   return (
     <div className="space-y-6">
-      {/* HEADER */}
+      {/* DASHBOARD HEADER */}
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
             <LayoutDashboardIcon />
-
-            Business overview
+            ConsulBuzz overview
           </div>
 
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
-            Welcome back,{" "}
-            {user?.name
-              ?.split(
-                " "
-              )[0] ||
-              "Admin"}
+          <h1 className="mt-2 text-[26px] font-bold tracking-[-0.035em] text-slate-950">
+            Dashboard
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            {tenant.name} ·{" "}
-            {new Date().toLocaleDateString(
-              "en-IN",
-              {
-                weekday:
-                  "long",
-
-                day:
-                  "numeric",
-
-                month:
-                  "long",
-
-                year:
-                  "numeric",
-              }
-            )}
+            Leads, admissions, revenue and finance performance in one view.
           </p>
         </div>
 
         <button
           type="button"
           onClick={() => {
-            loadDashboard();
+            loadDashboard(selectedYear);
             loadCalendar();
           }}
-          disabled={
-            loading ||
-            calendarLoading
-          }
-          className="h-9 px-3.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 inline-flex items-center justify-center gap-2 shadow-sm hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 transition-colors"
+          disabled={loading || calendarLoading}
+          className="h-9 px-3.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 inline-flex items-center justify-center gap-2 shadow-sm hover:bg-slate-50 disabled:opacity-50"
         >
           <RefreshCw
             size={14}
             className={
-              loading ||
-              calendarLoading
+              loading || calendarLoading
                 ? "animate-spin"
                 : ""
             }
           />
-
           Refresh data
         </button>
       </div>
@@ -1056,7 +783,7 @@ export default function Dashboard({
       )}
 
       {loading ? (
-        <div className="bg-white border border-slate-200 rounded-lg p-12 flex items-center justify-center gap-2 text-sm text-slate-500">
+        <div className="bg-white border border-slate-200 rounded-xl p-12 flex items-center justify-center gap-2 text-sm text-slate-500">
           <Loader2
             size={18}
             className="animate-spin"
@@ -1066,848 +793,447 @@ export default function Dashboard({
         </div>
       ) : (
         <>
-          {/* KPI CARDS */}
+          {/* CONSULBUZZ KPI + ANALYTICS + CALENDAR */}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            <MetricCard
-              label="Total Leads"
-              value={
-                summary.totalLeads ||
-                0
-              }
-              icon={
-                Users
-              }
-              detail="All leads captured in the CRM"
-              accent="indigo"
-            />
-
-            <MetricCard
-              label="New Leads"
-              value={
-                summary.newLeads ||
-                0
-              }
-              icon={
-                Clock
-              }
-              detail="Leads currently awaiting action"
-              accent="amber"
-            />
-
-            <MetricCard
-              label="Qualified Leads"
-              value={
-                summary.qualifiedLeads ||
-                0
-              }
-              icon={
-                Target
-              }
-              detail="Sales-ready opportunities"
-              accent="indigo"
-            />
-
-            <MetricCard
-              label="Total Admissions"
-              value={
-                summary.totalAdmissions ||
-                0
-              }
-              icon={
-                UserCheck
-              }
-              detail="Successful admissions recorded"
-              accent="emerald"
-            />
-
-            <MetricCard
-              label="Potential Revenue"
-              value={money(
-                summary.potentialRevenue
-              )}
-              icon={
-                CircleDollarSign
-              }
-              detail="Total admission value"
-              accent="indigo"
-            />
-
-            <MetricCard
-              label="Received Amount"
-              value={money(
-                summary.receivedAmount
-              )}
-              icon={
-                DollarSign
-              }
-              detail="Revenue collected to date"
-              accent="emerald"
-            />
-
-            <MetricCard
-              label="Pending Amount"
-              value={money(
-                summary.pendingAmount
-              )}
-              icon={
-                Clock
-              }
-              detail="Amount still to be collected"
-              accent="amber"
-            />
-
-            <MetricCard
-              label="Current Profit"
-              value={money(
-                summary.currentProfit
-              )}
-              icon={
-                Wallet
-              }
-              detail="Current calculated profitability"
-              accent={
-                summary.currentProfit >=
-                0
-                  ? "emerald"
-                  : "rose"
-              }
-            />
-          </div>
-
-          {/* CALENDAR */}
-
-          <div className="grid grid-cols-1 2xl:grid-cols-[minmax(0,2fr)_360px] gap-4">
-            <div className="bg-white border border-slate-200 rounded-xl shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <CalendarDays
-                      size={17}
-                      className="text-indigo-600"
-                    />
-
-                    <h3 className="text-sm font-bold text-slate-950">
-                      My Calendar
-                    </h3>
-                  </div>
-
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Meetings,
-                    follow-ups,
-                    counselling and
-                    important CRM
-                    events.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCalendarMonth(
-                        new Date(
-                          new Date().getFullYear(),
-                          new Date().getMonth(),
-                          1
-                        )
-                      )
-                    }
-                    className="h-8 px-3 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
-                  >
-                    Today
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      openCreateEvent(
-                        new Date()
-                      )
-                    }
-                    className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold inline-flex items-center gap-1.5"
-                  >
-                    <Plus
-                      size={13}
-                    />
-
-                    Add event
-                  </button>
-                </div>
-              </div>
-
-              {calendarError && (
-                <div className="mx-5 mt-4 px-3 py-2 rounded-lg bg-rose-50 border border-rose-100 text-xs text-rose-700">
-                  {calendarError}
-                </div>
-              )}
-
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCalendarMonth(
-                        new Date(
-                          calendarMonth.getFullYear(),
-                          calendarMonth.getMonth() -
-                            1,
-                          1
-                        )
-                      )
-                    }
-                    className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
-                  >
-                    <ChevronLeft
-                      size={15}
-                    />
-                  </button>
-
-                  <div className="text-sm font-bold text-slate-900">
-                    {calendarMonth.toLocaleDateString(
-                      "en-IN",
-                      {
-                        month:
-                          "long",
-
-                        year:
-                          "numeric",
-                      }
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCalendarMonth(
-                        new Date(
-                          calendarMonth.getFullYear(),
-                          calendarMonth.getMonth() +
-                            1,
-                          1
-                        )
-                      )
-                    }
-                    className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
-                  >
-                    <ChevronRight
-                      size={15}
-                    />
-                  </button>
-                </div>
-
-                {calendarLoading ? (
-                  <div className="h-[420px] flex items-center justify-center gap-2 text-sm text-slate-500">
-                    <Loader2
-                      size={17}
-                      className="animate-spin"
-                    />
-
-                    Loading
-                    calendar...
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-7 border-t border-l border-slate-200 rounded-xl overflow-hidden">
-                    {[
-                      "Sun",
-                      "Mon",
-                      "Tue",
-                      "Wed",
-                      "Thu",
-                      "Fri",
-                      "Sat",
-                    ].map(
-                      (
-                        day
-                      ) => (
-                        <div
-                          key={
-                            day
-                          }
-                          className="bg-slate-50 border-r border-b border-slate-200 px-2 py-2.5 text-center text-[10px] font-bold uppercase tracking-wide text-slate-500"
-                        >
-                          {
-                            day
-                          }
-                        </div>
-                      )
-                    )}
-
-                    {(() => {
-                      const year =
-                        calendarMonth.getFullYear();
-
-                      const month =
-                        calendarMonth.getMonth();
-
-                      const firstDay =
-                        new Date(
-                          year,
-                          month,
-                          1
-                        ).getDay();
-
-                      const days =
-                        new Date(
-                          year,
-                          month +
-                            1,
-                          0
-                        ).getDate();
-
-                      const cells =
-                        [];
-
-                      for (
-                        let i =
-                          0;
-                        i <
-                        firstDay;
-                        i +=
-                        1
-                      ) {
-                        cells.push(
-                          <div
-                            key={`blank-${i}`}
-                            className="min-h-[96px] bg-slate-50/40 border-r border-b border-slate-200"
-                          />
-                        );
-                      }
-
-                      for (
-                        let day =
-                          1;
-                        day <=
-                        days;
-                        day +=
-                        1
-                      ) {
-                        const date =
-                          new Date(
-                            year,
-                            month,
-                            day
-                          );
-
-                        const key =
-                          dateKey(
-                            date
-                          );
-
-                        const dayEvents =
-                          calendarEvents
-                            .filter(
-                              (
-                                event
-                              ) =>
-                                eventDateKey(
-                                  event
-                                ) ===
-                                key
-                            )
-                            .sort(
-                              (
-                                a,
-                                b
-                              ) =>
-                                new Date(
-                                  a.startAt
-                                ) -
-                                new Date(
-                                  b.startAt
-                                )
-                            );
-
-                        const isToday =
-                          key ===
-                          todayKey;
-
-                        cells.push(
-                          <div
-                            key={
-                              key
-                            }
-                            onDoubleClick={() =>
-                              openCreateEvent(
-                                date
-                              )
-                            }
-                            className="min-h-[96px] p-2 bg-white hover:bg-slate-50/70 border-r border-b border-slate-200 transition-colors overflow-hidden"
-                          >
-                            <button
-                              type="button"
-                              onClick={() =>
-                                openCreateEvent(
-                                  date
-                                )
-                              }
-                              className={`inline-flex w-6 h-6 items-center justify-center rounded-full text-[11px] font-semibold ${
-                                isToday
-                                  ? "bg-indigo-600 text-white"
-                                  : "text-slate-700 hover:bg-slate-100"
-                              }`}
-                            >
-                              {
-                                day
-                              }
-                            </button>
-
-                            <div className="mt-1.5 space-y-1">
-                              {dayEvents
-                                .slice(
-                                  0,
-                                  3
-                                )
-                                .map(
-                                  (
-                                    item
-                                  ) => (
-                                    <button
-                                      key={
-                                        item.id
-                                      }
-                                      type="button"
-                                      onClick={() =>
-                                        openEditEvent(
-                                          item
-                                        )
-                                      }
-                                      className={`w-full truncate text-left rounded-md border px-1.5 py-1 text-[9px] font-semibold ${
-                                        EVENT_TYPE_STYLES[
-                                          item
-                                            .type
-                                        ] ||
-                                        EVENT_TYPE_STYLES.OTHER
-                                      }`}
-                                    >
-                                      {item.allDay
-                                        ? ""
-                                        : `${new Date(
-                                            item.startAt
-                                          ).toLocaleTimeString(
-                                            "en-IN",
-                                            {
-                                              hour:
-                                                "2-digit",
-
-                                              minute:
-                                                "2-digit",
-                                            }
-                                          )} `}
-
-                                      {
-                                        item.title
-                                      }
-                                    </button>
-                                  )
-                                )}
-
-                              {dayEvents.length >
-                                3 && (
-                                <div className="text-[9px] font-semibold text-slate-400 px-1">
-                                  +
-                                  {dayEvents.length -
-                                    3}{" "}
-                                  more
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      }
-
-                      return cells;
-                    })()}
-                  </div>
-                )}
-
-                <div className="mt-3 text-[10px] text-slate-400">
-                  Click a date to
-                  create an event.
-                  Click an existing
-                  event to edit it.
-                </div>
-              </div>
-            </div>
-
-            {/* TODAY + UPCOMING */}
-
-            <div className="bg-white border border-slate-200 rounded-xl shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
-              <div className="px-4 py-4 border-b border-slate-100">
-                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                  Today
-                </div>
-
-                <div className="mt-1 text-sm font-bold text-slate-950">
-                  {new Date().toLocaleDateString(
-                    "en-IN",
-                    {
-                      weekday:
-                        "long",
-
-                      day:
-                        "numeric",
-
-                      month:
-                        "long",
-                    }
-                  )}
-                </div>
-              </div>
-
-              <div className="p-4">
-                {todayEvents.length ===
-                0 ? (
-                  <div className="rounded-xl bg-slate-50 border border-slate-100 p-5 text-center">
-                    <CalendarDays
-                      size={20}
-                      className="mx-auto text-slate-300"
-                    />
-
-                    <div className="mt-2 text-xs font-semibold text-slate-700">
-                      No events today
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        openCreateEvent(
-                          new Date()
-                        )
-                      }
-                      className="mt-3 text-[11px] font-semibold text-indigo-600 hover:text-indigo-700"
-                    >
-                      + Add event
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {todayEvents.map(
-                      (
-                        item
-                      ) => (
-                        <button
-                          key={
-                            item.id
-                          }
-                          type="button"
-                          onClick={() =>
-                            openEditEvent(
-                              item
-                            )
-                          }
-                          className="w-full text-left rounded-xl border border-slate-200 p-3 hover:border-indigo-200 hover:bg-indigo-50/20 transition-colors"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="w-12 text-[10px] font-bold text-indigo-600 pt-0.5">
-                              {eventTime(
-                                item
-                              )}
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                              <div className="text-xs font-semibold text-slate-900 truncate">
-                                {
-                                  item.title
-                                }
-                              </div>
-
-                              <div className="mt-1 text-[10px] text-slate-500">
-                                {typeLabel(
-                                  item.type
-                                )}
-                              </div>
-
-                              {item.assignedTo
-                                ?.name && (
-                                <div className="mt-1 text-[10px] text-slate-400 truncate">
-                                  {
-                                    item
-                                      .assignedTo
-                                      .name
-                                  }
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    )}
-                  </div>
-                )}
-
-                <div className="mt-6 mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                  Upcoming
-                </div>
-
-                {upcomingEvents.length ===
-                0 ? (
-                  <div className="py-5 text-center text-xs text-slate-400">
-                    No upcoming
-                    events.
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {upcomingEvents.map(
-                      (
-                        item
-                      ) => (
-                        <button
-                          key={
-                            item.id
-                          }
-                          type="button"
-                          onClick={() =>
-                            openEditEvent(
-                              item
-                            )
-                          }
-                          className="w-full flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left hover:bg-slate-50 transition-colors"
-                        >
-                          <div className="w-10 text-center flex-shrink-0">
-                            <div className="text-[9px] font-bold text-indigo-600 uppercase">
-                              {new Date(
-                                item.startAt
-                              ).toLocaleDateString(
-                                "en-IN",
-                                {
-                                  month:
-                                    "short",
-                                }
-                              )}
-                            </div>
-
-                            <div className="text-base font-bold text-slate-950">
-                              {new Date(
-                                item.startAt
-                              ).getDate()}
-                            </div>
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-semibold text-slate-900 truncate">
-                              {
-                                item.title
-                              }
-                            </div>
-
-                            <div className="mt-0.5 text-[10px] text-slate-500 truncate">
-                              {eventTime(
-                                item
-                              )}{" "}
-                              ·{" "}
-                              {typeLabel(
-                                item.type
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* ANALYTICS */}
-
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-            <div className="xl:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-              <h3 className="text-sm font-bold text-slate-900 mb-4">
-                Revenue Trend
-              </h3>
-
-              <ResponsiveContainer
-                width="100%"
-                height={
-                  260
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_330px] gap-4 items-start">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 2xl:grid-cols-4 gap-3 sm:gap-4 content-start">
+              <MetricCard
+                label="Total Leads"
+                value={summary.totalLeads || 0}
+                icon={Users}
+                detail={
+                  selectedYear === "all"
+                    ? "All CRM leads"
+                    : `CRM leads in ${selectedYear}`
                 }
-              >
-                <BarChart
-                  data={
-                    data.revenueTrend
-                  }
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#e2e8f0"
-                  />
+                accent="indigo"
+              />
 
-                  <XAxis
-                    dataKey="m"
-                    fontSize={
-                      11
-                    }
-                    stroke="#64748b"
-                  />
+              <MetricCard
+                label="New Leads"
+                value={summary.newLeads || 0}
+                icon={Clock}
+                detail="Leads awaiting action"
+                accent="amber"
+              />
 
-                  <YAxis
-                    fontSize={
-                      11
-                    }
-                    stroke="#64748b"
-                    tickFormatter={
-                      axisMoney
-                    }
-                  />
+              <MetricCard
+                label="Qualified Leads"
+                value={summary.qualifiedLeads || 0}
+                icon={Target}
+                detail="Qualified lead opportunities"
+                accent="indigo"
+              />
 
-                  <Tooltip
-                    formatter={(
-                      value
-                    ) =>
-                      money(
-                        value
-                      )
-                    }
-                  />
+              <MetricCard
+                label="Admissions"
+                value={summary.totalAdmissions || 0}
+                icon={UserCheck}
+                detail={
+                  selectedYear === "all"
+                    ? "Recorded admissions"
+                    : `Admissions in ${selectedYear}`
+                }
+                accent="emerald"
+              />
 
-                  <Bar
-                    dataKey="potential"
-                    name="Potential"
-                    fill="#cbd5e1"
-                    radius={[
-                      4,
-                      4,
-                      0,
-                      0,
-                    ]}
-                  />
+              <MetricCard
+                label="Potential Revenue"
+                value={money(summary.potentialRevenue)}
+                icon={CircleDollarSign}
+                detail="Total admission revenue value"
+                accent="indigo"
+              />
 
-                  <Bar
-                    dataKey="received"
-                    name="Received"
-                    fill="#6366f1"
-                    radius={[
-                      4,
-                      4,
-                      0,
-                      0,
-                    ]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <MetricCard
+                label="Received Revenue"
+                value={money(summary.receivedAmount)}
+                icon={DollarSign}
+                detail="Revenue already received"
+                accent="emerald"
+              />
+
+              <MetricCard
+                label="Pending Revenue"
+                value={money(summary.pendingAmount)}
+                icon={Clock}
+                detail="Revenue pending collection"
+                accent="amber"
+              />
+
+              <MetricCard
+                label="Finance / Profit"
+                value={money(summary.currentProfit)}
+                icon={Wallet}
+                detail={
+                  selectedYear === "all"
+                    ? "Current CRM profitability"
+                    : `Profit for ${selectedYear}`
+                }
+                accent={
+                  summary.currentProfit >= 0
+                    ? "emerald"
+                    : "rose"
+                }
+              />
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-              <h3 className="text-sm font-bold text-slate-900 mb-4">
-                Leads by Source
-              </h3>
+              {/* ANALYTICS — immediately below KPI cards */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+              <div className="xl:col-span-2 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Revenue Trend
+                  </h3>
 
-              {data.leadsBySource
-                .length >
-              0 ? (
-                <>
-                  <ResponsiveContainer
-                    width="100%"
-                    height={
-                      220
+                  <span className="text-[10px] font-semibold text-slate-400">
+                    {selectedYear ===
+                    "all"
+                      ? "Last 8 months"
+                      : selectedYear}
+                  </span>
+                </div>
+
+                <ResponsiveContainer
+                  width="100%"
+                  height={260}
+                >
+                  <BarChart
+                    data={
+                      data.revenueTrend
                     }
                   >
-                    <PieChart>
-                      <Pie
-                        data={
-                          data.leadsBySource
-                        }
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius={
-                          45
-                        }
-                        outerRadius={
-                          80
-                        }
-                        paddingAngle={
-                          2
-                        }
-                      >
-                        {data.leadsBySource.map(
-                          (
-                            entry,
-                            index
-                          ) => (
-                            <Cell
-                              key={
-                                entry.name
-                              }
-                              fill={
-                                PIE_COLORS[
-                                  index %
-                                    PIE_COLORS.length
-                                ]
-                              }
-                            />
-                          )
-                        )}
-                      </Pie>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#e2e8f0"
+                    />
 
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                    <XAxis
+                      dataKey="m"
+                      fontSize={11}
+                      stroke="#64748b"
+                    />
 
-                  <div className="mt-2 space-y-1">
-                    {data.leadsBySource.map(
-                      (
-                        source,
-                        index
-                      ) => (
-                        <div
-                          key={
-                            source.name
+                    <YAxis
+                      fontSize={11}
+                      stroke="#64748b"
+                      tickFormatter={
+                        axisMoney
+                      }
+                    />
+
+                    <Tooltip
+                      formatter={(value) =>
+                        money(value)
+                      }
+                    />
+
+                    <Bar
+                      dataKey="potential"
+                      name="Potential"
+                      fill="#cbd5e1"
+                      radius={[
+                        4,
+                        4,
+                        0,
+                        0,
+                      ]}
+                    />
+
+                    <Bar
+                      dataKey="received"
+                      name="Received"
+                      fill="#6366f1"
+                      radius={[
+                        4,
+                        4,
+                        0,
+                        0,
+                      ]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+                <h3 className="text-sm font-bold text-slate-900 mb-4">
+                  Leads by Source
+                </h3>
+
+                {data.leadsBySource
+                  .length > 0 ? (
+                  <>
+                    <ResponsiveContainer
+                      width="100%"
+                      height={220}
+                    >
+                      <PieChart>
+                        <Pie
+                          data={
+                            data.leadsBySource
                           }
-                          className="flex items-center justify-between text-xs"
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={45}
+                          outerRadius={80}
+                          paddingAngle={2}
                         >
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className="w-2 h-2 rounded-full"
-                              style={{
-                                background:
+                          {data.leadsBySource.map(
+                            (
+                              entry,
+                              index
+                            ) => (
+                              <Cell
+                                key={
+                                  entry.name
+                                }
+                                fill={
                                   PIE_COLORS[
                                     index %
                                       PIE_COLORS.length
-                                  ],
-                              }}
-                            />
+                                  ]
+                                }
+                              />
+                            )
+                          )}
+                        </Pie>
 
-                            {
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+
+                    <div className="mt-2 space-y-1">
+                      {data.leadsBySource.map(
+                        (
+                          source,
+                          index
+                        ) => (
+                          <div
+                            key={
                               source.name
                             }
-                          </div>
+                            className="flex items-center justify-between text-xs"
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className="w-2 h-2 rounded-full"
+                                style={{
+                                  background:
+                                    PIE_COLORS[
+                                      index %
+                                        PIE_COLORS.length
+                                    ],
+                                }}
+                              />
 
-                          <span className="text-slate-500">
-                            {
-                              source.value
-                            }
-                          </span>
+                              {
+                                source.name
+                              }
+                            </div>
+
+                            <span className="text-slate-500">
+                              {
+                                source.value
+                              }
+                            </span>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="h-[220px] flex items-center justify-center text-sm text-slate-500">
+                    No lead data yet.
+                  </div>
+                )}
+              </div>
+          </div>
+            </div>
+
+            {/* RIGHT CORNER CALENDAR */}
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-[0_8px_26px_rgba(15,23,42,0.05)] overflow-hidden">
+              <div className="px-5 pt-5 pb-3 flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[16px] font-bold text-slate-950">
+                    Calendar
+                  </div>
+                  <div className="mt-1 text-[12px] font-semibold text-slate-700">
+                    {agendaDate.toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setFullCalendarOpen(true)}
+                  className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700"
+                >
+                  View full
+                </button>
+              </div>
+
+              <div className="px-5 pb-3 flex items-center justify-end gap-1">
+                <button
+                  type="button"
+                  onClick={() => moveAgendaDay(-1)}
+                  className="w-8 h-8 rounded-lg text-indigo-700 hover:bg-indigo-50 flex items-center justify-center"
+                  aria-label="Previous day"
+                >
+                  <ChevronLeft size={17} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const today = new Date();
+                    setAgendaDate(today);
+                    setCalendarMonth(
+                      new Date(
+                        today.getFullYear(),
+                        today.getMonth(),
+                        1
+                      )
+                    );
+                  }}
+                  className="h-8 px-2.5 rounded-lg text-[10px] font-semibold text-slate-500 hover:bg-slate-50"
+                >
+                  Today
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => moveAgendaDay(1)}
+                  className="w-8 h-8 rounded-lg text-indigo-700 hover:bg-indigo-50 flex items-center justify-center"
+                  aria-label="Next day"
+                >
+                  <ChevronRight size={17} />
+                </button>
+              </div>
+
+              <div className="px-5 pb-5">
+                {calendarLoading ? (
+                  <div className="h-[320px] flex items-center justify-center gap-2 text-xs text-slate-500">
+                    <Loader2 size={15} className="animate-spin" />
+                    Loading calendar...
+                  </div>
+                ) : calendarError ? (
+                  <div className="rounded-xl border border-rose-100 bg-rose-50 p-3 text-xs text-rose-700">
+                    {calendarError}
+                  </div>
+                ) : (
+                  <div className="relative min-h-[320px]">
+                    <div className="absolute left-[53px] top-0 bottom-0 w-px bg-slate-200" />
+
+                    {["9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM"].map(
+                      (time) => (
+                        <div
+                          key={time}
+                          className="h-[42px] relative flex items-start"
+                        >
+                          <div className="w-[46px] pt-0.5 text-[10px] text-slate-500">
+                            {time}
+                          </div>
+                          <div className="flex-1 border-t border-slate-100" />
                         </div>
                       )
                     )}
+
+                    {agendaEvents.length === 0 && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          <CalendarDays
+                            size={21}
+                            className="mx-auto text-slate-300"
+                          />
+                          <div className="mt-2 text-xs font-semibold text-slate-600">
+                            No events
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => openCreateEvent(agendaDate)}
+                            className="mt-2 text-[11px] font-semibold text-indigo-600"
+                          >
+                            + Add event
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {agendaEvents.map((item, index) => {
+                      const start = new Date(item.startAt);
+                      const hour = start.getHours();
+                      const minute = start.getMinutes();
+
+                      const clampedHour = Math.max(9, Math.min(hour, 17));
+                      const top =
+                        (clampedHour - 9) * 42 +
+                        Math.round((minute / 60) * 42);
+
+                      const style =
+                        EVENT_TYPE_STYLES[item.type] ||
+                        EVENT_TYPE_STYLES.OTHER;
+
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => openEditEvent(item)}
+                          className={`absolute left-[62px] right-0 rounded-xl border px-3 py-2 text-left shadow-sm ${style}`}
+                          style={{
+                            top: `${Math.min(top, 290)}px`,
+                            minHeight: "54px",
+                            zIndex: 10 + index,
+                          }}
+                        >
+                          <div className="text-[11px] font-bold truncate">
+                            {item.title}
+                          </div>
+                          <div className="mt-1 text-[10px] opacity-80">
+                            {eventTime(item)}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                </>
-              ) : (
-                <div className="h-[220px] flex items-center justify-center text-sm text-slate-500">
-                  No lead data
-                  yet.
-                </div>
-              )}
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => openCreateEvent(agendaDate)}
+                  className="mt-3 h-9 w-full rounded-xl border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center gap-1.5"
+                >
+                  <Plus size={13} />
+                  Add calendar event
+                </button>
+              </div>
             </div>
           </div>
 
           {/* TEAM PERFORMANCE */}
 
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-            <h3 className="text-sm font-bold text-slate-900 mb-4">
-              Team Performance
-            </h3>
+          <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <h3 className="text-sm font-bold text-slate-900">
+                Team Performance
+              </h3>
+
+              <div className="text-[10px] font-semibold text-slate-400">
+                {selectedYear ===
+                "all"
+                  ? "All Time"
+                  : selectedYear}
+              </div>
+            </div>
 
             {data.teamPerformance
-              .length >
-            0 ? (
+              .length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                 {data.teamPerformance.map(
-                  (
-                    member
-                  ) => (
+                  (member) => (
                     <div
                       key={
                         member.name
@@ -1963,8 +1289,8 @@ export default function Dashboard({
               </div>
             ) : (
               <div className="py-8 text-center text-sm text-slate-500">
-                No team activity
-                yet.
+                No team activity for
+                this period.
               </div>
             )}
           </div>
@@ -1973,27 +1299,530 @@ export default function Dashboard({
 
       {/* EVENT MODAL */}
 
+      {fullCalendarOpen && (
+        <div className="fixed inset-0 z-[88] bg-slate-950/45 backdrop-blur-[2px] p-3 sm:p-6 overflow-y-auto">
+          <div className="max-w-[1380px] mx-auto bg-[#f7f8fb] rounded-2xl shadow-2xl border border-white overflow-hidden">
+            <div className="h-16 px-5 sm:px-6 bg-white border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <div className="text-base font-bold text-slate-950">
+                  ConsulBuzz Calendar
+                </div>
+                <div className="text-[11px] text-slate-500 mt-0.5">
+                  Meetings, follow-ups, counselling, admissions and payment reminders.
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setFullCalendarOpen(false)}
+                className="w-9 h-9 rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 flex items-center justify-center"
+                aria-label="Close full calendar"
+              >
+                <X size={17} />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-5">
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_340px] gap-4">
+            <div className="bg-white border border-slate-200 rounded-xl shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
+              <div className="px-4 sm:px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <CalendarDays
+                      size={17}
+                      className="text-indigo-600"
+                    />
+
+                    <h3 className="text-sm font-bold text-slate-950">
+                      My Calendar
+                    </h3>
+                  </div>
+
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Meetings, follow-ups,
+                    counselling and
+                    important CRM events.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCalendarMonth(
+                        new Date(
+                          new Date().getFullYear(),
+                          new Date().getMonth(),
+                          1
+                        )
+                      )
+                    }
+                    className="h-8 px-3 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    Today
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openCreateEvent(
+                        new Date()
+                      )
+                    }
+                    className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold inline-flex items-center gap-1.5"
+                  >
+                    <Plus size={13} />
+
+                    Add event
+                  </button>
+                </div>
+              </div>
+
+              {calendarError && (
+                <div className="mx-4 sm:mx-5 mt-4 px-3 py-2 rounded-lg bg-rose-50 border border-rose-100 text-xs text-rose-700">
+                  {calendarError}
+                </div>
+              )}
+
+              <div className="p-4 sm:p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCalendarMonth(
+                        new Date(
+                          calendarMonth.getFullYear(),
+                          calendarMonth.getMonth() -
+                            1,
+                          1
+                        )
+                      )
+                    }
+                    className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
+                  >
+                    <ChevronLeft
+                      size={15}
+                    />
+                  </button>
+
+                  <div className="text-sm font-bold text-slate-900">
+                    {calendarMonth.toLocaleDateString(
+                      "en-IN",
+                      {
+                        month: "long",
+                        year: "numeric",
+                      }
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCalendarMonth(
+                        new Date(
+                          calendarMonth.getFullYear(),
+                          calendarMonth.getMonth() +
+                            1,
+                          1
+                        )
+                      )
+                    }
+                    className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50"
+                  >
+                    <ChevronRight
+                      size={15}
+                    />
+                  </button>
+                </div>
+
+                {calendarLoading ? (
+                  <div className="h-[360px] sm:h-[420px] flex items-center justify-center gap-2 text-sm text-slate-500">
+                    <Loader2
+                      size={17}
+                      className="animate-spin"
+                    />
+
+                    Loading calendar...
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto -mx-1 pb-1">
+                    <div className="min-w-[700px] grid grid-cols-7 border-t border-l border-slate-200 rounded-xl overflow-hidden">
+                      {[
+                        "Sun",
+                        "Mon",
+                        "Tue",
+                        "Wed",
+                        "Thu",
+                        "Fri",
+                        "Sat",
+                      ].map((day) => (
+                        <div
+                          key={day}
+                          className="bg-slate-50 border-r border-b border-slate-200 px-2 py-2.5 text-center text-[10px] font-bold uppercase tracking-wide text-slate-500"
+                        >
+                          {day}
+                        </div>
+                      ))}
+
+                      {(() => {
+                        const year =
+                          calendarMonth.getFullYear();
+
+                        const month =
+                          calendarMonth.getMonth();
+
+                        const firstDay =
+                          new Date(
+                            year,
+                            month,
+                            1
+                          ).getDay();
+
+                        const days =
+                          new Date(
+                            year,
+                            month + 1,
+                            0
+                          ).getDate();
+
+                        const cells = [];
+
+                        for (
+                          let i = 0;
+                          i < firstDay;
+                          i += 1
+                        ) {
+                          cells.push(
+                            <div
+                              key={`blank-${i}`}
+                              className="min-h-[96px] bg-slate-50/40 border-r border-b border-slate-200"
+                            />
+                          );
+                        }
+
+                        for (
+                          let day = 1;
+                          day <= days;
+                          day += 1
+                        ) {
+                          const date =
+                            new Date(
+                              year,
+                              month,
+                              day
+                            );
+
+                          const key =
+                            dateKey(date);
+
+                          const dayEvents =
+                            calendarEvents
+                              .filter(
+                                (event) =>
+                                  eventDateKey(
+                                    event
+                                  ) === key
+                              )
+                              .sort(
+                                (a, b) =>
+                                  new Date(
+                                    a.startAt
+                                  ) -
+                                  new Date(
+                                    b.startAt
+                                  )
+                              );
+
+                          const isToday =
+                            key ===
+                            todayKey;
+
+                          cells.push(
+                            <div
+                              key={key}
+                              onDoubleClick={() =>
+                                openCreateEvent(
+                                  date
+                                )
+                              }
+                              className="min-h-[96px] p-2 bg-white hover:bg-slate-50/70 border-r border-b border-slate-200 transition-colors overflow-hidden"
+                            >
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openCreateEvent(
+                                    date
+                                  )
+                                }
+                                className={`inline-flex w-6 h-6 items-center justify-center rounded-full text-[11px] font-semibold ${
+                                  isToday
+                                    ? "bg-indigo-600 text-white"
+                                    : "text-slate-700 hover:bg-slate-100"
+                                }`}
+                              >
+                                {day}
+                              </button>
+
+                              <div className="mt-1.5 space-y-1">
+                                {dayEvents
+                                  .slice(0, 3)
+                                  .map(
+                                    (item) => (
+                                      <button
+                                        key={
+                                          item.id
+                                        }
+                                        type="button"
+                                        onClick={() =>
+                                          openEditEvent(
+                                            item
+                                          )
+                                        }
+                                        className={`w-full truncate text-left rounded-md border px-1.5 py-1 text-[9px] font-semibold ${
+                                          EVENT_TYPE_STYLES[
+                                            item
+                                              .type
+                                          ] ||
+                                          EVENT_TYPE_STYLES.OTHER
+                                        }`}
+                                      >
+                                        {!item.allDay
+                                          ? `${new Date(
+                                              item.startAt
+                                            ).toLocaleTimeString(
+                                              "en-IN",
+                                              {
+                                                hour:
+                                                  "2-digit",
+                                                minute:
+                                                  "2-digit",
+                                              }
+                                            )} `
+                                          : ""}
+
+                                        {
+                                          item.title
+                                        }
+                                      </button>
+                                    )
+                                  )}
+
+                                {dayEvents.length >
+                                  3 && (
+                                  <div className="text-[9px] font-semibold text-slate-400 px-1">
+                                    +
+                                    {dayEvents.length -
+                                      3}{" "}
+                                    more
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return cells;
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-3 text-[10px] text-slate-400">
+                  Click a date to create
+                  an event. Click an
+                  existing event to edit
+                  it.
+                </div>
+              </div>
+            </div>
+
+            {/* TODAY + UPCOMING */}
+
+            <div className="bg-white border border-slate-200 rounded-xl shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
+              <div className="px-4 py-4 border-b border-slate-100">
+                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                  Today
+                </div>
+
+                <div className="mt-1 text-sm font-bold text-slate-950">
+                  {new Date().toLocaleDateString(
+                    "en-IN",
+                    {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                    }
+                  )}
+                </div>
+              </div>
+
+              <div className="p-4">
+                {todayEvents.length ===
+                0 ? (
+                  <div className="rounded-xl bg-slate-50 border border-slate-100 p-5 text-center">
+                    <CalendarDays
+                      size={20}
+                      className="mx-auto text-slate-300"
+                    />
+
+                    <div className="mt-2 text-xs font-semibold text-slate-700">
+                      No events today
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openCreateEvent(
+                          new Date()
+                        )
+                      }
+                      className="mt-3 text-[11px] font-semibold text-indigo-600 hover:text-indigo-700"
+                    >
+                      + Add event
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {todayEvents.map(
+                      (item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() =>
+                            openEditEvent(
+                              item
+                            )
+                          }
+                          className="w-full text-left rounded-xl border border-slate-200 p-3 hover:border-indigo-200 hover:bg-indigo-50/20 transition-colors"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-12 text-[10px] font-bold text-indigo-600 pt-0.5">
+                              {eventTime(
+                                item
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-semibold text-slate-900 truncate">
+                                {
+                                  item.title
+                                }
+                              </div>
+
+                              <div className="mt-1 text-[10px] text-slate-500">
+                                {typeLabel(
+                                  item.type
+                                )}
+                              </div>
+
+                              {item.assignedTo
+                                ?.name && (
+                                <div className="mt-1 text-[10px] text-slate-400 truncate">
+                                  {
+                                    item
+                                      .assignedTo
+                                      .name
+                                  }
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-6 mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                  Upcoming
+                </div>
+
+                {upcomingEvents.length ===
+                0 ? (
+                  <div className="py-5 text-center text-xs text-slate-400">
+                    No upcoming events.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {upcomingEvents.map(
+                      (item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() =>
+                            openEditEvent(
+                              item
+                            )
+                          }
+                          className="w-full flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left hover:bg-slate-50 transition-colors"
+                        >
+                          <div className="w-10 text-center flex-shrink-0">
+                            <div className="text-[9px] font-bold text-indigo-600 uppercase">
+                              {new Date(
+                                item.startAt
+                              ).toLocaleDateString(
+                                "en-IN",
+                                {
+                                  month:
+                                    "short",
+                                }
+                              )}
+                            </div>
+
+                            <div className="text-base font-bold text-slate-950">
+                              {new Date(
+                                item.startAt
+                              ).getDate()}
+                            </div>
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-slate-900 truncate">
+                              {
+                                item.title
+                              }
+                            </div>
+
+                            <div className="mt-0.5 text-[10px] text-slate-500 truncate">
+                              {eventTime(
+                                item
+                              )}{" "}
+                              ·{" "}
+                              {typeLabel(
+                                item.type
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+
+            </div>
+          </div>
+        </div>
+      )}
+
       {eventModalOpen && (
         <div
-          className="fixed inset-0 z-[100] bg-slate-950/35 backdrop-blur-[2px] flex items-center justify-center p-4"
-          onMouseDown={(
-            event
-          ) => {
+          className="fixed inset-0 z-[100] bg-slate-950/35 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4"
+          onMouseDown={(event) => {
             if (
               event.target ===
               event.currentTarget
             ) {
-              setEventModalOpen(
-                false
-              );
+              setEventModalOpen(false);
             }
           }}
         >
           <form
-            onSubmit={
-              saveEvent
-            }
-            className="w-full max-w-xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white border border-slate-200 shadow-[0_24px_80px_rgba(15,23,42,0.22)]"
+            onSubmit={saveEvent}
+            className="w-full max-w-xl max-h-[94vh] sm:max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-white border border-slate-200 shadow-[0_24px_80px_rgba(15,23,42,0.22)]"
           >
             <div className="sticky top-0 bg-white z-10 px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <div>
@@ -2020,9 +1849,7 @@ export default function Dashboard({
                 }
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700"
               >
-                <X
-                  size={15}
-                />
+                <X size={15} />
               </button>
             </div>
 
@@ -2037,17 +1864,13 @@ export default function Dashboard({
                   value={
                     eventForm.title
                   }
-                  onChange={(
-                    event
-                  ) =>
+                  onChange={(event) =>
                     setEventForm(
-                      (
-                        form
-                      ) => ({
+                      (form) => ({
                         ...form,
-
                         title:
-                          event.target.value,
+                          event.target
+                            .value,
                       })
                     )
                   }
@@ -2067,17 +1890,13 @@ export default function Dashboard({
                     value={
                       eventForm.startAt
                     }
-                    onChange={(
-                      event
-                    ) =>
+                    onChange={(event) =>
                       setEventForm(
-                        (
-                          form
-                        ) => ({
+                        (form) => ({
                           ...form,
-
                           startAt:
-                            event.target.value,
+                            event.target
+                              .value,
                         })
                       )
                     }
@@ -2095,17 +1914,13 @@ export default function Dashboard({
                     value={
                       eventForm.endAt
                     }
-                    onChange={(
-                      event
-                    ) =>
+                    onChange={(event) =>
                       setEventForm(
-                        (
-                          form
-                        ) => ({
+                        (form) => ({
                           ...form,
-
                           endAt:
-                            event.target.value,
+                            event.target
+                              .value,
                         })
                       )
                     }
@@ -2120,17 +1935,13 @@ export default function Dashboard({
                   checked={
                     eventForm.allDay
                   }
-                  onChange={(
-                    event
-                  ) =>
+                  onChange={(event) =>
                     setEventForm(
-                      (
-                        form
-                      ) => ({
+                      (form) => ({
                         ...form,
-
                         allDay:
-                          event.target.checked,
+                          event.target
+                            .checked,
                       })
                     )
                   }
@@ -2152,26 +1963,20 @@ export default function Dashboard({
                     value={
                       eventForm.type
                     }
-                    onChange={(
-                      event
-                    ) =>
+                    onChange={(event) =>
                       setEventForm(
-                        (
-                          form
-                        ) => ({
+                        (form) => ({
                           ...form,
-
                           type:
-                            event.target.value,
+                            event.target
+                              .value,
                         })
                       )
                     }
                     className="mt-1.5 w-full h-10 rounded-lg border border-slate-200 px-3 text-sm bg-white outline-none focus:border-indigo-400"
                   >
                     {EVENT_TYPES.map(
-                      (
-                        type
-                      ) => (
+                      (type) => (
                         <option
                           key={
                             type.value
@@ -2198,17 +2003,13 @@ export default function Dashboard({
                     value={
                       eventForm.status
                     }
-                    onChange={(
-                      event
-                    ) =>
+                    onChange={(event) =>
                       setEventForm(
-                        (
-                          form
-                        ) => ({
+                        (form) => ({
                           ...form,
-
                           status:
-                            event.target.value,
+                            event.target
+                              .value,
                         })
                       )
                     }
@@ -2242,17 +2043,13 @@ export default function Dashboard({
                   value={
                     eventForm.assignedToUserId
                   }
-                  onChange={(
-                    event
-                  ) =>
+                  onChange={(event) =>
                     setEventForm(
-                      (
-                        form
-                      ) => ({
+                      (form) => ({
                         ...form,
-
                         assignedToUserId:
-                          event.target.value,
+                          event.target
+                            .value,
                       })
                     )
                   }
@@ -2263,9 +2060,7 @@ export default function Dashboard({
                   </option>
 
                   {calendarUsers.map(
-                    (
-                      member
-                    ) => (
+                    (member) => (
                       <option
                         key={
                           member.id
@@ -2288,9 +2083,7 @@ export default function Dashboard({
 
               <label className="block">
                 <span className="text-[11px] font-semibold text-slate-600 flex items-center gap-1.5">
-                  <MapPin
-                    size={12}
-                  />
+                  <MapPin size={12} />
 
                   Location
                 </span>
@@ -2299,17 +2092,13 @@ export default function Dashboard({
                   value={
                     eventForm.location
                   }
-                  onChange={(
-                    event
-                  ) =>
+                  onChange={(event) =>
                     setEventForm(
-                      (
-                        form
-                      ) => ({
+                      (form) => ({
                         ...form,
-
                         location:
-                          event.target.value,
+                          event.target
+                            .value,
                       })
                     )
                   }
@@ -2328,17 +2117,13 @@ export default function Dashboard({
                   value={
                     eventForm.description
                   }
-                  onChange={(
-                    event
-                  ) =>
+                  onChange={(event) =>
                     setEventForm(
-                      (
-                        form
-                      ) => ({
+                      (form) => ({
                         ...form,
-
                         description:
-                          event.target.value,
+                          event.target
+                            .value,
                       })
                     )
                   }
@@ -2347,15 +2132,16 @@ export default function Dashboard({
                 />
               </label>
 
-              {editingEvent?.assignedTo && (
+              {editingEvent
+                ?.assignedTo && (
                 <div className="rounded-lg bg-slate-50 border border-slate-100 p-3 flex items-center gap-2 text-xs text-slate-600">
                   <CheckCircle2
                     size={14}
                     className="text-emerald-500"
                   />
 
-                  Currently
-                  assigned to{" "}
+                  Currently assigned
+                  to{" "}
                   <span className="font-semibold text-slate-800">
                     {
                       editingEvent
@@ -2428,13 +2214,9 @@ export default function Dashboard({
                       className="animate-spin"
                     />
                   ) : editingEvent ? (
-                    <Pencil
-                      size={13}
-                    />
+                    <Pencil size={13} />
                   ) : (
-                    <Plus
-                      size={13}
-                    />
+                    <Plus size={13} />
                   )}
 
                   {editingEvent

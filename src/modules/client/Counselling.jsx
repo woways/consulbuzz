@@ -151,7 +151,7 @@ function Field({ label, required, full, children }) {
   );
 }
 
-export default function Counselling() {
+export default function Counselling({ selectedYear = "all" }) {
   const [sessions, setSessions] = useState([]);
   const [summary, setSummary] = useState({
     sessionsToday: 0,
@@ -180,6 +180,7 @@ export default function Counselling() {
       const params = new URLSearchParams();
       if (search.trim()) params.set("search", search.trim());
       if (statusFilter) params.set("status", statusFilter);
+      if (selectedYear !== "all") params.set("year", selectedYear);
       const query = params.toString();
 
       const data = await apiRequest(
@@ -214,7 +215,7 @@ export default function Counselling() {
   useEffect(() => {
     const timer = window.setTimeout(loadData, 250);
     return () => window.clearTimeout(timer);
-  }, [search, statusFilter]);
+  }, [search, statusFilter, selectedYear]);
 
   useEffect(() => {
     loadLeads();

@@ -8,6 +8,21 @@ import {
 
 const router = Router();
 
+function parseYear(value) {
+  if (!value || value === "all") return null;
+  const year = Number(value);
+  return Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : null;
+}
+
+function yearRange(year) {
+  if (!year) return null;
+  return {
+    gte: new Date(year, 0, 1),
+    lt: new Date(year + 1, 0, 1),
+  };
+}
+
+
 router.use(requireClientUser);
 
 router.use(
@@ -113,6 +128,7 @@ router.get("/", async (req, res) => {
   try {
     const companyId =
       req.clientUser.companyId;
+    const selectedYear = parseYear(req.query.year);
 
     const [
       admissions,
@@ -122,6 +138,7 @@ router.get("/", async (req, res) => {
       prisma.admission.findMany({
         where: {
           companyId,
+          ...(selectedYear ? { admissionDate: yearRange(selectedYear) } : {}),
 
           status: {
             not: "CANCELLED",
@@ -142,6 +159,7 @@ router.get("/", async (req, res) => {
       prisma.expense.findMany({
         where: {
           companyId,
+          ...(selectedYear ? { expenseDate: yearRange(selectedYear) } : {}),
         },
 
         orderBy: {
@@ -152,6 +170,7 @@ router.get("/", async (req, res) => {
       prisma.incentive.findMany({
         where: {
           companyId,
+          ...(selectedYear ? { incentiveDate: yearRange(selectedYear) } : {}),
         },
 
         include: {
@@ -238,21 +257,14 @@ router.get("/", async (req, res) => {
 
     const now = new Date();
 
-    const months = [];
+    const months = selectedYear
+      ? Array.from({ length: 12 }, (_, month) => new Date(selectedYear, month, 1))
+      : [];
 
-    for (
-      let offset = 7;
-      offset >= 0;
-      offset -= 1
-    ) {
-      months.push(
-        new Date(
-          now.getFullYear(),
-          now.getMonth() -
-            offset,
-          1
-        )
-      );
+    if (!selectedYear) {
+      for (let offset = 7; offset >= 0; offset -= 1) {
+        months.push(new Date(now.getFullYear(), now.getMonth() - offset, 1));
+      }
     }
 
     const monthlyRevenue =

@@ -28,6 +28,10 @@ import {
   Users,
   Target,
   BarChart3,
+  ArrowUp,
+  ArrowDown,
+  Minus,
+  GitCompareArrows,
 } from "lucide-react";
 
 import {
@@ -132,7 +136,7 @@ function ChartCard({
   );
 }
 
-export default function Analytics() {
+export default function Analytics({ selectedYear = "all" }) {
   const [
     data,
     setData,
@@ -143,6 +147,7 @@ export default function Analytics() {
     monthlyActivity: [],
     employeePerformance: [],
     topCampaigns: [],
+    comparison: null,
   });
 
   const [
@@ -157,6 +162,20 @@ export default function Analytics() {
     setError,
   ] = useState("");
 
+  const currentYear = new Date().getFullYear();
+
+  const baseYear =
+    selectedYear !== "all" && Number(selectedYear)
+      ? Number(selectedYear)
+      : currentYear;
+
+  const [
+    compareYear,
+    setCompareYear,
+  ] = useState(baseYear - 1);
+
+  const [analyticsTab, setAnalyticsTab] = useState("overview");
+
   async function loadAnalytics() {
     setLoading(
       true
@@ -167,7 +186,7 @@ export default function Analytics() {
     try {
       const result =
         await apiRequest(
-          "/api/client/analytics"
+          `/api/client/analytics?year=${encodeURIComponent(selectedYear)}&compareYear=${encodeURIComponent(compareYear)}`
         );
 
       setData(
@@ -188,8 +207,19 @@ export default function Analytics() {
   }
 
   useEffect(() => {
+    const nextBaseYear =
+      selectedYear !== "all" && Number(selectedYear)
+        ? Number(selectedYear)
+        : new Date().getFullYear();
+
+    setCompareYear((current) =>
+      current === nextBaseYear ? nextBaseYear - 1 : current
+    );
+  }, [selectedYear]);
+
+  useEffect(() => {
     loadAnalytics();
-  }, []);
+  }, [selectedYear, compareYear]);
 
   const summary =
     data.summary || {};
@@ -207,6 +237,93 @@ export default function Analytics() {
         ),
       0
     );
+
+  const comparison = data.comparison || null;
+  const primaryYear = comparison?.primaryYear || baseYear;
+  const comparisonYear = comparison?.compareYear || compareYear;
+
+  function percentChange(current, previous) {
+    const currentValue = Number(current || 0);
+    const previousValue = Number(previous || 0);
+
+    if (previousValue === 0) {
+      return currentValue === 0 ? 0 : null;
+    }
+
+    return Number(
+      (((currentValue - previousValue) / previousValue) * 100).toFixed(1)
+    );
+  }
+
+  function ComparisonCard({
+    label,
+    current,
+    previous,
+    moneyValue = false,
+    percentValue = false,
+  }) {
+    const change = percentChange(current, previous);
+    const positive = change !== null && change > 0;
+    const negative = change !== null && change < 0;
+
+    const formatValue = (value) => {
+      if (moneyValue) return money(value);
+      if (percentValue) return `${Number(value || 0)}%`;
+      return Number(value || 0).toLocaleString("en-IN");
+    };
+
+    return (
+      <div className="bg-white border border-slate-200 rounded-xl p-4">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+          {label}
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div>
+            <div className="text-[10px] text-slate-400">{primaryYear}</div>
+            <div className="mt-1 text-lg font-bold text-slate-950">
+              {formatValue(current)}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[10px] text-slate-400">{comparisonYear}</div>
+            <div className="mt-1 text-lg font-bold text-slate-600">
+              {formatValue(previous)}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 pt-3 border-t border-slate-100">
+          {change === null ? (
+            <span className="text-[11px] font-semibold text-slate-500">
+              New vs zero in {comparisonYear}
+            </span>
+          ) : (
+            <span
+              className={`inline-flex items-center gap-1 text-[11px] font-semibold ${
+                positive
+                  ? "text-emerald-700"
+                  : negative
+                    ? "text-rose-700"
+                    : "text-slate-500"
+              }`}
+            >
+              {positive ? (
+                <ArrowUp size={12} />
+              ) : negative ? (
+                <ArrowDown size={12} />
+              ) : (
+                <Minus size={12} />
+              )}
+              {change > 0 ? "+" : ""}
+              {change}% vs {comparisonYear}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -268,6 +385,33 @@ export default function Analytics() {
 
       {/* LOADING */}
 
+
+      <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+        <button
+          type="button"
+          onClick={() => setAnalyticsTab("overview")}
+          className={`h-8 px-4 rounded-lg text-xs font-semibold transition-colors ${
+            analyticsTab === "overview"
+              ? "bg-slate-950 text-white"
+              : "text-slate-600 hover:bg-slate-50"
+          }`}
+        >
+          Overview
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setAnalyticsTab("comparison")}
+          className={`h-8 px-4 rounded-lg text-xs font-semibold transition-colors ${
+            analyticsTab === "comparison"
+              ? "bg-slate-950 text-white"
+              : "text-slate-600 hover:bg-slate-50"
+          }`}
+        >
+          Year Comparison
+        </button>
+      </div>
+
       {loading ? (
         <div className="bg-white border border-slate-200 rounded-xl p-14 flex items-center justify-center gap-2 text-sm text-slate-500 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
           <Loader2
@@ -280,6 +424,8 @@ export default function Analytics() {
       ) : (
         <>
 
+          {analyticsTab === "overview" && (
+            <>
           {/* KPI CARDS */}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -336,6 +482,237 @@ export default function Analytics() {
             />
           </div>
 
+            </>
+          )}
+
+          {analyticsTab === "comparison" && (
+            <>
+          {/* YEAR COMPARISON */}
+
+          {comparison && (
+            <div className="space-y-4">
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center">
+                      <GitCompareArrows size={17} />
+                    </div>
+
+                    <div>
+                      <h2 className="text-sm font-bold text-slate-900">
+                        Year Comparison
+                      </h2>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Compare {primaryYear} performance against another year.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 inline-flex items-center text-xs font-bold text-slate-700">
+                      {primaryYear}
+                    </div>
+
+                    <span className="text-xs font-semibold text-slate-400">
+                      vs
+                    </span>
+
+                    <select
+                      value={compareYear}
+                      onChange={(event) =>
+                        setCompareYear(Number(event.target.value))
+                      }
+                      className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100"
+                    >
+                      {Array.from({ length: 8 }, (_, index) => currentYear - index)
+                        .filter((year) => year !== primaryYear)
+                        .map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                <ComparisonCard
+                  label="Total Leads"
+                  current={comparison.primary.totalLeads}
+                  previous={comparison.compare.totalLeads}
+                />
+
+                <ComparisonCard
+                  label="Admissions"
+                  current={comparison.primary.totalAdmissions}
+                  previous={comparison.compare.totalAdmissions}
+                />
+
+                <ComparisonCard
+                  label="Conversion Rate"
+                  current={comparison.primary.conversionRate}
+                  previous={comparison.compare.conversionRate}
+                  percentValue
+                />
+
+                <ComparisonCard
+                  label="Potential Revenue"
+                  current={comparison.primary.potentialRevenue}
+                  previous={comparison.compare.potentialRevenue}
+                  moneyValue
+                />
+
+                <ComparisonCard
+                  label="Received"
+                  current={comparison.primary.receivedAmount}
+                  previous={comparison.compare.receivedAmount}
+                  moneyValue
+                />
+
+                <ComparisonCard
+                  label="Pending"
+                  current={comparison.primary.pendingAmount}
+                  previous={comparison.compare.pendingAmount}
+                  moneyValue
+                />
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <ChartCard
+                  title={`Monthly Leads — ${primaryYear} vs ${comparisonYear}`}
+                  subtitle="Month-by-month lead generation comparison."
+                >
+                  <ResponsiveContainer width="100%" height={280}>
+                    <LineChart data={comparison.monthly}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="#e2e8f0"
+                      />
+                      <XAxis
+                        dataKey="m"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: "#64748b" }}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: "#64748b" }}
+                      />
+                      <Tooltip />
+                      <Line
+                        type="monotone"
+                        dataKey="primaryLeads"
+                        name={`${primaryYear} Leads`}
+                        stroke="#6366f1"
+                        strokeWidth={2.5}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="compareLeads"
+                        name={`${comparisonYear} Leads`}
+                        stroke="#94a3b8"
+                        strokeWidth={2.5}
+                        strokeDasharray="5 5"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+
+                <ChartCard
+                  title={`Monthly Admissions — ${primaryYear} vs ${comparisonYear}`}
+                  subtitle="Month-by-month admissions comparison."
+                >
+                  <ResponsiveContainer width="100%" height={280}>
+                    <LineChart data={comparison.monthly}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="#e2e8f0"
+                      />
+                      <XAxis
+                        dataKey="m"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: "#64748b" }}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: "#64748b" }}
+                      />
+                      <Tooltip />
+                      <Line
+                        type="monotone"
+                        dataKey="primaryAdmissions"
+                        name={`${primaryYear} Admissions`}
+                        stroke="#10b981"
+                        strokeWidth={2.5}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="compareAdmissions"
+                        name={`${comparisonYear} Admissions`}
+                        stroke="#94a3b8"
+                        strokeWidth={2.5}
+                        strokeDasharray="5 5"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+              </div>
+
+              <ChartCard
+                title={`Monthly Received Revenue — ${primaryYear} vs ${comparisonYear}`}
+                subtitle="Compare actual received admission revenue month by month."
+              >
+                <ResponsiveContainer width="100%" height={290}>
+                  <BarChart data={comparison.monthly}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="#e2e8f0"
+                    />
+                    <XAxis
+                      dataKey="m"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: "#64748b" }}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: "#64748b" }}
+                      tickFormatter={(value) =>
+                        `₹${Number(value || 0).toLocaleString("en-IN")}`
+                      }
+                    />
+                    <Tooltip formatter={(value) => money(value)} />
+                    <Bar
+                      dataKey="primaryRevenue"
+                      name={`${primaryYear} Received`}
+                      fill="#6366f1"
+                      radius={[5, 5, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="compareRevenue"
+                      name={`${comparisonYear} Received`}
+                      fill="#cbd5e1"
+                      radius={[5, 5, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </div>
+          )}
+
+            </>
+          )}
+
+          {analyticsTab === "overview" && (
+            <>
           {/* PRIMARY CHARTS */}
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -976,6 +1353,8 @@ export default function Analytics() {
               </table>
             </div>
           </div>
+            </>
+          )}
         </>
       )}
     </div>

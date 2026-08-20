@@ -635,7 +635,7 @@ function Field({
   );
 }
 
-export default function UTMLeads() {
+export default function UTMLeads({ selectedYear = "all" }) {
   const [sub, setSub] =
     useState("all");
 
@@ -707,7 +707,7 @@ export default function UTMLeads() {
         linksData,
       ] = await Promise.all([
         apiRequest(
-          "/api/client/leads"
+          `/api/client/leads?year=${encodeURIComponent(selectedYear)}`
         ),
 
         apiRequest(
@@ -734,7 +734,7 @@ export default function UTMLeads() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedYear]);
 
   const filtered =
     useMemo(() => {

@@ -211,6 +211,7 @@ model Company {
   walkIns                 WalkIn[]
   counsellingSessions     CounsellingSession[]
   admissionPartners       AdmissionPartner[]
+  admissionStreams        AdmissionStream[]
   calendarEvents          CalendarEvent[]
 }
 
@@ -560,11 +561,38 @@ model Admission {
   @@index([companyId, partnerId])
 }
 
+model AdmissionStream {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  name String
+  slug String
+
+  description String?
+  color       String  @default("blue")
+  active      Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  partners AdmissionPartner[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, slug])
+  @@index([companyId, active])
+  @@index([companyId, sortOrder])
+}
+
 model AdmissionPartner {
   id String @id @default(cuid())
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  streamId String?
+  stream   AdmissionStream? @relation(fields: [streamId], references: [id], onDelete: SetNull)
 
   name String
   slug String
@@ -581,6 +609,8 @@ model AdmissionPartner {
   @@unique([companyId, slug])
   @@index([companyId, active])
   @@index([companyId, sortOrder])
+  @@index([streamId])
+  @@index([companyId, streamId])
 }
 
 model WalkIn {

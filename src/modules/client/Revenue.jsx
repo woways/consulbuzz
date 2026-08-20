@@ -669,7 +669,7 @@ function RevenueMetric({
   );
 }
 
-export default function Revenue() {
+export default function Revenue({ selectedYear = "all" }) {
   const [tab, setTab] =
     useState("overview");
 
@@ -704,7 +704,7 @@ export default function Revenue() {
     try {
       const result =
         await apiRequest(
-          "/api/client/revenue"
+          `/api/client/revenue?year=${encodeURIComponent(selectedYear)}`
         );
 
       setData(result);
@@ -720,7 +720,7 @@ export default function Revenue() {
 
   useEffect(() => {
     loadRevenue();
-  }, []);
+  }, [selectedYear]);
 
   async function expenseStatus(
     id,

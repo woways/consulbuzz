@@ -13,6 +13,21 @@ import {
 const router =
   Router();
 
+function parseYear(value) {
+  if (!value || value === "all") return null;
+  const year = Number(value);
+  return Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : null;
+}
+
+function yearRange(year) {
+  if (!year) return null;
+  return {
+    gte: new Date(year, 0, 1),
+    lt: new Date(year + 1, 0, 1),
+  };
+}
+
+
 router.use(
   requireClientUser
 );
@@ -756,8 +771,10 @@ router.get(
             ""
         ).trim();
 
+      const selectedYear = parseYear(req.query.year);
       const where = {
         companyId,
+        ...(selectedYear ? { createdAt: yearRange(selectedYear) } : {}),
       };
 
       if (

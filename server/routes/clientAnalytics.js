@@ -53,7 +53,11 @@ function getLastMonths(count = 8) {
   const now = new Date();
   const months = [];
 
-  for (let offset = count - 1; offset >= 0; offset -= 1) {
+  for (
+    let offset = count - 1;
+    offset >= 0;
+    offset -= 1
+  ) {
     months.push(
       new Date(
         now.getFullYear(),
@@ -66,284 +70,487 @@ function getLastMonths(count = 8) {
   return months;
 }
 
+function parseYear(value) {
+  if (!value || value === "all") return null;
+
+  const year = Number(value);
+
+  return Number.isInteger(year) &&
+    year >= 2000 &&
+    year <= 2100
+    ? year
+    : null;
+}
+
+function yearRange(year) {
+  if (!year) return null;
+
+  return {
+    gte: new Date(year, 0, 1),
+    lt: new Date(year + 1, 0, 1),
+  };
+}
+
+function getYearMonths(year) {
+  return Array.from(
+    { length: 12 },
+    (_, month) =>
+      new Date(year, month, 1)
+  );
+}
+
 /* =========================================================
    DASHBOARD
 ========================================================= */
 
-router.get("/dashboard", async (req, res) => {
-  try {
-    const companyId = req.clientUser.companyId;
+router.get(
+  "/dashboard",
+  async (req, res) => {
+    try {
+      const companyId =
+        req.clientUser.companyId;
 
-    const [
-      leads,
-      admissions,
-      expenses,
-      incentives,
-    ] = await Promise.all([
-      prisma.lead.findMany({
-        where: {
-          companyId,
-        },
+      const selectedYear =
+        parseYear(req.query.year);
 
-        select: {
-          id: true,
-          source: true,
-          stage: true,
-          assignedToName: true,
-          createdAt: true,
-        },
-      }),
+      const currentYear =
+        new Date().getFullYear();
 
-      prisma.admission.findMany({
-        where: {
-          companyId,
-          status: {
-            not: "CANCELLED",
+      const [
+        leadDates,
+        admissionDates,
+      ] = await Promise.all([
+        prisma.lead.findMany({
+          where: {
+            companyId,
           },
-        },
 
-        select: {
-          id: true,
-          counsellorName: true,
-          totalFee: true,
-          paidAmount: true,
-          admissionDate: true,
-        },
-      }),
-
-      prisma.expense.findMany({
-        where: {
-          companyId,
-          status: "APPROVED",
-        },
-
-        select: {
-          amount: true,
-        },
-      }),
-
-      prisma.incentive.findMany({
-        where: {
-          companyId,
-          status: {
-            in: [
-              "APPROVED",
-              "PAID",
-            ],
+          select: {
+            createdAt: true,
           },
-        },
+        }),
 
-        select: {
-          amount: true,
-        },
-      }),
-    ]);
+        prisma.admission.findMany({
+          where: {
+            companyId,
 
-    const totalLeads = leads.length;
+            status: {
+              not: "CANCELLED",
+            },
+          },
 
-    const newLeads = leads.filter(
-      (lead) => lead.stage === "NEW"
-    ).length;
+          select: {
+            admissionDate: true,
+          },
+        }),
+      ]);
 
-    const qualifiedLeads = leads.filter(
-      (lead) =>
-        lead.stage === "QUALIFIED"
-    ).length;
+      const availableYears =
+        Array.from(
+          new Set([
+            currentYear,
 
-    const totalAdmissions =
-      admissions.length;
-
-    const potentialRevenue =
-      admissions.reduce(
-        (sum, admission) =>
-          sum +
-          Number(admission.totalFee || 0),
-        0
-      );
-
-    const receivedAmount =
-      admissions.reduce(
-        (sum, admission) =>
-          sum +
-          Number(
-            admission.paidAmount || 0
-          ),
-        0
-      );
-
-    const pendingAmount = Math.max(
-      potentialRevenue -
-        receivedAmount,
-      0
-    );
-
-    const approvedExpenses =
-      expenses.reduce(
-        (sum, expense) =>
-          sum +
-          Number(expense.amount || 0),
-        0
-      );
-
-    const totalIncentives =
-      incentives.reduce(
-        (sum, incentive) =>
-          sum +
-          Number(incentive.amount || 0),
-        0
-      );
-
-    const currentProfit =
-      receivedAmount -
-      approvedExpenses -
-      totalIncentives;
-
-    const months =
-      getLastMonths(8);
-
-    const revenueTrend =
-      months.map((month) => {
-        const key =
-          monthKey(month);
-
-        const monthAdmissions =
-          admissions.filter(
-            (admission) =>
-              monthKey(
+            ...leadDates.map(
+              (item) =>
                 new Date(
-                  admission.admissionDate
-                )
-              ) === key
+                  item.createdAt
+                ).getFullYear()
+            ),
+
+            ...admissionDates.map(
+              (item) =>
+                new Date(
+                  item.admissionDate
+                ).getFullYear()
+            ),
+          ])
+        )
+          .filter(Number.isFinite)
+          .sort(
+            (a, b) => b - a
           );
 
-        return {
-          key,
-          m: monthLabel(month),
+      const leadWhere = {
+        companyId,
+      };
 
-          potential:
-            monthAdmissions.reduce(
-              (sum, admission) =>
-                sum +
-                Number(
-                  admission.totalFee ||
-                    0
-                ),
-              0
-            ),
+      const admissionWhere = {
+        companyId,
 
-          received:
-            monthAdmissions.reduce(
-              (sum, admission) =>
-                sum +
-                Number(
-                  admission.paidAmount ||
-                    0
-                ),
-              0
-            ),
-        };
-      });
+        status: {
+          not: "CANCELLED",
+        },
+      };
 
-    const sourceCounts = {};
+      if (selectedYear) {
+        leadWhere.createdAt =
+          yearRange(
+            selectedYear
+          );
 
-    for (const lead of leads) {
-      const source =
-        SOURCE_LABELS[
-          lead.source
-        ] || lead.source;
-
-      sourceCounts[source] =
-        (sourceCounts[source] || 0) +
-        1;
-    }
-
-    const leadsBySource =
-      Object.entries(
-        sourceCounts
-      ).map(([name, value]) => ({
-        name,
-        value,
-      }));
-
-    const teamMap = {};
-
-    for (const lead of leads) {
-      const name =
-        lead.assignedToName ||
-        "Unassigned";
-
-      if (!teamMap[name]) {
-        teamMap[name] = {
-          name,
-          leads: 0,
-          admissions: 0,
-          revenue: 0,
-        };
+        admissionWhere.admissionDate =
+          yearRange(
+            selectedYear
+          );
       }
 
-      teamMap[name].leads += 1;
-    }
+      const [
+        leads,
+        admissions,
+        expenses,
+        incentives,
+      ] = await Promise.all([
+        prisma.lead.findMany({
+          where: leadWhere,
 
-    for (const admission of admissions) {
-      const name =
-        admission.counsellorName ||
-        "Unassigned";
+          select: {
+            id: true,
+            source: true,
+            stage: true,
+            assignedToName: true,
+            createdAt: true,
+          },
+        }),
 
-      if (!teamMap[name]) {
-        teamMap[name] = {
-          name,
-          leads: 0,
-          admissions: 0,
-          revenue: 0,
-        };
-      }
+        prisma.admission.findMany({
+          where:
+            admissionWhere,
 
-      teamMap[name].admissions += 1;
+          select: {
+            id: true,
+            counsellorName: true,
+            totalFee: true,
+            paidAmount: true,
+            admissionDate: true,
+          },
+        }),
 
-      teamMap[name].revenue +=
-        Number(
-          admission.paidAmount || 0
+        prisma.expense.findMany({
+          where: {
+            companyId,
+            status: "APPROVED",
+          },
+
+          select: {
+            amount: true,
+            createdAt: true,
+          },
+        }),
+
+        prisma.incentive.findMany({
+          where: {
+            companyId,
+
+            status: {
+              in: [
+                "APPROVED",
+                "PAID",
+              ],
+            },
+          },
+
+          select: {
+            amount: true,
+            createdAt: true,
+          },
+        }),
+      ]);
+
+      const filteredExpenses =
+        selectedYear
+          ? expenses.filter(
+              (item) =>
+                new Date(
+                  item.createdAt
+                ).getFullYear() ===
+                selectedYear
+            )
+          : expenses;
+
+      const filteredIncentives =
+        selectedYear
+          ? incentives.filter(
+              (item) =>
+                new Date(
+                  item.createdAt
+                ).getFullYear() ===
+                selectedYear
+            )
+          : incentives;
+
+      const totalLeads =
+        leads.length;
+
+      const newLeads =
+        leads.filter(
+          (lead) =>
+            lead.stage === "NEW"
+        ).length;
+
+      const qualifiedLeads =
+        leads.filter(
+          (lead) =>
+            lead.stage ===
+            "QUALIFIED"
+        ).length;
+
+      const totalAdmissions =
+        admissions.length;
+
+      const potentialRevenue =
+        admissions.reduce(
+          (
+            sum,
+            admission
+          ) =>
+            sum +
+            Number(
+              admission.totalFee ||
+                0
+            ),
+          0
         );
-    }
 
-    const teamPerformance =
-      Object.values(teamMap).sort(
-        (a, b) =>
-          b.admissions -
-          a.admissions
+      const receivedAmount =
+        admissions.reduce(
+          (
+            sum,
+            admission
+          ) =>
+            sum +
+            Number(
+              admission.paidAmount ||
+                0
+            ),
+          0
+        );
+
+      const pendingAmount =
+        Math.max(
+          potentialRevenue -
+            receivedAmount,
+          0
+        );
+
+      const approvedExpenses =
+        filteredExpenses.reduce(
+          (
+            sum,
+            expense
+          ) =>
+            sum +
+            Number(
+              expense.amount || 0
+            ),
+          0
+        );
+
+      const totalIncentives =
+        filteredIncentives.reduce(
+          (
+            sum,
+            incentive
+          ) =>
+            sum +
+            Number(
+              incentive.amount || 0
+            ),
+          0
+        );
+
+      const currentProfit =
+        receivedAmount -
+        approvedExpenses -
+        totalIncentives;
+
+      const months =
+        selectedYear
+          ? getYearMonths(
+              selectedYear
+            )
+          : getLastMonths(8);
+
+      const revenueTrend =
+        months.map(
+          (month) => {
+            const key =
+              monthKey(month);
+
+            const monthAdmissions =
+              admissions.filter(
+                (
+                  admission
+                ) =>
+                  monthKey(
+                    new Date(
+                      admission.admissionDate
+                    )
+                  ) === key
+              );
+
+            return {
+              key,
+
+              m: monthLabel(
+                month
+              ),
+
+              potential:
+                monthAdmissions.reduce(
+                  (
+                    sum,
+                    admission
+                  ) =>
+                    sum +
+                    Number(
+                      admission.totalFee ||
+                        0
+                    ),
+                  0
+                ),
+
+              received:
+                monthAdmissions.reduce(
+                  (
+                    sum,
+                    admission
+                  ) =>
+                    sum +
+                    Number(
+                      admission.paidAmount ||
+                        0
+                    ),
+                  0
+                ),
+            };
+          }
+        );
+
+      const sourceCounts =
+        {};
+
+      for (const lead of leads) {
+        const source =
+          SOURCE_LABELS[
+            lead.source
+          ] || lead.source;
+
+        sourceCounts[source] =
+          (sourceCounts[
+            source
+          ] || 0) + 1;
+      }
+
+      const leadsBySource =
+        Object.entries(
+          sourceCounts
+        ).map(
+          ([name, value]) => ({
+            name,
+            value,
+          })
+        );
+
+      const teamMap = {};
+
+      for (const lead of leads) {
+        const name =
+          lead.assignedToName ||
+          "Unassigned";
+
+        if (!teamMap[name]) {
+          teamMap[name] = {
+            name,
+            leads: 0,
+            admissions: 0,
+            revenue: 0,
+          };
+        }
+
+        teamMap[
+          name
+        ].leads += 1;
+      }
+
+      for (
+        const admission of
+        admissions
+      ) {
+        const name =
+          admission.counsellorName ||
+          "Unassigned";
+
+        if (!teamMap[name]) {
+          teamMap[name] = {
+            name,
+            leads: 0,
+            admissions: 0,
+            revenue: 0,
+          };
+        }
+
+        teamMap[
+          name
+        ].admissions += 1;
+
+        teamMap[
+          name
+        ].revenue += Number(
+          admission.paidAmount ||
+            0
+        );
+      }
+
+      const teamPerformance =
+        Object.values(
+          teamMap
+        ).sort(
+          (a, b) =>
+            b.admissions -
+            a.admissions
+        );
+
+      return res.json({
+        success: true,
+
+        selectedYear:
+          selectedYear ||
+          "all",
+
+        availableYears,
+
+        summary: {
+          totalLeads,
+          newLeads,
+          qualifiedLeads,
+          totalAdmissions,
+          potentialRevenue,
+          receivedAmount,
+          pendingAmount,
+          currentProfit,
+        },
+
+        revenueTrend,
+        leadsBySource,
+        teamPerformance,
+      });
+    } catch (error) {
+      console.error(
+        "Failed to fetch dashboard:",
+        error
       );
 
-    return res.json({
-      success: true,
+      return res
+        .status(500)
+        .json({
+          success: false,
 
-      summary: {
-        totalLeads,
-        newLeads,
-        qualifiedLeads,
-        totalAdmissions,
-        potentialRevenue,
-        receivedAmount,
-        pendingAmount,
-        currentProfit,
-      },
-
-      revenueTrend,
-      leadsBySource,
-      teamPerformance,
-    });
-  } catch (error) {
-    console.error(
-      "Failed to fetch dashboard:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to load dashboard",
-    });
+          message:
+            "Unable to load dashboard",
+        });
+    }
   }
-});
+);
 
 /* =========================================================
    ANALYTICS
@@ -351,111 +558,83 @@ router.get("/dashboard", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const companyId =
-      req.clientUser.companyId;
+    const companyId = req.clientUser.companyId;
+    const requestedYear = parseYear(req.query.year);
+    const currentYear = new Date().getFullYear();
 
-    const [
-      leads,
-      admissions,
-    ] = await Promise.all([
-      prisma.lead.findMany({
-        where: {
-          companyId,
-        },
+    // If the global filter is "all", comparison defaults to current year.
+    const primaryYear = requestedYear || currentYear;
+    const compareYear =
+      parseYear(req.query.compareYear) || primaryYear - 1;
 
-        select: {
-          id: true,
-          source: true,
-          stage: true,
-          campaign: true,
-          assignedToName: true,
-          createdAt: true,
-        },
-      }),
+    async function buildYearAnalytics(year) {
+      const leadWhere = {
+        companyId,
+        createdAt: yearRange(year),
+      };
 
-      prisma.admission.findMany({
-        where: {
-          companyId,
-          status: {
-            not: "CANCELLED",
+      const admissionWhere = {
+        companyId,
+        admissionDate: yearRange(year),
+        status: { not: "CANCELLED" },
+      };
+
+      const [leads, admissions] = await Promise.all([
+        prisma.lead.findMany({
+          where: leadWhere,
+          select: {
+            id: true,
+            source: true,
+            stage: true,
+            campaign: true,
+            assignedToName: true,
+            createdAt: true,
           },
-        },
+        }),
+        prisma.admission.findMany({
+          where: admissionWhere,
+          select: {
+            id: true,
+            leadId: true,
+            counsellorName: true,
+            totalFee: true,
+            paidAmount: true,
+            admissionDate: true,
+          },
+        }),
+      ]);
 
-        select: {
-          id: true,
-          leadId: true,
-          counsellorName: true,
-          totalFee: true,
-          paidAmount: true,
-          admissionDate: true,
-        },
-      }),
-    ]);
+      const totalLeads = leads.length;
+      const totalAdmissions = admissions.length;
 
-    const totalLeads =
-      leads.length;
-
-    const totalAdmissions =
-      admissions.length;
-
-    // Direct admissions do not represent a lead conversion.
-    // Only admissions linked to a CRM lead are used for conversion rate.
-    const linkedAdmissions =
-      admissions.filter(
-        (admission) =>
-          Boolean(admission.leadId)
+      const linkedAdmissions = admissions.filter((admission) =>
+        Boolean(admission.leadId)
       ).length;
 
-    const conversionRate =
-      totalLeads > 0
-        ? Number(
-            (
-              (linkedAdmissions /
-                totalLeads) *
-              100
-            ).toFixed(1)
-          )
-        : 0;
+      const conversionRate =
+        totalLeads > 0
+          ? Number(((linkedAdmissions / totalLeads) * 100).toFixed(1))
+          : 0;
 
-    const sourceMap = {};
-
-    for (const lead of leads) {
-      const source =
-        SOURCE_LABELS[
-          lead.source
-        ] || lead.source;
-
-      if (!sourceMap[source]) {
-        sourceMap[source] = {
-          name: source,
-          leads: 0,
-          admissions: 0,
-        };
-      }
-
-      sourceMap[source].leads += 1;
-    }
-
-    const admissionLeadIds =
-      new Set(
-        admissions
-          .map(
-            (admission) =>
-              admission.leadId
-          )
-          .filter(Boolean)
+      const potentialRevenue = admissions.reduce(
+        (sum, admission) => sum + Number(admission.totalFee || 0),
+        0
       );
 
-    for (const lead of leads) {
-      if (
-        admissionLeadIds.has(
-          lead.id
-        )
-      ) {
-        const source =
-          SOURCE_LABELS[
-            lead.source
-          ] || lead.source;
+      const receivedAmount = admissions.reduce(
+        (sum, admission) => sum + Number(admission.paidAmount || 0),
+        0
+      );
+
+      const pendingAmount = Math.max(
+        potentialRevenue - receivedAmount,
+        0
+      );
+
+      const sourceMap = {};
+
+      for (const lead of leads) {
+        const source = SOURCE_LABELS[lead.source] || lead.source;
 
         if (!sourceMap[source]) {
           sourceMap[source] = {
@@ -465,255 +644,217 @@ router.get("/", async (req, res) => {
           };
         }
 
-        sourceMap[
-          source
-        ].admissions += 1;
+        sourceMap[source].leads += 1;
       }
-    }
 
-    const sourceConversion =
-      Object.values(
-        sourceMap
-      ).map((item) => ({
+      const admissionLeadIds = new Set(
+        admissions.map((admission) => admission.leadId).filter(Boolean)
+      );
+
+      for (const lead of leads) {
+        if (admissionLeadIds.has(lead.id)) {
+          const source = SOURCE_LABELS[lead.source] || lead.source;
+
+          if (!sourceMap[source]) {
+            sourceMap[source] = {
+              name: source,
+              leads: 0,
+              admissions: 0,
+            };
+          }
+
+          sourceMap[source].admissions += 1;
+        }
+      }
+
+      const sourceConversion = Object.values(sourceMap).map((item) => ({
         ...item,
-
         conversion:
           item.leads > 0
-            ? Number(
-                (
-                  (item.admissions /
-                    item.leads) *
-                  100
-                ).toFixed(1)
-              )
+            ? Number(((item.admissions / item.leads) * 100).toFixed(1))
             : 0,
       }));
 
-    const stageMap = {};
+      const stageMap = {};
 
-    for (const lead of leads) {
-      const stage =
-        STAGE_LABELS[
-          lead.stage
-        ] || lead.stage;
+      for (const lead of leads) {
+        const stage = STAGE_LABELS[lead.stage] || lead.stage;
+        stageMap[stage] = (stageMap[stage] || 0) + 1;
+      }
 
-      stageMap[stage] =
-        (stageMap[stage] || 0) +
-        1;
-    }
+      const leadsByStage = Object.entries(stageMap).map(
+        ([name, value]) => ({
+          name,
+          value,
+        })
+      );
 
-    const leadsByStage =
-      Object.entries(
-        stageMap
-      ).map(([name, value]) => ({
-        name,
-        value,
-      }));
+      const monthlyActivity = getYearMonths(year).map((month) => {
+        const key = monthKey(month);
 
-    const months =
-      getLastMonths(8);
-
-    const monthlyActivity =
-      months.map((month) => {
-        const key =
-          monthKey(month);
+        const monthAdmissions = admissions.filter(
+          (admission) =>
+            monthKey(new Date(admission.admissionDate)) === key
+        );
 
         return {
           key,
           m: monthLabel(month),
-
           leads: leads.filter(
-            (lead) =>
-              monthKey(
-                new Date(
-                  lead.createdAt
-                )
-              ) === key
+            (lead) => monthKey(new Date(lead.createdAt)) === key
           ).length,
-
-          admissions:
-            admissions.filter(
-              (admission) =>
-                monthKey(
-                  new Date(
-                    admission.admissionDate
-                  )
-                ) === key
-            ).length,
-
-          potential:
-            admissions
-              .filter(
-                (admission) =>
-                  monthKey(
-                    new Date(
-                      admission.admissionDate
-                    )
-                  ) === key
-              )
-              .reduce(
-                (sum, admission) =>
-                  sum +
-                  Number(
-                    admission.totalFee ||
-                      0
-                  ),
-                0
-              ),
-
-          received:
-            admissions
-              .filter(
-                (admission) =>
-                  monthKey(
-                    new Date(
-                      admission.admissionDate
-                    )
-                  ) === key
-              )
-              .reduce(
-                (sum, admission) =>
-                  sum +
-                  Number(
-                    admission.paidAmount ||
-                      0
-                  ),
-                0
-              ),
+          admissions: monthAdmissions.length,
+          potential: monthAdmissions.reduce(
+            (sum, admission) =>
+              sum + Number(admission.totalFee || 0),
+            0
+          ),
+          received: monthAdmissions.reduce(
+            (sum, admission) =>
+              sum + Number(admission.paidAmount || 0),
+            0
+          ),
         };
       });
 
-    const employeeMap = {};
+      const employeeMap = {};
 
-    for (const lead of leads) {
-      const name =
-        lead.assignedToName ||
-        "Unassigned";
+      for (const lead of leads) {
+        const name = lead.assignedToName || "Unassigned";
 
-      if (!employeeMap[name]) {
-        employeeMap[name] = {
-          name,
-          leads: 0,
-          admissions: 0,
-          revenue: 0,
-        };
+        if (!employeeMap[name]) {
+          employeeMap[name] = {
+            name,
+            leads: 0,
+            admissions: 0,
+            revenue: 0,
+          };
+        }
+
+        employeeMap[name].leads += 1;
       }
 
-      employeeMap[name].leads += 1;
-    }
+      for (const admission of admissions) {
+        const name = admission.counsellorName || "Unassigned";
 
-    for (const admission of admissions) {
-      const name =
-        admission.counsellorName ||
-        "Unassigned";
+        if (!employeeMap[name]) {
+          employeeMap[name] = {
+            name,
+            leads: 0,
+            admissions: 0,
+            revenue: 0,
+          };
+        }
 
-      if (!employeeMap[name]) {
-        employeeMap[name] = {
-          name,
-          leads: 0,
-          admissions: 0,
-          revenue: 0,
-        };
+        employeeMap[name].admissions += 1;
+        employeeMap[name].revenue += Number(
+          admission.paidAmount || 0
+        );
       }
 
-      employeeMap[
-        name
-      ].admissions += 1;
-
-      employeeMap[
-        name
-      ].revenue += Number(
-        admission.paidAmount || 0
-      );
-    }
-
-    const employeePerformance =
-      Object.values(
-        employeeMap
-      ).sort(
-        (a, b) =>
-          b.admissions -
-          a.admissions
+      const employeePerformance = Object.values(employeeMap).sort(
+        (a, b) => b.admissions - a.admissions
       );
 
-    const campaignMap = {};
+      const campaignMap = {};
 
-    for (const lead of leads) {
-      const campaign =
-        lead.campaign ||
-        "No Campaign";
+      for (const lead of leads) {
+        const campaign = lead.campaign || "No Campaign";
 
-      if (!campaignMap[campaign]) {
-        campaignMap[campaign] = {
-          campaign,
-          leads: 0,
-          admissions: 0,
-        };
+        if (!campaignMap[campaign]) {
+          campaignMap[campaign] = {
+            campaign,
+            leads: 0,
+            admissions: 0,
+          };
+        }
+
+        campaignMap[campaign].leads += 1;
+
+        if (admissionLeadIds.has(lead.id)) {
+          campaignMap[campaign].admissions += 1;
+        }
       }
 
-      campaignMap[
-        campaign
-      ].leads += 1;
-
-      if (
-        admissionLeadIds.has(
-          lead.id
-        )
-      ) {
-        campaignMap[
-          campaign
-        ].admissions += 1;
-      }
-    }
-
-    const topCampaigns =
-      Object.values(campaignMap)
+      const topCampaigns = Object.values(campaignMap)
         .map((item) => ({
           ...item,
-
           conversion:
             item.leads > 0
               ? Number(
-                  (
-                    (item.admissions /
-                      item.leads) *
-                    100
-                  ).toFixed(1)
+                  ((item.admissions / item.leads) * 100).toFixed(1)
                 )
               : 0,
         }))
-        .sort(
-          (a, b) =>
-            b.admissions -
-            a.admissions
-        )
+        .sort((a, b) => b.admissions - a.admissions)
         .slice(0, 10);
+
+      return {
+        year,
+        summary: {
+          totalLeads,
+          totalAdmissions,
+          conversionRate,
+          potentialRevenue,
+          receivedAmount,
+          pendingAmount,
+        },
+        sourceConversion,
+        leadsByStage,
+        monthlyActivity,
+        employeePerformance,
+        topCampaigns,
+      };
+    }
+
+    const [primary, comparison] = await Promise.all([
+      buildYearAnalytics(primaryYear),
+      buildYearAnalytics(compareYear),
+    ]);
+
+    const monthlyComparison = primary.monthlyActivity.map(
+      (item, index) => ({
+        m: item.m,
+        primaryLeads: item.leads,
+        compareLeads:
+          comparison.monthlyActivity[index]?.leads || 0,
+        primaryAdmissions: item.admissions,
+        compareAdmissions:
+          comparison.monthlyActivity[index]?.admissions || 0,
+        primaryRevenue: item.received,
+        compareRevenue:
+          comparison.monthlyActivity[index]?.received || 0,
+      })
+    );
 
     return res.json({
       success: true,
+      selectedYear: requestedYear || "all",
+      primaryYear,
+      compareYear,
 
-      summary: {
-        totalLeads,
-        totalAdmissions,
-        conversionRate,
+      // Existing analytics remain compatible with the selected/global year.
+      summary: primary.summary,
+      sourceConversion: primary.sourceConversion,
+      leadsByStage: primary.leadsByStage,
+      monthlyActivity: primary.monthlyActivity,
+      employeePerformance: primary.employeePerformance,
+      topCampaigns: primary.topCampaigns,
+
+      comparison: {
+        primaryYear,
+        compareYear,
+        primary: primary.summary,
+        compare: comparison.summary,
+        monthly: monthlyComparison,
       },
-
-      sourceConversion,
-      leadsByStage,
-      monthlyActivity,
-      employeePerformance,
-      topCampaigns,
     });
   } catch (error) {
-    console.error(
-      "Failed to fetch analytics:",
-      error
-    );
+    console.error("Failed to fetch analytics:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Unable to load analytics",
+      message: "Unable to load analytics",
     });
   }
 });

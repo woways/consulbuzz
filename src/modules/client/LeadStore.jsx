@@ -1506,7 +1506,7 @@ function StoreMetric({
   );
 }
 
-export default function LeadStore() {
+export default function LeadStore({ selectedYear = "all" }) {
   const [
     sub,
     setSub,
@@ -1576,7 +1576,7 @@ export default function LeadStore() {
     try {
       const data =
         await apiRequest(
-          "/api/client/lead-store"
+          `/api/client/lead-store?year=${encodeURIComponent(selectedYear)}`
         );
 
       setDatasets(
@@ -1614,7 +1614,7 @@ export default function LeadStore() {
   useEffect(() => {
     loadDatasets();
     loadAssignees();
-  }, []);
+  }, [selectedYear]);
 
   const filtered =
     useMemo(

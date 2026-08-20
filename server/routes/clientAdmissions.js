@@ -10,6 +10,21 @@ import {
 
 const router = Router();
 
+function parseYear(value) {
+  if (!value || value === "all") return null;
+  const year = Number(value);
+  return Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : null;
+}
+
+function yearRange(year) {
+  if (!year) return null;
+  return {
+    gte: new Date(year, 0, 1),
+    lt: new Date(year + 1, 0, 1),
+  };
+}
+
+
 router.use(requireClientUser);
 router.use(
   requireClientPermission(
@@ -88,6 +103,14 @@ function formatAdmission(admission) {
           id: admission.partner.id,
           name: admission.partner.name,
           slug: admission.partner.slug,
+          stream: admission.partner.stream
+            ? {
+                id: admission.partner.stream.id,
+                name: admission.partner.stream.name,
+                slug: admission.partner.stream.slug,
+                color: admission.partner.stream.color || "blue",
+              }
+            : null,
         }
       : null,
     name: admission.studentName,
@@ -116,6 +139,113 @@ function formatAdmission(admission) {
   };
 }
 
+
+async function uniqueStreamSlug(companyId, name, excludeId = null) {
+  const base = slugify(name);
+  let slug = base;
+  let suffix = 2;
+
+  while (true) {
+    const existing = await prisma.admissionStream.findFirst({
+      where: {
+        companyId,
+        slug,
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      select: { id: true },
+    });
+
+    if (!existing) return slug;
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+}
+
+async function getStream(companyId, streamId) {
+  if (!streamId) return null;
+
+  return prisma.admissionStream.findFirst({
+    where: {
+      id: String(streamId),
+      companyId,
+      active: true,
+    },
+  });
+}
+
+async function ensureDefaultStream(companyId) {
+  let stream = await prisma.admissionStream.findFirst({
+    where: {
+      companyId,
+      slug: "general",
+    },
+  });
+
+  if (!stream) {
+    const existingFirst = await prisma.admissionStream.findFirst({
+      where: { companyId, active: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+
+    stream =
+      existingFirst ||
+      (await prisma.admissionStream.create({
+        data: {
+          companyId,
+          name: "General",
+          slug: await uniqueStreamSlug(companyId, "General"),
+          description: "Existing colleges and uncategorized admission partners",
+        },
+      }));
+  }
+
+  await prisma.admissionPartner.updateMany({
+    where: {
+      companyId,
+      streamId: null,
+    },
+    data: {
+      streamId: stream.id,
+    },
+  });
+
+  return stream;
+}
+
+function streamMetrics(stream) {
+  const partners = stream.partners || [];
+  const admissions = partners.flatMap((partner) => partner.admissions || []);
+  const activeAdmissions = admissions.filter(
+    (item) => item.status !== "CANCELLED"
+  );
+
+  return {
+    id: stream.id,
+    name: stream.name,
+    slug: stream.slug,
+    description: stream.description,
+    color: stream.color || "blue",
+    active: stream.active,
+    sortOrder: stream.sortOrder,
+    totalColleges: partners.length,
+    totalAdmissions: admissions.length,
+    received: activeAdmissions.reduce(
+      (sum, item) => sum + Number(item.paidAmount || 0),
+      0
+    ),
+    pending: activeAdmissions.reduce(
+      (sum, item) =>
+        sum +
+        Math.max(
+          Number(item.totalFee || 0) - Number(item.paidAmount || 0),
+          0
+        ),
+      0
+    ),
+    createdAt: stream.createdAt,
+  };
+}
+
 async function uniquePartnerSlug(companyId, name, excludeId = null) {
   const base = slugify(name);
   let slug = base;
@@ -138,6 +268,8 @@ async function uniquePartnerSlug(companyId, name, excludeId = null) {
 }
 
 async function syncLegacyPartners(companyId) {
+  const defaultStream = await ensureDefaultStream(companyId);
+
   const legacy = await prisma.admission.findMany({
     where: {
       companyId,
@@ -159,7 +291,19 @@ async function syncLegacyPartners(companyId) {
 
     if (!partner) {
       partner = await prisma.admissionPartner.create({
-        data: { companyId, name, slug },
+        data: {
+          companyId,
+          streamId: defaultStream.id,
+          name,
+          slug,
+        },
+      });
+    }
+
+    if (!partner.streamId) {
+      partner = await prisma.admissionPartner.update({
+        where: { id: partner.id },
+        data: { streamId: defaultStream.id },
       });
     }
 
@@ -182,6 +326,9 @@ async function getPartner(companyId, partnerId) {
       companyId,
       active: true,
     },
+    include: {
+      stream: true,
+    },
   });
 }
 
@@ -198,6 +345,15 @@ function partnerMetrics(partner) {
     description: partner.description,
     active: partner.active,
     sortOrder: partner.sortOrder,
+    streamId: partner.streamId,
+    stream: partner.stream
+      ? {
+          id: partner.stream.id,
+          name: partner.stream.name,
+          slug: partner.stream.slug,
+          color: partner.stream.color || "blue",
+        }
+      : null,
     totalAdmissions: admissions.length,
     thisMonth: admissions.filter(
       (item) => new Date(item.admissionDate) >= monthStart
@@ -214,6 +370,253 @@ function partnerMetrics(partner) {
 }
 
 /* =========================================================
+   ADMISSION STREAMS
+========================================================= */
+
+router.get("/streams", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+
+    await syncLegacyPartners(companyId);
+
+    const selectedYear = parseYear(req.query.year);
+
+    const streams = await prisma.admissionStream.findMany({
+      where: {
+        companyId,
+        active: true,
+      },
+      include: {
+        partners: {
+          where: {
+            active: true,
+          },
+          include: {
+            admissions: {
+              ...(selectedYear
+                ? { where: { admissionDate: yearRange(selectedYear) } }
+                : {}),
+              select: {
+                status: true,
+                totalFee: true,
+                paidAmount: true,
+                admissionDate: true,
+              },
+            },
+          },
+          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        },
+      },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    });
+
+    return res.json({
+      success: true,
+      streams: streams.map(streamMetrics),
+    });
+  } catch (error) {
+    console.error("Failed to fetch admission streams:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch admission streams",
+    });
+  }
+});
+
+router.post("/streams", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+    const name = String(req.body?.name || "").trim();
+    const description = cleanOptional(req.body?.description);
+    const color = String(req.body?.color || "blue").trim().toLowerCase();
+
+    const allowedColors = [
+      "blue",
+      "purple",
+      "rose",
+      "amber",
+      "emerald",
+      "cyan",
+      "slate",
+    ];
+
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: "Stream name is required",
+      });
+    }
+
+    if (!allowedColors.includes(color)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid stream color",
+      });
+    }
+
+    const slug = await uniqueStreamSlug(companyId, name);
+
+    const stream = await prisma.admissionStream.create({
+      data: {
+        companyId,
+        name,
+        slug,
+        description,
+        color,
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Admission stream added successfully",
+      stream: streamMetrics({
+        ...stream,
+        partners: [],
+      }),
+    });
+  } catch (error) {
+    console.error("Failed to create admission stream:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to add admission stream",
+    });
+  }
+});
+
+router.patch("/streams/:id", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+
+    const existing = await prisma.admissionStream.findFirst({
+      where: {
+        id: req.params.id,
+        companyId,
+      },
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: "Stream not found",
+      });
+    }
+
+    const data = {};
+
+    if (req.body?.name !== undefined) {
+      const name = String(req.body.name || "").trim();
+
+      if (!name) {
+        return res.status(400).json({
+          success: false,
+          message: "Stream name is required",
+        });
+      }
+
+      data.name = name;
+      data.slug = await uniqueStreamSlug(companyId, name, existing.id);
+    }
+
+    if (req.body?.description !== undefined) {
+      data.description = cleanOptional(req.body.description);
+    }
+
+    if (req.body?.color !== undefined) {
+      const color = String(req.body.color || "").trim().toLowerCase();
+      const allowedColors = [
+        "blue",
+        "purple",
+        "rose",
+        "amber",
+        "emerald",
+        "cyan",
+        "slate",
+      ];
+
+      if (!allowedColors.includes(color)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid stream color",
+        });
+      }
+
+      data.color = color;
+    }
+
+    const updated = await prisma.admissionStream.update({
+      where: {
+        id: existing.id,
+      },
+      data,
+    });
+
+    return res.json({
+      success: true,
+      message: "Stream updated",
+      stream: updated,
+    });
+  } catch (error) {
+    console.error("Failed to update admission stream:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to update stream",
+    });
+  }
+});
+
+router.delete("/streams/:id", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+
+    const existing = await prisma.admissionStream.findFirst({
+      where: {
+        id: req.params.id,
+        companyId,
+      },
+      include: {
+        _count: {
+          select: {
+            partners: true,
+          },
+        },
+      },
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: "Stream not found",
+      });
+    }
+
+    if (existing._count.partners > 0) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "This stream contains colleges. Move or delete those colleges before removing the stream.",
+      });
+    }
+
+    await prisma.admissionStream.delete({
+      where: {
+        id: existing.id,
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: "Stream removed",
+    });
+  } catch (error) {
+    console.error("Failed to delete admission stream:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to remove stream",
+    });
+  }
+});
+
+/* =========================================================
    ADMISSION PARTNERS / COLLEGE CARDS
 ========================================================= */
 
@@ -222,10 +625,18 @@ router.get("/partners", async (req, res) => {
     const companyId = req.clientUser.companyId;
     await syncLegacyPartners(companyId);
 
+    const streamId = cleanOptional(req.query.streamId);
+
     const partners = await prisma.admissionPartner.findMany({
-      where: { companyId, active: true },
+      where: {
+        companyId,
+        active: true,
+        ...(streamId ? { streamId } : {}),
+      },
       include: {
+        stream: true,
         admissions: {
+          ...(parseYear(req.query.year) ? { where: { admissionDate: yearRange(parseYear(req.query.year)) } } : {}),
           select: {
             status: true,
             totalFee: true,
@@ -255,6 +666,7 @@ router.post("/partners", async (req, res) => {
     const companyId = req.clientUser.companyId;
     const name = String(req.body?.name || "").trim();
     const description = cleanOptional(req.body?.description);
+    const requestedStreamId = cleanOptional(req.body?.streamId);
 
     if (!name) {
       return res.status(400).json({
@@ -263,13 +675,32 @@ router.post("/partners", async (req, res) => {
       });
     }
 
+    let stream = requestedStreamId
+      ? await getStream(companyId, requestedStreamId)
+      : null;
+
+    if (requestedStreamId && !stream) {
+      return res.status(400).json({
+        success: false,
+        message: "Selected stream is invalid",
+      });
+    }
+
+    if (!stream) {
+      stream = await ensureDefaultStream(companyId);
+    }
+
     const slug = await uniquePartnerSlug(companyId, name);
     const partner = await prisma.admissionPartner.create({
       data: {
         companyId,
+        streamId: stream.id,
         name,
         slug,
         description,
+      },
+      include: {
+        stream: true,
       },
     });
 
@@ -311,10 +742,26 @@ router.patch("/partners/:id", async (req, res) => {
       data.description = cleanOptional(req.body.description);
     }
 
+    if (req.body?.streamId !== undefined) {
+      const stream = await getStream(companyId, req.body.streamId);
+
+      if (!stream) {
+        return res.status(400).json({
+          success: false,
+          message: "Selected stream is invalid",
+        });
+      }
+
+      data.streamId = stream.id;
+    }
+
     const updated = await prisma.$transaction(async (tx) => {
       const saved = await tx.admissionPartner.update({
         where: { id: existing.id },
         data,
+        include: {
+          stream: true,
+        },
       });
 
       if (data.name && data.name !== existing.name) {
@@ -610,13 +1057,42 @@ router.get("/", async (req, res) => {
     await syncLegacyPartners(companyId);
 
     const partnerId = cleanOptional(req.query.partnerId);
-    const where = { companyId };
-    if (partnerId) where.partnerId = partnerId;
+    const streamId = cleanOptional(req.query.streamId);
+    const selectedYear = parseYear(req.query.year);
+
+    const where = {
+      companyId,
+      ...(selectedYear ? { admissionDate: yearRange(selectedYear) } : {}),
+    };
+
+    if (partnerId) {
+      where.partnerId = partnerId;
+    } else if (streamId) {
+      where.partner = {
+        is: {
+          streamId,
+        },
+      };
+    }
 
     const admissions = await prisma.admission.findMany({
       where,
       include: {
-        partner: { select: { id: true, name: true, slug: true } },
+        partner: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            stream: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                color: true,
+              },
+            },
+          },
+        },
         lead: { select: { id: true, source: true, campaign: true } },
       },
       orderBy: { admissionDate: "desc" },
@@ -739,10 +1215,22 @@ router.post("/", async (req, res) => {
     let resolvedPartner = partner;
     if (!resolvedPartner) {
       const slug = slugify(cleanCollege);
-      resolvedPartner = await prisma.admissionPartner.findFirst({ where: { companyId, slug } });
+      resolvedPartner = await prisma.admissionPartner.findFirst({
+        where: { companyId, slug },
+        include: { stream: true },
+      });
+
       if (!resolvedPartner) {
+        const defaultStream = await ensureDefaultStream(companyId);
+
         resolvedPartner = await prisma.admissionPartner.create({
-          data: { companyId, name: cleanCollege, slug: await uniquePartnerSlug(companyId, cleanCollege) },
+          data: {
+            companyId,
+            streamId: defaultStream.id,
+            name: cleanCollege,
+            slug: await uniquePartnerSlug(companyId, cleanCollege),
+          },
+          include: { stream: true },
         });
       }
     }
@@ -767,7 +1255,21 @@ router.post("/", async (req, res) => {
           notes: cleanOptional(notes),
         },
         include: {
-          partner: { select: { id: true, name: true, slug: true } },
+          partner: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            stream: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                color: true,
+              },
+            },
+          },
+        },
           lead: { select: { id: true, source: true, campaign: true } },
         },
       });
@@ -881,7 +1383,21 @@ router.patch("/:id", async (req, res) => {
         where: { id: existing.id },
         data,
         include: {
-          partner: { select: { id: true, name: true, slug: true } },
+          partner: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            stream: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                color: true,
+              },
+            },
+          },
+        },
           lead: { select: { id: true, source: true, campaign: true } },
         },
       });

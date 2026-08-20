@@ -32,6 +32,10 @@ import {
   AlertCircle,
   ReceiptIndianRupee,
   CalendarClock,
+  Menu,
+  Search,
+  Sun,
+  ChevronRight,
 } from "lucide-react";
 
 import {
@@ -222,6 +226,11 @@ export default function ClientPortal({
   ] = useState(false);
 
   const [
+    mobileSidebarOpen,
+    setMobileSidebarOpen,
+  ] = useState(false);
+
+  const [
     notificationsOpen,
     setNotificationsOpen,
   ] = useState(false);
@@ -254,6 +263,9 @@ export default function ClientPortal({
     setProfileMenuOpen,
   ] = useState(false);
 const [accountActionsOpen, setAccountActionsOpen] = useState(false);
+
+  const [workspaceSearch, setWorkspaceSearch] = useState("");
+  const [contextMenu, setContextMenu] = useState(null);
 
   const profileMenuRef =
     useRef(null);
@@ -343,6 +355,38 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     clientSession?.company ||
       null
   );
+
+  // Global reporting period shared by all date-based CRM modules.
+  const [selectedYear, setSelectedYear] = useState(() =>
+    window.localStorage.getItem("cb_global_year") || "all"
+  );
+  const [availableYears, setAvailableYears] = useState([
+    new Date().getFullYear(),
+  ]);
+
+  useEffect(() => {
+    window.localStorage.setItem("cb_global_year", selectedYear);
+  }, [selectedYear]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadAvailableYears() {
+      try {
+        const result = await apiRequest("/api/client/analytics/dashboard?year=all");
+        if (active && Array.isArray(result.availableYears) && result.availableYears.length) {
+          setAvailableYears(result.availableYears);
+        }
+      } catch (error) {
+        console.error("Unable to load reporting years:", error);
+      }
+    }
+    loadAvailableYears();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [module]);
 
   useEffect(() => {
     setLiveCompany(
@@ -1105,48 +1149,45 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       case "dashboard":
         return (
           <Dashboard
-            tenant={
-              tenant
-            }
-            user={
-              user
-            }
+            tenant={tenant}
+            user={user}
+            selectedYear={selectedYear}
           />
         );
 
       case "utm-leads":
         return (
-          <UTMLeads />
+          <UTMLeads selectedYear={selectedYear} />
         );
 
       case "admissions":
         return (
-          <Admissions />
+          <Admissions selectedYear={selectedYear} />
         );
 
       case "revenue":
         return (
-          <Revenue />
+          <Revenue selectedYear={selectedYear} />
         );
 
       case "lead-store":
         return (
-          <LeadStore />
+          <LeadStore selectedYear={selectedYear} />
         );
 
       case "walkins":
         return (
-          <Walkins />
+          <Walkins selectedYear={selectedYear} />
         );
 
       case "counselling":
         return (
-          <Counselling />
+          <Counselling selectedYear={selectedYear} />
         );
 
       case "analytics":
         return (
-          <Analytics />
+          <Analytics selectedYear={selectedYear} />
         );
 
       case "help":
@@ -1217,18 +1258,18 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             key
           )
         }
-        className={`relative w-full flex items-center py-3 text-[13px] font-semibold transition-all ${
+        className={`relative mx-2 w-[calc(100%-16px)] rounded-xl flex items-center py-2.5 text-[13px] font-semibold transition-all ${
           sidebarCollapsed
             ? "justify-center px-2"
             : "gap-3 px-4"
         } ${
           active
-            ? "bg-[#18304b] text-white"
+            ? "bg-white/[0.09] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
             : "text-slate-300 hover:bg-white/[0.05] hover:text-white"
         }`}
       >
         {active && (
-          <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-indigo-400" />
+          <span className="absolute left-1.5 top-2 bottom-2 w-[2px] rounded-full bg-indigo-400" />
         )}
 
         <Icon
@@ -1308,9 +1349,9 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             key
           )
         }
-        className={`relative w-full flex items-center gap-3 pl-[52px] pr-4 py-2.5 text-[13px] transition-all ${
+        className={`relative mx-2 w-[calc(100%-16px)] rounded-lg flex items-center gap-2.5 pl-[42px] pr-3 py-2 text-[12px] transition-all ${
           active
-            ? "text-white bg-[#12283f]"
+            ? "text-white bg-white/[0.07]"
             : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
         }`}
       >
@@ -1412,521 +1453,730 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       )
       .toUpperCase();
 
+
+  function getTimeGreeting() {
+    const hour = new Date().getHours();
+
+    if (hour < 12) {
+      return "Good morning";
+    }
+
+    if (hour < 17) {
+      return "Good afternoon";
+    }
+
+    return "Good evening";
+  }
+
+  const timeGreeting = getTimeGreeting();
+
   return (
-    <div className="min-h-screen bg-[#f6f7fb] text-slate-900">
+    <div className="min-h-screen bg-[#f6f7fb] text-slate-900 overflow-x-hidden">
+
+      {/* MOBILE APP BAR */}
+      <div className="lg:hidden sticky top-0 z-40 h-14 bg-[#f6f7fb]/95 backdrop-blur-xl border-b border-slate-200/70 px-4 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setMobileSidebarOpen(true)}
+          className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-600 shadow-sm flex items-center justify-center active:scale-95 transition"
+          aria-label="Open navigation"
+        >
+          <Menu size={18} />
+        </button>
+
+        <div className="min-w-0 px-3 text-center">
+          <div className="text-[13px] font-bold text-slate-950 truncate">
+            {company.brandName}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            setMobileSidebarOpen(true);
+            setAccountActionsOpen(true);
+          }}
+          className="relative w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shadow-sm"
+          aria-label="Open account"
+        >
+          {initials}
+          {unreadNotificationCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-[#f6f7fb]" />
+          )}
+        </button>
+      </div>
+
+      {mobileSidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={() => setMobileSidebarOpen(false)}
+          className="lg:hidden fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-[1px]"
+        />
+      )}
 
       <div className="flex">
-
-        {/* SIDEBAR */}
-
+        {/* FIXED LIGHT SIDEBAR */}
         <aside
-          className={`relative bg-[#071321] text-slate-300 min-h-screen sticky top-0 self-start flex-shrink-0 border-r border-white/[0.04] transition-[width] duration-300 ${
-            sidebarCollapsed
-              ? "w-[76px]"
-              : "w-[258px]"
+          className={`fixed inset-y-0 left-0 z-50 lg:z-30 bg-[#071321] transition-[width,transform] duration-300 ${
+            mobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          } ${
+            sidebarCollapsed ? "w-[92px]" : "w-[286px]"
           }`}
         >
-          <div className="h-screen flex flex-col">
-
-            {/* WORKSPACE IDENTITY — shown once */}
-
-            {!sidebarCollapsed ? (
-              <div className="px-4 pt-5 pb-4">
-                <div className="flex items-center gap-3 px-2">
-                  <div
-                    className={`w-9 h-9 rounded-xl ${getAccent(
-                      company.primaryColor
-                    )} text-white flex items-center justify-center text-xs font-bold shadow-sm flex-shrink-0`}
-                  >
-                    {company.shortName}
+          <div className="h-screen flex flex-col overflow-visible">
+            {/* CONSULBUZZ PRODUCT IDENTITY — TOP LEFT */}
+            {(!sidebarCollapsed || mobileSidebarOpen) ? (
+              <div className="px-5 pt-5 pb-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-white text-[#071321] flex items-center justify-center text-[10px] font-black tracking-tight shadow-sm">
+                    CB
                   </div>
 
-                  <div className="min-w-0">
-                    <div className="text-[13px] font-bold text-white truncate">
-                      {company.brandName}
+                  <div>
+                    <div className="text-[17px] leading-none font-black tracking-[-0.03em] text-white">
+                      ConsulBuzz
                     </div>
-                    <div className="text-[10px] text-slate-500 truncate mt-0.5">
-                      {company.subdomain || "Company workspace"}
+                    <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                      CRM Workspace
                     </div>
-                  </div>
-                </div>
-
-                <div className="px-2 pt-5 pb-2">
-                  <div className="text-[10px] font-semibold tracking-[0.18em] uppercase text-slate-600">
-                    Workspace
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="pt-5 pb-4 flex justify-center">
+              <div className="pt-4 pb-1 flex justify-center">
                 <div
-                  className={`w-9 h-9 rounded-xl ${getAccent(
-                    company.primaryColor
-                  )} text-white flex items-center justify-center text-xs font-bold shadow-sm`}
-                  title={company.brandName}
+                  className="w-10 h-10 rounded-xl bg-white text-[#071321] flex items-center justify-center text-[10px] font-black tracking-tight shadow-sm"
+                  title="ConsulBuzz"
                 >
-                  {company.shortName}
+                  CB
                 </div>
               </div>
             )}
 
-            {/* NAVIGATION */}
+            {/* MENU CARD */}
+            <nav
+              className={`relative mx-3 mb-3 flex-1 min-h-0 rounded-[22px] border border-slate-200/80 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.06)] ${
+                sidebarCollapsed && !mobileSidebarOpen
+                  ? "px-2 py-4"
+                  : "px-2 py-3"
+              }`}
+            >
+              <div className="h-full overflow-y-auto overflow-x-visible pb-3">
+                {NAV_GROUPS.map((group) => {
+                  const Icon = group.icon;
+                  const groupActive = group.items.includes(module);
 
-            <nav className="flex-1 min-h-0 overflow-y-auto pb-3">
+                  if (group.direct) {
+                    const key = group.items[0];
+                    const active = module === key;
+                    const locked =
+                      !enabledFeatures.includes(key) ||
+                      !hasModulePermission(key);
 
-              {NAV_GROUPS.map(
-                (group) => {
-
-                  if (
-                    group.direct
-                  ) {
-                    return renderDirectItem(
-                      group
-                    );
-                  }
-
-                  const GroupIcon =
-                    group.icon;
-
-                  const open =
-                    Boolean(
-                      openGroups[
-                        group.key
-                      ]
-                    );
-
-                  const groupActive =
-                    group.items.includes(
-                      module
-                    );
-
-                  if (
-                    sidebarCollapsed
-                  ) {
                     return (
                       <button
-                        key={
-                          group.key
-                        }
+                        key={group.key}
                         type="button"
-                        title={
-                          group.label
-                        }
+                        title={sidebarCollapsed ? group.label : undefined}
                         onClick={() => {
-                          setSidebarCollapsed(
-                            false
-                          );
-
-                          setOpenGroups(
-                            (current) => ({
-                              ...current,
-                              [group.key]:
-                                true,
-                            })
-                          );
+                          setContextMenu(null);
+                          setModule(key);
+                          setMobileSidebarOpen(false);
                         }}
-                        className={`relative w-full flex items-center justify-center px-2 py-3 transition-colors ${
-                          groupActive
-                            ? "bg-[#18304b] text-white"
-                            : "text-slate-400 hover:text-white hover:bg-white/[0.05]"
+                        className={`relative w-full rounded-2xl mb-1 transition-all ${
+                          sidebarCollapsed && !mobileSidebarOpen
+                            ? "h-[66px] flex items-center justify-center"
+                            : "h-12 px-4 flex items-center gap-3"
+                        } ${
+                          active
+                            ? "bg-indigo-50 text-indigo-800"
+                            : "text-slate-700 hover:bg-slate-50"
                         }`}
                       >
-                        {groupActive && (
-                          <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-indigo-400" />
+                        {active && (
+                          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-500" />
                         )}
 
-                        <GroupIcon
-                          size={
-                            17
-                          }
-                          className={
-                            groupActive
-                              ? "text-indigo-300"
-                              : "text-slate-400"
-                          }
+                        <Icon
+                          size={sidebarCollapsed && !mobileSidebarOpen ? 23 : 18}
+                          strokeWidth={1.8}
                         />
+
+                        {(!sidebarCollapsed || mobileSidebarOpen) && (
+                          <>
+                            <span className="flex-1 text-left text-[14px] font-semibold">
+                              {group.label}
+                            </span>
+
+                            {locked ? (
+                              <Lock size={12} className="text-slate-400" />
+                            ) : (
+                              <ChevronRight size={15} className="text-slate-400" />
+                            )}
+                          </>
+                        )}
                       </button>
                     );
                   }
 
-                  return (
-                    <div
-                      key={
-                        group.key
-                      }
-                    >
+                  const flyoutOpen = contextMenu === group.key;
 
+                  return (
+                    <div key={group.key} className="relative">
                       <button
                         type="button"
+                        title={sidebarCollapsed ? group.label : undefined}
                         onClick={() =>
-                          toggleGroup(
-                            group.key
+                          setContextMenu((current) =>
+                            current === group.key ? null : group.key
                           )
                         }
-                        className={`w-full flex items-center gap-3 px-4 py-3 text-[13px] font-semibold transition-colors ${
-                          groupActive
-                            ? "text-white"
-                            : "text-slate-300 hover:text-white hover:bg-white/[0.04]"
+                        className={`relative w-full rounded-2xl mb-1 transition-all ${
+                          sidebarCollapsed && !mobileSidebarOpen
+                            ? "h-[66px] flex items-center justify-center"
+                            : "h-12 px-4 flex items-center gap-3"
+                        } ${
+                          groupActive || flyoutOpen
+                            ? "bg-indigo-50 text-indigo-800"
+                            : "text-slate-700 hover:bg-slate-50"
                         }`}
                       >
-                        <GroupIcon
-                          size={
-                            17
-                          }
-                          className={
-                            groupActive
-                              ? "text-indigo-300"
-                              : "text-slate-400"
-                          }
+                        {(groupActive || flyoutOpen) && (
+                          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-500" />
+                        )}
+
+                        <Icon
+                          size={sidebarCollapsed && !mobileSidebarOpen ? 23 : 18}
+                          strokeWidth={1.8}
                         />
 
-                        <span className="flex-1 text-left">
-                          {
-                            group.label
-                          }
-                        </span>
-
-                        <ChevronDown
-                          size={
-                            14
-                          }
-                          className={`text-slate-500 transition-transform duration-200 ${
-                            open
-                              ? "rotate-0"
-                              : "-rotate-90"
-                          }`}
-                        />
+                        {(!sidebarCollapsed || mobileSidebarOpen) && (
+                          <>
+                            <span className="flex-1 text-left text-[14px] font-semibold">
+                              {group.label}
+                            </span>
+                            <ChevronRight
+                              size={15}
+                              className={`text-slate-400 transition-transform ${
+                                flyoutOpen ? "rotate-90" : ""
+                              }`}
+                            />
+                          </>
+                        )}
                       </button>
 
-                      <div
-                        className={`overflow-hidden transition-all duration-200 ${
-                          open
-                            ? "max-h-[300px] opacity-100"
-                            : "max-h-0 opacity-0"
-                        }`}
-                      >
-                        <div className="relative">
+                      {flyoutOpen && (
+                        <div
+                          className={`fixed z-[80] w-[245px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_50px_rgba(15,23,42,0.16)] ${
+                            sidebarCollapsed && !mobileSidebarOpen
+                              ? "left-[104px]"
+                              : "left-[298px]"
+                          }`}
+                          style={{
+                            top: `${Math.min(
+                              150 +
+                                NAV_GROUPS.findIndex(
+                                  (item) => item.key === group.key
+                                ) *
+                                  52,
+                              window.innerHeight - 300
+                            )}px`,
+                          }}
+                        >
+                          <div className="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                            {group.label}
+                          </div>
 
-                          <span className="absolute left-[37px] top-0 bottom-0 w-px bg-slate-800" />
+                          {group.items.map((key) => {
+                            const meta = MODULE_META[key];
+                            if (!meta) return null;
 
-                          {group.items.map(
-                            (
-                              key
-                            ) =>
-                              renderChildItem(
-                                key
-                              )
-                          )}
+                            const ChildIcon = meta.icon;
+                            const active = module === key;
+                            const locked =
+                              !enabledFeatures.includes(key) ||
+                              !hasModulePermission(key);
 
+                            return (
+                              <button
+                                key={key}
+                                type="button"
+                                onClick={() => {
+                                  setModule(key);
+                                  setContextMenu(null);
+                                  setMobileSidebarOpen(false);
+                                }}
+                                className={`w-full h-11 rounded-xl px-3 flex items-center gap-3 text-left transition-colors ${
+                                  active
+                                    ? "bg-indigo-50 text-indigo-800"
+                                    : "text-slate-700 hover:bg-slate-50"
+                                }`}
+                              >
+                                <ChildIcon size={16} strokeWidth={1.8} />
+                                <span className="flex-1 text-[13px] font-semibold">
+                                  {meta.label}
+                                </span>
+
+                                {(key === "walkins" || key === "counselling") && (
+                                  <Crown
+                                    size={13}
+                                    className="text-indigo-500"
+                                    title="Premium module"
+                                  />
+                                )}
+
+                                {locked ? (
+                                  <Lock size={11} className="text-slate-400" />
+                                ) : (
+                                  <ChevronRight size={13} className="text-slate-300" />
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
-                      </div>
-
+                      )}
                     </div>
                   );
-                }
-              )}
+                })}
+              </div>
 
             </nav>
 
-            {/* ACCOUNT — user + plan shown once */}
-
-            <div className="border-t border-slate-800/80 p-3 pb-4 flex-shrink-0">
-            {!sidebarCollapsed ? (
-              <div className="relative">
-                {accountActionsOpen && (
-                  <div className="mb-2 rounded-xl border border-white/[0.07] bg-[#0b1a2b] p-1.5 shadow-xl">
-                    <div
-                      ref={notificationRef}
-                      className="relative"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextOpen = !notificationsOpen;
-                          setNotificationsOpen(nextOpen);
-                          setProfileMenuOpen(false);
-
-                          if (nextOpen) {
-                            loadNotifications();
-                          }
-                        }}
-                        className={`w-full h-9 px-2.5 rounded-lg flex items-center gap-2.5 text-[11px] font-semibold transition-colors ${
-                          notificationsOpen
-                            ? "bg-white/[0.08] text-white"
-                            : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
-                        }`}
-                      >
-                        <div className="relative">
-                          <Bell size={14} />
-                          {unreadNotificationCount > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 min-w-[13px] h-[13px] px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-bold leading-[13px] text-center">
-                              {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
-                            </span>
-                          )}
-                        </div>
-                        <span className="flex-1 text-left">Notifications</span>
-                        {unreadNotificationCount > 0 && (
-                          <span className="text-[10px] text-slate-500">
-                            {unreadNotificationCount}
-                          </span>
-                        )}
-                      </button>
-
-                      {notificationsOpen && (
-                        <div className="absolute left-full bottom-0 ml-3 w-[380px] max-w-[calc(100vw-24px)] bg-white border border-slate-200 rounded-xl shadow-[0_16px_40px_rgba(15,23,42,0.14)] overflow-hidden z-50 text-slate-900">
-                          <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3">
-                            <div>
-                              <div className="text-sm font-bold text-slate-950">Notifications</div>
-                              <div className="text-[11px] text-slate-500 mt-0.5">
-                                Workspace updates and alerts
-                              </div>
-                            </div>
-                            {unreadNotificationCount > 0 && (
-                              <button
-                                type="button"
-                                onClick={markAllNotificationsRead}
-                                className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700"
-                              >
-                                Mark all read
-                              </button>
-                            )}
-                          </div>
-
-                          <div className="max-h-[420px] overflow-y-auto divide-y divide-slate-100">
-                            {notificationsLoading ? (
-                              <div className="py-12 flex items-center justify-center gap-2 text-xs text-slate-500">
-                                <Loader2 size={14} className="animate-spin text-indigo-600" />
-                                Loading notifications...
-                              </div>
-                            ) : notificationError ? (
-                              <div className="p-4">
-                                <div className="text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded-lg p-3">
-                                  {notificationError}
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={loadNotifications}
-                                  className="mt-3 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
-                                >
-                                  Try again
-                                </button>
-                              </div>
-                            ) : notifications.length === 0 ? (
-                              <div className="py-12 px-6 text-center">
-                                <Bell size={20} className="mx-auto text-slate-300" />
-                                <div className="text-xs font-semibold text-slate-700 mt-2">
-                                  No notifications yet
-                                </div>
-                                <div className="text-[11px] text-slate-500 mt-1">
-                                  Important workspace updates will appear here.
-                                </div>
-                              </div>
-                            ) : (
-                              notifications.map((notification) => (
-                                <button
-                                  key={notification.id}
-                                  type="button"
-                                  onClick={() => markNotificationRead(notification)}
-                                  className={`w-full p-4 text-left hover:bg-slate-50 transition-colors ${
-                                    notification.read ? "bg-white" : "bg-indigo-50/35"
-                                  }`}
-                                >
-                                  <div className="flex gap-3">
-                                    <div
-                                      className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
-                                        notification.read ? "bg-slate-200" : "bg-indigo-500"
-                                      }`}
-                                    />
-                                    <div className="min-w-0 flex-1">
-                                      <div className="flex items-start justify-between gap-3">
-                                        <div
-                                          className={`text-xs ${
-                                            notification.read
-                                              ? "font-medium text-slate-800"
-                                              : "font-bold text-slate-950"
-                                          }`}
-                                        >
-                                          {notification.title}
-                                        </div>
-                                        <div className="text-[10px] text-slate-400 whitespace-nowrap">
-                                          {new Date(notification.createdAt).toLocaleDateString(
-                                            "en-IN",
-                                            { day: "2-digit", month: "short" }
-                                          )}
-                                        </div>
-                                      </div>
-                                      <div className="text-xs text-slate-500 mt-1 leading-5">
-                                        {notification.message}
-                                      </div>
-                                      {notification.actionLabel && (
-                                        <div className="text-[11px] font-semibold text-indigo-600 mt-2">
-                                          {notification.actionLabel}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </button>
-                              ))
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {(user.role === "CLIENT_ADMIN" ||
-                      permissions.canManageBilling === true) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAccountActionsOpen(false);
-                          openBilling();
-                        }}
-                        className="w-full h-9 px-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] flex items-center gap-2.5 text-[11px] font-semibold transition-colors"
-                      >
-                        <ReceiptIndianRupee size={14} />
-                        <span>Billing & Subscription</span>
-                      </button>
-                    )}
-
-                    {(user.role === "CLIENT_ADMIN" ||
-                      permissions.canManageSettings === true) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAccountActionsOpen(false);
-                          setModule("settings");
-                        }}
-                        className="w-full h-9 px-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] flex items-center gap-2.5 text-[11px] font-semibold transition-colors"
-                      >
-                        <Settings size={14} />
-                        <span>Company Settings</span>
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={signOut}
-                      disabled={signingOut}
-                      className="w-full h-9 px-2.5 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-white/[0.06] flex items-center gap-2.5 text-[11px] font-semibold transition-colors disabled:opacity-50"
-                    >
-                      {signingOut ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <LogOut size={14} />
-                      )}
-                      <span>Sign out</span>
-                    </button>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAccountActionsOpen((value) => !value);
-                    setNotificationsOpen(false);
-                  }}
-                  className={`w-full rounded-xl px-2.5 py-2.5 flex items-center gap-2.5 text-left transition-colors ${
-                    accountActionsOpen
-                      ? "bg-white/[0.08]"
-                      : "hover:bg-white/[0.06]"
-                  }`}
-                >
-                  <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">
-                    {initials}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[12px] font-semibold text-white truncate">
-                      {user.name || tenant.name}
-                    </div>
-                    <div className="text-[10px] text-slate-500 truncate mt-0.5">
-                      {formatRole(user.role)} · {tenant.planName || tenant.plan}
+            {/* CURRENT PLAN — bottom of sidebar */}
+            <div className={`${sidebarCollapsed && !mobileSidebarOpen ? "px-2" : "px-3"} pb-3`}>
+              {(!sidebarCollapsed || mobileSidebarOpen) ? (
+                <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+                  <div className="flex items-center gap-2">
+                    <Crown size={14} className="text-indigo-500" />
+                    <div className="text-[11px] font-bold text-white">
+                      {String(plan || "basic").charAt(0).toUpperCase() +
+                        String(plan || "basic").slice(1)} Plan
                     </div>
                   </div>
-
-                  <ChevronDown
-                    size={14}
-                    className={`text-slate-500 flex-shrink-0 transition-transform duration-200 ${
-                      accountActionsOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setSidebarCollapsed(false);
-                  setAccountActionsOpen(true);
-                }}
-                title={`${user.name || tenant.name} · ${formatRole(user.role)}`}
-                className="w-full flex items-center justify-center"
-              >
-                <div className="relative w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
-                  {initials}
-                  {unreadNotificationCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-[#071321]" />
-                  )}
+                  <div className="mt-1 text-[10px] text-slate-300">
+                    Active subscription
+                  </div>
                 </div>
-              </button>
-            )}
+              ) : (
+                <div
+                  className="w-11 h-11 mx-auto rounded-xl border border-white/15 bg-white/10 flex items-center justify-center shadow-sm"
+                  title={`${String(plan || "basic").charAt(0).toUpperCase() +
+                    String(plan || "basic").slice(1)} Plan`}
+                >
+                  <Crown size={16} className="text-indigo-500" />
+                </div>
+              )}
+            </div>
           </div>
 
-          </div>
-
-          {/* COLLAPSE / EXPAND — SIDEBAR EDGE */}
-
+          {/* COLLAPSE — middle edge of sidebar */}
           <button
             type="button"
-            onClick={() =>
-              setSidebarCollapsed(
-                (current) =>
-                  !current
-              )
-            }
-            title={
-              sidebarCollapsed
-                ? "Expand sidebar"
-                : "Collapse sidebar"
-            }
-            aria-label={
-              sidebarCollapsed
-                ? "Expand sidebar"
-                : "Collapse sidebar"
-            }
-            className="absolute right-0 top-1/2 z-30 w-8 h-8 translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-200 bg-white text-slate-600 shadow-md flex items-center justify-center hover:bg-slate-50 hover:text-slate-950 hover:shadow-lg transition-all"
+            onClick={() => {
+              setContextMenu(null);
+              setSidebarCollapsed((current) => !current);
+            }}
+            className="hidden lg:flex absolute right-0 top-1/2 z-30 w-9 h-9 translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-200 bg-white text-slate-600 shadow-md items-center justify-center hover:bg-slate-50 hover:text-slate-950"
+            title={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
+            aria-label={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
           >
             {sidebarCollapsed ? (
-              <PanelLeftOpen
-                size={
-                  15
-                }
-              />
+              <PanelLeftOpen size={16} />
             ) : (
-              <PanelLeftClose
-                size={
-                  15
-                }
-              />
+              <PanelLeftClose size={16} />
             )}
           </button>
         </aside>
 
-        {/* MAIN CONTENT */}
+        {/* MAIN WORKSPACE */}
+        <div
+          className={`flex-1 min-w-0 transition-[margin] duration-300 ${
+            sidebarCollapsed ? "lg:ml-[92px]" : "lg:ml-[286px]"
+          }`}
+        >
+          {/* TOP BAR */}
+          <header className="sticky top-0 z-40 h-[76px] bg-[#fbfaf7]/95 backdrop-blur-xl border-b border-slate-200/80">
+            <div className="h-full px-4 sm:px-6 lg:px-8 flex items-center gap-4">
+              <div className="relative flex-1 max-w-[560px]">
+                <Search
+                  size={19}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                />
 
-        <main className="flex-1 min-w-0 p-6 lg:p-7">
-          <div className="max-w-[1600px] mx-auto">
-            {
-              renderModule()
-            }
-          </div>
-        </main>
+                <input
+                  value={workspaceSearch}
+                  onChange={(event) => setWorkspaceSearch(event.target.value)}
+                  placeholder="Search modules..."
+                  className="w-full h-11 pl-12 pr-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 outline-none focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50"
+                />
 
+                {workspaceSearch.trim() && (
+                  <div className="absolute left-0 right-0 top-[50px] z-[90] rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+                    {NAV_GROUPS.flatMap((group) => group.items)
+                      .filter((key) => {
+                        const label =
+                          key === "dashboard"
+                            ? "Dashboard"
+                            : key === "settings"
+                            ? "Settings"
+                            : MODULE_META[key]?.label || key;
+
+                        return label
+                          .toLowerCase()
+                          .includes(workspaceSearch.trim().toLowerCase());
+                      })
+                      .slice(0, 8)
+                      .map((key) => {
+                        const label =
+                          key === "dashboard"
+                            ? "Dashboard"
+                            : key === "settings"
+                            ? "Settings"
+                            : MODULE_META[key]?.label || key;
+
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => {
+                              setModule(key);
+                              setWorkspaceSearch("");
+                            }}
+                            className="w-full px-3 py-2.5 rounded-lg text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+
+              <div className="ml-auto flex items-center gap-2 sm:gap-3">
+                {/* GLOBAL PERIOD */}
+                <div className="hidden md:flex h-10 items-center rounded-xl border border-slate-200 bg-white overflow-hidden">
+                  <div className="px-3 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 border-r border-slate-100">
+                    Period
+                  </div>
+
+                  <select
+                    value={selectedYear}
+                    onChange={(event) => setSelectedYear(event.target.value)}
+                    className="h-full min-w-[104px] bg-white px-3 text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+                    aria-label="Global reporting year"
+                  >
+                    <option value="all">All Time</option>
+                    {availableYears.map((year) => (
+                      <option key={year} value={String(year)}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* NOTIFICATIONS */}
+                <div ref={notificationRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !notificationsOpen;
+                      setNotificationsOpen(next);
+                      setProfileMenuOpen(false);
+
+                      if (next) {
+                        loadNotifications();
+                      }
+                    }}
+                    className="relative w-10 h-10 rounded-xl border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50"
+                    aria-label="Notifications"
+                  >
+                    <Bell size={18} />
+
+                    {unreadNotificationCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-indigo-600 text-white text-[9px] font-bold leading-[17px] text-center">
+                        {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {notificationsOpen && (
+                    <div className="absolute right-0 mt-2 w-[360px] max-w-[calc(100vw-24px)] rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.18)] overflow-hidden">
+                      <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                        <div className="text-sm font-bold text-slate-950">
+                          Notifications
+                        </div>
+
+                        {unreadNotificationCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={markAllNotificationsRead}
+                            className="text-[11px] font-semibold text-indigo-600"
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="max-h-[420px] overflow-y-auto">
+                        {notificationsLoading ? (
+                          <div className="py-10 flex items-center justify-center gap-2 text-xs text-slate-500">
+                            <Loader2 size={14} className="animate-spin" />
+                            Loading...
+                          </div>
+                        ) : notificationError ? (
+                          <div className="p-4 text-xs text-rose-600">
+                            {notificationError}
+                          </div>
+                        ) : notifications.length === 0 ? (
+                          <div className="py-10 text-center text-xs text-slate-500">
+                            No notifications yet.
+                          </div>
+                        ) : (
+                          notifications.map((notification) => (
+                            <button
+                              key={notification.id}
+                              type="button"
+                              onClick={() => markNotificationRead(notification)}
+                              className={`w-full px-4 py-3 text-left border-b border-slate-100 last:border-0 hover:bg-slate-50 ${
+                                notification.read
+                                  ? "bg-white"
+                                  : "bg-indigo-50/30"
+                              }`}
+                            >
+                              <div className="text-xs font-bold text-slate-900">
+                                {notification.title}
+                              </div>
+
+                              <div className="mt-1 text-[11px] leading-5 text-slate-500">
+                                {notification.message}
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* PROFILE — TOP RIGHT ONLY */}
+                <div ref={profileMenuRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen((current) => !current);
+                      setNotificationsOpen(false);
+                    }}
+                    className="h-11 pl-1 pr-2 sm:pr-3 rounded-xl hover:bg-white flex items-center gap-2.5 transition-colors"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center text-xs font-bold">
+                      {initials}
+                    </div>
+
+                    <div className="hidden sm:block text-left min-w-0">
+                      <div className="text-[13px] font-bold text-slate-950 truncate max-w-[130px]">
+                        {user.name || tenant.name}
+                      </div>
+
+                      <div className="text-[10px] text-slate-500">
+                        {formatRole(user.role)}
+                      </div>
+                    </div>
+
+                    <ChevronDown
+                      size={14}
+                      className={`hidden sm:block text-slate-400 transition-transform ${
+                        profileMenuOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {profileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-[240px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_60px_rgba(15,23,42,0.16)]">
+                      <div className="px-3 py-2.5 border-b border-slate-100">
+                        <div className="text-xs font-bold text-slate-900">
+                          {user.name}
+                        </div>
+                        <div className="text-[10px] text-slate-500 mt-0.5">
+                          {user.email}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={openChangePassword}
+                        className="mt-1 w-full h-10 px-3 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
+                      >
+                        <Lock size={14} />
+                        Change Password
+                      </button>
+
+                      {(user.role === "CLIENT_ADMIN" ||
+                        permissions.canManageBilling === true) && (
+                        <button
+                          type="button"
+                          onClick={openBilling}
+                          className="w-full h-10 px-3 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
+                        >
+                          <ReceiptIndianRupee size={14} />
+                          Billing & Subscription
+                        </button>
+                      )}
+
+                      {(user.role === "CLIENT_ADMIN" ||
+                        permissions.canManageSettings === true) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            setModule("settings");
+                          }}
+                          className="w-full h-10 px-3 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
+                        >
+                          <Settings size={14} />
+                          Company Settings
+                        </button>
+                      )}
+
+                      <div className="my-1 border-t border-slate-100" />
+
+                      <button
+                        type="button"
+                        onClick={signOut}
+                        disabled={signingOut}
+                        className="w-full h-10 px-3 rounded-xl text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 disabled:opacity-50"
+                      >
+                        {signingOut ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <LogOut size={14} />
+                        )}
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* MAIN CONTENT */}
+          <main className="px-3 py-4 sm:px-5 sm:py-5 lg:p-7">
+            <div className="max-w-[1560px] mx-auto">
+              {module === "dashboard" && (
+                <div className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_28px_rgba(15,23,42,0.05)]">
+                  <div className="relative min-h-[138px] px-5 sm:px-7 py-5 flex items-center justify-between gap-6">
+                    <div className="relative z-10 min-w-0">
+                      <div className="text-[25px] sm:text-[30px] leading-tight font-black tracking-[-0.045em] text-slate-950">
+                        {timeGreeting},{" "}
+                        <span className="text-indigo-600">
+                          {(user?.name || tenant.ownerName || "Admin").split(" ")[0]}
+                        </span>
+                        <span className="ml-2" aria-hidden="true">🚀</span>
+                      </div>
+
+                      <div className="mt-2 text-[12px] sm:text-[13px] text-slate-500">
+                        Here&apos;s your ConsulBuzz CRM activity for today.
+                      </div>
+
+                      <div className="mt-2 text-[10px] sm:text-[11px] font-medium text-slate-400">
+                        {new Date().toLocaleDateString("en-IN", {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="hidden md:flex w-[250px] lg:w-[320px] self-stretch items-center justify-end flex-shrink-0">
+                      <svg
+                        viewBox="0 0 360 150"
+                        className="w-full max-h-[128px]"
+                        role="img"
+                        aria-label="CRM activity illustration"
+                      >
+                        <path
+                          d="M88 0h272v150H45c20-24 18-48 1-70C28 56 36 22 88 0Z"
+                          fill="#eef4ff"
+                        />
+                        <rect
+                          x="78"
+                          y="36"
+                          width="88"
+                          height="62"
+                          rx="8"
+                          fill="#ffffff"
+                          stroke="#0f172a"
+                          strokeWidth="3"
+                        />
+                        <path
+                          d="M98 56h47M98 70h36"
+                          stroke="#0f172a"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+                        <rect
+                          x="64"
+                          y="103"
+                          width="118"
+                          height="9"
+                          rx="4.5"
+                          fill="#4f46e5"
+                        />
+                        <path
+                          d="M222 36l55 26-40 30-52-26 37-30Z"
+                          fill="#4f46e5"
+                        />
+                        <path
+                          d="M222 36l15 56M277 62l-92 4"
+                          stroke="#a5b4fc"
+                          strokeWidth="2"
+                        />
+                        <circle
+                          cx="280"
+                          cy="45"
+                          r="16"
+                          fill="#111827"
+                        />
+                        <path
+                          d="M268 61c-16 7-25 23-25 48v29h57v-29c0-22-7-39-21-48h-11Z"
+                          fill="#111827"
+                        />
+                        <path
+                          d="M249 83l-26-8-5 12 30 15M295 82l21-18"
+                          fill="none"
+                          stroke="#111827"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M258 137l-8 13M288 137l9 13"
+                          stroke="#111827"
+                          strokeWidth="6"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M207 23l-9-11M219 20l2-14M231 27l10-10"
+                          stroke="#4f46e5"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {renderModule()}
+            </div>
+          </main>
+        </div>
       </div>
 
       {billingOpen && (
-        <div className="fixed inset-0 z-[95] bg-slate-950/55 backdrop-blur-[2px] flex items-center justify-center p-4">
-          <div className="w-full max-w-4xl max-h-[90vh] bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-[95] bg-slate-950/55 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-full max-w-4xl max-h-[94vh] sm:max-h-[90vh] bg-white border border-slate-200 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col">
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <div className="text-base font-bold text-slate-950">
@@ -2006,7 +2256,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         <div className="text-xs text-slate-500">
                           Status
                         </div>
-                        <div className="text-sm font-bold text-emerald-600 mt-0.5">
+                        <div className="text-sm font-bold text-indigo-600 mt-0.5">
                           {billingData.subscription.status}
                         </div>
                       </div>
@@ -2152,7 +2402,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                   className={`text-[10px] font-semibold mt-0.5 ${
                                     payment.status ===
                                     "CAPTURED"
-                                      ? "text-emerald-600"
+                                      ? "text-indigo-600"
                                       : payment.status ===
                                         "FAILED"
                                       ? "text-rose-600"
@@ -2180,8 +2430,8 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       )}
 
       {changePasswordOpen && (
-        <div className="fixed inset-0 z-[100] bg-slate-950/55 backdrop-blur-[2px] flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-[100] bg-slate-950/55 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <div className="text-base font-bold text-slate-950">
@@ -2315,7 +2565,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               )}
 
               {passwordMessage && (
-                <div className="flex items-start gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                <div className="flex items-start gap-2 text-xs text-indigo-700 bg-indigo-50 border border-emerald-200 rounded-lg p-3">
                   <CheckCircle2
                     size={14}
                     className="mt-0.5 flex-shrink-0"
