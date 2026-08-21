@@ -582,6 +582,28 @@ router.post(
             includeUsers,
         });
 
+      if (
+        event.assignedToUserId
+      ) {
+        await prisma.notification.create({
+          data: {
+            companyId,
+            userId:
+              event.assignedToUserId,
+            title:
+              "New calendar event assigned",
+            message:
+              `${event.title} is scheduled for ${event.startAt.toLocaleString("en-IN")}.`,
+            type:
+              "INFO",
+            actionModule:
+              "dashboard",
+            actionLabel:
+              "Open calendar",
+          },
+        });
+      }
+
       return res
         .status(201)
         .json({
@@ -914,6 +936,30 @@ router.patch(
           include:
             includeUsers,
         });
+
+      if (
+        data.assignedToUserId &&
+        data.assignedToUserId !==
+          existing.assignedToUserId
+      ) {
+        await prisma.notification.create({
+          data: {
+            companyId,
+            userId:
+              data.assignedToUserId,
+            title:
+              "Calendar event assigned to you",
+            message:
+              `${event.title} is scheduled for ${event.startAt.toLocaleString("en-IN")}.`,
+            type:
+              "INFO",
+            actionModule:
+              "dashboard",
+            actionLabel:
+              "Open calendar",
+          },
+        });
+      }
 
       return res.json({
         success:

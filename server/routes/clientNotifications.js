@@ -9,6 +9,223 @@ const router = Router();
 
 router.use(requireClientUser);
 
+
+async function ensureCalendarReminders(
+  companyId,
+  userId
+) {
+  const now =
+    new Date();
+
+  const soon =
+    new Date(
+      now.getTime() +
+        60 * 60 * 1000
+    );
+
+  const events =
+    await prisma.calendarEvent.findMany({
+      where: {
+        companyId,
+        assignedToUserId:
+          userId,
+        status:
+          "SCHEDULED",
+        startAt: {
+          gte: now,
+          lte: soon,
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        startAt: true,
+        type: true,
+      },
+    });
+
+  for (const event of events) {
+    const marker =
+      `CALENDAR_REMINDER:${event.id}`;
+
+    const exists =
+      await prisma.notification.findFirst({
+        where: {
+          companyId,
+          userId,
+          message: {
+            contains:
+              marker,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    if (!exists) {
+      await prisma.notification.create({
+        data: {
+          companyId,
+          userId,
+          title:
+            "Upcoming calendar event",
+          message:
+            `${event.title} starts at ${event.startAt.toLocaleTimeString("en-IN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}. ${marker}`,
+          type:
+            "REMINDER",
+          actionModule:
+            "dashboard",
+          actionLabel:
+            "Open calendar",
+        },
+      });
+    }
+  }
+}
+
+async function ensureBillingRenewalReminder(
+  companyId,
+  userId
+) {
+  const user =
+    await prisma.user.findFirst({
+      where: {
+        id: userId,
+        companyId,
+        active: true,
+      },
+      select: {
+        role: true,
+        canManageBilling: true,
+      },
+    });
+
+  if (
+    !user ||
+    (
+      user.role !==
+        "CLIENT_ADMIN" &&
+      user.canManageBilling !==
+        true
+    )
+  ) {
+    return;
+  }
+
+  const subscription =
+    await prisma.subscription.findFirst({
+      where: {
+        companyId,
+        renewalDate: {
+          not: null,
+        },
+        status: {
+          in: [
+            "TRIAL",
+            "ACTIVE",
+            "PAST_DUE",
+          ],
+        },
+      },
+      include: {
+        plan: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt:
+          "desc",
+      },
+    });
+
+  if (
+    !subscription
+      ?.renewalDate
+  ) {
+    return;
+  }
+
+  const now =
+    new Date();
+
+  const sevenDays =
+    new Date(
+      now.getTime() +
+        7 * 24 * 60 * 60 * 1000
+    );
+
+  if (
+    subscription.renewalDate <
+      now ||
+    subscription.renewalDate >
+      sevenDays
+  ) {
+    return;
+  }
+
+  const marker =
+    `BILLING_RENEWAL:${subscription.id}:${subscription.renewalDate.toISOString().slice(0, 10)}`;
+
+  const exists =
+    await prisma.notification.findFirst({
+      where: {
+        companyId,
+        userId,
+        message: {
+          contains:
+            marker,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+  if (!exists) {
+    await prisma.notification.create({
+      data: {
+        companyId,
+        userId,
+        title:
+          "Subscription renewal approaching",
+        message:
+          `${subscription.plan.name} renews on ${subscription.renewalDate.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })}. ${marker}`,
+        type:
+          "BILLING",
+        actionModule:
+          "settings",
+        actionLabel:
+          "View billing",
+      },
+    });
+  }
+}
+
+async function ensureDynamicNotifications(
+  req
+) {
+  await Promise.all([
+    ensureCalendarReminders(
+      req.clientUser.companyId,
+      req.clientUser.userId
+    ),
+    ensureBillingRenewalReminder(
+      req.clientUser.companyId,
+      req.clientUser.userId
+    ),
+  ]);
+}
+
 function notificationWhere(req) {
   return {
     companyId: req.clientUser.companyId,
@@ -194,6 +411,8 @@ router.patch(
 
 router.get("/", async (req, res) => {
   try {
+    await ensureDynamicNotifications(req);
+
     const limit = Math.min(
       Math.max(
         Number(req.query.limit) || 20,
@@ -246,6 +465,8 @@ router.get(
   "/unread-count",
   async (req, res) => {
     try {
+      await ensureDynamicNotifications(req);
+
       const unreadCount =
         await prisma.notification.count({
           where: {

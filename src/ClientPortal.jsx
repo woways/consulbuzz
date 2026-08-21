@@ -336,6 +336,20 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     paymentProcessing,
     setPaymentProcessing,
   ] = useState("");
+  const [
+    receiptOpen,
+    setReceiptOpen,
+  ] = useState(false);
+
+  const [
+    receiptData,
+    setReceiptData,
+  ] = useState(null);
+
+  const [
+    receiptLoading,
+    setReceiptLoading,
+  ] = useState(false);
 
   const [
     openGroups,
@@ -965,11 +979,14 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               await loadBillingData();
 
               if (verified.captured) {
-                window.setTimeout(
-                  () =>
-                    window.location.reload(),
-                  700
-                );
+                if (verified.receipt) {
+                  setReceiptData(
+                    verified.receipt
+                  );
+                  setReceiptOpen(true);
+                }
+
+                await loadUnreadNotificationCount();
               }
             } catch (error) {
               setBillingError(
@@ -1014,6 +1031,132 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       );
       setPaymentProcessing("");
     }
+  }
+
+  async function openPaymentReceipt(
+    paymentId
+  ) {
+    setReceiptOpen(true);
+    setReceiptLoading(true);
+
+    try {
+      const data =
+        await apiRequest(
+          `/api/client/billing/receipts/${paymentId}`
+        );
+
+      setReceiptData(
+        data.receipt || null
+      );
+    } catch (error) {
+      setBillingError(
+        error?.data?.message ||
+          "Unable to load payment receipt"
+      );
+      setReceiptOpen(false);
+    } finally {
+      setReceiptLoading(false);
+    }
+  }
+
+  function printReceipt() {
+    const receipt =
+      document.getElementById(
+        "consulbuzz-payment-receipt"
+      );
+
+    if (!receipt) {
+      return;
+    }
+
+    const printWindow =
+      window.open(
+        "",
+        "_blank",
+        "width=900,height=1100"
+      );
+
+    if (!printWindow) {
+      setBillingError(
+        "Please allow pop-ups to print the receipt."
+      );
+      return;
+    }
+
+    printWindow.document.open();
+
+    printWindow.document.write(`
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>ConsulBuzz Payment Receipt</title>
+
+          <script src="https://cdn.tailwindcss.com"></script>
+
+          <style>
+            @page {
+              size: A4;
+              margin: 10mm;
+            }
+
+            html,
+            body {
+              margin: 0;
+              padding: 0;
+              background: #ffffff;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+
+            body {
+              font-family:
+                Inter,
+                ui-sans-serif,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+            }
+
+            #consulbuzz-payment-receipt {
+              width: 100%;
+              max-width: 794px;
+              margin: 0 auto;
+              box-shadow: none !important;
+              border-radius: 0 !important;
+            }
+
+            @media print {
+              .print\\:hidden {
+                display: none !important;
+              }
+            }
+          </style>
+        </head>
+
+        <body>
+          ${receipt.outerHTML}
+
+          <script>
+            window.addEventListener(
+              "load",
+              function () {
+                setTimeout(
+                  function () {
+                    window.print();
+                  },
+                  500
+                );
+              }
+            );
+          </script>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
   }
 
   function toggleGroup(
@@ -1472,6 +1615,56 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#f6f7fb] text-slate-900 overflow-x-hidden">
+      <style>{`
+        @media print {
+          @page {
+            size: A4;
+            margin: 10mm;
+          }
+
+          html,
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            overflow: visible !important;
+          }
+
+          body > * {
+            display: none !important;
+          }
+
+          #consulbuzz-payment-receipt-print-root {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+          }
+
+          #consulbuzz-payment-receipt {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            overflow: visible !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid-page !important;
+          }
+
+          #consulbuzz-payment-receipt * {
+            visibility: visible !important;
+          }
+
+          .print\\:hidden {
+            display: none !important;
+          }
+        }
+      `}</style>
 
       {/* MOBILE APP BAR */}
       <div className="lg:hidden sticky top-0 z-40 h-14 bg-[#f6f7fb]/95 backdrop-blur-xl border-b border-slate-200/70 px-4 flex items-center justify-between">
@@ -2411,6 +2604,20 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                 >
                                   {payment.status}
                                 </div>
+
+                                {payment.status === "CAPTURED" && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      openPaymentReceipt(
+                                        payment.id
+                                      )
+                                    }
+                                    className="mt-1.5 text-[10px] font-semibold text-indigo-600 hover:text-indigo-700"
+                                  >
+                                    View Receipt
+                                  </button>
+                                )}
                               </div>
                             </div>
                           )
@@ -2424,6 +2631,271 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {receiptOpen && (
+        <div
+          id="consulbuzz-payment-receipt-print-root"
+          className="fixed inset-0 z-[120] bg-slate-950/60 backdrop-blur-[3px] p-3 sm:p-6 overflow-y-auto"
+        >
+          <div className="max-w-[860px] mx-auto">
+            <div className="flex items-center justify-between gap-3 mb-3 print:hidden">
+              <button
+                type="button"
+                onClick={() => {
+                  setReceiptOpen(false);
+                  setReceiptData(null);
+                }}
+                className="h-9 px-3 rounded-xl border border-white/20 bg-white/10 text-white text-xs font-semibold hover:bg-white/15"
+              >
+                Close
+              </button>
+
+              {receiptData && (
+                <button
+                  type="button"
+                  onClick={printReceipt}
+                  className="h-9 px-4 rounded-xl bg-white text-slate-950 text-xs font-semibold shadow-sm"
+                >
+                  Print / Save PDF
+                </button>
+              )}
+            </div>
+
+            <div
+              id="consulbuzz-payment-receipt"
+              className="bg-white rounded-[24px] shadow-2xl overflow-hidden print:shadow-none print:rounded-none print:text-[11px]"
+            >
+              {receiptLoading ? (
+                <div className="py-24 flex items-center justify-center gap-2 text-sm text-slate-500">
+                  <Loader2 size={16} className="animate-spin" />
+                  Loading receipt...
+                </div>
+              ) : receiptData ? (
+                <>
+                  <div className="px-8 sm:px-10 pt-9 pb-8 border-b border-slate-100">
+                    <div className="flex items-start justify-between gap-6">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-2xl bg-[#071321] text-white flex items-center justify-center text-[11px] font-black">
+                            CB
+                          </div>
+
+                          <div>
+                            <div className="text-[18px] font-black tracking-[-0.03em] text-slate-950">
+                              ConsulBuzz
+                            </div>
+                            <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] font-semibold text-slate-400">
+                              CRM Subscription
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-8 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                          Payment Receipt
+                        </div>
+
+                        <div className="mt-2 text-[28px] sm:text-[34px] leading-none font-black tracking-[-0.045em] text-slate-950">
+                          ₹{Number(
+                            receiptData.amount || 0
+                          ).toLocaleString("en-IN")}
+                        </div>
+
+                        <div className="mt-2 text-sm font-semibold text-emerald-600">
+                          Payment successful
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700">
+                          <CheckCircle2 size={12} />
+                          Paid
+                        </div>
+
+                        <div className="mt-5 text-[10px] text-slate-400">
+                          Receipt No.
+                        </div>
+                        <div className="mt-1 text-xs font-bold text-slate-800 break-all max-w-[220px]">
+                          {receiptData.receiptNumber || receiptData.id}
+                        </div>
+
+                        <div className="mt-3 text-[10px] text-slate-400">
+                          Payment Date
+                        </div>
+                        <div className="mt-1 text-xs font-semibold text-slate-700">
+                          {new Date(
+                            receiptData.paidAt ||
+                              receiptData.createdAt
+                          ).toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-8 sm:px-10 py-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                          Billed To
+                        </div>
+
+                        <div className="mt-3 text-sm font-bold text-slate-950">
+                          {receiptData.company?.brandName ||
+                            receiptData.company?.name ||
+                            company.name}
+                        </div>
+
+                        <div className="mt-1 text-xs leading-5 text-slate-500">
+                          {receiptData.company?.email || company.email || "—"}
+                          <br />
+                          {receiptData.company?.phone || company.phone || ""}
+                          {receiptData.company?.city
+                            ? ` · ${receiptData.company.city}`
+                            : company.city
+                            ? ` · ${company.city}`
+                            : ""}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                          Subscription
+                        </div>
+
+                        <div className="mt-3 text-sm font-bold text-slate-950">
+                          {receiptData.plan?.name} Plan
+                        </div>
+
+                        <div className="mt-1 text-xs leading-5 text-slate-500">
+                          {receiptData.billingCycle} Billing
+                          <br />
+                          Renewal:{" "}
+                          {receiptData.subscription?.renewalDate
+                            ? new Date(
+                                receiptData.subscription.renewalDate
+                              ).toLocaleDateString("en-IN", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "—"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 rounded-2xl border border-slate-200 overflow-hidden">
+                      <div className="grid grid-cols-[1fr_auto] bg-slate-50 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                        <div>Description</div>
+                        <div>Amount</div>
+                      </div>
+
+                      <div className="grid grid-cols-[1fr_auto] px-4 py-4 border-t border-slate-100">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">
+                            ConsulBuzz {receiptData.plan?.name} Plan
+                          </div>
+                          <div className="mt-1 text-[11px] text-slate-500">
+                            {receiptData.billingCycle === "YEARLY"
+                              ? "Annual CRM subscription"
+                              : "Monthly CRM subscription"}
+                          </div>
+                        </div>
+
+                        <div className="text-sm font-bold text-slate-950">
+                          ₹{Number(
+                            receiptData.amount || 0
+                          ).toLocaleString("en-IN")}
+                        </div>
+                      </div>
+
+                      <div className="px-4 py-4 border-t border-slate-100 bg-slate-50/60">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-500">Subtotal</span>
+                          <span className="font-semibold text-slate-800">
+                            ₹{Number(
+                              receiptData.amount || 0
+                            ).toLocaleString("en-IN")}
+                          </span>
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between text-xs">
+                          <span className="text-slate-500">Tax / GST</span>
+                          <span className="font-semibold text-slate-500">
+                            Not separately recorded
+                          </span>
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t border-slate-200 flex items-end justify-between gap-3">
+                          <span className="text-sm font-bold text-slate-950">
+                            Total Paid
+                          </span>
+                          <span className="text-[22px] font-black tracking-tight text-slate-950">
+                            ₹{Number(
+                              receiptData.amount || 0
+                            ).toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-8">
+                      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                        Payment Details
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                        {[
+                          ["Payment Method", "Razorpay"],
+                          ["Currency", receiptData.currency || "INR"],
+                          ["Payment ID", receiptData.providerPaymentId || "—"],
+                          ["Order ID", receiptData.providerOrderId || "—"],
+                          ["Status", receiptData.status || "CAPTURED"],
+                          [
+                            "Billing Cycle",
+                            receiptData.billingCycle || "—",
+                          ],
+                        ].map(([label, value]) => (
+                          <div
+                            key={label}
+                            className="border-b border-slate-100 pb-3"
+                          >
+                            <div className="text-[10px] text-slate-400">
+                              {label}
+                            </div>
+                            <div className="mt-1 text-xs font-semibold text-slate-800 break-all">
+                              {value}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mt-9 pt-6 border-t border-slate-100 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">
+                          Thank you for choosing ConsulBuzz.
+                        </div>
+                        <div className="mt-1 text-[11px] text-slate-500">
+                          This receipt confirms successful payment for your CRM subscription.
+                        </div>
+                      </div>
+
+                      <div className="text-[10px] text-slate-400 sm:text-right">
+                        ConsulBuzz CRM
+                        <br />
+                        Subscription Receipt
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
         </div>

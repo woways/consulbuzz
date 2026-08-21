@@ -188,6 +188,26 @@ function localDateTimeValue(value) {
   return `${year}-${month}-${day}T${hour}:${minute}`;
 }
 
+function minimumDateTimeLocal() {
+  const now = new Date();
+
+  now.setSeconds(0, 0);
+
+  return localDateTimeValue(now);
+}
+
+function isPastDateTime(value) {
+  if (!value) return false;
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  return date.getTime() < Date.now();
+}
+
 function eventDateKey(event) {
   return dateKey(
     new Date(event.startAt)
@@ -438,21 +458,59 @@ export default function Dashboard({
     const selected =
       new Date(date);
 
-    selected.setHours(
-      9,
-      0,
-      0,
-      0
-    );
+    const now =
+      new Date();
+
+    const isToday =
+      selected.getFullYear() ===
+        now.getFullYear() &&
+      selected.getMonth() ===
+        now.getMonth() &&
+      selected.getDate() ===
+        now.getDate();
+
+    if (isToday) {
+      const rounded =
+        new Date(now);
+
+      rounded.setSeconds(
+        0,
+        0
+      );
+
+      const minutes =
+        rounded.getMinutes();
+
+      const remainder =
+        minutes % 15;
+
+      if (remainder) {
+        rounded.setMinutes(
+          minutes +
+            (15 - remainder)
+        );
+      }
+
+      selected.setHours(
+        rounded.getHours(),
+        rounded.getMinutes(),
+        0,
+        0
+      );
+    } else {
+      selected.setHours(
+        9,
+        0,
+        0,
+        0
+      );
+    }
 
     const end =
       new Date(selected);
 
     end.setHours(
-      10,
-      0,
-      0,
-      0
+      end.getHours() + 1
     );
 
     setEditingEvent(null);
@@ -516,6 +574,33 @@ export default function Dashboard({
       return;
     }
 
+    if (
+      !editingEvent &&
+      isPastDateTime(
+        eventForm.startAt
+      )
+    ) {
+      setCalendarError(
+        "New calendar events cannot be scheduled in the past."
+      );
+      return;
+    }
+
+    if (
+      eventForm.endAt &&
+      new Date(
+        eventForm.endAt
+      ) <
+        new Date(
+          eventForm.startAt
+        )
+    ) {
+      setCalendarError(
+        "Event end time cannot be before the start time."
+      );
+      return;
+    }
+
     setSavingEvent(true);
     setCalendarError("");
 
@@ -561,7 +646,9 @@ export default function Dashboard({
           `/api/client/calendar/${editingEvent.id}`,
           {
             method: "PATCH",
-            body: payload,
+            body: JSON.stringify(
+              payload
+            ),
           }
         );
       } else {
@@ -569,7 +656,9 @@ export default function Dashboard({
           "/api/client/calendar",
           {
             method: "POST",
-            body: payload,
+            body: JSON.stringify(
+              payload
+            ),
           }
         );
       }
@@ -1203,8 +1292,20 @@ export default function Dashboard({
 
                 <button
                   type="button"
+                  disabled={
+                    new Date(
+                      agendaDate.getFullYear(),
+                      agendaDate.getMonth(),
+                      agendaDate.getDate(),
+                      23,
+                      59,
+                      59,
+                      999
+                    ) <
+                    new Date()
+                  }
                   onClick={() => openCreateEvent(agendaDate)}
-                  className="mt-3 h-9 w-full rounded-xl border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center gap-1.5"
+                  className="mt-3 h-9 w-full rounded-xl border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1.5"
                 >
                   <Plus size={13} />
                   Add calendar event
@@ -1512,6 +1613,21 @@ export default function Dashboard({
                               day
                             );
 
+                          const dayEnd =
+                            new Date(
+                              year,
+                              month,
+                              day,
+                              23,
+                              59,
+                              59,
+                              999
+                            );
+
+                          const isPastDay =
+                            dayEnd <
+                            new Date();
+
                           const key =
                             dateKey(date);
 
@@ -1540,23 +1656,38 @@ export default function Dashboard({
                           cells.push(
                             <div
                               key={key}
-                              onDoubleClick={() =>
-                                openCreateEvent(
-                                  date
-                                )
-                              }
-                              className="min-h-[96px] p-2 bg-white hover:bg-slate-50/70 border-r border-b border-slate-200 transition-colors overflow-hidden"
+                              onDoubleClick={() => {
+                                if (
+                                  !isPastDay
+                                ) {
+                                  openCreateEvent(
+                                    date
+                                  );
+                                }
+                              }}
+                              className={`min-h-[96px] p-2 border-r border-b border-slate-200 transition-colors overflow-hidden ${
+                                isPastDay
+                                  ? "bg-slate-50/70"
+                                  : "bg-white hover:bg-slate-50/70"
+                              }`}
                             >
                               <button
                                 type="button"
-                                onClick={() =>
-                                  openCreateEvent(
-                                    date
-                                  )
-                                }
+                                disabled={isPastDay}
+                                onClick={() => {
+                                  if (
+                                    !isPastDay
+                                  ) {
+                                    openCreateEvent(
+                                      date
+                                    );
+                                  }
+                                }}
                                 className={`inline-flex w-6 h-6 items-center justify-center rounded-full text-[11px] font-semibold ${
                                   isToday
                                     ? "bg-indigo-600 text-white"
+                                    : isPastDay
+                                    ? "text-slate-300 cursor-not-allowed"
                                     : "text-slate-700 hover:bg-slate-100"
                                 }`}
                               >
@@ -1887,6 +2018,11 @@ export default function Dashboard({
 
                   <input
                     type="datetime-local"
+                    min={
+                      editingEvent
+                        ? undefined
+                        : minimumDateTimeLocal()
+                    }
                     value={
                       eventForm.startAt
                     }
@@ -1911,6 +2047,10 @@ export default function Dashboard({
 
                   <input
                     type="datetime-local"
+                    min={
+                      eventForm.startAt ||
+                      minimumDateTimeLocal()
+                    }
                     value={
                       eventForm.endAt
                     }

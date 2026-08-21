@@ -179,6 +179,8 @@ router.get("/", async (req, res) => {
             payment.providerOrderId,
           providerPaymentId:
             payment.providerPaymentId,
+          receipt:
+            payment.receipt,
           paidAt:
             payment.paidAt,
           createdAt:
@@ -484,11 +486,96 @@ router.post(
             paymentId,
         });
 
+        const paidTransaction =
+          await prisma.paymentTransaction.findUnique({
+            where: {
+              id: transaction.id,
+            },
+            include: {
+              plan: true,
+              company: {
+                select: {
+                  id: true,
+                  name: true,
+                  brandName: true,
+                  email: true,
+                  phone: true,
+                  city: true,
+                },
+              },
+              subscription: {
+                select: {
+                  id: true,
+                  startDate: true,
+                  renewalDate: true,
+                  endDate: true,
+                  billingCycle: true,
+                  status: true,
+                },
+              },
+            },
+          });
+
+        await prisma.notification.create({
+          data: {
+            companyId:
+              req.clientUser.companyId,
+            userId:
+              req.clientUser.userId,
+            title:
+              "Subscription payment successful",
+            message:
+              `${paidTransaction?.plan?.name || "ConsulBuzz"} ${transaction.billingCycle.toLowerCase()} subscription payment of ₹${Number(transaction.amount).toLocaleString("en-IN")} was received successfully.`,
+            type:
+              "SUCCESS",
+            actionModule:
+              "settings",
+            actionLabel:
+              "View billing",
+          },
+        });
+
         return res.json({
           success: true,
           captured: true,
           message:
             "Payment verified and subscription activated successfully",
+          receipt: paidTransaction
+            ? {
+                id:
+                  paidTransaction.id,
+                receiptNumber:
+                  paidTransaction.receipt,
+                status:
+                  paidTransaction.status,
+                amount:
+                  Number(paidTransaction.amount),
+                currency:
+                  paidTransaction.currency,
+                billingCycle:
+                  paidTransaction.billingCycle,
+                provider:
+                  paidTransaction.provider,
+                providerOrderId:
+                  paidTransaction.providerOrderId,
+                providerPaymentId:
+                  paidTransaction.providerPaymentId,
+                paidAt:
+                  paidTransaction.paidAt,
+                createdAt:
+                  paidTransaction.createdAt,
+                plan: {
+                  key:
+                    paidTransaction.plan.key,
+                  name:
+                    paidTransaction.plan.name,
+                },
+                company:
+                  paidTransaction.company,
+                subscription:
+                  paidTransaction.subscription,
+              }
+            : null,
         });
       }
 
@@ -523,6 +610,103 @@ router.post(
         success: false,
         message:
           "Unable to verify payment",
+      });
+    }
+  }
+);
+
+
+router.get(
+  "/receipts/:paymentId",
+  async (req, res) => {
+    try {
+      const payment =
+        await prisma.paymentTransaction.findFirst({
+          where: {
+            id: req.params.paymentId,
+            companyId:
+              req.clientUser.companyId,
+          },
+          include: {
+            plan: true,
+            company: {
+              select: {
+                id: true,
+                name: true,
+                brandName: true,
+                email: true,
+                phone: true,
+                city: true,
+              },
+            },
+            subscription: {
+              select: {
+                id: true,
+                status: true,
+                billingCycle: true,
+                startDate: true,
+                renewalDate: true,
+                endDate: true,
+              },
+            },
+          },
+        });
+
+      if (!payment) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Payment receipt not found",
+        });
+      }
+
+      return res.json({
+        success: true,
+        receipt: {
+          id:
+            payment.id,
+          receiptNumber:
+            payment.receipt,
+          status:
+            payment.status,
+          amount:
+            Number(payment.amount),
+          currency:
+            payment.currency,
+          billingCycle:
+            payment.billingCycle,
+          provider:
+            payment.provider,
+          providerOrderId:
+            payment.providerOrderId,
+          providerPaymentId:
+            payment.providerPaymentId,
+          paidAt:
+            payment.paidAt,
+          createdAt:
+            payment.createdAt,
+          plan: {
+            key:
+              payment.plan.key,
+            name:
+              payment.plan.name,
+          },
+          company:
+            payment.company,
+          subscription:
+            payment.subscription,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "Load payment receipt failed:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Unable to load payment receipt",
       });
     }
   }

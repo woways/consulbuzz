@@ -8,21 +8,6 @@ import {
 
 const router = Router();
 
-function parseYear(value) {
-  if (!value || value === "all") return null;
-  const year = Number(value);
-  return Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : null;
-}
-
-function yearRange(year) {
-  if (!year) return null;
-  return {
-    gte: new Date(year, 0, 1),
-    lt: new Date(year + 1, 0, 1),
-  };
-}
-
-
 router.use(requireClientUser);
 
 router.use(
@@ -42,6 +27,57 @@ const STAGE_LABELS = {
 };
 
 const VALID_STAGES = Object.keys(STAGE_LABELS);
+
+
+function parseYear(value) {
+  if (!value || value === "all") return null;
+
+  const year = Number(value);
+
+  return Number.isInteger(year) &&
+    year >= 2000 &&
+    year <= 2100
+    ? year
+    : null;
+}
+
+function yearRange(year) {
+  if (!year) return null;
+
+  return {
+    gte: new Date(year, 0, 1),
+    lt: new Date(year + 1, 0, 1),
+  };
+}
+
+function slugUtm(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function buildUtmUrl(rawUrl, campaign, source, medium) {
+  const parsed = new URL(rawUrl);
+
+  parsed.searchParams.set(
+    "utm_campaign",
+    slugUtm(campaign)
+  );
+
+  parsed.searchParams.set(
+    "utm_source",
+    slugUtm(source)
+  );
+
+  parsed.searchParams.set(
+    "utm_medium",
+    slugUtm(medium)
+  );
+
+  return parsed.toString();
+}
 
 const FALLBACK_SOURCE_LABELS = {
   GOOGLE_FORM: "Google Form",
@@ -358,10 +394,19 @@ router.get("/", async (req, res) => {
       String(req.query.search || "")
         .trim();
 
-    const selectedYear = parseYear(req.query.year);
+    const selectedYear =
+      parseYear(req.query.year);
+
     const where = {
       companyId,
-      ...(selectedYear ? { createdAt: yearRange(selectedYear) } : {}),
+      ...(selectedYear
+        ? {
+            createdAt:
+              yearRange(
+                selectedYear
+              ),
+          }
+        : {}),
     };
 
     if (source) {
@@ -1009,28 +1054,278 @@ router.get("/utm/links", async (req, res) => {
     const companyId =
       req.clientUser.companyId;
 
+    const selectedYear =
+      parseYear(
+        req.query.year
+      );
+
+    const search =
+      String(
+        req.query.search ||
+          ""
+      ).trim();
+
+    const source =
+      String(
+        req.query.source ||
+          ""
+      ).trim();
+
+    const medium =
+      String(
+        req.query.medium ||
+          ""
+      ).trim();
+
+    const campaign =
+      String(
+        req.query.campaign ||
+          ""
+      ).trim();
+
+    const sort =
+      String(
+        req.query.sort ||
+          "newest"
+      );
+
+    const where = {
+      companyId,
+      ...(selectedYear
+        ? {
+            createdAt:
+              yearRange(
+                selectedYear
+              ),
+          }
+        : {}),
+    };
+
+    if (source) {
+      where.source = {
+        equals:
+          source,
+        mode:
+          "insensitive",
+      };
+    }
+
+    if (medium) {
+      where.medium = {
+        equals:
+          medium,
+        mode:
+          "insensitive",
+      };
+    }
+
+    if (campaign) {
+      where.campaign = {
+        contains:
+          campaign,
+        mode:
+          "insensitive",
+      };
+    }
+
+    if (search) {
+      where.OR = [
+        {
+          campaign: {
+            contains:
+              search,
+            mode:
+              "insensitive",
+          },
+        },
+        {
+          source: {
+            contains:
+              search,
+            mode:
+              "insensitive",
+          },
+        },
+        {
+          medium: {
+            contains:
+              search,
+            mode:
+              "insensitive",
+          },
+        },
+        {
+          url: {
+            contains:
+              search,
+            mode:
+              "insensitive",
+          },
+        },
+      ];
+    }
+
     const links =
       await prisma.utmLink.findMany({
-        where: {
-          companyId,
-        },
-
+        where,
         include: {
-          _count: {
+          leads: {
             select: {
-              leads: true,
+              id: true,
+              createdAt: true,
+              admission: {
+                select: {
+                  status: true,
+                  paidAmount: true,
+                },
+              },
             },
           },
         },
-
-        orderBy: {
-          createdAt: "desc",
-        },
       });
+
+    let formatted =
+      links.map(
+        (link) => {
+          const validLeads =
+            selectedYear
+              ? link.leads.filter(
+                  (lead) =>
+                    new Date(
+                      lead.createdAt
+                    ).getFullYear() ===
+                    selectedYear
+                )
+              : link.leads;
+
+          const admissions =
+            validLeads.filter(
+              (lead) =>
+                lead.admission &&
+                lead.admission
+                  .status !==
+                  "CANCELLED"
+            );
+
+          const revenue =
+            admissions.reduce(
+              (
+                sum,
+                lead
+              ) =>
+                sum +
+                Number(
+                  lead.admission
+                    ?.paidAmount ||
+                    0
+                ),
+              0
+            );
+
+          return {
+            id: link.id,
+            campaign:
+              link.campaign,
+            source:
+              link.source,
+            medium:
+              link.medium,
+            url: link.url,
+            clicks:
+              Number(
+                link.clicks ||
+                  0
+              ),
+            regs:
+              Number(
+                link.registrations ||
+                  validLeads.length
+              ),
+            leads:
+              validLeads.length,
+            conv:
+              Number(
+                link.conversions ||
+                  admissions.length
+              ),
+            adm:
+              admissions.length,
+            rev:
+              revenue ||
+              Number(
+                link.revenue ||
+                  0
+              ),
+            active:
+              link.active,
+            createdAt:
+              link.createdAt,
+          };
+        }
+      );
+
+    formatted.sort(
+      (a, b) => {
+        if (
+          sort ===
+          "oldest"
+        ) {
+          return (
+            new Date(
+              a.createdAt
+            ) -
+            new Date(
+              b.createdAt
+            )
+          );
+        }
+
+        if (
+          sort ===
+          "leads"
+        ) {
+          return (
+            b.leads -
+            a.leads
+          );
+        }
+
+        if (
+          sort ===
+          "admissions"
+        ) {
+          return (
+            b.adm -
+            a.adm
+          );
+        }
+
+        if (
+          sort ===
+          "revenue"
+        ) {
+          return (
+            b.rev -
+            a.rev
+          );
+        }
+
+        return (
+          new Date(
+            b.createdAt
+          ) -
+          new Date(
+            a.createdAt
+          )
+        );
+      }
+    );
 
     return res.json({
       success: true,
-      links: links.map(formatLink),
+      links: formatted,
+      total:
+        formatted.length,
     });
   } catch (error) {
     console.error(
@@ -1055,30 +1350,43 @@ router.post("/utm/links", async (req, res) => {
     const companyId =
       req.clientUser.companyId;
 
-    const {
-      campaign,
-      source,
-      medium,
-      url,
-    } = req.body || {};
+    const mode =
+      String(
+        req.body?.mode ||
+          "generate"
+      )
+        .trim()
+        .toLowerCase();
 
-    const cleanCampaign =
-      String(campaign || "").trim();
+    const campaign =
+      String(
+        req.body?.campaign ||
+          ""
+      ).trim();
 
-    const cleanSource =
-      String(source || "").trim();
+    const source =
+      String(
+        req.body?.source ||
+          ""
+      ).trim();
 
-    const cleanMedium =
-      String(medium || "").trim();
+    const medium =
+      String(
+        req.body?.medium ||
+          ""
+      ).trim();
 
-    const cleanUrl =
-      String(url || "").trim();
+    const rawUrl =
+      String(
+        req.body?.url ||
+          ""
+      ).trim();
 
     if (
-      !cleanCampaign ||
-      !cleanSource ||
-      !cleanMedium ||
-      !cleanUrl
+      !campaign ||
+      !source ||
+      !medium ||
+      !rawUrl
     ) {
       return res.status(400).json({
         success: false,
@@ -1087,22 +1395,84 @@ router.post("/utm/links", async (req, res) => {
       });
     }
 
+    let url;
+
+    try {
+      if (
+        mode ===
+        "manual"
+      ) {
+        const parsed =
+          new URL(
+            rawUrl
+          );
+
+        if (
+          !parsed.searchParams.get(
+            "utm_campaign"
+          )
+        ) {
+          parsed.searchParams.set(
+            "utm_campaign",
+            slugUtm(
+              campaign
+            )
+          );
+        }
+
+        if (
+          !parsed.searchParams.get(
+            "utm_source"
+          )
+        ) {
+          parsed.searchParams.set(
+            "utm_source",
+            slugUtm(
+              source
+            )
+          );
+        }
+
+        if (
+          !parsed.searchParams.get(
+            "utm_medium"
+          )
+        ) {
+          parsed.searchParams.set(
+            "utm_medium",
+            slugUtm(
+              medium
+            )
+          );
+        }
+
+        url =
+          parsed.toString();
+      } else {
+        url =
+          buildUtmUrl(
+            rawUrl,
+            campaign,
+            source,
+            medium
+          );
+      }
+    } catch {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Please enter a valid URL",
+      });
+    }
+
     const link =
       await prisma.utmLink.create({
         data: {
           companyId,
-          campaign: cleanCampaign,
-          source: cleanSource,
-          medium: cleanMedium,
-          url: cleanUrl,
-        },
-
-        include: {
-          _count: {
-            select: {
-              leads: true,
-            },
-          },
+          campaign,
+          source,
+          medium,
+          url,
         },
       });
 
@@ -1110,7 +1480,34 @@ router.post("/utm/links", async (req, res) => {
       success: true,
       message:
         "UTM link created successfully",
-      link: formatLink(link),
+      link: {
+        id: link.id,
+        campaign:
+          link.campaign,
+        source:
+          link.source,
+        medium:
+          link.medium,
+        url: link.url,
+        clicks:
+          link.clicks,
+        regs:
+          link.registrations,
+        leads: 0,
+        conv:
+          link.conversions,
+        adm:
+          link.admissions,
+        rev:
+          Number(
+            link.revenue ||
+              0
+          ),
+        active:
+          link.active,
+        createdAt:
+          link.createdAt,
+      },
     });
   } catch (error) {
     console.error(
@@ -1122,6 +1519,471 @@ router.post("/utm/links", async (req, res) => {
       success: false,
       message:
         "Unable to create UTM link",
+    });
+  }
+});
+
+/* =========================================================
+   UPDATE UTM LINK
+========================================================= */
+
+router.patch("/utm/links/:id", async (req, res) => {
+  try {
+    const companyId =
+      req.clientUser.companyId;
+
+    const existing =
+      await prisma.utmLink.findFirst({
+        where: {
+          id: req.params.id,
+          companyId,
+        },
+      });
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "UTM link not found",
+      });
+    }
+
+    const data = {};
+
+    for (const field of [
+      "campaign",
+      "source",
+      "medium",
+    ]) {
+      if (
+        req.body?.[
+          field
+        ] !== undefined
+      ) {
+        const value =
+          String(
+            req.body[
+              field
+            ] || ""
+          ).trim();
+
+        if (!value) {
+          return res.status(400).json({
+            success: false,
+            message:
+              `${field} cannot be empty`,
+          });
+        }
+
+        data[field] =
+          value;
+      }
+    }
+
+    if (
+      req.body?.url !==
+      undefined
+    ) {
+      const rawUrl =
+        String(
+          req.body.url ||
+            ""
+        ).trim();
+
+      try {
+        data.url =
+          buildUtmUrl(
+            rawUrl,
+            data.campaign ||
+              existing.campaign,
+            data.source ||
+              existing.source,
+            data.medium ||
+              existing.medium
+          );
+      } catch {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Please enter a valid URL",
+        });
+      }
+    }
+
+    const updated =
+      await prisma.utmLink.update({
+        where: {
+          id:
+            existing.id,
+        },
+        data,
+      });
+
+    return res.json({
+      success: true,
+      message:
+        "UTM link updated",
+      link: {
+        id:
+          updated.id,
+        campaign:
+          updated.campaign,
+        source:
+          updated.source,
+        medium:
+          updated.medium,
+        url:
+          updated.url,
+        clicks:
+          updated.clicks,
+        regs:
+          updated.registrations,
+        leads: 0,
+        conv:
+          updated.conversions,
+        adm:
+          updated.admissions,
+        rev:
+          Number(
+            updated.revenue ||
+              0
+          ),
+        active:
+          updated.active,
+        createdAt:
+          updated.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Failed to update UTM link:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Unable to update UTM link",
+    });
+  }
+});
+
+/* =========================================================
+   DELETE UTM LINK
+========================================================= */
+
+router.delete("/utm/links/:id", async (req, res) => {
+  try {
+    const companyId =
+      req.clientUser.companyId;
+
+    const existing =
+      await prisma.utmLink.findFirst({
+        where: {
+          id: req.params.id,
+          companyId,
+        },
+      });
+
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "UTM link not found",
+      });
+    }
+
+    await prisma.utmLink.delete({
+      where: {
+        id:
+          existing.id,
+      },
+    });
+
+    return res.json({
+      success: true,
+      message:
+        "UTM link deleted",
+    });
+  } catch (error) {
+    console.error(
+      "Failed to delete UTM link:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Unable to delete UTM link",
+    });
+  }
+});
+
+/* =========================================================
+   UTM ANALYTICS
+========================================================= */
+
+router.get("/utm/analytics", async (req, res) => {
+  try {
+    const companyId =
+      req.clientUser.companyId;
+
+    const selectedYear =
+      parseYear(
+        req.query.year
+      );
+
+    const links =
+      await prisma.utmLink.findMany({
+        where: {
+          companyId,
+          ...(selectedYear
+            ? {
+                createdAt:
+                  yearRange(
+                    selectedYear
+                  ),
+              }
+            : {}),
+        },
+        include: {
+          leads: {
+            select: {
+              id: true,
+              createdAt: true,
+              admission: {
+                select: {
+                  status: true,
+                  paidAmount: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+    let totalRegistrations =
+      0;
+    let totalLeads = 0;
+    let totalAdmissions = 0;
+    let totalRevenue = 0;
+
+    const campaignMap =
+      new Map();
+
+    const sourceMap =
+      new Map();
+
+    const mediumMap =
+      new Map();
+
+    for (const link of links) {
+      const validLeads =
+        selectedYear
+          ? link.leads.filter(
+              (lead) =>
+                new Date(
+                  lead.createdAt
+                ).getFullYear() ===
+                selectedYear
+            )
+          : link.leads;
+
+      const admissions =
+        validLeads.filter(
+          (lead) =>
+            lead.admission &&
+            lead.admission
+              .status !==
+              "CANCELLED"
+        );
+
+      const revenue =
+        admissions.reduce(
+          (
+            sum,
+            lead
+          ) =>
+            sum +
+            Number(
+              lead.admission
+                ?.paidAmount ||
+                0
+            ),
+          0
+        );
+
+      const registrations =
+        Number(
+          link.registrations ||
+            validLeads.length
+        );
+
+      totalRegistrations +=
+        registrations;
+
+      totalLeads +=
+        validLeads.length;
+
+      totalAdmissions +=
+        admissions.length;
+
+      totalRevenue +=
+        revenue;
+
+      const campaignRow =
+        campaignMap.get(
+          link.campaign
+        ) || {
+          campaign:
+            link.campaign,
+          leads: 0,
+          admissions: 0,
+          revenue: 0,
+        };
+
+      campaignRow.leads +=
+        validLeads.length;
+
+      campaignRow.admissions +=
+        admissions.length;
+
+      campaignRow.revenue +=
+        revenue;
+
+      campaignMap.set(
+        link.campaign,
+        campaignRow
+      );
+
+      const sourceRow =
+        sourceMap.get(
+          link.source
+        ) || {
+          source:
+            link.source,
+          leads: 0,
+          admissions: 0,
+          revenue: 0,
+        };
+
+      sourceRow.leads +=
+        validLeads.length;
+
+      sourceRow.admissions +=
+        admissions.length;
+
+      sourceRow.revenue +=
+        revenue;
+
+      sourceMap.set(
+        link.source,
+        sourceRow
+      );
+
+      const mediumRow =
+        mediumMap.get(
+          link.medium
+        ) || {
+          medium:
+            link.medium,
+          leads: 0,
+          admissions: 0,
+          revenue: 0,
+        };
+
+      mediumRow.leads +=
+        validLeads.length;
+
+      mediumRow.admissions +=
+        admissions.length;
+
+      mediumRow.revenue +=
+        revenue;
+
+      mediumMap.set(
+        link.medium,
+        mediumRow
+      );
+    }
+
+    const campaignPerformance =
+      Array.from(
+        campaignMap.values()
+      ).sort(
+        (a, b) =>
+          b.leads -
+          a.leads
+      );
+
+    const sourcePerformance =
+      Array.from(
+        sourceMap.values()
+      ).sort(
+        (a, b) =>
+          b.leads -
+          a.leads
+      );
+
+    const mediumPerformance =
+      Array.from(
+        mediumMap.values()
+      ).sort(
+        (a, b) =>
+          b.leads -
+          a.leads
+      );
+
+    const topCampaign =
+      campaignPerformance[
+        0
+      ]?.campaign ||
+      "—";
+
+    const topSource =
+      sourcePerformance[
+        0
+      ]?.source ||
+      "—";
+
+    const conversionRate =
+      totalLeads > 0
+        ? Number(
+            (
+              (totalAdmissions /
+                totalLeads) *
+              100
+            ).toFixed(1)
+          )
+        : 0;
+
+    return res.json({
+      success: true,
+      summary: {
+        totalUtmLinks:
+          links.length,
+        totalRegistrations,
+        totalLeads,
+        totalAdmissions,
+        totalRevenue,
+        topCampaign,
+        topSource,
+        conversionRate,
+      },
+      campaignPerformance,
+      sourcePerformance,
+      mediumPerformance,
+    });
+  } catch (error) {
+    console.error(
+      "Failed to load UTM analytics:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Unable to load UTM analytics",
     });
   }
 });

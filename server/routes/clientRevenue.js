@@ -1,4 +1,5 @@
 import { Router } from "express";
+import crypto from "crypto";
 
 import prisma from "../lib/prisma.js";
 import {
@@ -353,6 +354,202 @@ router.get("/", async (req, res) => {
 });
 
 /* =========================================================
+   UPLOAD EXPENSE PROOF
+   Uses Cloudinary signed upload without additional npm packages.
+========================================================= */
+
+router.post(
+  "/expenses/proof-upload",
+  async (req, res) => {
+    try {
+      const {
+        fileName,
+        mimeType,
+        fileSize,
+        dataUrl,
+      } = req.body || {};
+
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "application/pdf",
+      ];
+
+      if (
+        !fileName ||
+        !mimeType ||
+        !dataUrl
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Proof file is required",
+        });
+      }
+
+      if (
+        !allowedTypes.includes(
+          String(mimeType)
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Only JPG, PNG, WEBP and PDF files are allowed",
+        });
+      }
+
+      const parsedSize =
+        Number(fileSize || 0);
+
+      if (
+        !Number.isFinite(
+          parsedSize
+        ) ||
+        parsedSize <= 0 ||
+        parsedSize >
+          8 * 1024 * 1024
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Proof file must be 8 MB or smaller",
+        });
+      }
+
+      const cloudName =
+        process.env
+          .CLOUDINARY_CLOUD_NAME;
+
+      const apiKey =
+        process.env
+          .CLOUDINARY_API_KEY;
+
+      const apiSecret =
+        process.env
+          .CLOUDINARY_API_SECRET;
+
+      if (
+        !cloudName ||
+        !apiKey ||
+        !apiSecret
+      ) {
+        return res.status(503).json({
+          success: false,
+          message:
+            "Expense proof storage is not configured. Add Cloudinary environment variables.",
+        });
+      }
+
+      const timestamp =
+        Math.floor(
+          Date.now() / 1000
+        );
+
+      const folder =
+        `consulbuzz/${req.clientUser.companyId}/expense-proofs`;
+
+      const signatureBase =
+        `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
+
+      const signature =
+        crypto
+          .createHash("sha1")
+          .update(
+            signatureBase
+          )
+          .digest("hex");
+
+      const form =
+        new FormData();
+
+      form.append(
+        "file",
+        String(dataUrl)
+      );
+
+      form.append(
+        "api_key",
+        apiKey
+      );
+
+      form.append(
+        "timestamp",
+        String(timestamp)
+      );
+
+      form.append(
+        "folder",
+        folder
+      );
+
+      form.append(
+        "signature",
+        signature
+      );
+
+      const response =
+        await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+          {
+            method: "POST",
+            body: form,
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (
+        !response.ok ||
+        !result?.secure_url
+      ) {
+        console.error(
+          "Cloudinary expense upload failed:",
+          result
+        );
+
+        return res.status(502).json({
+          success: false,
+          message:
+            result?.error?.message ||
+            "Unable to upload proof document",
+        });
+      }
+
+      return res.json({
+        success: true,
+        url:
+          result.secure_url,
+        publicId:
+          result.public_id,
+        fileName:
+          String(fileName),
+        mimeType:
+          String(mimeType),
+        bytes:
+          Number(
+            result.bytes ||
+              parsedSize
+          ),
+      });
+    } catch (error) {
+      console.error(
+        "Failed to upload expense proof:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Unable to upload proof document",
+      });
+    }
+  }
+);
+
+/* =========================================================
    CREATE EXPENSE
 ========================================================= */
 
@@ -373,6 +570,7 @@ router.post(
         transactionRef,
         vendorName,
         invoiceNumber,
+        receiptUrl,
       } = req.body || {};
 
       const cleanTitle =
@@ -443,6 +641,36 @@ router.post(
         });
       }
 
+      if (receiptUrl) {
+        try {
+          const parsedReceiptUrl =
+            new URL(
+              String(
+                receiptUrl
+              )
+            );
+
+          if (
+            ![
+              "http:",
+              "https:",
+            ].includes(
+              parsedReceiptUrl.protocol
+            )
+          ) {
+            throw new Error(
+              "Invalid protocol"
+            );
+          }
+        } catch {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Receipt / proof URL must be a valid http or https URL",
+          });
+        }
+      }
+
       const expense =
         await prisma.expense.create({
           data: {
@@ -494,6 +722,13 @@ router.post(
               invoiceNumber
                 ? String(
                     invoiceNumber
+                  ).trim()
+                : null,
+
+            receiptUrl:
+              receiptUrl
+                ? String(
+                    receiptUrl
                   ).trim()
                 : null,
 
