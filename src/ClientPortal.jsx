@@ -16,12 +16,7 @@ import {
   Crown,
   Loader2,
   ChevronDown,
-  LayoutDashboard,
-  Megaphone,
   GraduationCap,
-  WalletCards,
-  BarChart3,
-  LifeBuoy,
   Settings,
   PanelLeftClose,
   PanelLeftOpen,
@@ -62,29 +57,142 @@ import Analytics from "./modules/client/Analytics";
 import Help from "./modules/client/Help";
 import SettingsView from "./modules/client/Settings";
 
+
+function SidebarIcon({
+  type,
+  size = 18,
+  className = "",
+}) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.9,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    className,
+    "aria-hidden": true,
+  };
+
+  if (type === "home") {
+    return (
+      <svg {...common}>
+        <path d="M3.5 10.5 12 3.5l8.5 7" />
+        <path d="M5.5 9.5V20h13V9.5" />
+        <path d="M9.5 20v-6h5v6" />
+      </svg>
+    );
+  }
+
+  if (type === "utm") {
+    return (
+      <svg {...common}>
+        <circle cx="6" cy="6" r="2.2" />
+        <circle cx="18" cy="6" r="2.2" />
+        <circle cx="12" cy="18" r="2.2" />
+        <path d="M8 7.4 10.7 15" />
+        <path d="M16 7.4 13.3 15" />
+        <path d="M8.3 6h7.4" />
+      </svg>
+    );
+  }
+
+  if (type === "store") {
+    return (
+      <svg {...common}>
+        <path d="M5 8.5h14l-1.1 10H6.1L5 8.5Z" />
+        <path d="M8.5 8.5V6.5a3.5 3.5 0 0 1 7 0v2" />
+        <path d="M9.5 12h5" />
+      </svg>
+    );
+  }
+
+  if (type === "admissions") {
+    return (
+      <svg {...common}>
+        <path d="m3 9 9-4 9 4-9 4-9-4Z" />
+        <path d="M7 11.5V15c0 1.5 2.2 2.8 5 2.8s5-1.3 5-2.8v-3.5" />
+        <path d="M21 9v5" />
+      </svg>
+    );
+  }
+
+  if (type === "finance") {
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M9 7.5h6" />
+        <path d="M9 10.5h5.2" />
+        <path d="M9.2 7.5c0 3 1.7 4.5 4.8 4.5" />
+        <path d="m10 12 5 5" />
+      </svg>
+    );
+  }
+
+  if (type === "insights") {
+    return (
+      <svg {...common}>
+        <path d="M4 19V10" />
+        <path d="M10 19V6" />
+        <path d="M16 19v-8" />
+        <path d="M22 19V4" />
+      </svg>
+    );
+  }
+
+  if (type === "help") {
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M9.8 9.2a2.6 2.6 0 1 1 4.2 2c-.9.7-2 1.2-2 2.6" />
+        <path d="M12 17h.01" />
+      </svg>
+    );
+  }
+
+  if (type === "settings") {
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.3 15.2a1.8 1.8 0 0 0 .4 2l.1.1-2.5 2.5-.1-.1a1.8 1.8 0 0 0-2-.4 1.8 1.8 0 0 0-1.1 1.7v.1h-4.2V21a1.8 1.8 0 0 0-1.1-1.7 1.8 1.8 0 0 0-2 .4l-.1.1-2.5-2.5.1-.1a1.8 1.8 0 0 0 .4-2A1.8 1.8 0 0 0 3 14.1H2.9V10H3a1.8 1.8 0 0 0 1.7-1.1 1.8 1.8 0 0 0-.4-2l-.1-.1 2.5-2.5.1.1a1.8 1.8 0 0 0 2 .4A1.8 1.8 0 0 0 9.9 3v-.1h4.2V3a1.8 1.8 0 0 0 1.1 1.7 1.8 1.8 0 0 0 2-.4l.1-.1 2.5 2.5-.1.1a1.8 1.8 0 0 0-.4 2 1.8 1.8 0 0 0 1.7 1.1h.1V14H21a1.8 1.8 0 0 0-1.7 1.2Z" />
+      </svg>
+    );
+  }
+
+  return null;
+}
+
 const NAV_GROUPS = [
   {
     key: "dashboard",
     label: "Dashboard",
-    icon: LayoutDashboard,
+    icon: (props) => <SidebarIcon type="home" {...props} />,
     items: ["dashboard"],
     direct: true,
   },
 
   {
-    key: "leads",
-    label: "Leads",
-    icon: Megaphone,
-    items: [
-      "utm-leads",
-      "lead-store",
-    ],
+    key: "utm-leads",
+    label: "UTM Leads",
+    icon: (props) => <SidebarIcon type="utm" {...props} />,
+    items: ["utm-leads"],
+    direct: true,
+  },
+
+  {
+    key: "lead-store",
+    label: "Lead Store",
+    icon: (props) => <SidebarIcon type="store" {...props} />,
+    items: ["lead-store"],
+    direct: true,
   },
 
   {
     key: "admissions",
     label: "Admissions",
-    icon: GraduationCap,
+    icon: (props) => <SidebarIcon type="admissions" {...props} />,
     items: [
       "admissions",
       "walkins",
@@ -95,37 +203,30 @@ const NAV_GROUPS = [
   {
     key: "finance",
     label: "Finance",
-    icon: WalletCards,
-    items: [
-      "revenue",
-    ],
+    icon: (props) => <SidebarIcon type="finance" {...props} />,
+    items: ["revenue"],
   },
 
   {
     key: "insights",
     label: "Insights",
-    icon: BarChart3,
-    items: [
-      "analytics",
-    ],
+    icon: (props) => <SidebarIcon type="insights" {...props} />,
+    items: ["analytics"],
   },
 
   {
-    key: "support",
-    label: "Support",
-    icon: LifeBuoy,
-    items: [
-      "help",
-    ],
+    key: "help",
+    label: "Help & Support",
+    icon: (props) => <SidebarIcon type="help" {...props} />,
+    items: ["help"],
+    direct: true,
   },
 
   {
     key: "settings",
     label: "Settings",
-    icon: Settings,
-    items: [
-      "settings",
-    ],
+    icon: (props) => <SidebarIcon type="settings" {...props} />,
+    items: ["settings"],
     direct: true,
   },
 ];
@@ -265,7 +366,6 @@ export default function ClientPortal({
 const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
   const [workspaceSearch, setWorkspaceSearch] = useState("");
-  const [contextMenu, setContextMenu] = useState(null);
 
   const profileMenuRef =
     useRef(null);
@@ -487,6 +587,37 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       ?.plan
       ?.key ||
     "basic";
+
+  const planLabel =
+    String(
+      plan || "basic"
+    )
+      .charAt(0)
+      .toUpperCase() +
+    String(
+      plan || "basic"
+    ).slice(1);
+
+  const sidebarRenewalDate =
+    company?.subscription
+      ?.renewalDate ||
+    billingData?.subscription
+      ?.renewalDate ||
+    null;
+
+  const sidebarRenewalLabel =
+    sidebarRenewalDate
+      ? new Date(
+          sidebarRenewalDate
+        ).toLocaleDateString(
+          "en-IN",
+          {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }
+        )
+      : null;
 
   const tenant =
     useMemo(
@@ -1614,7 +1745,17 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
   const timeGreeting = getTimeGreeting();
 
   return (
-    <div className="min-h-screen bg-[#f6f7fb] text-slate-900 overflow-x-hidden">
+    <div className="min-h-screen bg-[#071321] text-slate-900 overflow-x-hidden">
+      <style>{`
+        html,
+        body,
+        #root {
+          margin: 0;
+          min-height: 100%;
+          background: #071321;
+        }
+
+      `}</style>
       <style>{`
         @media print {
           @page {
@@ -1714,7 +1855,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           className={`fixed inset-y-0 left-0 z-50 lg:z-30 bg-[#071321] transition-[width,transform] duration-300 ${
             mobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           } ${
-            sidebarCollapsed ? "w-[92px]" : "w-[286px]"
+            sidebarCollapsed ? "w-[82px]" : "w-[260px]"
           }`}
         >
           <div className="h-screen flex flex-col overflow-visible">
@@ -1730,9 +1871,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     <div className="text-[17px] leading-none font-black tracking-[-0.03em] text-white">
                       ConsulBuzz
                     </div>
-                    <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                      CRM Workspace
-                    </div>
+
                   </div>
                 </div>
               </div>
@@ -1747,15 +1886,15 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               </div>
             )}
 
-            {/* MENU CARD */}
+            {/* MENU — integrated dark navigation */}
             <nav
-              className={`relative mx-3 mb-3 flex-1 min-h-0 rounded-[22px] border border-slate-200/80 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.06)] ${
+              className={`relative mx-2 mb-3 flex-1 min-h-0 overflow-hidden ${
                 sidebarCollapsed && !mobileSidebarOpen
-                  ? "px-2 py-4"
-                  : "px-2 py-3"
+                  ? "px-1.5 py-2"
+                  : "px-2 py-2"
               }`}
             >
-              <div className="h-full overflow-y-auto overflow-x-visible pb-3">
+              <div className="h-full overflow-y-auto overflow-x-hidden pr-0.5">
                 {NAV_GROUPS.map((group) => {
                   const Icon = group.icon;
                   const groupActive = group.items.includes(module);
@@ -1773,235 +1912,298 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         type="button"
                         title={sidebarCollapsed ? group.label : undefined}
                         onClick={() => {
-                          setContextMenu(null);
                           setModule(key);
                           setMobileSidebarOpen(false);
                         }}
-                        className={`relative w-full rounded-2xl mb-1 transition-all ${
+                        className={`relative mb-1 w-full transition-all ${
                           sidebarCollapsed && !mobileSidebarOpen
-                            ? "h-[66px] flex items-center justify-center"
-                            : "h-12 px-4 flex items-center gap-3"
+                            ? "h-12 rounded-xl flex items-center justify-center"
+                            : "h-11 rounded-xl px-3 flex items-center gap-3"
                         } ${
                           active
-                            ? "bg-indigo-50 text-indigo-800"
-                            : "text-slate-700 hover:bg-slate-50"
+                            ? "bg-indigo-600/90 text-white shadow-[0_8px_18px_rgba(79,70,229,0.22)]"
+                            : "text-slate-300 hover:bg-white/[0.06] hover:text-white"
                         }`}
                       >
                         {active && (
-                          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-500" />
+                          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-400" />
                         )}
 
                         <Icon
-                          size={sidebarCollapsed && !mobileSidebarOpen ? 23 : 18}
-                          strokeWidth={1.8}
+                          size={sidebarCollapsed && !mobileSidebarOpen ? 20 : 18}
+                          strokeWidth={2}
+                          className={active ? "text-white" : "text-slate-400"}
                         />
 
                         {(!sidebarCollapsed || mobileSidebarOpen) && (
                           <>
-                            <span className="flex-1 text-left text-[14px] font-semibold">
+                            <span className="flex-1 text-left text-[13px] font-semibold">
                               {group.label}
                             </span>
 
                             {locked ? (
-                              <Lock size={12} className="text-slate-400" />
-                            ) : (
-                              <ChevronRight size={15} className="text-slate-400" />
-                            )}
+                              <Lock size={11} className="text-slate-400" />
+                            ) : null}
                           </>
                         )}
                       </button>
                     );
                   }
 
-                  const flyoutOpen = contextMenu === group.key;
+                  const open = Boolean(openGroups[group.key]);
 
-                  return (
-                    <div key={group.key} className="relative">
+                  if (sidebarCollapsed && !mobileSidebarOpen) {
+                    return (
                       <button
+                        key={group.key}
                         type="button"
-                        title={sidebarCollapsed ? group.label : undefined}
-                        onClick={() =>
-                          setContextMenu((current) =>
-                            current === group.key ? null : group.key
-                          )
-                        }
-                        className={`relative w-full rounded-2xl mb-1 transition-all ${
-                          sidebarCollapsed && !mobileSidebarOpen
-                            ? "h-[66px] flex items-center justify-center"
-                            : "h-12 px-4 flex items-center gap-3"
-                        } ${
-                          groupActive || flyoutOpen
-                            ? "bg-indigo-50 text-indigo-800"
-                            : "text-slate-700 hover:bg-slate-50"
+                        title={group.label}
+                        onClick={() => {
+                          setSidebarCollapsed(false);
+                          setOpenGroups((current) => ({
+                            ...current,
+                            [group.key]: true,
+                          }));
+                        }}
+                        className={`relative mb-1 h-12 w-full rounded-xl flex items-center justify-center transition-all ${
+                          groupActive
+                            ? "bg-white/10 text-white"
+                            : "text-slate-400 hover:bg-white/[0.06] hover:text-white"
                         }`}
                       >
-                        {(groupActive || flyoutOpen) && (
-                          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-500" />
+                        {groupActive && (
+                          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-400" />
                         )}
 
                         <Icon
-                          size={sidebarCollapsed && !mobileSidebarOpen ? 23 : 18}
-                          strokeWidth={1.8}
+                          size={20}
+                          strokeWidth={2}
+                        />
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={group.key}
+                      className="mb-1"
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          toggleGroup(group.key)
+                        }
+                        className={`relative h-11 w-full rounded-xl px-3 flex items-center gap-3 transition-all ${
+                          groupActive
+                            ? "bg-white/[0.08] text-white"
+                            : open
+                            ? "bg-white/[0.04] text-white"
+                            : "text-slate-300 hover:bg-white/[0.05] hover:text-white"
+                        }`}
+                      >
+                        {groupActive && (
+                          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-400" />
+                        )}
+
+                        <Icon
+                          size={18}
+                          strokeWidth={2}
+                          className={
+                            groupActive
+                              ? "text-white"
+                              : "text-slate-400"
+                          }
                         />
 
-                        {(!sidebarCollapsed || mobileSidebarOpen) && (
-                          <>
-                            <span className="flex-1 text-left text-[14px] font-semibold">
-                              {group.label}
-                            </span>
-                            <ChevronRight
-                              size={15}
-                              className={`text-slate-400 transition-transform ${
-                                flyoutOpen ? "rotate-90" : ""
-                              }`}
-                            />
-                          </>
-                        )}
+                        <span className="flex-1 text-left text-[13px] font-semibold">
+                          {group.label}
+                        </span>
+
+                        <ChevronDown
+                          size={14}
+                          className={`text-slate-500 transition-transform duration-200 ${
+                            open ? "rotate-180" : ""
+                          }`}
+                        />
                       </button>
 
-                      {flyoutOpen && (
-                        <div
-                          className={`fixed z-[80] w-[245px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_50px_rgba(15,23,42,0.16)] ${
-                            sidebarCollapsed && !mobileSidebarOpen
-                              ? "left-[104px]"
-                              : "left-[298px]"
-                          }`}
-                          style={{
-                            top: `${Math.min(
-                              150 +
-                                NAV_GROUPS.findIndex(
-                                  (item) => item.key === group.key
-                                ) *
-                                  52,
-                              window.innerHeight - 300
-                            )}px`,
-                          }}
-                        >
-                          <div className="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                            {group.label}
+                      <div
+                        className={`grid transition-[grid-template-rows,opacity] duration-200 ${
+                          open
+                            ? "grid-rows-[1fr] opacity-100"
+                            : "grid-rows-[0fr] opacity-0"
+                        }`}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="relative ml-[18px] mt-1 mb-1 pl-4">
+                            <span className="absolute left-0 top-1 bottom-1 w-px bg-white/10" />
+
+                            <div className="space-y-0.5">
+                              {group.items.map((key) => {
+                                const meta = MODULE_META[key];
+                                if (!meta) return null;
+
+                                const ChildIcon = meta.icon;
+                                const active = module === key;
+                                const locked =
+                                  !enabledFeatures.includes(key) ||
+                                  !hasModulePermission(key);
+
+                                return (
+                                  <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => {
+                                      setModule(key);
+                                      setMobileSidebarOpen(false);
+                                    }}
+                                    className={`relative w-full min-h-9 rounded-lg px-2.5 py-2 flex items-center gap-2.5 text-left transition-colors ${
+                                      active
+                                        ? "text-white"
+                                        : "text-slate-400 hover:text-white"
+                                    }`}
+                                  >
+                                    <ChildIcon
+                                      size={14}
+                                      strokeWidth={1.8}
+                                      className={
+                                        active
+                                          ? "text-white"
+                                          : "text-slate-500"
+                                      }
+                                    />
+
+                                    <span className="flex-1 text-[12px] font-semibold">
+                                      {meta.label}
+                                    </span>
+
+                                    {(key === "walkins" || key === "counselling") && (
+                                      <Crown
+                                        size={12}
+                                        className="text-amber-500"
+                                        title="Premium module"
+                                      />
+                                    )}
+
+                                    {locked ? (
+                                      <Lock
+                                        size={10}
+                                        className="text-slate-400"
+                                      />
+                                    ) : null}
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-
-                          {group.items.map((key) => {
-                            const meta = MODULE_META[key];
-                            if (!meta) return null;
-
-                            const ChildIcon = meta.icon;
-                            const active = module === key;
-                            const locked =
-                              !enabledFeatures.includes(key) ||
-                              !hasModulePermission(key);
-
-                            return (
-                              <button
-                                key={key}
-                                type="button"
-                                onClick={() => {
-                                  setModule(key);
-                                  setContextMenu(null);
-                                  setMobileSidebarOpen(false);
-                                }}
-                                className={`w-full h-11 rounded-xl px-3 flex items-center gap-3 text-left transition-colors ${
-                                  active
-                                    ? "bg-indigo-50 text-indigo-800"
-                                    : "text-slate-700 hover:bg-slate-50"
-                                }`}
-                              >
-                                <ChildIcon size={16} strokeWidth={1.8} />
-                                <span className="flex-1 text-[13px] font-semibold">
-                                  {meta.label}
-                                </span>
-
-                                {(key === "walkins" || key === "counselling") && (
-                                  <Crown
-                                    size={13}
-                                    className="text-indigo-500"
-                                    title="Premium module"
-                                  />
-                                )}
-
-                                {locked ? (
-                                  <Lock size={11} className="text-slate-400" />
-                                ) : (
-                                  <ChevronRight size={13} className="text-slate-300" />
-                                )}
-                              </button>
-                            );
-                          })}
                         </div>
-                      )}
+                      </div>
                     </div>
                   );
                 })}
               </div>
-
             </nav>
 
-            {/* CURRENT PLAN — bottom of sidebar */}
-            <div className={`${sidebarCollapsed && !mobileSidebarOpen ? "px-2" : "px-3"} pb-3`}>
-              {(!sidebarCollapsed || mobileSidebarOpen) ? (
-                <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
-                  <div className="flex items-center gap-2">
-                    <Crown size={14} className="text-indigo-500" />
-                    <div className="text-[11px] font-bold text-white">
-                      {String(plan || "basic").charAt(0).toUpperCase() +
-                        String(plan || "basic").slice(1)} Plan
+            {/* CURRENT PLAN — exact approved sidebar style */}
+            <div
+              className={`${
+                sidebarCollapsed &&
+                !mobileSidebarOpen
+                  ? "px-2"
+                  : "px-3"
+              } pb-3`}
+            >
+              {(!sidebarCollapsed ||
+                mobileSidebarOpen) ? (
+                <div className="rounded-2xl border border-indigo-400/20 bg-gradient-to-br from-indigo-500/20 via-indigo-500/10 to-violet-500/10 px-4 py-4 shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-[11px] font-medium text-slate-300">
+                      Current Plan
                     </div>
+
+                    <Crown
+                      size={16}
+                      strokeWidth={2}
+                      className="text-amber-400"
+                    />
                   </div>
-                  <div className="mt-1 text-[10px] text-slate-300">
-                    Active subscription
+
+                  <div className="mt-2 text-[18px] font-bold leading-none text-white">
+                    {planLabel}
                   </div>
+
+                  <div className="mt-2 text-[11px] text-slate-300">
+                    {sidebarRenewalLabel
+                      ? `Valid till ${sidebarRenewalLabel}`
+                      : "Active subscription"}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={openBilling}
+                    className="mt-4 h-9 w-full rounded-xl border border-indigo-400/15 bg-indigo-500/25 text-[11px] font-semibold text-white transition-colors hover:bg-indigo-500/35"
+                  >
+                    Upgrade Plan
+                  </button>
                 </div>
               ) : (
-                <div
-                  className="w-11 h-11 mx-auto rounded-xl border border-white/15 bg-white/10 flex items-center justify-center shadow-sm"
-                  title={`${String(plan || "basic").charAt(0).toUpperCase() +
-                    String(plan || "basic").slice(1)} Plan`}
+                <button
+                  type="button"
+                  onClick={openBilling}
+                  className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.07] text-amber-400"
+                  title={`${planLabel} Plan`}
                 >
-                  <Crown size={16} className="text-indigo-500" />
-                </div>
+                  <Crown
+                    size={17}
+                    strokeWidth={2}
+                  />
+                </button>
               )}
             </div>
           </div>
 
-          {/* COLLAPSE — middle edge of sidebar */}
-          <button
-            type="button"
-            onClick={() => {
-              setContextMenu(null);
-              setSidebarCollapsed((current) => !current);
-            }}
-            className="hidden lg:flex absolute right-0 top-1/2 z-30 w-9 h-9 translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-200 bg-white text-slate-600 shadow-md items-center justify-center hover:bg-slate-50 hover:text-slate-950"
-            title={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
-            aria-label={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
-          >
-            {sidebarCollapsed ? (
-              <PanelLeftOpen size={16} />
-            ) : (
-              <PanelLeftClose size={16} />
-            )}
-          </button>
         </aside>
 
         {/* MAIN WORKSPACE */}
         <div
-          className={`flex-1 min-w-0 transition-[margin] duration-300 ${
-            sidebarCollapsed ? "lg:ml-[92px]" : "lg:ml-[286px]"
+          className={`flex-1 min-w-0 bg-[#071321] transition-[margin] duration-300 ${
+            sidebarCollapsed ? "lg:ml-[82px]" : "lg:ml-[260px]"
           }`}
         >
-          {/* TOP BAR */}
-          <header className="sticky top-0 z-40 h-[76px] bg-[#fbfaf7]/95 backdrop-blur-xl border-b border-slate-200/80">
-            <div className="h-full px-4 sm:px-6 lg:px-8 flex items-center gap-4">
-              <div className="relative flex-1 max-w-[560px]">
+          {/* TOP BAR — continuous with sidebar */}
+          <header
+            className={`fixed top-0 right-0 z-40 h-[84px] bg-[#071321] text-white transition-[left] duration-300 ${
+              sidebarCollapsed
+                ? "left-[82px]"
+                : "left-[260px]"
+            }`}
+          >
+            <div className="h-full px-4 sm:px-6 lg:px-7 flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed((current) => !current)}
+                className="hidden lg:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white"
+                title={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
+                aria-label={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
+              >
+                {sidebarCollapsed ? (
+                  <PanelLeftOpen size={18} />
+                ) : (
+                  <Menu size={18} />
+                )}
+              </button>
+
+              <div className="relative flex-1 max-w-[570px]">
                 <Search
                   size={19}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
                 />
 
                 <input
                   value={workspaceSearch}
                   onChange={(event) => setWorkspaceSearch(event.target.value)}
-                  placeholder="Search modules..."
-                  className="w-full h-11 pl-12 pr-4 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 outline-none focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50"
+                  placeholder="Search leads, admissions, modules..."
+                  className="w-full h-11 pl-12 pr-4 rounded-xl border border-white/15 bg-white/[0.035] text-sm text-white placeholder:text-slate-500 outline-none transition-colors focus:border-indigo-400/70 focus:bg-white/[0.055]"
                 />
 
                 {workspaceSearch.trim() && (
@@ -2048,15 +2250,15 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
               <div className="ml-auto flex items-center gap-2 sm:gap-3">
                 {/* GLOBAL PERIOD */}
-                <div className="hidden md:flex h-10 items-center rounded-xl border border-slate-200 bg-white overflow-hidden">
-                  <div className="px-3 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 border-r border-slate-100">
+                <div className="hidden md:flex h-10 items-center rounded-xl border border-white/10 bg-white/[0.04] overflow-hidden">
+                  <div className="px-3 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 border-r border-white/10">
                     Period
                   </div>
 
                   <select
                     value={selectedYear}
                     onChange={(event) => setSelectedYear(event.target.value)}
-                    className="h-full min-w-[104px] bg-white px-3 text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+                    className="h-full min-w-[104px] bg-transparent px-3 text-xs font-semibold text-slate-200 outline-none cursor-pointer"
                     aria-label="Global reporting year"
                   >
                     <option value="all">All Time</option>
@@ -2081,7 +2283,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         loadNotifications();
                       }
                     }}
-                    className="relative w-10 h-10 rounded-xl border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50"
+                    className="relative w-10 h-10 rounded-xl text-slate-300 flex items-center justify-center hover:bg-white/[0.07] hover:text-white"
                     aria-label="Notifications"
                   >
                     <Bell size={18} />
@@ -2160,18 +2362,18 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       setProfileMenuOpen((current) => !current);
                       setNotificationsOpen(false);
                     }}
-                    className="h-11 pl-1 pr-2 sm:pr-3 rounded-xl hover:bg-white flex items-center gap-2.5 transition-colors"
+                    className="h-11 pl-1 pr-2 sm:pr-3 rounded-xl hover:bg-white/[0.06] flex items-center gap-2.5 transition-colors"
                   >
-                    <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center text-xs font-bold">
+                    <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold ring-2 ring-white/10">
                       {initials}
                     </div>
 
                     <div className="hidden sm:block text-left min-w-0">
-                      <div className="text-[13px] font-bold text-slate-950 truncate max-w-[130px]">
+                      <div className="text-[13px] font-bold text-white truncate max-w-[130px]">
                         {user.name || tenant.name}
                       </div>
 
-                      <div className="text-[10px] text-slate-500">
+                      <div className="text-[10px] text-slate-400">
                         {formatRole(user.role)}
                       </div>
                     </div>
@@ -2203,18 +2405,6 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         <Lock size={14} />
                         Change Password
                       </button>
-
-                      {(user.role === "CLIENT_ADMIN" ||
-                        permissions.canManageBilling === true) && (
-                        <button
-                          type="button"
-                          onClick={openBilling}
-                          className="w-full h-10 px-3 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
-                        >
-                          <ReceiptIndianRupee size={14} />
-                          Billing & Subscription
-                        </button>
-                      )}
 
                       {(user.role === "CLIENT_ADMIN" ||
                         permissions.canManageSettings === true) && (
@@ -2254,7 +2444,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           </header>
 
           {/* MAIN CONTENT */}
-          <main className="px-3 py-4 sm:px-5 sm:py-5 lg:p-7">
+          <main className="mt-[84px] min-h-[calc(100vh-84px)] rounded-tl-[22px] bg-[#f7f8fb] px-3 py-4 sm:px-5 sm:py-5 lg:p-7 lg:pl-8">
             <div className="max-w-[1560px] mx-auto">
               {module === "dashboard" && (
                 <div className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_28px_rgba(15,23,42,0.05)]">

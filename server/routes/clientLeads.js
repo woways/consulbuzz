@@ -1,4 +1,6 @@
 import { Router } from "express";
+import multer from "multer";
+import ExcelJS from "exceljs";
 
 import prisma from "../lib/prisma.js";
 import {
@@ -84,6 +86,7 @@ const FALLBACK_SOURCE_LABELS = {
   WEBSITE_FORM: "Website Form",
   IM_LEADS: "IM Leads",
   DM_LEADS: "DM Leads",
+  INTERNAL: "Internal Leads",
   REFERRAL: "Referral",
   OFFLINE: "Offline",
   OTHER: "Other",
@@ -122,6 +125,36 @@ async function validateSource(
       companyId,
       key: sourceKey,
       active: true,
+    },
+  });
+}
+
+
+async function ensureInternalSource(
+  companyId
+) {
+  return prisma.leadSourceConfig.upsert({
+    where: {
+      companyId_key: {
+        companyId,
+        key: "INTERNAL",
+      },
+    },
+    update: {
+      name: "Internal Leads",
+      active: true,
+      showInForms: true,
+    },
+    create: {
+      companyId,
+      key: "INTERNAL",
+      name: "Internal Leads",
+      description:
+        "Leads added manually or imported internally",
+      active: true,
+      showInForms: true,
+      system: true,
+      sortOrder: 50,
     },
   });
 }
@@ -364,6 +397,7 @@ function formatLink(link) {
     adm: link.admissions,
 
     rev: Number(link.revenue),
+    cost: Number(link.cost || 0),
 
     active: link.active,
 
@@ -556,10 +590,14 @@ router.post("/", async (req, res) => {
     }
 
     const sourceConfig =
-      await validateSource(
-        companyId,
-        sourceKey
-      );
+      sourceKey === "INTERNAL"
+        ? await ensureInternalSource(
+            companyId
+          )
+        : await validateSource(
+            companyId,
+            sourceKey
+          );
 
     if (!sourceConfig) {
       return res.status(400).json({
@@ -822,10 +860,14 @@ router.patch("/:id", async (req, res) => {
           .toUpperCase();
 
       const sourceConfig =
-        await validateSource(
-          companyId,
-          source
-        );
+        source === "INTERNAL"
+          ? await ensureInternalSource(
+              companyId
+            )
+          : await validateSource(
+              companyId,
+              source
+            );
 
       if (!sourceConfig) {
         return res.status(400).json({
@@ -1045,6 +1087,480 @@ router.get(
   }
 );
 
+
+/* =========================================================
+   IMPORT INTERNAL LEADS
+========================================================= */
+
+const internalLeadUpload =
+  multer({
+    storage:
+      multer.memoryStorage(),
+    limits: {
+      fileSize:
+        5 * 1024 * 1024,
+      files: 1,
+    },
+    fileFilter(
+      req,
+      file,
+      callback
+    ) {
+      const name =
+        String(
+          file.originalname ||
+            ""
+        ).toLowerCase();
+
+      if (
+        !name.endsWith(
+          ".csv"
+        ) &&
+        !name.endsWith(
+          ".xlsx"
+        )
+      ) {
+        callback(
+          new Error(
+            "Only CSV and XLSX files are supported"
+          )
+        );
+        return;
+      }
+
+      callback(
+        null,
+        true
+      );
+    },
+  });
+
+function normalizeLeadHeader(
+  value
+) {
+  return String(
+    value || ""
+  )
+    .trim()
+    .toLowerCase()
+    .replace(
+      /\s+/g,
+      " "
+    );
+}
+
+const INTERNAL_LEAD_HEADERS = {
+  name: [
+    "name",
+    "lead name",
+    "student name",
+  ],
+  phone: [
+    "phone",
+    "mobile",
+    "mobile number",
+    "phone number",
+    "contact",
+  ],
+  email: [
+    "email",
+    "email id",
+    "email address",
+  ],
+  course: [
+    "course",
+    "interest",
+    "course / interest",
+    "program",
+    "programme",
+  ],
+  campaign: [
+    "campaign",
+    "campaign name",
+  ],
+  medium: [
+    "medium",
+  ],
+  assignedToName: [
+    "assigned to",
+    "assigned",
+    "counsellor",
+    "counselor",
+  ],
+  notes: [
+    "notes",
+    "remarks",
+    "comments",
+  ],
+};
+
+function internalHeaderIndex(
+  headers,
+  field
+) {
+  const aliases =
+    INTERNAL_LEAD_HEADERS[
+      field
+    ] || [];
+
+  return headers.findIndex(
+    (header) =>
+      aliases.includes(
+        normalizeLeadHeader(
+          header
+        )
+      )
+  );
+}
+
+async function parseInternalLeadFile(
+  file
+) {
+  if (!file) {
+    throw new Error(
+      "CSV or XLSX file is required"
+    );
+  }
+
+  const workbook =
+    new ExcelJS.Workbook();
+
+  const filename =
+    String(
+      file.originalname ||
+        ""
+    ).toLowerCase();
+
+  if (
+    filename.endsWith(
+      ".csv"
+    )
+  ) {
+    await workbook.csv.read(
+      file.buffer
+    );
+  } else {
+    await workbook.xlsx.load(
+      file.buffer
+    );
+  }
+
+  const sheet =
+    workbook.worksheets[0];
+
+  if (!sheet) {
+    throw new Error(
+      "Spreadsheet does not contain a worksheet"
+    );
+  }
+
+  const headerRow =
+    sheet.getRow(1);
+
+  const headers = [];
+
+  for (
+    let i = 1;
+    i <=
+    headerRow.cellCount;
+    i += 1
+  ) {
+    headers.push(
+      String(
+        headerRow.getCell(i)
+          .text || ""
+      ).trim()
+    );
+  }
+
+  const indexes = {};
+
+  for (
+    const field of
+    Object.keys(
+      INTERNAL_LEAD_HEADERS
+    )
+  ) {
+    indexes[field] =
+      internalHeaderIndex(
+        headers,
+        field
+      );
+  }
+
+  if (
+    indexes.name < 0 ||
+    indexes.phone < 0
+  ) {
+    throw new Error(
+      'Spreadsheet must contain "Name" and "Phone" columns'
+    );
+  }
+
+  const rows = [];
+  const maxRow =
+    Math.min(
+      sheet.rowCount,
+      2001
+    );
+
+  for (
+    let rowNumber = 2;
+    rowNumber <= maxRow;
+    rowNumber += 1
+  ) {
+    const row =
+      sheet.getRow(
+        rowNumber
+      );
+
+    const valueAt =
+      (field) =>
+        indexes[field] >= 0
+          ? row.getCell(
+              indexes[field] +
+                1
+            ).text
+          : "";
+
+    const name =
+      String(
+        valueAt(
+          "name"
+        ) || ""
+      ).trim();
+
+    const phone =
+      String(
+        valueAt(
+          "phone"
+        ) || ""
+      ).trim();
+
+    if (
+      !name &&
+      !phone
+    ) {
+      continue;
+    }
+
+    rows.push({
+      name,
+      phone,
+      email:
+        String(
+          valueAt(
+            "email"
+          ) || ""
+        )
+          .trim()
+          .toLowerCase() ||
+        null,
+      course:
+        String(
+          valueAt(
+            "course"
+          ) || ""
+        ).trim() ||
+        null,
+      campaign:
+        String(
+          valueAt(
+            "campaign"
+          ) || ""
+        ).trim() ||
+        null,
+      medium:
+        String(
+          valueAt(
+            "medium"
+          ) || ""
+        ).trim() ||
+        null,
+      assignedToName:
+        String(
+          valueAt(
+            "assignedToName"
+          ) || ""
+        ).trim() ||
+        null,
+      notes:
+        String(
+          valueAt(
+            "notes"
+          ) || ""
+        ).trim() ||
+        null,
+    });
+  }
+
+  return rows;
+}
+
+router.post(
+  "/internal/import",
+  internalLeadUpload.single(
+    "file"
+  ),
+  async (req, res) => {
+    try {
+      const companyId =
+        req.clientUser.companyId;
+
+      await ensureInternalSource(
+        companyId
+      );
+
+      const rows =
+        await parseInternalLeadFile(
+          req.file
+        );
+
+      if (!rows.length) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "No internal lead rows found",
+        });
+      }
+
+      const valid = [];
+      let invalid = 0;
+      let duplicates = 0;
+
+      const seenPhones =
+        new Set();
+
+      const phones =
+        rows
+          .map(
+            (row) =>
+              row.phone
+          )
+          .filter(Boolean);
+
+      const existing =
+        phones.length
+          ? await prisma.lead.findMany({
+              where: {
+                companyId,
+                phone: {
+                  in: phones,
+                },
+              },
+              select: {
+                phone: true,
+              },
+            })
+          : [];
+
+      const existingPhones =
+        new Set(
+          existing.map(
+            (item) =>
+              item.phone
+          )
+        );
+
+      for (
+        const row of rows
+      ) {
+        if (
+          !row.name ||
+          !row.phone
+        ) {
+          invalid += 1;
+          continue;
+        }
+
+        if (
+          seenPhones.has(
+            row.phone
+          ) ||
+          existingPhones.has(
+            row.phone
+          )
+        ) {
+          duplicates += 1;
+          continue;
+        }
+
+        seenPhones.add(
+          row.phone
+        );
+
+        valid.push(row);
+      }
+
+      if (!valid.length) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "No new valid internal leads were found",
+          importSummary: {
+            imported: 0,
+            duplicates,
+            invalid,
+          },
+        });
+      }
+
+      await prisma.lead.createMany({
+        data:
+          valid.map(
+            (row) => ({
+              companyId,
+              name:
+                row.name,
+              phone:
+                row.phone,
+              email:
+                row.email,
+              course:
+                row.course,
+              source:
+                "INTERNAL",
+              stage:
+                "NEW",
+              campaign:
+                row.campaign,
+              medium:
+                row.medium,
+              assignedToName:
+                row.assignedToName,
+              notes:
+                row.notes,
+            })
+          ),
+      });
+
+      return res.status(201).json({
+        success: true,
+        message:
+          `${valid.length} internal leads imported`,
+        importSummary: {
+          imported:
+            valid.length,
+          duplicates,
+          invalid,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "Internal leads import failed:",
+        error
+      );
+
+      return res.status(400).json({
+        success: false,
+        message:
+          error?.message ||
+          "Unable to import internal leads",
+      });
+    }
+  }
+);
+
 /* =========================================================
    GET UTM LINKS
 ========================================================= */
@@ -1172,6 +1688,12 @@ router.get("/utm/links", async (req, res) => {
           leads: {
             select: {
               id: true,
+              name: true,
+              phone: true,
+              email: true,
+              campaign: true,
+              source: true,
+              medium: true,
               createdAt: true,
               admission: {
                 select: {
@@ -1256,6 +1778,35 @@ router.get("/utm/links", async (req, res) => {
                 link.revenue ||
                   0
               ),
+            cost:
+              Number(
+                link.cost ||
+                  0
+              ),
+            costPerLead:
+              validLeads.length > 0
+                ? Number(
+                    (
+                      Number(
+                        link.cost ||
+                          0
+                      ) /
+                      validLeads.length
+                    ).toFixed(2)
+                  )
+                : 0,
+            latestLead:
+              validLeads
+                .slice()
+                .sort(
+                  (a, b) =>
+                    new Date(
+                      b.createdAt
+                    ) -
+                    new Date(
+                      a.createdAt
+                    )
+                )[0] || null,
             active:
               link.active,
             createdAt:
@@ -1382,6 +1933,12 @@ router.post("/utm/links", async (req, res) => {
           ""
       ).trim();
 
+    const cost =
+      Number(
+        req.body?.cost ||
+          0
+      );
+
     if (
       !campaign ||
       !source ||
@@ -1392,6 +1949,17 @@ router.post("/utm/links", async (req, res) => {
         success: false,
         message:
           "Campaign, source, medium and URL are required",
+      });
+    }
+
+    if (
+      !Number.isFinite(cost) ||
+      cost < 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Campaign cost must be a valid non-negative amount",
       });
     }
 
@@ -1473,6 +2041,7 @@ router.post("/utm/links", async (req, res) => {
           source,
           medium,
           url,
+          cost,
         },
       });
 
@@ -1503,6 +2072,13 @@ router.post("/utm/links", async (req, res) => {
             link.revenue ||
               0
           ),
+        cost:
+          Number(
+            link.cost ||
+              0
+          ),
+        costPerLead: 0,
+        latestLead: null,
         active:
           link.active,
         createdAt:
@@ -1581,6 +2157,33 @@ router.patch("/utm/links/:id", async (req, res) => {
     }
 
     if (
+      req.body?.cost !==
+      undefined
+    ) {
+      const cost =
+        Number(
+          req.body.cost ||
+            0
+        );
+
+      if (
+        !Number.isFinite(
+          cost
+        ) ||
+        cost < 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Campaign cost must be a valid non-negative amount",
+        });
+      }
+
+      data.cost =
+        cost;
+    }
+
+    if (
       req.body?.url !==
       undefined
     ) {
@@ -1648,6 +2251,13 @@ router.patch("/utm/links/:id", async (req, res) => {
             updated.revenue ||
               0
           ),
+        cost:
+          Number(
+            updated.cost ||
+              0
+          ),
+        costPerLead: 0,
+        latestLead: null,
         active:
           updated.active,
         createdAt:

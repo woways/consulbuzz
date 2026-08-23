@@ -78,6 +78,47 @@ function slugify(value) {
     .replace(/^-+|-+$/g, "") || `partner-${Date.now()}`;
 }
 
+function inferStreamColor(name) {
+  const value = String(name || "").trim().toLowerCase();
+
+  if (
+    value.includes("medical") ||
+    value.includes("mbbs") ||
+    value.includes("health")
+  ) return "rose";
+
+  if (
+    value.includes("engineering") ||
+    value.includes("technology") ||
+    value.includes("btech") ||
+    value.includes("tech")
+  ) return "blue";
+
+  if (
+    value.includes("management") ||
+    value.includes("mba") ||
+    value.includes("business")
+  ) return "amber";
+
+  if (
+    value.includes("pharmacy") ||
+    value.includes("pharma")
+  ) return "cyan";
+
+  if (
+    value.includes("law") ||
+    value.includes("legal")
+  ) return "emerald";
+
+  if (
+    value.includes("degree") ||
+    value.includes("arts") ||
+    value.includes("science")
+  ) return "purple";
+
+  return "blue";
+}
+
 function parseMoney(value, fallback = 0) {
   if (value === null || value === undefined || value === "") return fallback;
   const number = Number(String(value).replace(/[,₹\s]/g, ""));
@@ -111,6 +152,14 @@ function formatAdmission(admission) {
                 color: admission.partner.stream.color || "blue",
               }
             : null,
+        }
+      : null,
+    branchId: admission.branchId,
+    branch: admission.branch
+      ? {
+          id: admission.branch.id,
+          name: admission.branch.name,
+          slug: admission.branch.slug,
         }
       : null,
     name: admission.studentName,
@@ -228,6 +277,10 @@ function streamMetrics(stream) {
     active: stream.active,
     sortOrder: stream.sortOrder,
     totalColleges: partners.length,
+    totalBranches: partners.reduce(
+      (sum, partner) => sum + Number(partner._count?.branches || partner.branches?.length || 0),
+      0
+    ),
     totalAdmissions: admissions.length,
     received: activeAdmissions.reduce(
       (sum, item) => sum + Number(item.paidAmount || 0),
@@ -354,6 +407,7 @@ function partnerMetrics(partner) {
           color: partner.stream.color || "blue",
         }
       : null,
+    totalBranches: Number(partner._count?.branches || partner.branches?.length || 0),
     totalAdmissions: admissions.length,
     thisMonth: admissions.filter(
       (item) => new Date(item.admissionDate) >= monthStart
@@ -392,6 +446,11 @@ router.get("/streams", async (req, res) => {
             active: true,
           },
           include: {
+            _count: {
+              select: {
+                branches: true,
+              },
+            },
             admissions: {
               ...(selectedYear
                 ? { where: { admissionDate: yearRange(selectedYear) } }
@@ -428,7 +487,10 @@ router.post("/streams", async (req, res) => {
     const companyId = req.clientUser.companyId;
     const name = String(req.body?.name || "").trim();
     const description = cleanOptional(req.body?.description);
-    const color = String(req.body?.color || "blue").trim().toLowerCase();
+    const requestedColor = cleanOptional(req.body?.color);
+    const color = String(
+      requestedColor || inferStreamColor(name)
+    ).trim().toLowerCase();
 
     const allowedColors = [
       "blue",
@@ -635,6 +697,11 @@ router.get("/partners", async (req, res) => {
       },
       include: {
         stream: true,
+        _count: {
+          select: {
+            branches: true,
+          },
+        },
         admissions: {
           ...(parseYear(req.query.year) ? { where: { admissionDate: yearRange(parseYear(req.query.year)) } } : {}),
           select: {
@@ -807,6 +874,508 @@ router.delete("/partners/:id", async (req, res) => {
     return res.status(500).json({ success: false, message: "Unable to remove college" });
   }
 });
+
+/* =========================================================
+   ADMISSION BRANCHES
+========================================================= */
+
+async function uniqueBranchSlug(
+  companyId,
+  partnerId,
+  name,
+  excludeId = null
+) {
+  const base = slugify(name);
+  let slug = base;
+  let suffix = 2;
+
+  while (true) {
+    const existing =
+      await prisma.admissionBranch.findFirst({
+        where: {
+          companyId,
+          partnerId,
+          slug,
+          ...(excludeId
+            ? {
+                id: {
+                  not: excludeId,
+                },
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    if (!existing) {
+      return slug;
+    }
+
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+}
+
+async function getBranch(
+  companyId,
+  branchId
+) {
+  if (!branchId) {
+    return null;
+  }
+
+  return prisma.admissionBranch.findFirst({
+    where: {
+      id: String(branchId),
+      companyId,
+      active: true,
+    },
+    include: {
+      partner: {
+        include: {
+          stream: true,
+        },
+      },
+    },
+  });
+}
+
+function branchMetrics(branch) {
+  const admissions =
+    branch.admissions || [];
+
+  const active =
+    admissions.filter(
+      (item) =>
+        item.status !== "CANCELLED"
+    );
+
+  return {
+    id: branch.id,
+    partnerId: branch.partnerId,
+    name: branch.name,
+    slug: branch.slug,
+    description: branch.description,
+    active: branch.active,
+    sortOrder: branch.sortOrder,
+    totalAdmissions:
+      admissions.length,
+    received:
+      active.reduce(
+        (sum, item) =>
+          sum +
+          Number(
+            item.paidAmount || 0
+          ),
+        0
+      ),
+    pending:
+      active.reduce(
+        (sum, item) =>
+          sum +
+          Math.max(
+            Number(
+              item.totalFee || 0
+            ) -
+              Number(
+                item.paidAmount || 0
+              ),
+            0
+          ),
+        0
+      ),
+    createdAt:
+      branch.createdAt,
+  };
+}
+
+router.get(
+  "/branches",
+  async (req, res) => {
+    try {
+      const companyId =
+        req.clientUser.companyId;
+
+      const partnerId =
+        cleanOptional(
+          req.query.partnerId
+        );
+
+      if (!partnerId) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "College is required",
+        });
+      }
+
+      const partner =
+        await getPartner(
+          companyId,
+          partnerId
+        );
+
+      if (!partner) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "College not found",
+        });
+      }
+
+      const selectedYear =
+        parseYear(
+          req.query.year
+        );
+
+      const branches =
+        await prisma.admissionBranch.findMany({
+          where: {
+            companyId,
+            partnerId:
+              partner.id,
+            active: true,
+          },
+          include: {
+            admissions: {
+              ...(selectedYear
+                ? {
+                    where: {
+                      admissionDate:
+                        yearRange(
+                          selectedYear
+                        ),
+                    },
+                  }
+                : {}),
+              select: {
+                status: true,
+                totalFee: true,
+                paidAmount: true,
+                admissionDate: true,
+              },
+            },
+          },
+          orderBy: [
+            {
+              sortOrder:
+                "asc",
+            },
+            {
+              name:
+                "asc",
+            },
+          ],
+        });
+
+      return res.json({
+        success: true,
+        branches:
+          branches.map(
+            branchMetrics
+          ),
+      });
+    } catch (error) {
+      console.error(
+        "Failed to fetch admission branches:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Unable to fetch admission branches",
+      });
+    }
+  }
+);
+
+router.post(
+  "/branches",
+  async (req, res) => {
+    try {
+      const companyId =
+        req.clientUser.companyId;
+
+      const partnerId =
+        cleanOptional(
+          req.body?.partnerId
+        );
+
+      const name =
+        String(
+          req.body?.name || ""
+        ).trim();
+
+      const description =
+        cleanOptional(
+          req.body?.description
+        );
+
+      if (!partnerId) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "College is required",
+        });
+      }
+
+      if (!name) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Branch name is required",
+        });
+      }
+
+      const partner =
+        await getPartner(
+          companyId,
+          partnerId
+        );
+
+      if (!partner) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "College not found",
+        });
+      }
+
+      const slug =
+        await uniqueBranchSlug(
+          companyId,
+          partner.id,
+          name
+        );
+
+      const branch =
+        await prisma.admissionBranch.create({
+          data: {
+            companyId,
+            partnerId:
+              partner.id,
+            name,
+            slug,
+            description,
+          },
+        });
+
+      return res.status(201).json({
+        success: true,
+        message:
+          "Branch added successfully",
+        branch:
+          branchMetrics({
+            ...branch,
+            admissions: [],
+          }),
+      });
+    } catch (error) {
+      console.error(
+        "Failed to create admission branch:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Unable to add branch",
+      });
+    }
+  }
+);
+
+router.patch(
+  "/branches/:id",
+  async (req, res) => {
+    try {
+      const companyId =
+        req.clientUser.companyId;
+
+      const existing =
+        await prisma.admissionBranch.findFirst({
+          where: {
+            id:
+              req.params.id,
+            companyId,
+          },
+        });
+
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Branch not found",
+        });
+      }
+
+      const data = {};
+
+      if (
+        req.body?.name !==
+        undefined
+      ) {
+        const name =
+          String(
+            req.body.name ||
+              ""
+          ).trim();
+
+        if (!name) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "Branch name is required",
+          });
+        }
+
+        data.name = name;
+        data.slug =
+          await uniqueBranchSlug(
+            companyId,
+            existing.partnerId,
+            name,
+            existing.id
+          );
+      }
+
+      if (
+        req.body?.description !==
+        undefined
+      ) {
+        data.description =
+          cleanOptional(
+            req.body.description
+          );
+      }
+
+      const updated =
+        await prisma.$transaction(
+          async (tx) => {
+            const saved =
+              await tx.admissionBranch.update({
+                where: {
+                  id:
+                    existing.id,
+                },
+                data,
+              });
+
+            if (
+              data.name &&
+              data.name !==
+                existing.name
+            ) {
+              await tx.admission.updateMany({
+                where: {
+                  companyId,
+                  branchId:
+                    existing.id,
+                },
+                data: {
+                  course:
+                    data.name,
+                },
+              });
+            }
+
+            return saved;
+          }
+        );
+
+      return res.json({
+        success: true,
+        message:
+          "Branch updated",
+        branch: updated,
+      });
+    } catch (error) {
+      console.error(
+        "Failed to update admission branch:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Unable to update branch",
+      });
+    }
+  }
+);
+
+router.delete(
+  "/branches/:id",
+  async (req, res) => {
+    try {
+      const companyId =
+        req.clientUser.companyId;
+
+      const existing =
+        await prisma.admissionBranch.findFirst({
+          where: {
+            id:
+              req.params.id,
+            companyId,
+          },
+          include: {
+            _count: {
+              select: {
+                admissions:
+                  true,
+              },
+            },
+          },
+        });
+
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Branch not found",
+        });
+      }
+
+      if (
+        existing._count
+          .admissions > 0
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "This branch has admissions. Move or delete those admissions before removing the branch.",
+        });
+      }
+
+      await prisma.admissionBranch.delete({
+        where: {
+          id:
+            existing.id,
+        },
+      });
+
+      return res.json({
+        success: true,
+        message:
+          "Branch removed",
+      });
+    } catch (error) {
+      console.error(
+        "Failed to delete admission branch:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Unable to remove branch",
+      });
+    }
+  }
+);
 
 /* =========================================================
    BULK IMPORT INTO A COLLEGE
@@ -1013,6 +1582,206 @@ router.post(
   }
 );
 
+router.post(
+  "/branches/:id/import",
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      const companyId =
+        req.clientUser.companyId;
+
+      const branch =
+        await getBranch(
+          companyId,
+          req.params.id
+        );
+
+      if (!branch) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Branch not found",
+        });
+      }
+
+      const partner =
+        branch.partner;
+
+      const rows =
+        await parseAdmissionFile(
+          req.file
+        );
+
+      if (!rows.length) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "No admission rows found",
+        });
+      }
+
+      const valid = [];
+      let invalid = 0;
+      let duplicates = 0;
+      const seenPhones =
+        new Set();
+
+      const phones =
+        rows
+          .map(
+            (row) =>
+              row.studentPhone
+          )
+          .filter(Boolean);
+
+      const existingPhones =
+        phones.length
+          ? await prisma.admission.findMany({
+              where: {
+                companyId,
+                branchId:
+                  branch.id,
+                studentPhone: {
+                  in: phones,
+                },
+              },
+              select: {
+                studentPhone:
+                  true,
+              },
+            })
+          : [];
+
+      const existingPhoneSet =
+        new Set(
+          existingPhones
+            .map(
+              (item) =>
+                item.studentPhone
+            )
+            .filter(Boolean)
+        );
+
+      for (const row of rows) {
+        if (
+          !row.studentName ||
+          !Number.isFinite(
+            row.totalFee
+          ) ||
+          row.totalFee < 0 ||
+          !Number.isFinite(
+            row.paidAmount
+          ) ||
+          row.paidAmount < 0 ||
+          row.paidAmount >
+            row.totalFee ||
+          !row.admissionDate
+        ) {
+          invalid += 1;
+          continue;
+        }
+
+        if (
+          row.studentPhone &&
+          (
+            seenPhones.has(
+              row.studentPhone
+            ) ||
+            existingPhoneSet.has(
+              row.studentPhone
+            )
+          )
+        ) {
+          duplicates += 1;
+          continue;
+        }
+
+        if (
+          row.studentPhone
+        ) {
+          seenPhones.add(
+            row.studentPhone
+          );
+        }
+
+        valid.push(row);
+      }
+
+      if (!valid.length) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "No new valid admission records were found to import",
+          importSummary: {
+            imported: 0,
+            duplicates,
+            invalid,
+          },
+        });
+      }
+
+      await prisma.admission.createMany({
+        data:
+          valid.map(
+            (row) => ({
+              companyId,
+              partnerId:
+                partner.id,
+              branchId:
+                branch.id,
+              studentName:
+                row.studentName,
+              studentPhone:
+                row.studentPhone,
+              studentEmail:
+                row.studentEmail,
+              college:
+                partner.name,
+              course:
+                branch.name,
+              counsellorName:
+                row.counsellorName,
+              totalFee:
+                row.totalFee,
+              paidAmount:
+                row.paidAmount,
+              status:
+                row.status,
+              admissionDate:
+                row.admissionDate,
+              notes:
+                row.notes,
+            })
+          ),
+      });
+
+      return res.status(201).json({
+        success: true,
+        message:
+          `${valid.length} admissions imported into ${branch.name}`,
+        importSummary: {
+          imported:
+            valid.length,
+          duplicates,
+          invalid,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "Branch admission import failed:",
+        error
+      );
+
+      return res.status(400).json({
+        success: false,
+        message:
+          error?.message ||
+          "Unable to import admissions",
+      });
+    }
+  }
+);
+
 /* =========================================================
    GET LEADS AVAILABLE FOR ADMISSION
 ========================================================= */
@@ -1058,6 +1827,7 @@ router.get("/", async (req, res) => {
 
     const partnerId = cleanOptional(req.query.partnerId);
     const streamId = cleanOptional(req.query.streamId);
+    const branchId = cleanOptional(req.query.branchId);
     const selectedYear = parseYear(req.query.year);
 
     const where = {
@@ -1065,7 +1835,9 @@ router.get("/", async (req, res) => {
       ...(selectedYear ? { admissionDate: yearRange(selectedYear) } : {}),
     };
 
-    if (partnerId) {
+    if (branchId) {
+      where.branchId = branchId;
+    } else if (partnerId) {
       where.partnerId = partnerId;
     } else if (streamId) {
       where.partner = {
@@ -1091,6 +1863,13 @@ router.get("/", async (req, res) => {
                 color: true,
               },
             },
+          },
+        },
+        branch: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
           },
         },
         lead: { select: { id: true, source: true, campaign: true } },
@@ -1131,6 +1910,7 @@ router.post("/", async (req, res) => {
     const companyId = req.clientUser.companyId;
     const {
       partnerId,
+      branchId,
       leadId,
       studentName,
       studentPhone,
@@ -1150,10 +1930,32 @@ router.post("/", async (req, res) => {
       return res.status(404).json({ success: false, message: "Admission college not found" });
     }
 
+    const branch = await getBranch(companyId, branchId);
+
+    if (branchId && !branch) {
+      return res.status(404).json({
+        success: false,
+        message: "Admission branch not found",
+      });
+    }
+
+    if (
+      branch &&
+      partner &&
+      branch.partnerId !== partner.id
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Selected branch does not belong to this college",
+      });
+    }
+
     let cleanStudentName = String(studentName || "").trim();
     let cleanStudentPhone = cleanOptional(studentPhone);
     let cleanStudentEmail = cleanOptional(studentEmail)?.toLowerCase() || null;
-    let cleanCourse = String(course || "").trim();
+    let cleanCourse =
+      branch?.name ||
+      String(course || "").trim();
     let cleanCounsellor = cleanOptional(counsellorName);
     let cleanCollege = partner?.name || String(college || "").trim();
 
@@ -1163,6 +1965,13 @@ router.post("/", async (req, res) => {
 
     if (!cleanCollege) {
       return res.status(400).json({ success: false, message: "College is required" });
+    }
+
+    if (partner && !branch) {
+      return res.status(400).json({
+        success: false,
+        message: "Branch is required for this admission",
+      });
     }
     if (!Number.isFinite(parsedTotalFee) || parsedTotalFee < 0) {
       return res.status(400).json({ success: false, message: "Total fee must be a valid amount" });
@@ -1240,6 +2049,7 @@ router.post("/", async (req, res) => {
         data: {
           companyId,
           partnerId: resolvedPartner.id,
+          branchId: branch?.id || null,
           leadId: selectedLead?.id || null,
           leadStageBeforeAdmission: selectedLead?.stage || null,
           studentName: cleanStudentName,
@@ -1270,6 +2080,13 @@ router.post("/", async (req, res) => {
             },
           },
         },
+          branch: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
           lead: { select: { id: true, source: true, campaign: true } },
         },
       });
@@ -1322,11 +2139,41 @@ router.patch("/:id", async (req, res) => {
       data.college = partner.name;
     }
 
+    if (req.body?.branchId !== undefined) {
+      const branch = await getBranch(companyId, req.body.branchId);
+
+      if (!branch) {
+        return res.status(400).json({
+          success: false,
+          message: "Selected branch is invalid",
+        });
+      }
+
+      const finalPartnerId =
+        data.partnerId ||
+        existing.partnerId;
+
+      if (
+        finalPartnerId &&
+        branch.partnerId !==
+          finalPartnerId
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Selected branch does not belong to this college",
+        });
+      }
+
+      data.branchId =
+        branch.id;
+      data.course =
+        branch.name;
+    }
+
     const stringFields = [
       ["studentName", true],
       ["studentPhone", false],
       ["studentEmail", false],
-      ["course", true],
       ["counsellorName", false],
       ["notes", false],
     ];
@@ -1398,6 +2245,13 @@ router.patch("/:id", async (req, res) => {
             },
           },
         },
+          branch: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
           lead: { select: { id: true, source: true, campaign: true } },
         },
       });

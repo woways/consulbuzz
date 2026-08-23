@@ -212,6 +212,7 @@ model Company {
   counsellingSessions     CounsellingSession[]
   admissionPartners       AdmissionPartner[]
   admissionStreams        AdmissionStream[]
+  admissionBranches       AdmissionBranch[]
   calendarEvents          CalendarEvent[]
 }
 
@@ -436,6 +437,7 @@ model UtmLink {
   admissions    Int @default(0)
 
   revenue Decimal @default(0) @db.Decimal(14, 2)
+  cost    Decimal @default(0) @db.Decimal(14, 2)
 
   active Boolean @default(true)
 
@@ -535,7 +537,11 @@ model Admission {
   partnerId String?
   partner   AdmissionPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
 
+  branchId String?
+  branch   AdmissionBranch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
   college String
+  // Kept for backward compatibility and exports. New admissions mirror branch.name here.
   course  String
 
   counsellorName String?
@@ -559,6 +565,8 @@ model Admission {
   @@index([companyId, admissionDate])
   @@index([partnerId])
   @@index([companyId, partnerId])
+  @@index([branchId])
+  @@index([companyId, branchId])
 }
 
 model AdmissionStream {
@@ -601,6 +609,7 @@ model AdmissionPartner {
   active      Boolean @default(true)
   sortOrder   Int     @default(0)
 
+  branches   AdmissionBranch[]
   admissions Admission[]
 
   createdAt DateTime @default(now())
@@ -611,6 +620,32 @@ model AdmissionPartner {
   @@index([companyId, sortOrder])
   @@index([streamId])
   @@index([companyId, streamId])
+}
+
+model AdmissionBranch {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  partnerId String
+  partner   AdmissionPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  name String
+  slug String
+
+  description String?
+  active      Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  admissions Admission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, partnerId, slug])
+  @@index([companyId, partnerId, active])
+  @@index([companyId, sortOrder])
 }
 
 model WalkIn {

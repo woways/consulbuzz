@@ -31,6 +31,8 @@ import {
   UserCheck,
   IndianRupee,
   Check,
+  ChevronDown,
+  Upload,
 } from "lucide-react";
 
 import {
@@ -57,6 +59,10 @@ const SOURCES = [
   {
     value: "DM_LEADS",
     label: "DM Leads",
+  },
+  {
+    value: "INTERNAL",
+    label: "Internal Leads",
   },
   {
     value: "OTHER",
@@ -119,6 +125,7 @@ function formatDate(date) {
 function LeadModal({
   onClose,
   onCreated,
+  defaultSource = "GOOGLE_FORM",
 }) {
   const [saving, setSaving] =
     useState(false);
@@ -132,7 +139,7 @@ function LeadModal({
       phone: "",
       email: "",
       course: "",
-      source: "GOOGLE_FORM",
+      source: defaultSource,
       stage: "NEW",
       campaign: "",
       medium: "",
@@ -506,6 +513,8 @@ function LinkModal({
         editing?.medium || "",
       url:
         editing?.url || "",
+      cost:
+        editing?.cost ?? "",
     });
 
   const generatedUrl =
@@ -541,6 +550,8 @@ function LinkModal({
           mode === "generate"
             ? generatedUrl
             : form.url,
+        cost:
+          Number(form.cost || 0),
       };
 
       const data =
@@ -687,6 +698,19 @@ function LinkModal({
             </div>
 
             <Field
+              label="Campaign Cost"
+              type="number"
+              value={form.cost}
+              onChange={(value) =>
+                update(
+                  "cost",
+                  value
+                )
+              }
+              placeholder="0"
+            />
+
+            <Field
               label={
                 mode === "generate"
                   ? "Destination URL"
@@ -803,6 +827,64 @@ function Field({
   );
 }
 
+
+function PlatformSelect({
+  label = "Platform",
+  value,
+  onChange,
+}) {
+  const options = [
+    "Instagram",
+    "YouTube",
+    "Twitter/X",
+    "Facebook",
+    "WhatsApp",
+    "Telegram",
+    "LinkedIn",
+    "ShareChat",
+    "Snapchat",
+    "Other",
+  ];
+
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-medium text-slate-600">
+        {label}
+      </label>
+
+      <div className="relative">
+        <select
+          value={value}
+          onChange={(event) =>
+            onChange(
+              event.target.value
+            )
+          }
+          className="h-10 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-10 text-sm text-slate-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+        >
+          <option value="">
+            Select platform
+          </option>
+
+          {options.map((item) => (
+            <option
+              key={item}
+              value={item}
+            >
+              {item}
+            </option>
+          ))}
+        </select>
+
+        <ChevronDown
+          size={16}
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+        />
+      </div>
+    </div>
+  );
+}
+
 function MetricCard({
   label,
   value,
@@ -907,167 +989,183 @@ function downloadCsv(rows) {
   );
 }
 
+
+
+
+function downloadSourceLeads(rows, filename = "leads.csv") {
+  const headers = [
+    "Lead Name",
+    "Phone",
+    "Email",
+    "Course / Interest",
+    "Source",
+    "Campaign",
+    "Medium",
+    "Stage",
+    "Assigned",
+    "Created",
+  ];
+
+  const escape = (value) =>
+    `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+  const csv = [
+    headers.map(escape).join(","),
+    ...rows.map((lead) =>
+      [
+        lead.name,
+        lead.phone,
+        lead.email,
+        lead.course,
+        lead.source,
+        lead.campaign,
+        lead.medium,
+        lead.stage,
+        lead.assigned,
+        lead.createdAt,
+      ]
+        .map(escape)
+        .join(",")
+    ),
+  ].join("\n");
+
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function downloadUtmLeadDetails(rows) {
+  const headers = [
+    "Lead Name",
+    "Phone",
+    "Email",
+    "Course / Interest",
+    "Source",
+    "Campaign",
+    "Medium",
+    "Stage",
+    "Assigned",
+    "Created",
+  ];
+
+  const escape = (value) =>
+    `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+  const csv = [
+    headers.map(escape).join(","),
+    ...rows.map((lead) =>
+      [
+        lead.name,
+        lead.phone,
+        lead.email,
+        lead.course,
+        lead.source,
+        lead.campaign,
+        lead.medium,
+        lead.stage,
+        lead.assigned,
+        lead.createdAt,
+      ]
+        .map(escape)
+        .join(",")
+    ),
+  ].join("\n");
+
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const anchor =
+    document.createElement("a");
+
+  anchor.href = url;
+  anchor.download =
+    "utm-lead-details.csv";
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
+  URL.revokeObjectURL(url);
+}
+
 export default function UTMLeads({
   selectedYear = "all",
 }) {
-  const [sub, setSub] =
-    useState("all");
-
-  const [leads, setLeads] =
-    useState([]);
-
-  const [links, setLinks] =
-    useState([]);
-
-  const [analytics, setAnalytics] =
-    useState({
-      summary: {},
-      campaignPerformance: [],
-      sourcePerformance: [],
-      mediumPerformance: [],
-    });
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  const [search, setSearch] =
-    useState("");
-
-  const [linkSearch, setLinkSearch] =
-    useState("");
-
-  const [sourceFilter, setSourceFilter] =
-    useState("");
-
-  const [mediumFilter, setMediumFilter] =
-    useState("");
-
-  const [sort, setSort] =
-    useState("newest");
-
-  const [
-    showLeadModal,
-    setShowLeadModal,
-  ] = useState(false);
-
-  const [
-    showLinkModal,
-    setShowLinkModal,
-  ] = useState(false);
-
-  const [
-    editingLink,
-    setEditingLink,
-  ] = useState(null);
-  const [
-    generatorMode,
-    setGeneratorMode,
-  ] = useState("generate");
-
-  const [
-    generatorForm,
-    setGeneratorForm,
-  ] = useState({
-    campaign: "",
-    source: "",
-    medium: "",
-    url: "",
+  const [leads, setLeads] = useState([]);
+  const [links, setLinks] = useState([]);
+  const [analytics, setAnalytics] = useState({
+    summary: {},
+    campaignPerformance: [],
+    sourcePerformance: [],
+    mediumPerformance: [],
   });
 
-  const [
-    generatorSaving,
-    setGeneratorSaving,
-  ] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [
-    generatorError,
-    setGeneratorError,
-  ] = useState("");
+  const [linkSearch, setLinkSearch] = useState("");
+  const [leadSearch, setLeadSearch] = useState("");
+  const [sourceFilter, setSourceFilter] = useState("");
+  const [mediumFilter, setMediumFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [sort, setSort] = useState("newest");
 
-  const [
-    copiedGenerated,
-    setCopiedGenerated,
-  ] = useState(false);
+  const [editingLink, setEditingLink] = useState(null);
+  const [showLinkModal, setShowLinkModal] = useState(false);
 
-  const subs = [
-    {
-      k: "all",
-      label: "All Leads",
-      icon: Layers,
-    },
-    {
-      k: "links",
-      label: "UTM Links",
-      icon: Link2,
-    },
-    {
-      k: "analytics",
-      label: "UTM Analytics",
-      icon: BarChart3,
-    },
-    {
-      k: "google-form",
-      label: "Google Form",
-      icon: FileSpreadsheet,
-    },
-    {
-      k: "website-form",
-      label: "Website Form",
-      icon: Globe,
-    },
-    {
-      k: "im",
-      label: "IM Leads",
-      icon: MessageSquare,
-    },
-    {
-      k: "dm",
-      label: "DM Leads",
-      icon: Instagram,
-    },
-  ];
+  const [leadSourceView, setLeadSourceView] =
+    useState("GOOGLE_FORM");
+
+  const [showInternalLeadModal, setShowInternalLeadModal] =
+    useState(false);
+
+  const [importingInternal, setImportingInternal] =
+    useState(false);
+
+  const [internalImportMessage, setInternalImportMessage] =
+    useState("");
+
+  const [generateForm, setGenerateForm] = useState({
+    url: "",
+    source: "",
+    medium: "",
+    campaign: "",
+    cost: "",
+  });
+
+  const [manualForm, setManualForm] = useState({
+    url: "",
+    source: "",
+    medium: "",
+    campaign: "",
+    cost: "",
+  });
+
+  const [generateSaving, setGenerateSaving] = useState(false);
+  const [manualSaving, setManualSaving] = useState(false);
+  const [generateError, setGenerateError] = useState("");
+  const [manualError, setManualError] = useState("");
+  const [copiedGenerated, setCopiedGenerated] = useState(false);
 
   async function loadData() {
     setLoading(true);
     setError("");
 
     try {
-      const params =
-        new URLSearchParams();
-
-      params.set(
-        "year",
-        selectedYear
-      );
-
-      if (linkSearch.trim()) {
-        params.set(
-          "search",
-          linkSearch.trim()
-        );
-      }
-
-      if (sourceFilter) {
-        params.set(
-          "source",
-          sourceFilter
-        );
-      }
-
-      if (mediumFilter) {
-        params.set(
-          "medium",
-          mediumFilter
-        );
-      }
-
-      params.set(
-        "sort",
-        sort
-      );
+      const params = new URLSearchParams();
+      params.set("year", selectedYear);
+      params.set("sort", sort);
 
       const [
         leadsData,
@@ -1075,24 +1173,22 @@ export default function UTMLeads({
         analyticsData,
       ] = await Promise.all([
         apiRequest(
-          `/api/client/leads?year=${encodeURIComponent(selectedYear)}`
+          `/api/client/leads?year=${encodeURIComponent(
+            selectedYear
+          )}`
         ),
         apiRequest(
           `/api/client/leads/utm/links?${params.toString()}`
         ),
         apiRequest(
-          `/api/client/leads/utm/analytics?year=${encodeURIComponent(selectedYear)}`
+          `/api/client/leads/utm/analytics?year=${encodeURIComponent(
+            selectedYear
+          )}`
         ),
       ]);
 
-      setLeads(
-        leadsData.leads || []
-      );
-
-      setLinks(
-        linksData.links || []
-      );
-
+      setLeads(leadsData.leads || []);
+      setLinks(linksData.links || []);
       setAnalytics(
         analyticsData || {
           summary: {},
@@ -1113,141 +1209,157 @@ export default function UTMLeads({
 
   useEffect(() => {
     loadData();
-  }, [
-    selectedYear,
-    sort,
-  ]);
+  }, [selectedYear, sort]);
 
-  const filtered =
-    useMemo(() => {
-      let result = leads;
+  const generatedUrl = useMemo(
+    () =>
+      buildTrackedUrl({
+        url: generateForm.url,
+        campaign: generateForm.campaign,
+        source: generateForm.source,
+        medium: generateForm.medium,
+      }),
+    [generateForm]
+  );
 
-      if (
-        sub === "google-form"
-      ) {
-        result = result.filter(
-          (lead) =>
-            lead.sourceKey ===
-            "GOOGLE_FORM"
-        );
-      }
+  function updateGenerate(field, value) {
+    setGenerateForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
 
-      if (
-        sub === "website-form"
-      ) {
-        result = result.filter(
-          (lead) =>
-            lead.sourceKey ===
-            "WEBSITE_FORM"
-        );
-      }
+  function updateManual(field, value) {
+    setManualForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
 
-      if (sub === "im") {
-        result = result.filter(
-          (lead) =>
-            lead.sourceKey ===
-            "IM_LEADS"
-        );
-      }
-
-      if (sub === "dm") {
-        result = result.filter(
-          (lead) =>
-            lead.sourceKey ===
-            "DM_LEADS"
-        );
-      }
-
-      const query =
-        search
-          .trim()
-          .toLowerCase();
-
-      if (query) {
-        result =
-          result.filter(
-            (lead) =>
-              lead.name
-                ?.toLowerCase()
-                .includes(query) ||
-              lead.phone
-                ?.toLowerCase()
-                .includes(query) ||
-              lead.course
-                ?.toLowerCase()
-                .includes(query) ||
-              lead.campaign
-                ?.toLowerCase()
-                .includes(query)
-          );
-      }
-
-      return result;
-    }, [
-      leads,
-      sub,
-      search,
-    ]);
-
-  const sourceOptions =
-    useMemo(
-      () =>
-        Array.from(
-          new Set(
-            links
-              .map(
-                (link) =>
-                  link.source
-              )
-              .filter(Boolean)
-          )
-        ).sort(),
-      [links]
-    );
-
-  const mediumOptions =
-    useMemo(
-      () =>
-        Array.from(
-          new Set(
-            links
-              .map(
-                (link) =>
-                  link.medium
-              )
-              .filter(Boolean)
-          )
-        ).sort(),
-      [links]
-    );
-
-  async function copyLink(url) {
-    try {
-      await navigator.clipboard.writeText(
-        url
+  async function saveGenerate() {
+    if (
+      !generateForm.url.trim() ||
+      !generateForm.source.trim() ||
+      !generateForm.medium.trim() ||
+      !generateForm.campaign.trim() ||
+      !generatedUrl
+    ) {
+      setGenerateError(
+        "Destination URL, source, medium and campaign are required"
       );
-    } catch {
-      // Clipboard may be unavailable.
+      return;
+    }
+
+    setGenerateSaving(true);
+    setGenerateError("");
+
+    try {
+      await apiRequest(
+        "/api/client/leads/utm/links",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            mode: "generate",
+            url: generateForm.url,
+            source: generateForm.source,
+            medium: generateForm.medium,
+            campaign: generateForm.campaign,
+            cost: Number(generateForm.cost || 0),
+          }),
+        }
+      );
+
+      setGenerateForm({
+        url: "",
+        source: "",
+        medium: "",
+        campaign: "",
+        cost: "",
+      });
+
+      await loadData();
+    } catch (error) {
+      setGenerateError(
+        error?.data?.message ||
+          "Unable to generate UTM link"
+      );
+    } finally {
+      setGenerateSaving(false);
     }
   }
 
-  function handleLeadCreated(
-    lead
-  ) {
-    setLeads((current) => [
-      lead,
-      ...current,
-    ]);
+  async function saveManual() {
+    if (
+      !manualForm.url.trim() ||
+      !manualForm.source.trim() ||
+      !manualForm.medium.trim() ||
+      !manualForm.campaign.trim()
+    ) {
+      setManualError(
+        "UTM URL, source, medium and campaign are required"
+      );
+      return;
+    }
 
-    setShowLeadModal(false);
+    setManualSaving(true);
+    setManualError("");
+
+    try {
+      await apiRequest(
+        "/api/client/leads/utm/links",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            mode: "manual",
+            url: manualForm.url,
+            source: manualForm.source,
+            medium: manualForm.medium,
+            campaign: manualForm.campaign,
+            cost: Number(manualForm.cost || 0),
+          }),
+        }
+      );
+
+      setManualForm({
+        url: "",
+        source: "",
+        medium: "",
+        campaign: "",
+        cost: "",
+      });
+
+      await loadData();
+    } catch (error) {
+      setManualError(
+        error?.data?.message ||
+          "Unable to save manual UTM link"
+      );
+    } finally {
+      setManualSaving(false);
+    }
   }
 
-  async function handleLinkSaved(
-    link
-  ) {
-    setShowLinkModal(false);
-    setEditingLink(null);
-    await loadData();
+  async function copyGeneratedLink() {
+    if (!generatedUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(generatedUrl);
+      setCopiedGenerated(true);
+      window.setTimeout(
+        () => setCopiedGenerated(false),
+        1500
+      );
+    } catch {
+      // Clipboard can be unavailable.
+    }
+  }
+
+  async function copyLink(url) {
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Clipboard can be unavailable.
+    }
   }
 
   async function deleteLink(link) {
@@ -1262,10 +1374,7 @@ export default function UTMLeads({
     try {
       await apiRequest(
         `/api/client/leads/utm/links/${link.id}`,
-        {
-          method:
-            "DELETE",
-        }
+        { method: "DELETE" }
       );
 
       await loadData();
@@ -1277,952 +1386,1170 @@ export default function UTMLeads({
     }
   }
 
-  const generatedInlineUrl =
-    generatorMode === "generate"
-      ? buildTrackedUrl(generatorForm)
-      : generatorForm.url;
+  const filteredLinks = useMemo(() => {
+    const query = linkSearch.trim().toLowerCase();
+    const now = new Date();
+    const monthStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1
+    );
+    const yearStart = new Date(now.getFullYear(), 0, 1);
 
-  function updateGenerator(field, value) {
-    setGeneratorForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  }
+    return links.filter((link) => {
+      if (
+        query &&
+        ![
+          link.campaign,
+          link.source,
+          link.medium,
+          link.url,
+          link.latestLead?.name,
+          link.latestLead?.phone,
+        ]
+          .filter(Boolean)
+          .some((value) =>
+            String(value)
+              .toLowerCase()
+              .includes(query)
+          )
+      ) {
+        return false;
+      }
 
-  async function saveGeneratedLink() {
-    if (
-      !generatorForm.campaign.trim() ||
-      !generatorForm.source.trim() ||
-      !generatorForm.medium.trim() ||
-      !generatorForm.url.trim()
-    ) {
-      setGeneratorError(
-        "Campaign, source, medium and URL are required"
-      );
+      if (
+        sourceFilter &&
+        String(link.source).toLowerCase() !==
+          sourceFilter.toLowerCase()
+      ) {
+        return false;
+      }
+
+      if (
+        mediumFilter &&
+        String(link.medium).toLowerCase() !==
+          mediumFilter.toLowerCase()
+      ) {
+        return false;
+      }
+
+      if (dateFilter !== "all") {
+        const created = new Date(link.createdAt);
+
+        if (
+          dateFilter === "month" &&
+          created < monthStart
+        ) {
+          return false;
+        }
+
+        if (
+          dateFilter === "year" &&
+          created < yearStart
+        ) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [
+    links,
+    linkSearch,
+    sourceFilter,
+    mediumFilter,
+    dateFilter,
+  ]);
+
+  const utmLeads = useMemo(() => {
+    const linkIds = new Set(links.map((link) => link.id));
+    const query = leadSearch.trim().toLowerCase();
+
+    return leads.filter((lead) => {
+      if (!lead.utmLinkId || !linkIds.has(lead.utmLinkId)) {
+        return false;
+      }
+
+      if (!query) return true;
+
+      return [
+        lead.name,
+        lead.phone,
+        lead.email,
+        lead.course,
+        lead.campaign,
+        lead.medium,
+        lead.source,
+        lead.stage,
+      ]
+        .filter(Boolean)
+        .some((value) =>
+          String(value)
+            .toLowerCase()
+            .includes(query)
+        );
+    });
+  }, [leads, links, leadSearch]);
+
+  const sourceOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          links
+            .map((link) => link.source)
+            .filter(Boolean)
+        )
+      ).sort(),
+    [links]
+  );
+
+  const mediumOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          links
+            .map((link) => link.medium)
+            .filter(Boolean)
+        )
+      ).sort(),
+    [links]
+  );
+
+
+  const SOURCE_VIEWS = [
+    {
+      key: "GOOGLE_FORM",
+      label: "Google Form",
+      icon: FileSpreadsheet,
+    },
+    {
+      key: "WEBSITE_FORM",
+      label: "Website Form",
+      icon: Globe,
+    },
+    {
+      key: "IM_LEADS",
+      label: "IM Leads",
+      icon: MessageSquare,
+    },
+    {
+      key: "DM_LEADS",
+      label: "DM Leads",
+      icon: Instagram,
+    },
+    {
+      key: "INTERNAL",
+      label: "Internal Leads",
+      icon: Users,
+    },
+  ];
+
+  const sourceViewLeads = useMemo(() => {
+    return leads.filter(
+      (lead) =>
+        lead.sourceKey ===
+        leadSourceView
+    );
+  }, [
+    leads,
+    leadSourceView,
+  ]);
+
+  async function importInternalLeads(file) {
+    if (!file) {
       return;
     }
 
-    if (
-      generatorMode === "generate" &&
-      !generatedInlineUrl
-    ) {
-      setGeneratorError(
-        "Please enter a valid destination URL"
-      );
-      return;
-    }
-
-    setGeneratorSaving(true);
-    setGeneratorError("");
+    setImportingInternal(true);
+    setInternalImportMessage("");
+    setError("");
 
     try {
-      await apiRequest(
-        "/api/client/leads/utm/links",
+      const body = new FormData();
+      body.append("file", file);
+
+      const data = await apiRequest(
+        "/api/client/leads/internal/import",
         {
           method: "POST",
-          body: JSON.stringify({
-            mode: generatorMode,
-            campaign: generatorForm.campaign,
-            source: generatorForm.source,
-            medium: generatorForm.medium,
-            url:
-              generatorMode === "generate"
-                ? generatedInlineUrl
-                : generatorForm.url,
-          }),
+          body,
         }
       );
 
-      setGeneratorForm({
-        campaign: "",
-        source: "",
-        medium: "",
-        url: "",
-      });
+      setInternalImportMessage(
+        `${data.importSummary?.imported || 0} imported · ${
+          data.importSummary?.duplicates || 0
+        } duplicates · ${
+          data.importSummary?.invalid || 0
+        } invalid skipped`
+      );
 
-      setCopiedGenerated(false);
       await loadData();
-      setSub("links");
+      setLeadSourceView("INTERNAL");
     } catch (error) {
-      setGeneratorError(
+      setError(
         error?.data?.message ||
-          "Unable to save UTM link"
+          "Unable to import internal leads"
       );
     } finally {
-      setGeneratorSaving(false);
+      setImportingInternal(false);
     }
   }
 
-  async function copyGeneratedLink() {
-    if (!generatedInlineUrl) return;
+  const summary = analytics.summary || {};
 
-    try {
-      await navigator.clipboard.writeText(
-        generatedInlineUrl
+  function PerformanceCard({
+    title,
+    rows,
+    labelKey,
+  }) {
+    const max =
+      Math.max(
+        1,
+        ...rows.map((row) => Number(row.leads || 0))
       );
-      setCopiedGenerated(true);
-      window.setTimeout(
-        () => setCopiedGenerated(false),
-        1600
-      );
-    } catch {
-      // Clipboard may be unavailable.
-    }
-  }
 
-  const summary =
-    analytics.summary || {};
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-            Leads / Campaign tracking
-          </div>
-
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
-            UTM Leads
-          </h1>
-
-          <p className="mt-1 text-sm text-slate-500">
-            Student Mentor-style campaign tracking adapted for your ConsulBuzz tenant.
-          </p>
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
+        <div className="text-sm font-bold text-slate-900">
+          {title}
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() =>
-              downloadCsv(
-                links
-              )
-            }
-            disabled={
-              !links.length
-            }
-            className="h-9 px-3.5 border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 text-slate-700 text-xs font-semibold rounded-lg inline-flex items-center gap-2"
-          >
-            <Download size={13} />
-            Export
-          </button>
+        <div className="mt-4 space-y-4">
+          {rows.slice(0, 6).map((row) => {
+            const value = Number(row.leads || 0);
+            const width = Math.max(8, (value / max) * 100);
 
-          <button
-            type="button"
-            onClick={() =>
-              setShowLeadModal(
-                true
-              )
-            }
-            className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg inline-flex items-center gap-2 shadow-sm"
-          >
-            <Plus size={14} />
-            New Lead
-          </button>
-        </div>
-      </div>
-
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-[0_4px_16px_rgba(15,23,42,0.04)]">
-        <div className="px-5 py-4 border-b border-slate-100 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-500">
-              UTM Generator
-            </div>
-
-            <h2 className="mt-1 text-lg font-bold tracking-[-0.02em] text-slate-950">
-              Generate UTM Link
-            </h2>
-
-            <p className="mt-1 text-xs text-slate-500">
-              Create and save campaign tracking links directly from this page.
-            </p>
-          </div>
-
-          <div className="inline-flex p-1 bg-slate-100 rounded-xl w-fit">
-            <button
-              type="button"
-              onClick={() => setGeneratorMode("generate")}
-              className={`h-8 px-3 rounded-lg text-xs font-semibold ${
-                generatorMode === "generate"
-                  ? "bg-white text-slate-950 shadow-sm"
-                  : "text-slate-500"
-              }`}
-            >
-              Generate UTM
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setGeneratorMode("manual")}
-              className={`h-8 px-3 rounded-lg text-xs font-semibold ${
-                generatorMode === "manual"
-                  ? "bg-white text-slate-950 shadow-sm"
-                  : "text-slate-500"
-              }`}
-            >
-              Manual UTM
-            </button>
-          </div>
-        </div>
-
-        <div className="p-5 space-y-4">
-          {generatorError ? (
-            <div className="px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-sm">
-              {generatorError}
-            </div>
-          ) : null}
-
-          <div className="grid grid-cols-1 xl:grid-cols-[1.35fr_0.85fr_0.85fr] gap-4">
-            <Field
-              label={
-                generatorMode === "generate"
-                  ? "Destination URL"
-                  : "UTM URL"
-              }
-              required
-              value={generatorForm.url}
-              onChange={(value) =>
-                updateGenerator("url", value)
-              }
-              placeholder="https://studentmentor.co.in/"
-            />
-
-            <Field
-              label="Source"
-              required
-              value={generatorForm.source}
-              onChange={(value) =>
-                updateGenerator("source", value)
-              }
-              placeholder="instagram"
-            />
-
-            <Field
-              label="Medium"
-              required
-              value={generatorForm.medium}
-              onChange={(value) =>
-                updateGenerator("medium", value)
-              }
-              placeholder="social"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-4 items-end">
-            <Field
-              label="Campaign"
-              required
-              value={generatorForm.campaign}
-              onChange={(value) =>
-                updateGenerator("campaign", value)
-              }
-              placeholder="August Admissions 2026"
-            />
-
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={saveGeneratedLink}
-                disabled={
-                  generatorSaving ||
-                  !generatorForm.campaign.trim() ||
-                  !generatorForm.source.trim() ||
-                  !generatorForm.medium.trim() ||
-                  !generatorForm.url.trim() ||
-                  (generatorMode === "generate" &&
-                    !generatedInlineUrl)
-                }
-                className="h-10 px-4 bg-slate-950 hover:bg-slate-800 disabled:opacity-50 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-2"
-              >
-                {generatorSaving ? (
-                  <Loader2
-                    size={13}
-                    className="animate-spin"
-                  />
-                ) : (
-                  <Link2 size={13} />
-                )}
-
-                {generatorMode === "generate"
-                  ? "Generate & Save"
-                  : "Save Manual UTM"}
-              </button>
-
-              <button
-                type="button"
-                onClick={copyGeneratedLink}
-                disabled={!generatedInlineUrl}
-                className="h-10 px-4 border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 rounded-xl text-xs font-semibold text-slate-700 inline-flex items-center gap-2"
-              >
-                {copiedGenerated ? (
-                  <Check size={13} />
-                ) : (
-                  <Copy size={13} />
-                )}
-
-                {copiedGenerated
-                  ? "Copied"
-                  : "Copy Link"}
-              </button>
-            </div>
-          </div>
-
-          {generatedInlineUrl ? (
-            <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-500">
-                    {generatorMode === "generate"
-                      ? "Generated UTM URL"
-                      : "Manual UTM URL"}
+            return (
+              <div key={row[labelKey]}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="truncate text-xs font-semibold text-slate-700">
+                    {row[labelKey]}
                   </div>
 
-                  <div className="mt-2 text-xs font-mono text-slate-700 break-all">
-                    {generatedInlineUrl}
+                  <div className="text-xs font-bold text-slate-950">
+                    {value}
                   </div>
                 </div>
 
-                <a
-                  href={generatedInlineUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-9 h-9 rounded-lg bg-white border border-indigo-100 inline-flex items-center justify-center text-indigo-600 hover:bg-indigo-50 flex-shrink-0"
-                  title="Open link"
-                >
-                  <ExternalLink size={14} />
-                </a>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-indigo-600"
+                    style={{ width: `${width}%` }}
+                  />
+                </div>
               </div>
+            );
+          })}
+
+          {!rows.length ? (
+            <div className="py-8 text-center text-xs text-slate-500">
+              No data yet.
             </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-4 text-xs text-slate-500">
-              Enter the destination URL, campaign, source and medium to preview the tracked link here.
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
+    );
+  }
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <MetricCard
-          label="UTM Links"
-          value={
-            summary.totalUtmLinks ??
-            links.length
-          }
-          icon={Link2}
-          detail="Saved campaign links"
-        />
-
-        <MetricCard
-          label="Registrations"
-          value={
-            summary.totalRegistrations ??
-            links.reduce(
-              (sum, link) =>
-                sum +
-                Number(
-                  link.regs || 0
-                ),
-              0
-            )
-          }
-          icon={UserPlus}
-          detail="Tracked registrations"
-        />
-
-        <MetricCard
-          label="Leads"
-          value={
-            summary.totalLeads ??
-            links.reduce(
-              (sum, link) =>
-                sum +
-                Number(
-                  link.leads || 0
-                ),
-              0
-            )
-          }
-          icon={Users}
-          detail="Leads attached to UTM links"
-        />
-
-        <MetricCard
-          label="Admissions"
-          value={
-            summary.totalAdmissions ??
-            links.reduce(
-              (sum, link) =>
-                sum +
-                Number(
-                  link.adm || 0
-                ),
-              0
-            )
-          }
-          icon={UserCheck}
-          detail="Admissions from UTM leads"
-        />
-
-        <MetricCard
-          label="Revenue"
-          value={`₹${Number(
-            summary.totalRevenue ??
-              links.reduce(
-                (sum, link) =>
-                  sum +
-                  Number(
-                    link.rev || 0
-                  ),
-                0
-              )
-          ).toLocaleString("en-IN")}`}
-          icon={IndianRupee}
-          detail="Received admission revenue"
-        />
-      </div>
-
-      <div className="bg-white border border-slate-200 rounded-xl px-2 flex gap-1 overflow-x-auto shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-        {subs.map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <button
-              key={item.k}
-              onClick={() =>
-                setSub(
-                  item.k
-                )
-              }
-              className={`px-3 py-3 text-xs font-semibold inline-flex items-center gap-1.5 border-b-2 whitespace-nowrap ${
-                sub === item.k
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              <Icon size={13} />
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {sub === "links" ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col xl:flex-row xl:items-center gap-2">
-          <div className="relative flex-1 max-w-md">
-            <Search
-              size={14}
-              className="absolute left-2.5 top-2.5 text-slate-400"
-            />
-
-            <input
-              value={linkSearch}
-              onChange={(event) =>
-                setLinkSearch(
-                  event.target.value
-                )
-              }
-              placeholder="Search campaign, source, medium or URL..."
-              className="w-full h-9 pl-8 pr-3 border border-slate-200 rounded-lg text-sm"
-            />
-          </div>
-
-          <select
-            value={sourceFilter}
-            onChange={(event) =>
-              setSourceFilter(
-                event.target.value
-              )
-            }
-            className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs text-slate-700"
-          >
-            <option value="">
-              All Sources
-            </option>
-
-            {sourceOptions.map(
-              (item) => (
-                <option
-                  key={item}
-                  value={item}
-                >
-                  {item}
-                </option>
-              )
-            )}
-          </select>
-
-          <select
-            value={mediumFilter}
-            onChange={(event) =>
-              setMediumFilter(
-                event.target.value
-              )
-            }
-            className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs text-slate-700"
-          >
-            <option value="">
-              All Mediums
-            </option>
-
-            {mediumOptions.map(
-              (item) => (
-                <option
-                  key={item}
-                  value={item}
-                >
-                  {item}
-                </option>
-              )
-            )}
-          </select>
-
-          <select
-            value={sort}
-            onChange={(event) =>
-              setSort(
-                event.target.value
-              )
-            }
-            className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs text-slate-700"
-          >
-            <option value="newest">
-              Newest
-            </option>
-            <option value="oldest">
-              Oldest
-            </option>
-            <option value="leads">
-              Most Leads
-            </option>
-            <option value="admissions">
-              Most Admissions
-            </option>
-            <option value="revenue">
-              Highest Revenue
-            </option>
-          </select>
-
-          <button
-            type="button"
-            onClick={loadData}
-            disabled={loading}
-            className="h-9 px-3 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5"
-          >
-            <RefreshCw
-              size={13}
-              className={
-                loading
-                  ? "animate-spin"
-                  : ""
-              }
-            />
-            Apply
-          </button>
+  return (
+    <div className="space-y-6">
+      <div>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          Campaign tracking
         </div>
-      ) : sub !==
-        "analytics" ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center gap-2">
-          <div className="relative flex-1 max-w-md">
-            <Search
-              size={14}
-              className="absolute left-2.5 top-2.5 text-slate-400"
-            />
 
-            <input
-              value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value
-                )
-              }
-              placeholder="Search by name, phone, course or campaign..."
-              className="w-full h-9 pl-8 pr-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
-            />
-          </div>
+        <h1 className="mt-2 text-[30px] font-bold tracking-[-0.04em] text-slate-950">
+          UTM Leads
+        </h1>
 
-          <button
-            type="button"
-            onClick={loadData}
-            disabled={loading}
-            className="h-9 px-3 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5"
-          >
-            <RefreshCw
-              size={13}
-              className={
-                loading
-                  ? "animate-spin"
-                  : ""
-              }
-            />
-            Refresh
-          </button>
-        </div>
-      ) : null}
+        <p className="mt-1 text-sm text-slate-500">
+          Generate links, save influencer links, review UTM leads and analyse performance.
+        </p>
+      </div>
 
       {error ? (
-        <div className="flex items-center gap-2 px-3 py-2 border border-rose-200 bg-rose-50 rounded-lg text-sm text-rose-700">
+        <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           <AlertCircle size={15} />
           {error}
         </div>
       ) : null}
 
-      {loading ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-12 flex items-center justify-center gap-2 text-sm text-slate-500">
-          <Loader2
-            size={16}
-            className="animate-spin"
-          />
-          Loading...
+      {/* 1. Generate UTM Link */}
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_4px_18px_rgba(15,23,42,0.04)]">
+        <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-5 py-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-600">
+            UTM Generator
+          </div>
+
+          <h2 className="mt-1 text-lg font-bold text-slate-950">
+            Generate UTM Link
+          </h2>
+
+          <p className="mt-1 text-xs text-slate-500">
+            Build a tracked campaign URL and save it directly.
+          </p>
         </div>
-      ) : sub ===
-        "links" ? (
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+
+        <div className="space-y-4 p-5">
+          {generateError ? (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              {generateError}
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Field
+              label="Destination URL"
+              required
+              value={generateForm.url}
+              onChange={(value) =>
+                updateGenerate("url", value)
+              }
+              placeholder="https://studentmentor.co.in/"
+            />
+
+            <Field
+              label="Campaign"
+              required
+              value={generateForm.campaign}
+              onChange={(value) =>
+                updateGenerate("campaign", value)
+              }
+              placeholder="August Admissions 2026"
+            />
+
+            <PlatformSelect
+              label="Platform"
+              value={generateForm.source}
+              onChange={(value) =>
+                updateGenerate(
+                  "source",
+                  value
+                )
+              }
+            />
+
+            <Field
+              label="Medium"
+              required
+              value={generateForm.medium}
+              onChange={(value) =>
+                updateGenerate("medium", value)
+              }
+              placeholder="social"
+            />
+
+            <Field
+              label="Campaign Cost"
+              type="number"
+              value={generateForm.cost}
+              onChange={(value) =>
+                updateGenerate("cost", value)
+              }
+              placeholder="0"
+            />
+          </div>
+
+          <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+            <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">
+              Generated Link
+            </div>
+
+            <div className="mt-2 min-h-[22px] break-all font-mono text-xs text-slate-700">
+              {generatedUrl ||
+                "Complete the fields to preview the generated UTM URL."}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={saveGenerate}
+              disabled={
+                generateSaving ||
+                !generatedUrl
+              }
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {generateSaving ? (
+                <Loader2
+                  size={13}
+                  className="animate-spin"
+                />
+              ) : (
+                <Link2 size={13} />
+              )}
+              Generate & Save
+            </button>
+
+            <button
+              type="button"
+              onClick={copyGeneratedLink}
+              disabled={!generatedUrl}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 disabled:opacity-50"
+            >
+              {copiedGenerated ? (
+                <Check size={13} />
+              ) : (
+                <Copy size={13} />
+              )}
+              {copiedGenerated ? "Copied" : "Copy Link"}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Manually Add UTM Link */}
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_4px_18px_rgba(15,23,42,0.04)]">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+            Existing link
+          </div>
+
+          <h2 className="mt-1 text-lg font-bold text-slate-950">
+            Manually Add UTM Link
+          </h2>
+
+          <p className="mt-1 text-xs text-slate-500">
+            Save an already-created influencer or campaign UTM link.
+          </p>
+        </div>
+
+        <div className="space-y-4 p-5">
+          {manualError ? (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              {manualError}
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Field
+              label="UTM URL"
+              required
+              value={manualForm.url}
+              onChange={(value) =>
+                updateManual("url", value)
+              }
+              placeholder="https://example.com/?utm_source=..."
+            />
+
+            <Field
+              label="Campaign"
+              required
+              value={manualForm.campaign}
+              onChange={(value) =>
+                updateManual("campaign", value)
+              }
+              placeholder="Influencer August"
+            />
+
+            <PlatformSelect
+              label="Platform / Source"
+              value={manualForm.source}
+              onChange={(value) =>
+                updateManual(
+                  "source",
+                  value
+                )
+              }
+            />
+
+            <Field
+              label="Medium"
+              required
+              value={manualForm.medium}
+              onChange={(value) =>
+                updateManual("medium", value)
+              }
+              placeholder="instagram"
+            />
+
+            <Field
+              label="Campaign Cost"
+              type="number"
+              value={manualForm.cost}
+              onChange={(value) =>
+                updateManual("cost", value)
+              }
+              placeholder="0"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={saveManual}
+            disabled={manualSaving}
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white disabled:opacity-50"
+          >
+            {manualSaving ? (
+              <Loader2
+                size={13}
+                className="animate-spin"
+              />
+            ) : (
+              <Plus size={13} />
+            )}
+            Save Manual UTM
+          </button>
+        </div>
+      </section>
+
+      {/* 3. Saved Influencer Links */}
+      <section
+        id="saved-utm-links"
+        className="space-y-3 scroll-mt-28"
+      >
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+              Saved links
+            </div>
+
+            <h2 className="mt-1 text-xl font-bold tracking-[-0.02em] text-slate-950">
+              Saved Influencer Links
+            </h2>
+
+            <p className="mt-1 text-xs text-slate-500">
+              Search, filter, copy, edit and review performance for every saved link.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => downloadCsv(filteredLinks)}
+            disabled={!filteredLinks.length}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 disabled:opacity-50"
+          >
+            <Download size={13} />
+            Export
+          </button>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-3">
+          <div className="grid gap-2 xl:grid-cols-[1fr_180px_180px_150px_150px]">
+            <div className="relative">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+
+              <input
+                value={linkSearch}
+                onChange={(event) =>
+                  setLinkSearch(event.target.value)
+                }
+                placeholder="Search campaign, source, medium, URL or latest lead..."
+                className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-sm"
+              />
+            </div>
+
+            <select
+              value={sourceFilter}
+              onChange={(event) =>
+                setSourceFilter(event.target.value)
+              }
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700"
+            >
+              <option value="">All Sources</option>
+              {sourceOptions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={mediumFilter}
+              onChange={(event) =>
+                setMediumFilter(event.target.value)
+              }
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700"
+            >
+              <option value="">All Mediums</option>
+              {mediumOptions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={dateFilter}
+              onChange={(event) =>
+                setDateFilter(event.target.value)
+              }
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700"
+            >
+              <option value="all">All Dates</option>
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
+            </select>
+
+            <select
+              value={sort}
+              onChange={(event) =>
+                setSort(event.target.value)
+              }
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700"
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="leads">Most Leads</option>
+              <option value="admissions">Most Admissions</option>
+              <option value="revenue">Highest Revenue</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <Table
             columns={[
               "Campaign",
               "Source / Medium",
-              "Link",
-              "Clicks",
-              "Regs",
+              "Saved Link",
               "Leads",
-              "Conv",
-              "Adm",
+              "Cost",
+              "Cost / Lead",
+              "Latest Lead",
+              "Admissions",
               "Revenue",
               "Actions",
             ]}
-            empty="No UTM links created yet"
-            rows={links.map(
-              (link) => (
-                <tr
-                  key={link.id}
-                  className="hover:bg-slate-50/80 transition-colors"
-                >
-                  <td className="px-4 py-2.5">
-                    <div className="text-sm font-semibold text-slate-900">
-                      {link.campaign}
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">
-                      {formatDate(
-                        link.createdAt
-                      )}
-                    </div>
-                  </td>
+            empty="No saved UTM links yet"
+            rows={filteredLinks.map((link) => (
+              <tr
+                key={link.id}
+                className="hover:bg-slate-50/80"
+              >
+                <td className="px-4 py-3">
+                  <div className="text-sm font-semibold text-slate-900">
+                    {link.campaign}
+                  </div>
+                  <div className="mt-0.5 text-[10px] text-slate-400">
+                    {formatDate(link.createdAt)}
+                  </div>
+                </td>
 
-                  <td className="px-4 py-2.5 text-sm text-slate-600 capitalize">
-                    {link.source} /{" "}
-                    {link.medium}
-                  </td>
+                <td className="px-4 py-3 text-sm capitalize text-slate-600">
+                  {link.source} / {link.medium}
+                </td>
 
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-1.5 max-w-[300px]">
-                      <span className="truncate text-xs font-mono text-slate-600">
-                        {link.url}
-                      </span>
+                <td className="px-4 py-3">
+                  <div className="flex max-w-[250px] items-center gap-2">
+                    <span className="truncate font-mono text-xs text-slate-600">
+                      {link.url}
+                    </span>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          copyLink(
-                            link.url
-                          )
-                        }
-                        title="Copy"
-                      >
-                        <Copy
-                          size={12}
-                          className="text-slate-400 hover:text-indigo-600"
-                        />
-                      </button>
+                    <button
+                      type="button"
+                      onClick={() => copyLink(link.url)}
+                    >
+                      <Copy
+                        size={12}
+                        className="text-slate-400 hover:text-indigo-600"
+                      />
+                    </button>
 
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        title="Open"
-                      >
-                        <ExternalLink
-                          size={12}
-                          className="text-slate-400 hover:text-indigo-600"
-                        />
-                      </a>
-                    </div>
-                  </td>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <ExternalLink
+                        size={12}
+                        className="text-slate-400 hover:text-indigo-600"
+                      />
+                    </a>
+                  </div>
+                </td>
 
-                  <td className="px-4 py-2.5 text-sm text-slate-700">
-                    {Number(
-                      link.clicks || 0
-                    ).toLocaleString("en-IN")}
-                  </td>
+                <td className="px-4 py-3 text-sm font-bold text-slate-900">
+                  {link.leads || 0}
+                </td>
 
-                  <td className="px-4 py-2.5 text-sm text-slate-700">
-                    {link.regs || 0}
-                  </td>
+                <td className="px-4 py-3 text-sm text-slate-700">
+                  ₹{Number(link.cost || 0).toLocaleString("en-IN")}
+                </td>
 
-                  <td className="px-4 py-2.5 text-sm text-slate-700">
-                    {link.leads || 0}
-                  </td>
+                <td className="px-4 py-3 text-sm font-semibold text-slate-700">
+                  ₹{Number(link.costPerLead || 0).toLocaleString("en-IN")}
+                </td>
 
-                  <td className="px-4 py-2.5 text-sm text-slate-700">
-                    {link.conv || 0}
-                  </td>
+                <td className="px-4 py-3">
+                  <div className="text-sm font-semibold text-slate-900">
+                    {link.latestLead?.name || "—"}
+                  </div>
+                  <div className="mt-0.5 text-xs text-slate-500">
+                    {link.latestLead?.phone ||
+                      (link.latestLead?.createdAt
+                        ? formatDate(link.latestLead.createdAt)
+                        : "No leads yet")}
+                  </div>
+                </td>
 
-                  <td className="px-4 py-2.5 text-sm text-emerald-700 font-semibold">
-                    {link.adm || 0}
-                  </td>
+                <td className="px-4 py-3 text-sm font-bold text-emerald-700">
+                  {link.adm || 0}
+                </td>
 
-                  <td className="px-4 py-2.5 text-sm text-slate-900 font-semibold">
-                    ₹
-                    {Number(
-                      link.rev || 0
-                    ).toLocaleString("en-IN")}
-                  </td>
+                <td className="px-4 py-3 text-sm font-bold text-slate-900">
+                  ₹{Number(link.rev || 0).toLocaleString("en-IN")}
+                </td>
 
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingLink(
-                            link
-                          );
-                          setShowLinkModal(
-                            true
-                          );
-                        }}
-                        className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
-                        title="Edit"
-                      >
-                        <Pencil size={13} />
-                      </button>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingLink(link);
+                        setShowLinkModal(true);
+                      }}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-indigo-50 hover:text-indigo-600"
+                    >
+                      <Pencil size={13} />
+                    </button>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deleteLink(
-                            link
-                          )
-                        }
-                        className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                        title="Delete"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )
-            )}
+                    <button
+                      type="button"
+                      onClick={() => deleteLink(link)}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
           />
         </div>
-      ) : sub ===
-        "analytics" ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              [
-                "Top Campaign",
-                summary.topCampaign ||
-                  "—",
-                BarChart3,
-              ],
-              [
-                "Top Source",
-                summary.topSource ||
-                  "—",
-                Globe,
-              ],
-              [
-                "UTM Conversion",
-                `${Number(
-                  summary.conversionRate ||
-                    0
-                ).toFixed(1)}%`,
-                MousePointerClick,
-              ],
-            ].map(
-              ([
-                label,
-                value,
-                Icon,
-              ]) => (
-                <MetricCard
-                  key={label}
-                  label={label}
-                  value={value}
-                  icon={Icon}
-                  detail={`Selected period: ${
-                    selectedYear ===
-                    "all"
-                      ? "All Time"
-                      : selectedYear
-                  }`}
-                />
-              )
-            )}
+      </section>
+
+
+      {/* Lead source views — restored from Student Mentor */}
+      <section className="space-y-3">
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+            Lead Sources
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-            {[
-              [
-                "Campaign Performance",
-                analytics.campaignPerformance ||
-                  [],
-                "campaign",
-              ],
-              [
-                "Source Performance",
-                analytics.sourcePerformance ||
-                  [],
-                "source",
-              ],
-              [
-                "Medium Performance",
-                analytics.mediumPerformance ||
-                  [],
-                "medium",
-              ],
-            ].map(
-              ([
-                title,
-                rows,
-                key,
-              ]) => (
-                <div
-                  key={title}
-                  className="bg-white border border-slate-200 rounded-xl overflow-hidden"
-                >
-                  <div className="px-4 py-3 border-b border-slate-100">
-                    <div className="text-sm font-bold text-slate-900">
-                      {title}
-                    </div>
-                  </div>
+          <h2 className="mt-1 text-xl font-bold tracking-[-0.02em] text-slate-950">
+            Lead Sources
+          </h2>
 
-                  <div className="divide-y divide-slate-100">
-                    {rows
-                      .slice(0, 8)
-                      .map(
-                        (row) => (
-                          <div
-                            key={
-                              row[key]
-                            }
-                            className="px-4 py-3 flex items-center justify-between gap-3"
-                          >
-                            <div className="text-xs font-semibold text-slate-700 truncate">
-                              {
-                                row[
-                                  key
-                                ]
-                              }
-                            </div>
-
-                            <div className="text-xs font-bold text-slate-950">
-                              {row.leads ??
-                                row.registrations ??
-                                0}
-                            </div>
-                          </div>
-                        )
-                      )}
-
-                    {!rows.length ? (
-                      <div className="px-4 py-8 text-center text-xs text-slate-500">
-                        No data yet.
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              )
-            )}
-          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            Open Google Form, Website Form, IM Leads, DM Leads or Internal Leads.
+          </p>
         </div>
-      ) : (
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <Table
-            columns={[
-              "Name",
-              "Course",
-              "Source",
-              "Campaign",
-              "Stage",
-              "Assigned",
-              "Created",
-              "",
-            ]}
-            empty="No leads found"
-            rows={filtered.map(
-              (lead) => (
+
+        <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2">
+          {SOURCE_VIEWS.map((item) => {
+            const Icon = item.icon;
+            const count =
+              leads.filter(
+                (lead) =>
+                  lead.sourceKey === item.key
+              ).length;
+
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() =>
+                  setLeadSourceView(
+                    item.key
+                  )
+                }
+                className={`inline-flex h-10 items-center gap-2 rounded-xl px-3.5 text-xs font-bold ${
+                  leadSourceView === item.key
+                    ? "bg-indigo-600 text-white"
+                    : "text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <Icon size={14} />
+                {item.label}
+                <span className={`rounded-full px-2 py-0.5 text-[10px] ${
+                  leadSourceView === item.key
+                    ? "bg-white/15"
+                    : "bg-slate-100"
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <div className="text-sm font-bold text-slate-900">
+                  {SOURCE_VIEWS.find(
+                    (item) =>
+                      item.key === leadSourceView
+                  )?.label || "Lead Details"}
+                </div>
+
+                <div className="mt-1 text-xs text-slate-500">
+                  {sourceViewLeads.length} leads in this source.
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    downloadSourceLeads(
+                      sourceViewLeads,
+                      `${leadSourceView.toLowerCase()}-leads.csv`
+                    )
+                  }
+                  disabled={!sourceViewLeads.length}
+                  className="inline-flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  <Download size={13} />
+                  Export
+                </button>
+
+                {leadSourceView === "INTERNAL" ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowInternalLeadModal(true)
+                      }
+                      className="inline-flex h-9 items-center gap-2 rounded-xl bg-indigo-600 px-3 text-xs font-bold text-white hover:bg-indigo-700"
+                    >
+                      <Plus size={13} />
+                      Add Internal Lead
+                    </button>
+
+                    <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-xl bg-slate-950 px-3 text-xs font-bold text-white hover:bg-slate-800">
+                      <Upload size={13} />
+                      {importingInternal
+                        ? "Importing..."
+                        : "Import Leads"}
+
+                      <input
+                        type="file"
+                        accept=".csv,.xlsx"
+                        className="hidden"
+                        disabled={importingInternal}
+                        onChange={(event) => {
+                          const file =
+                            event.target.files?.[0];
+                          importInternalLeads(file);
+                          event.target.value = "";
+                        }}
+                      />
+                    </label>
+                  </>
+                ) : null}
+              </div>
+            </div>
+
+            {leadSourceView === "INTERNAL" &&
+            internalImportMessage ? (
+              <div className="border-b border-emerald-100 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-700">
+                {internalImportMessage}
+              </div>
+            ) : null}
+
+            <Table
+              columns={[
+                "Lead",
+                "Course / Interest",
+                "Source",
+                "Campaign",
+                "Medium",
+                "Stage",
+                "Assigned",
+                "Created",
+              ]}
+              empty="No leads found in this source"
+              rows={sourceViewLeads.map((lead) => (
                 <tr
                   key={lead.id}
-                  className="hover:bg-slate-50/80 transition-colors"
+                  className="hover:bg-slate-50/80"
                 >
-                  <td className="px-4 py-2.5">
-                    <div className="text-sm font-medium text-slate-900">
+                  <td className="px-4 py-3">
+                    <div className="text-sm font-semibold text-slate-900">
                       {lead.name}
                     </div>
-
-                    <div className="text-xs text-slate-500">
+                    <div className="mt-0.5 text-xs text-slate-500">
                       {lead.phone}
                     </div>
                   </td>
 
-                  <td className="px-4 py-2.5 text-sm text-slate-700">
-                    {lead.course ||
-                      "—"}
+                  <td className="px-4 py-3 text-sm text-slate-700">
+                    {lead.course || "—"}
                   </td>
 
-                  <td className="px-4 py-2.5 text-sm text-slate-600">
-                    {lead.source}
+                  <td className="px-4 py-3 text-sm text-slate-600">
+                    {lead.source || "—"}
                   </td>
 
-                  <td className="px-4 py-2.5 text-sm text-slate-600">
-                    {lead.campaign ||
-                      "—"}
+                  <td className="px-4 py-3 text-sm font-semibold text-slate-700">
+                    {lead.campaign || "—"}
                   </td>
 
-                  <td className="px-4 py-2.5">
-                    <Badge
-                      tone={stageTone(
-                        lead.stage
-                      )}
-                    >
+                  <td className="px-4 py-3 text-sm text-slate-600">
+                    {lead.medium || "—"}
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <Badge tone={stageTone(lead.stage)}>
                       {lead.stage}
                     </Badge>
                   </td>
 
-                  <td className="px-4 py-2.5 text-sm text-slate-700">
-                    {lead.assigned}
+                  <td className="px-4 py-3 text-sm text-slate-700">
+                    {lead.assigned || "Unassigned"}
                   </td>
 
-                  <td className="px-4 py-2.5 text-xs text-slate-500">
-                    {formatDate(
-                      lead.createdAt
-                    )}
-                  </td>
-
-                  <td className="px-4 py-2.5">
-                    <MoreVertical
-                      size={14}
-                      className="text-slate-400"
-                    />
+                  <td className="px-4 py-3 text-xs text-slate-500">
+                    {formatDate(lead.createdAt)}
                   </td>
                 </tr>
+              ))}
+            />
+          </div>
+      </section>
+
+
+      {/* UTM Lead Details */}
+      <section className="space-y-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+              Lead details
+            </div>
+
+            <h2 className="mt-1 text-xl font-bold tracking-[-0.02em] text-slate-950">
+              UTM Lead Details
+            </h2>
+
+            <p className="mt-1 text-xs text-slate-500">
+              Actual leads generated from the saved UTM links.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              downloadUtmLeadDetails(
+                utmLeads
               )
-            )}
+            }
+            disabled={!utmLeads.length}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            <Download size={13} />
+            Export UTM Lead Details
+          </button>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-3">
+          <div className="relative max-w-xl">
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+
+            <input
+              value={leadSearch}
+              onChange={(event) =>
+                setLeadSearch(
+                  event.target.value
+                )
+              }
+              placeholder="Search UTM lead by name, phone, campaign, source or stage..."
+              className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-sm"
+            />
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <Table
+            columns={[
+              "Lead",
+              "Course / Interest",
+              "Source",
+              "Campaign",
+              "Medium",
+              "Stage",
+              "Assigned",
+              "Created",
+            ]}
+            empty="No UTM leads found"
+            rows={utmLeads.map((lead) => (
+              <tr
+                key={lead.id}
+                className="hover:bg-slate-50/80"
+              >
+                <td className="px-4 py-3">
+                  <div className="text-sm font-semibold text-slate-900">
+                    {lead.name}
+                  </div>
+
+                  <div className="mt-0.5 text-xs text-slate-500">
+                    {lead.phone}
+                  </div>
+                </td>
+
+                <td className="px-4 py-3 text-sm text-slate-700">
+                  {lead.course || "—"}
+                </td>
+
+                <td className="px-4 py-3 text-sm text-slate-600">
+                  {lead.source || "—"}
+                </td>
+
+                <td className="px-4 py-3 text-sm font-semibold text-slate-700">
+                  {lead.campaign || "—"}
+                </td>
+
+                <td className="px-4 py-3 text-sm text-slate-600">
+                  {lead.medium || "—"}
+                </td>
+
+                <td className="px-4 py-3">
+                  <Badge tone={stageTone(lead.stage)}>
+                    {lead.stage}
+                  </Badge>
+                </td>
+
+                <td className="px-4 py-3 text-sm text-slate-700">
+                  {lead.assigned || "Unassigned"}
+                </td>
+
+                <td className="px-4 py-3 text-xs text-slate-500">
+                  {formatDate(
+                    lead.createdAt
+                  )}
+                </td>
+              </tr>
+            ))}
           />
         </div>
-      )}
+      </section>
 
-      {showLeadModal ? (
+      {/* UTM Analysis */}
+      <section className="space-y-4">
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+            Performance
+          </div>
+
+          <h2 className="mt-1 text-xl font-bold tracking-[-0.02em] text-slate-950">
+            UTM Analysis
+          </h2>
+
+          <p className="mt-1 text-xs text-slate-500">
+            Campaign performance for the selected year.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+          <MetricCard
+            label="UTM Links"
+            value={summary.totalUtmLinks ?? links.length}
+            icon={Link2}
+            detail="Saved campaign links"
+          />
+
+          <MetricCard
+            label="Registrations"
+            value={summary.totalRegistrations ?? 0}
+            icon={UserPlus}
+            detail="Tracked registrations"
+          />
+
+          <MetricCard
+            label="UTM Leads"
+            value={summary.totalLeads ?? utmLeads.length}
+            icon={Users}
+            detail="Tracked UTM leads"
+          />
+
+          <MetricCard
+            label="Admissions"
+            value={summary.totalAdmissions ?? 0}
+            icon={UserCheck}
+            detail="Admissions from UTM leads"
+          />
+
+          <MetricCard
+            label="Revenue"
+            value={`₹${Number(
+              summary.totalRevenue || 0
+            ).toLocaleString("en-IN")}`}
+            icon={IndianRupee}
+            detail="Received admission revenue"
+          />
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-3">
+          <PerformanceCard
+            title="Campaign Performance"
+            rows={analytics.campaignPerformance || []}
+            labelKey="campaign"
+          />
+
+          <PerformanceCard
+            title="Source Performance"
+            rows={analytics.sourcePerformance || []}
+            labelKey="source"
+          />
+
+          <PerformanceCard
+            title="Medium Performance"
+            rows={analytics.mediumPerformance || []}
+            labelKey="medium"
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <MetricCard
+            label="Top Campaign"
+            value={summary.topCampaign || "—"}
+            icon={BarChart3}
+            detail={`Period: ${
+              selectedYear === "all"
+                ? "All Time"
+                : selectedYear
+            }`}
+          />
+
+          <MetricCard
+            label="Top Source"
+            value={summary.topSource || "—"}
+            icon={Globe}
+            detail="Best performing UTM source"
+          />
+
+          <MetricCard
+            label="UTM Conversion"
+            value={`${Number(
+              summary.conversionRate || 0
+            ).toFixed(1)}%`}
+            icon={MousePointerClick}
+            detail="Admissions / UTM leads"
+          />
+        </div>
+      </section>
+
+
+      {showInternalLeadModal ? (
         <LeadModal
+          defaultSource="INTERNAL"
           onClose={() =>
-            setShowLeadModal(
-              false
-            )
+            setShowInternalLeadModal(false)
           }
-          onCreated={
-            handleLeadCreated
-          }
+          onCreated={async () => {
+            setShowInternalLeadModal(false);
+            await loadData();
+            setLeadSourceView("INTERNAL");
+          }}
         />
       ) : null}
 
@@ -2230,16 +2557,14 @@ export default function UTMLeads({
         <LinkModal
           editing={editingLink}
           onClose={() => {
-            setShowLinkModal(
-              false
-            );
-            setEditingLink(
-              null
-            );
+            setShowLinkModal(false);
+            setEditingLink(null);
           }}
-          onSaved={
-            handleLinkSaved
-          }
+          onSaved={async () => {
+            setShowLinkModal(false);
+            setEditingLink(null);
+            await loadData();
+          }}
         />
       ) : null}
     </div>
