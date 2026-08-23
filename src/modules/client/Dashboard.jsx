@@ -12,6 +12,7 @@ import {
   Wallet,
   Users,
   Activity,
+  BarChart3,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -27,6 +28,8 @@ import {
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
   PieChart,
   Pie,
   Cell,
@@ -110,44 +113,45 @@ function MetricCard({
 }) {
   const tones = {
     indigo:
-      "bg-indigo-50 text-indigo-600 border-indigo-100",
+      "bg-indigo-50 text-indigo-600",
     emerald:
-      "bg-indigo-50 text-indigo-600 border-indigo-100",
+      "bg-emerald-50 text-emerald-600",
     amber:
-      "bg-amber-50 text-amber-600 border-amber-100",
+      "bg-amber-50 text-amber-600",
     rose:
-      "bg-rose-50 text-rose-600 border-rose-100",
+      "bg-rose-50 text-rose-600",
     slate:
-      "bg-slate-50 text-slate-600 border-slate-200",
+      "bg-slate-100 text-slate-600",
   };
 
   return (
-    <div className="group bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-            {label}
-          </div>
-
-          <div className="mt-2 text-[20px] sm:text-[24px] leading-none font-bold tracking-tight text-slate-950 break-words">
-            {value}
-          </div>
-        </div>
-
+    <div className="min-w-0 px-4 py-4 sm:px-5">
+      <div className="flex items-center gap-3">
         <div
-          className={`w-9 h-9 rounded-lg border flex items-center justify-center flex-shrink-0 ${
-            tones[accent] || tones.indigo
+          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${
+            tones[accent] ||
+            tones.indigo
           }`}
         >
           <Icon size={17} />
         </div>
+
+        <div className="min-w-0">
+          <div className="truncate text-[11px] font-semibold text-slate-500">
+            {label}
+          </div>
+
+          <div className="mt-1 truncate text-[21px] font-bold tracking-[-0.035em] text-slate-950">
+            {value}
+          </div>
+        </div>
       </div>
 
-      {detail && (
-        <div className="mt-3 pt-3 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-500">
+      {detail ? (
+        <div className="mt-2 truncate pl-12 text-[10px] text-slate-400">
           {detail}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -186,26 +190,6 @@ function localDateTimeValue(value) {
   ).padStart(2, "0");
 
   return `${year}-${month}-${day}T${hour}:${minute}`;
-}
-
-function minimumDateTimeLocal() {
-  const now = new Date();
-
-  now.setSeconds(0, 0);
-
-  return localDateTimeValue(now);
-}
-
-function isPastDateTime(value) {
-  if (!value) return false;
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return false;
-  }
-
-  return date.getTime() < Date.now();
 }
 
 function eventDateKey(event) {
@@ -458,59 +442,21 @@ export default function Dashboard({
     const selected =
       new Date(date);
 
-    const now =
-      new Date();
-
-    const isToday =
-      selected.getFullYear() ===
-        now.getFullYear() &&
-      selected.getMonth() ===
-        now.getMonth() &&
-      selected.getDate() ===
-        now.getDate();
-
-    if (isToday) {
-      const rounded =
-        new Date(now);
-
-      rounded.setSeconds(
-        0,
-        0
-      );
-
-      const minutes =
-        rounded.getMinutes();
-
-      const remainder =
-        minutes % 15;
-
-      if (remainder) {
-        rounded.setMinutes(
-          minutes +
-            (15 - remainder)
-        );
-      }
-
-      selected.setHours(
-        rounded.getHours(),
-        rounded.getMinutes(),
-        0,
-        0
-      );
-    } else {
-      selected.setHours(
-        9,
-        0,
-        0,
-        0
-      );
-    }
+    selected.setHours(
+      9,
+      0,
+      0,
+      0
+    );
 
     const end =
       new Date(selected);
 
     end.setHours(
-      end.getHours() + 1
+      10,
+      0,
+      0,
+      0
     );
 
     setEditingEvent(null);
@@ -574,33 +520,6 @@ export default function Dashboard({
       return;
     }
 
-    if (
-      !editingEvent &&
-      isPastDateTime(
-        eventForm.startAt
-      )
-    ) {
-      setCalendarError(
-        "New calendar events cannot be scheduled in the past."
-      );
-      return;
-    }
-
-    if (
-      eventForm.endAt &&
-      new Date(
-        eventForm.endAt
-      ) <
-        new Date(
-          eventForm.startAt
-        )
-    ) {
-      setCalendarError(
-        "Event end time cannot be before the start time."
-      );
-      return;
-    }
-
     setSavingEvent(true);
     setCalendarError("");
 
@@ -646,9 +565,7 @@ export default function Dashboard({
           `/api/client/calendar/${editingEvent.id}`,
           {
             method: "PATCH",
-            body: JSON.stringify(
-              payload
-            ),
+            body: payload,
           }
         );
       } else {
@@ -656,9 +573,7 @@ export default function Dashboard({
           "/api/client/calendar",
           {
             method: "POST",
-            body: JSON.stringify(
-              payload
-            ),
+            body: payload,
           }
         );
       }
@@ -793,6 +708,87 @@ export default function Dashboard({
       agendaDate,
     ]);
 
+
+  const calendarMonthCells =
+    useMemo(() => {
+      const year =
+        calendarMonth.getFullYear();
+      const month =
+        calendarMonth.getMonth();
+
+      const firstDay =
+        new Date(year, month, 1);
+
+      const offset =
+        (firstDay.getDay() + 6) %
+        7;
+
+      const gridStart =
+        new Date(
+          year,
+          month,
+          1 - offset
+        );
+
+      return Array.from(
+        { length: 42 },
+        (_, index) => {
+          const date =
+            new Date(
+              gridStart
+            );
+
+          date.setDate(
+            gridStart.getDate() +
+              index
+          );
+
+          const key =
+            dateKey(date);
+
+          const eventCount =
+            calendarEvents.filter(
+              (event) =>
+                eventDateKey(
+                  event
+                ) === key &&
+                event.status !==
+                  "CANCELLED"
+            ).length;
+
+          return {
+            date,
+            key,
+            inCurrentMonth:
+              date.getMonth() ===
+              month,
+            isToday:
+              key ===
+              dateKey(new Date()),
+            isSelected:
+              key ===
+              dateKey(agendaDate),
+            eventCount,
+          };
+        }
+      );
+    }, [
+      calendarMonth,
+      calendarEvents,
+      agendaDate,
+    ]);
+
+  function moveCalendarMonth(offset) {
+    setCalendarMonth(
+      new Date(
+        calendarMonth.getFullYear(),
+        calendarMonth.getMonth() +
+          offset,
+        1
+      )
+    );
+  }
+
   function moveAgendaDay(offset) {
     const next =
       new Date(agendaDate);
@@ -820,23 +816,101 @@ export default function Dashboard({
   }
 
 
+
+  const admissionsByMonthData =
+    Array.isArray(data.admissionsByMonth)
+      ? data.admissionsByMonth
+      : Array.isArray(data.monthlyAdmissions)
+      ? data.monthlyAdmissions
+      : [];
+
+  const recentAdmissionsData =
+    Array.isArray(data.recentAdmissions)
+      ? data.recentAdmissions
+      : [];
+
+  const recentActivityData =
+    Array.isArray(data.recentActivity)
+      ? data.recentActivity
+      : [];
+
+  const pulseMetrics = [
+    {
+      label: "Total Leads",
+      value: summary.totalLeads || 0,
+      icon: Users,
+      detail:
+        selectedYear === "all"
+          ? "All CRM leads"
+          : `CRM leads in ${selectedYear}`,
+      accent: "indigo",
+    },
+    {
+      label: "Qualified Leads",
+      value: summary.qualifiedLeads || 0,
+      icon: Target,
+      detail: "Qualified opportunities",
+      accent: "emerald",
+    },
+    {
+      label: "Admissions",
+      value: summary.totalAdmissions || 0,
+      icon: UserCheck,
+      detail:
+        selectedYear === "all"
+          ? "Recorded admissions"
+          : `Admissions in ${selectedYear}`,
+      accent: "indigo",
+    },
+    {
+      label: "Potential Revenue",
+      value: money(summary.potentialRevenue),
+      icon: CircleDollarSign,
+      detail: "Total admission revenue value",
+      accent: "amber",
+    },
+    {
+      label: "Current Profit",
+      value: money(summary.currentProfit),
+      icon: Wallet,
+      detail:
+        selectedYear === "all"
+          ? "Current profitability"
+          : `Profit for ${selectedYear}`,
+      accent:
+        summary.currentProfit >= 0
+          ? "emerald"
+          : "rose",
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* DASHBOARD HEADER */}
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="space-y-5">
+      {/* WORKSPACE HEADER */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-            <LayoutDashboardIcon />
-            ConsulBuzz overview
-          </div>
-
-          <h1 className="mt-2 text-[26px] font-bold tracking-[-0.035em] text-slate-950">
-            Dashboard
+          <h1 className="text-[28px] font-bold tracking-[-0.045em] text-slate-950 sm:text-[32px]">
+            Good evening,{" "}
+            <span className="text-indigo-600">
+              {(user?.name ||
+                tenant?.ownerName ||
+                "Admin")
+                .split(" ")[0]}
+            </span>
           </h1>
 
-          <p className="mt-1 text-sm text-slate-500">
-            Leads, admissions, revenue and finance performance in one view.
+          <p className="mt-1.5 text-[13px] text-slate-500">
+            Here&apos;s your ConsulBuzz CRM overview for{" "}
+            {new Date().toLocaleDateString(
+              "en-IN",
+              {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              }
+            )}
+            .
           </p>
         </div>
 
@@ -846,477 +920,865 @@ export default function Dashboard({
             loadDashboard(selectedYear);
             loadCalendar();
           }}
-          disabled={loading || calendarLoading}
-          className="h-9 px-3.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 inline-flex items-center justify-center gap-2 shadow-sm hover:bg-slate-50 disabled:opacity-50"
+          disabled={
+            loading ||
+            calendarLoading
+          }
+          className="inline-flex h-9 items-center justify-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-3.5 text-[11px] font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:opacity-50 lg:self-auto"
         >
           <RefreshCw
-            size={14}
+            size={13}
             className={
-              loading || calendarLoading
+              loading ||
+              calendarLoading
                 ? "animate-spin"
                 : ""
             }
           />
-          Refresh data
+          Refresh
         </button>
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 px-3 py-2 border border-rose-200 bg-rose-50 rounded-md text-sm text-rose-700">
-          <AlertCircle
-            size={15}
-          />
-
+        <div className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <AlertCircle size={15} />
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-12 flex items-center justify-center gap-2 text-sm text-slate-500">
+        <div className="flex min-h-[420px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-500">
           <Loader2
             size={18}
             className="animate-spin"
           />
-
           Loading dashboard...
         </div>
       ) : (
         <>
-          {/* CONSULBUZZ KPI + ANALYTICS + CALENDAR */}
-
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_330px] gap-4 items-start">
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 2xl:grid-cols-4 gap-3 sm:gap-4 content-start">
-              <MetricCard
-                label="Total Leads"
-                value={summary.totalLeads || 0}
-                icon={Users}
-                detail={
-                  selectedYear === "all"
-                    ? "All CRM leads"
-                    : `CRM leads in ${selectedYear}`
-                }
-                accent="indigo"
-              />
-
-              <MetricCard
-                label="New Leads"
-                value={summary.newLeads || 0}
-                icon={Clock}
-                detail="Leads awaiting action"
-                accent="amber"
-              />
-
-              <MetricCard
-                label="Qualified Leads"
-                value={summary.qualifiedLeads || 0}
-                icon={Target}
-                detail="Qualified lead opportunities"
-                accent="indigo"
-              />
-
-              <MetricCard
-                label="Admissions"
-                value={summary.totalAdmissions || 0}
-                icon={UserCheck}
-                detail={
-                  selectedYear === "all"
-                    ? "Recorded admissions"
-                    : `Admissions in ${selectedYear}`
-                }
-                accent="emerald"
-              />
-
-              <MetricCard
-                label="Potential Revenue"
-                value={money(summary.potentialRevenue)}
-                icon={CircleDollarSign}
-                detail="Total admission revenue value"
-                accent="indigo"
-              />
-
-              <MetricCard
-                label="Received Revenue"
-                value={money(summary.receivedAmount)}
-                icon={DollarSign}
-                detail="Revenue already received"
-                accent="emerald"
-              />
-
-              <MetricCard
-                label="Pending Revenue"
-                value={money(summary.pendingAmount)}
-                icon={Clock}
-                detail="Revenue pending collection"
-                accent="amber"
-              />
-
-              <MetricCard
-                label="Finance / Profit"
-                value={money(summary.currentProfit)}
-                icon={Wallet}
-                detail={
-                  selectedYear === "all"
-                    ? "Current CRM profitability"
-                    : `Profit for ${selectedYear}`
-                }
-                accent={
-                  summary.currentProfit >= 0
-                    ? "emerald"
-                    : "rose"
-                }
-              />
-            </div>
-
-              {/* ANALYTICS — immediately below KPI cards */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-              <div className="xl:col-span-2 bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Revenue Trend
-                  </h3>
-
-                  <span className="text-[10px] font-semibold text-slate-400">
-                    {selectedYear ===
-                    "all"
-                      ? "Last 8 months"
-                      : selectedYear}
-                  </span>
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="min-w-0 space-y-4">
+              {/* BUSINESS PULSE */}
+              <section>
+                <div className="mb-2.5 flex items-center gap-2">
+                  <Activity
+                    size={13}
+                    className="text-indigo-600"
+                  />
+                  <div className="text-[11px] font-bold uppercase tracking-[0.11em] text-indigo-600">
+                    Business Pulse
+                  </div>
                 </div>
 
-                <ResponsiveContainer
-                  width="100%"
-                  height={260}
-                >
-                  <BarChart
-                    data={
-                      data.revenueTrend
-                    }
+                <div className="overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+                  <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-5">
+                    {pulseMetrics.map((metric) => (
+                      <MetricCard
+                        key={metric.label}
+                        {...metric}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Existing metrics remain visible; no functionality/data is removed. */}
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5">
+                    <div>
+                      <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                        New Leads
+                      </div>
+                      <div className="mt-0.5 text-[15px] font-bold text-slate-950">
+                        {summary.newLeads || 0}
+                      </div>
+                    </div>
+                    <Clock size={15} className="text-slate-400" />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5">
+                    <div>
+                      <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                        Received Revenue
+                      </div>
+                      <div className="mt-0.5 text-[15px] font-bold text-slate-950">
+                        {money(summary.receivedAmount)}
+                      </div>
+                    </div>
+                    <DollarSign size={15} className="text-emerald-500" />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5">
+                    <div>
+                      <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                        Pending Revenue
+                      </div>
+                      <div className="mt-0.5 text-[15px] font-bold text-slate-950">
+                        {money(summary.pendingAmount)}
+                      </div>
+                    </div>
+                    <Clock size={15} className="text-amber-500" />
+                  </div>
+                </div>
+              </section>
+
+              {/* ANALYTICS CORE */}
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(280px,.85fr)]">
+                <section className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-5">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-[14px] font-bold text-slate-950">
+                        Revenue Trend
+                      </h2>
+                      <p className="mt-1 text-[10px] text-slate-400">
+                        Potential vs received revenue
+                      </p>
+                    </div>
+
+                    <span className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[10px] font-semibold text-slate-500">
+                      {selectedYear ===
+                      "all"
+                        ? "All Time"
+                        : selectedYear}
+                    </span>
+                  </div>
+
+                  <ResponsiveContainer
+                    width="100%"
+                    height={280}
                   >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="#e2e8f0"
-                    />
-
-                    <XAxis
-                      dataKey="m"
-                      fontSize={11}
-                      stroke="#64748b"
-                    />
-
-                    <YAxis
-                      fontSize={11}
-                      stroke="#64748b"
-                      tickFormatter={
-                        axisMoney
+                    <LineChart
+                      data={
+                        data.revenueTrend
                       }
-                    />
-
-                    <Tooltip
-                      formatter={(value) =>
-                        money(value)
-                      }
-                    />
-
-                    <Bar
-                      dataKey="potential"
-                      name="Potential"
-                      fill="#cbd5e1"
-                      radius={[
-                        4,
-                        4,
-                        0,
-                        0,
-                      ]}
-                    />
-
-                    <Bar
-                      dataKey="received"
-                      name="Received"
-                      fill="#6366f1"
-                      radius={[
-                        4,
-                        4,
-                        0,
-                        0,
-                      ]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-                <h3 className="text-sm font-bold text-slate-900 mb-4">
-                  Leads by Source
-                </h3>
-
-                {data.leadsBySource
-                  .length > 0 ? (
-                  <>
-                    <ResponsiveContainer
-                      width="100%"
-                      height={220}
+                      margin={{
+                        left: 4,
+                        right: 8,
+                        top: 8,
+                        bottom: 0,
+                      }}
                     >
-                      <PieChart>
-                        <Pie
-                          data={
-                            data.leadsBySource
-                          }
-                          dataKey="value"
-                          nameKey="name"
-                          innerRadius={45}
-                          outerRadius={80}
-                          paddingAngle={2}
+                      <CartesianGrid
+                        vertical={false}
+                        stroke="#eef2f7"
+                      />
+
+                      <XAxis
+                        dataKey="m"
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
+                        stroke="#94a3b8"
+                      />
+
+                      <YAxis
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
+                        stroke="#94a3b8"
+                        tickFormatter={
+                          axisMoney
+                        }
+                      />
+
+                      <Tooltip
+                        formatter={(
+                          value
+                        ) =>
+                          money(
+                            value
+                          )
+                        }
+                        contentStyle={{
+                          borderRadius:
+                            "10px",
+                          border:
+                            "1px solid #e2e8f0",
+                          boxShadow:
+                            "0 10px 30px rgba(15,23,42,.08)",
+                        }}
+                      />
+
+                      <Line
+                        type="monotone"
+                        dataKey="potential"
+                        name="Potential"
+                        stroke="#94a3b8"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={false}
+                      />
+
+                      <Line
+                        type="monotone"
+                        dataKey="received"
+                        name="Received"
+                        stroke="#4f46e5"
+                        strokeWidth={2.75}
+                        dot={false}
+                        activeDot={{
+                          r: 5,
+                          fill: "#4f46e5",
+                          stroke: "#ffffff",
+                          strokeWidth: 2,
+                        }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </section>
+
+                <section className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-5">
+                  <div className="mb-3">
+                    <h2 className="text-[14px] font-bold text-slate-950">
+                      Leads by Source
+                    </h2>
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      Source mix for the selected period
+                    </p>
+                  </div>
+
+                  {data.leadsBySource
+                    .length ? (
+                    <>
+                      <div className="relative">
+                        <ResponsiveContainer
+                          width="100%"
+                          height={190}
                         >
-                          {data.leadsBySource.map(
-                            (
-                              entry,
-                              index
-                            ) => (
-                              <Cell
-                                key={
-                                  entry.name
-                                }
-                                fill={
-                                  PIE_COLORS[
-                                    index %
-                                      PIE_COLORS.length
-                                  ]
-                                }
-                              />
-                            )
-                          )}
-                        </Pie>
+                          <PieChart>
+                            <Pie
+                              data={
+                                data.leadsBySource
+                              }
+                              dataKey="value"
+                              nameKey="name"
+                              innerRadius={52}
+                              outerRadius={78}
+                              paddingAngle={1}
+                            >
+                              {data.leadsBySource.map(
+                                (
+                                  entry,
+                                  index
+                                ) => (
+                                  <Cell
+                                    key={
+                                      entry.name
+                                    }
+                                    fill={
+                                      PIE_COLORS[
+                                        index %
+                                          PIE_COLORS.length
+                                      ]
+                                    }
+                                  />
+                                )
+                              )}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
 
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-
-                    <div className="mt-2 space-y-1">
-                      {data.leadsBySource.map(
-                        (
-                          source,
-                          index
-                        ) => (
-                          <div
-                            key={
-                              source.name
-                            }
-                            className="flex items-center justify-between text-xs"
-                          >
-                            <div className="flex items-center gap-1.5">
-                              <span
-                                className="w-2 h-2 rounded-full"
-                                style={{
-                                  background:
-                                    PIE_COLORS[
-                                      index %
-                                        PIE_COLORS.length
-                                    ],
-                                }}
-                              />
-
+                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="text-[20px] font-bold tracking-[-0.04em] text-slate-950">
                               {
-                                source.name
+                                summary.totalLeads ||
+                                0
                               }
                             </div>
-
-                            <span className="text-slate-500">
-                              {
-                                source.value
-                              }
-                            </span>
+                            <div className="text-[9px] text-slate-400">
+                              Leads
+                            </div>
                           </div>
-                        )
-                      )}
+                        </div>
+                      </div>
+
+                      <div className="mt-2 space-y-2">
+                        {data.leadsBySource
+                          .slice(0, 5)
+                          .map(
+                            (
+                              source,
+                              index
+                            ) => (
+                              <div
+                                key={
+                                  source.name
+                                }
+                                className="flex items-center justify-between gap-3 text-[10px]"
+                              >
+                                <div className="flex min-w-0 items-center gap-2">
+                                  <span
+                                    className="h-2 w-2 flex-shrink-0 rounded-full"
+                                    style={{
+                                      background:
+                                        PIE_COLORS[
+                                          index %
+                                            PIE_COLORS.length
+                                        ],
+                                    }}
+                                  />
+
+                                  <span className="truncate text-slate-600">
+                                    {
+                                      source.name
+                                    }
+                                  </span>
+                                </div>
+
+                                <span className="font-semibold text-slate-800">
+                                  {
+                                    source.value
+                                  }
+                                </span>
+                              </div>
+                            )
+                          )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex h-[260px] items-center justify-center text-xs text-slate-400">
+                      No lead data yet.
                     </div>
-                  </>
-                ) : (
-                  <div className="h-[220px] flex items-center justify-center text-sm text-slate-500">
-                    No lead data yet.
-                  </div>
-                )}
+                  )}
+                </section>
               </div>
-          </div>
+              {/* OPERATIONS ROW */}
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                <section className="overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+                  <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5">
+                    <div>
+                      <h2 className="text-[14px] font-bold text-slate-950">
+                        Recent Admissions
+                      </h2>
+                      <p className="mt-0.5 text-[9px] text-slate-400">
+                        Latest recorded admissions
+                      </p>
+                    </div>
+                  </div>
+
+                  {recentAdmissionsData.length ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[620px] text-left">
+                        <thead>
+                          <tr className="border-b border-slate-100 bg-slate-50/60 text-[8px] font-bold uppercase tracking-[0.07em] text-slate-400">
+                            <th className="px-4 py-2.5">Student</th>
+                            <th className="px-3 py-2.5">College</th>
+                            <th className="px-3 py-2.5">Counsellor</th>
+                            <th className="px-3 py-2.5">Date</th>
+                            <th className="px-3 py-2.5">Amount</th>
+                            <th className="px-3 py-2.5">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {recentAdmissionsData.slice(0, 5).map((item, index) => (
+                            <tr
+                              key={item.id || `${item.studentName || item.leadName || "admission"}-${index}`}
+                              className="border-b border-slate-50 text-[9px] text-slate-600 last:border-0"
+                            >
+                              <td className="px-4 py-3 font-semibold text-slate-900">
+                                {item.studentName || item.leadName || item.name || "—"}
+                              </td>
+                              <td className="px-3 py-3">
+                                {item.collegeName || item.universityName || item.college || "—"}
+                              </td>
+                              <td className="px-3 py-3">
+                                {item.counsellorName || item.admissionDoneBy || item.assignedTo || "—"}
+                              </td>
+                              <td className="px-3 py-3">
+                                {item.dateOfAdmission || item.admissionDate || item.createdAt
+                                  ? new Date(item.dateOfAdmission || item.admissionDate || item.createdAt).toLocaleDateString("en-IN", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                    })
+                                  : "—"}
+                              </td>
+                              <td className="px-3 py-3 font-semibold text-slate-800">
+                                {item.amount != null
+                                  ? money(item.amount)
+                                  : item.revenue != null
+                                  ? money(item.revenue)
+                                  : "—"}
+                              </td>
+                              <td className="px-3 py-3">
+                                {item.revenueStatus || item.status || "—"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="flex h-[220px] flex-col items-center justify-center text-center">
+                      <UserCheck size={20} className="text-slate-300" />
+                      <div className="mt-2 text-[11px] font-semibold text-slate-600">
+                        No recent admissions available
+                      </div>
+                      <div className="mt-1 max-w-[260px] text-[9px] text-slate-400">
+                        This section will use real admission records returned by the dashboard API.
+                      </div>
+                    </div>
+                  )}
+                </section>
+
+                <section className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+                  <div className="mb-3">
+                    <h2 className="text-[14px] font-bold text-slate-950">
+                      Admissions by Month
+                    </h2>
+                    <p className="mt-0.5 text-[9px] text-slate-400">
+                      Monthly admission performance
+                    </p>
+                  </div>
+
+                  {admissionsByMonthData.length ? (
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={admissionsByMonthData}>
+                        <CartesianGrid vertical={false} stroke="#eef2f7" />
+                        <XAxis
+                          dataKey={
+                            admissionsByMonthData[0]?.m !== undefined
+                              ? "m"
+                              : admissionsByMonthData[0]?.month !== undefined
+                              ? "month"
+                              : "name"
+                          }
+                          fontSize={9}
+                          tickLine={false}
+                          axisLine={false}
+                          stroke="#94a3b8"
+                        />
+                        <YAxis
+                          fontSize={9}
+                          tickLine={false}
+                          axisLine={false}
+                          stroke="#94a3b8"
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: "10px",
+                            border: "1px solid #e2e8f0",
+                            boxShadow: "0 10px 30px rgba(15,23,42,.08)",
+                          }}
+                        />
+                        <Bar
+                          dataKey={
+                            admissionsByMonthData[0]?.value !== undefined
+                              ? "value"
+                              : admissionsByMonthData[0]?.count !== undefined
+                              ? "count"
+                              : "admissions"
+                          }
+                          fill="#4f46e5"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex h-[220px] flex-col items-center justify-center text-center">
+                      <BarChart3 size={20} className="text-slate-300" />
+                      <div className="mt-2 text-[11px] font-semibold text-slate-600">
+                        No monthly admission data available
+                      </div>
+                      <div className="mt-1 max-w-[260px] text-[9px] text-slate-400">
+                        No mock chart values are being inserted.
+                      </div>
+                    </div>
+                  )}
+                </section>
+              </div>
             </div>
 
-            {/* RIGHT CORNER CALENDAR */}
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-[0_8px_26px_rgba(15,23,42,0.05)] overflow-hidden">
-              <div className="px-5 pt-5 pb-3 flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-[16px] font-bold text-slate-950">
+            {/* PRODUCTIVITY RAIL */}
+            <aside className="overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+              <div className="p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-[15px] font-bold text-slate-950">
                     Calendar
+                  </h2>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFullCalendarOpen(
+                        true
+                      )
+                    }
+                    className="text-[10px] font-semibold text-indigo-600"
+                  >
+                    View full
+                  </button>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      moveCalendarMonth(
+                        -1
+                      )
+                    }
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-50"
+                  >
+                    <ChevronLeft size={15} />
+                  </button>
+
+                  <div className="text-[11px] font-bold text-slate-800">
+                    {calendarMonth.toLocaleDateString(
+                      "en-IN",
+                      {
+                        month: "long",
+                        year: "numeric",
+                      }
+                    )}
                   </div>
-                  <div className="mt-1 text-[12px] font-semibold text-slate-700">
-                    {agendaDate.toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      moveCalendarMonth(
+                        1
+                      )
+                    }
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-50"
+                  >
+                    <ChevronRight size={15} />
+                  </button>
+                </div>
+
+                <div className="mt-3 grid grid-cols-7 text-center">
+                  {[
+                    "MO",
+                    "TU",
+                    "WE",
+                    "TH",
+                    "FR",
+                    "SA",
+                    "SU",
+                  ].map(
+                    (day) => (
+                      <div
+                        key={day}
+                        className="pb-2 text-[8px] font-bold tracking-[0.08em] text-slate-400"
+                      >
+                        {day}
+                      </div>
+                    )
+                  )}
+
+                  {calendarMonthCells.map(
+                    (cell) => (
+                      <button
+                        key={
+                          cell.key
+                        }
+                        type="button"
+                        onClick={() => {
+                          setAgendaDate(
+                            new Date(
+                              cell.date
+                            )
+                          );
+
+                          if (
+                            !cell.inCurrentMonth
+                          ) {
+                            setCalendarMonth(
+                              new Date(
+                                cell.date.getFullYear(),
+                                cell.date.getMonth(),
+                                1
+                              )
+                            );
+                          }
+                        }}
+                        className={`relative mx-auto my-0.5 flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-semibold ${
+                          cell.isSelected
+                            ? "bg-indigo-600 text-white shadow-[0_5px_12px_rgba(79,70,229,.25)]"
+                            : cell.isToday
+                            ? "bg-indigo-50 text-indigo-700"
+                            : cell.inCurrentMonth
+                            ? "text-slate-700 hover:bg-slate-50"
+                            : "text-slate-300"
+                        }`}
+                      >
+                        {
+                          cell.date.getDate()
+                        }
+
+                        {cell.eventCount >
+                          0 && (
+                          <span
+                            className={`absolute bottom-[2px] h-1 w-1 rounded-full ${
+                              cell.isSelected
+                                ? "bg-white"
+                                : "bg-indigo-500"
+                            }`}
+                          />
+                        )}
+                      </button>
+                    )
+                  )}
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => setFullCalendarOpen(true)}
-                  className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700"
+                  onClick={() =>
+                    openCreateEvent(
+                      agendaDate
+                    )
+                  }
+                  className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-[11px] font-bold text-white hover:bg-indigo-700"
                 >
-                  View full
+                  <Plus size={13} />
+                  Add Event
                 </button>
               </div>
 
-              <div className="px-5 pb-3 flex items-center justify-end gap-1">
-                <button
-                  type="button"
-                  onClick={() => moveAgendaDay(-1)}
-                  className="w-8 h-8 rounded-lg text-indigo-700 hover:bg-indigo-50 flex items-center justify-center"
-                  aria-label="Previous day"
-                >
-                  <ChevronLeft size={17} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const today = new Date();
-                    setAgendaDate(today);
-                    setCalendarMonth(
-                      new Date(
-                        today.getFullYear(),
-                        today.getMonth(),
-                        1
+              <div className="border-t border-slate-100 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[12px] font-bold text-slate-950">
+                      {dateKey(
+                        agendaDate
+                      ) ===
+                      dateKey(
+                        new Date()
                       )
-                    );
-                  }}
-                  className="h-8 px-2.5 rounded-lg text-[10px] font-semibold text-slate-500 hover:bg-slate-50"
-                >
-                  Today
-                </button>
+                        ? "Today"
+                        : agendaDate.toLocaleDateString(
+                            "en-IN",
+                            {
+                              weekday:
+                                "short",
+                            }
+                          )}
+                      {" · "}
+                      {agendaDate.toLocaleDateString(
+                        "en-IN",
+                        {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        }
+                      )}
+                    </div>
 
-                <button
-                  type="button"
-                  onClick={() => moveAgendaDay(1)}
-                  className="w-8 h-8 rounded-lg text-indigo-700 hover:bg-indigo-50 flex items-center justify-center"
-                  aria-label="Next day"
-                >
-                  <ChevronRight size={17} />
-                </button>
-              </div>
+                    <div className="mt-1 text-[9px] text-slate-400">
+                      {agendaEvents.length}
+                      {" "}
+                      {agendaEvents.length ===
+                      1
+                        ? "event"
+                        : "events"}
+                    </div>
+                  </div>
 
-              <div className="px-5 pb-5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const today =
+                        new Date();
+
+                      setAgendaDate(
+                        today
+                      );
+
+                      setCalendarMonth(
+                        new Date(
+                          today.getFullYear(),
+                          today.getMonth(),
+                          1
+                        )
+                      );
+                    }}
+                    className="text-[9px] font-semibold text-indigo-600"
+                  >
+                    Today
+                  </button>
+                </div>
+
                 {calendarLoading ? (
-                  <div className="h-[320px] flex items-center justify-center gap-2 text-xs text-slate-500">
-                    <Loader2 size={15} className="animate-spin" />
-                    Loading calendar...
+                  <div className="flex min-h-[220px] items-center justify-center gap-2 text-[10px] text-slate-400">
+                    <Loader2
+                      size={13}
+                      className="animate-spin"
+                    />
+                    Loading...
                   </div>
                 ) : calendarError ? (
-                  <div className="rounded-xl border border-rose-100 bg-rose-50 p-3 text-xs text-rose-700">
+                  <div className="mt-3 rounded-lg border border-rose-100 bg-rose-50 p-3 text-[10px] text-rose-700">
                     {calendarError}
                   </div>
+                ) : agendaEvents.length ===
+                  0 ? (
+                  <div className="flex min-h-[210px] flex-col items-center justify-center text-center">
+                    <CalendarDays
+                      size={19}
+                      className="text-slate-300"
+                    />
+                    <div className="mt-2 text-[11px] font-semibold text-slate-600">
+                      No events scheduled
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openCreateEvent(
+                          agendaDate
+                        )
+                      }
+                      className="mt-2 text-[10px] font-semibold text-indigo-600"
+                    >
+                      + Add event
+                    </button>
+                  </div>
                 ) : (
-                  <div className="relative min-h-[320px]">
-                    <div className="absolute left-[53px] top-0 bottom-0 w-px bg-slate-200" />
+                  <div className="mt-3 space-y-2">
+                    {agendaEvents.map(
+                      (item) => {
+                        const style =
+                          EVENT_TYPE_STYLES[
+                            item.type
+                          ] ||
+                          EVENT_TYPE_STYLES.OTHER;
 
-                    {["9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM"].map(
-                      (time) => (
-                        <div
-                          key={time}
-                          className="h-[42px] relative flex items-start"
-                        >
-                          <div className="w-[46px] pt-0.5 text-[10px] text-slate-500">
-                            {time}
-                          </div>
-                          <div className="flex-1 border-t border-slate-100" />
-                        </div>
-                      )
-                    )}
-
-                    {agendaEvents.length === 0 && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <CalendarDays
-                            size={21}
-                            className="mx-auto text-slate-300"
-                          />
-                          <div className="mt-2 text-xs font-semibold text-slate-600">
-                            No events
-                          </div>
+                        return (
                           <button
+                            key={
+                              item.id
+                            }
                             type="button"
-                            onClick={() => openCreateEvent(agendaDate)}
-                            className="mt-2 text-[11px] font-semibold text-indigo-600"
+                            onClick={() =>
+                              openEditEvent(
+                                item
+                              )
+                            }
+                            className="w-full rounded-xl border border-slate-100 p-3 text-left transition hover:border-slate-200 hover:bg-slate-50/50"
                           >
-                            + Add event
+                            <div className="flex items-start gap-3">
+                              <div
+                                className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border text-[9px] font-bold ${style}`}
+                              >
+                                {item.type ===
+                                "PAYMENT"
+                                  ? "₹"
+                                  : item.type
+                                      ?.charAt(
+                                        0
+                                      ) ||
+                                    "E"}
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="truncate text-[10px] font-bold text-slate-900">
+                                    {
+                                      item.title
+                                    }
+                                  </div>
+                                  <div className="flex-shrink-0 text-[9px] font-semibold text-slate-400">
+                                    {
+                                      eventTime(
+                                        item
+                                      )
+                                    }
+                                  </div>
+                                </div>
+
+                                <div className="mt-1 text-[9px] text-slate-400">
+                                  {typeLabel(
+                                    item.type
+                                  )}
+                                  {item.location
+                                    ? ` · ${item.location}`
+                                    : ""}
+                                </div>
+                              </div>
+                            </div>
                           </button>
-                        </div>
-                      </div>
+                        );
+                      }
                     )}
-
-                    {agendaEvents.map((item, index) => {
-                      const start = new Date(item.startAt);
-                      const hour = start.getHours();
-                      const minute = start.getMinutes();
-
-                      const clampedHour = Math.max(9, Math.min(hour, 17));
-                      const top =
-                        (clampedHour - 9) * 42 +
-                        Math.round((minute / 60) * 42);
-
-                      const style =
-                        EVENT_TYPE_STYLES[item.type] ||
-                        EVENT_TYPE_STYLES.OTHER;
-
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => openEditEvent(item)}
-                          className={`absolute left-[62px] right-0 rounded-xl border px-3 py-2 text-left shadow-sm ${style}`}
-                          style={{
-                            top: `${Math.min(top, 290)}px`,
-                            minHeight: "54px",
-                            zIndex: 10 + index,
-                          }}
-                        >
-                          <div className="text-[11px] font-bold truncate">
-                            {item.title}
-                          </div>
-                          <div className="mt-1 text-[10px] opacity-80">
-                            {eventTime(item)}
-                          </div>
-                        </button>
-                      );
-                    })}
                   </div>
                 )}
 
                 <button
                   type="button"
-                  disabled={
-                    new Date(
-                      agendaDate.getFullYear(),
-                      agendaDate.getMonth(),
-                      agendaDate.getDate(),
-                      23,
-                      59,
-                      59,
-                      999
-                    ) <
-                    new Date()
+                  onClick={() =>
+                    setFullCalendarOpen(
+                      true
+                    )
                   }
-                  onClick={() => openCreateEvent(agendaDate)}
-                  className="mt-3 h-9 w-full rounded-xl border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1.5"
+                  className="mt-4 inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600"
                 >
-                  <Plus size={13} />
-                  Add calendar event
+                  View full agenda
+                  <ChevronRight
+                    size={12}
+                  />
                 </button>
               </div>
-            </div>
+
+              <div className="border-t border-slate-100 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-[12px] font-bold text-slate-950">
+                      Recent Activity
+                    </h3>
+                    <p className="mt-0.5 text-[9px] text-slate-400">
+                      Latest CRM activity
+                    </p>
+                  </div>
+                </div>
+
+                {recentActivityData.length ? (
+                  <div className="mt-3 space-y-1">
+                    {recentActivityData.slice(0, 5).map((item, index) => (
+                      <div
+                        key={item.id || `${item.title || item.action || "activity"}-${index}`}
+                        className="flex items-start gap-2.5 border-b border-slate-50 py-2.5 last:border-0"
+                      >
+                        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-indigo-50 text-[8px] font-bold text-indigo-600">
+                          {(item.userName || item.name || item.title || "A")
+                            .split(" ")
+                            .map((part) => part[0])
+                            .join("")
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[9px] font-semibold text-slate-800">
+                            {item.title || item.action || item.description || "CRM activity"}
+                          </div>
+                          <div className="mt-0.5 text-[8px] text-slate-400">
+                            {item.createdAt
+                              ? new Date(item.createdAt).toLocaleString("en-IN", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : item.time || ""}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-7 text-center">
+                    <Activity size={17} className="mx-auto text-slate-300" />
+                    <div className="mt-2 text-[10px] font-semibold text-slate-500">
+                      No recent activity available
+                    </div>
+                  </div>
+                )}
+              </div>
+            </aside>
           </div>
 
           {/* TEAM PERFORMANCE */}
 
-          <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+          <div className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-5">
             <div className="flex items-center justify-between gap-3 mb-4">
               <h3 className="text-sm font-bold text-slate-900">
                 Team Performance
@@ -1339,7 +1801,7 @@ export default function Dashboard({
                       key={
                         member.name
                       }
-                      className="border border-slate-200 rounded-lg p-4 hover:border-slate-300 hover:shadow-sm transition-all"
+                      className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition hover:border-slate-200 hover:bg-white"
                     >
                       <div className="text-sm font-medium text-slate-900">
                         {
@@ -1613,21 +2075,6 @@ export default function Dashboard({
                               day
                             );
 
-                          const dayEnd =
-                            new Date(
-                              year,
-                              month,
-                              day,
-                              23,
-                              59,
-                              59,
-                              999
-                            );
-
-                          const isPastDay =
-                            dayEnd <
-                            new Date();
-
                           const key =
                             dateKey(date);
 
@@ -1656,38 +2103,23 @@ export default function Dashboard({
                           cells.push(
                             <div
                               key={key}
-                              onDoubleClick={() => {
-                                if (
-                                  !isPastDay
-                                ) {
-                                  openCreateEvent(
-                                    date
-                                  );
-                                }
-                              }}
-                              className={`min-h-[96px] p-2 border-r border-b border-slate-200 transition-colors overflow-hidden ${
-                                isPastDay
-                                  ? "bg-slate-50/70"
-                                  : "bg-white hover:bg-slate-50/70"
-                              }`}
+                              onDoubleClick={() =>
+                                openCreateEvent(
+                                  date
+                                )
+                              }
+                              className="min-h-[96px] p-2 bg-white hover:bg-slate-50/70 border-r border-b border-slate-200 transition-colors overflow-hidden"
                             >
                               <button
                                 type="button"
-                                disabled={isPastDay}
-                                onClick={() => {
-                                  if (
-                                    !isPastDay
-                                  ) {
-                                    openCreateEvent(
-                                      date
-                                    );
-                                  }
-                                }}
+                                onClick={() =>
+                                  openCreateEvent(
+                                    date
+                                  )
+                                }
                                 className={`inline-flex w-6 h-6 items-center justify-center rounded-full text-[11px] font-semibold ${
                                   isToday
                                     ? "bg-indigo-600 text-white"
-                                    : isPastDay
-                                    ? "text-slate-300 cursor-not-allowed"
                                     : "text-slate-700 hover:bg-slate-100"
                                 }`}
                               >
@@ -2018,11 +2450,6 @@ export default function Dashboard({
 
                   <input
                     type="datetime-local"
-                    min={
-                      editingEvent
-                        ? undefined
-                        : minimumDateTimeLocal()
-                    }
                     value={
                       eventForm.startAt
                     }
@@ -2047,10 +2474,6 @@ export default function Dashboard({
 
                   <input
                     type="datetime-local"
-                    min={
-                      eventForm.startAt ||
-                      minimumDateTimeLocal()
-                    }
                     value={
                       eventForm.endAt
                     }

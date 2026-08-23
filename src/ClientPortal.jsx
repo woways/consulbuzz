@@ -31,6 +31,7 @@ import {
   Search,
   Sun,
   ChevronRight,
+  Plus,
 } from "lucide-react";
 
 import {
@@ -470,33 +471,74 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       null
   );
 
-  // Global reporting period shared by all date-based CRM modules.
-  const [selectedYear, setSelectedYear] = useState(() =>
-    window.localStorage.getItem("cb_global_year") || "all"
-  );
-  const [availableYears, setAvailableYears] = useState([
-    new Date().getFullYear(),
-  ]);
+  // Global CRM year workspace shared by all operational modules.
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(() => {
+    const saved = window.localStorage.getItem("cb_global_year");
+    return saved || String(new Date().getFullYear());
+  });
+  const [availableYears, setAvailableYears] = useState([currentYear]);
+  const [addYearOpen, setAddYearOpen] = useState(false);
+  const [newWorkspaceYear, setNewWorkspaceYear] = useState("");
+  const [yearMode, setYearMode] = useState("EMPTY");
+  const [yearSaving, setYearSaving] = useState(false);
+  const [yearError, setYearError] = useState("");
 
   useEffect(() => {
     window.localStorage.setItem("cb_global_year", selectedYear);
   }, [selectedYear]);
 
-  useEffect(() => {
-    let active = true;
-    async function loadAvailableYears() {
-      try {
-        const result = await apiRequest("/api/client/analytics/dashboard?year=all");
-        if (active && Array.isArray(result.availableYears) && result.availableYears.length) {
-          setAvailableYears(result.availableYears);
-        }
-      } catch (error) {
-        console.error("Unable to load reporting years:", error);
+  async function loadAvailableYears() {
+    try {
+      const result = await apiRequest("/api/client/years");
+      const years = Array.isArray(result.years) ? result.years.map((x) => Number(x.year)).filter(Number.isFinite) : [];
+      const next = Array.from(new Set([currentYear, ...years])).sort((a,b) => b-a);
+      setAvailableYears(next);
+      if (
+        selectedYear !== "all" &&
+        !next.includes(Number(selectedYear))
+      ) {
+        setSelectedYear(
+          String(next[0] || currentYear)
+        );
       }
+    } catch (error) {
+      console.error("Unable to load CRM workspace years:", error);
     }
-    loadAvailableYears();
-    return () => { active = false; };
-  }, []);
+  }
+
+  useEffect(() => { loadAvailableYears(); }, []);
+
+  async function createYearWorkspace(event) {
+    event.preventDefault();
+    setYearError("");
+    const year = Number(newWorkspaceYear);
+    if (!Number.isInteger(year) || year < 2000 || year > 2100) { setYearError("Enter a valid year between 2000 and 2100."); return; }
+    if (availableYears.includes(year)) { setYearError(`${year} workspace already exists.`); return; }
+    setYearSaving(true);
+    try {
+      await apiRequest("/api/client/years", {
+        method: "POST",
+        body: JSON.stringify({
+          year,
+          mode: yearMode,
+          copiedFromYear:
+            yearMode === "COPY_STRUCTURE"
+              ? selectedYear === "all"
+                ? currentYear
+                : Number(selectedYear)
+              : null,
+        }),
+      });
+      await loadAvailableYears();
+      setSelectedYear(String(year));
+      setAddYearOpen(false);
+      setNewWorkspaceYear("");
+      setYearMode("EMPTY");
+      setModule("dashboard");
+    } catch (error) { setYearError(error?.data?.message || "Unable to create year workspace"); }
+    finally { setYearSaving(false); }
+  }
 
   useEffect(() => {
     setMobileSidebarOpen(false);
@@ -1745,14 +1787,14 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
   const timeGreeting = getTimeGreeting();
 
   return (
-    <div className="min-h-screen bg-[#071321] text-slate-900 overflow-x-hidden">
+    <div className="min-h-screen bg-[#f6f7fa] text-slate-900 overflow-x-hidden">
       <style>{`
         html,
         body,
         #root {
           margin: 0;
           min-height: 100%;
-          background: #071321;
+          background: #f6f7fa;
         }
 
       `}</style>
@@ -1852,37 +1894,58 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       <div className="flex">
         {/* FIXED LIGHT SIDEBAR */}
         <aside
-          className={`fixed inset-y-0 left-0 z-50 lg:z-30 bg-[#071321] transition-[width,transform] duration-300 ${
+          className={`fixed inset-y-0 left-0 z-50 lg:z-30 overflow-visible border-r border-white/[0.06] bg-[#07111d] shadow-[8px_0_28px_rgba(2,8,23,0.10)] transition-[width,transform] duration-300 ${
             mobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           } ${
-            sidebarCollapsed ? "w-[82px]" : "w-[260px]"
+            sidebarCollapsed ? "w-[72px]" : "w-[252px]"
           }`}
         >
-          <div className="h-screen flex flex-col overflow-visible">
+          <button
+            type="button"
+            onClick={() => setSidebarCollapsed((current) => !current)}
+            title={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
+            aria-label={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
+            className="hidden lg:flex absolute top-1/2 right-[-14px] z-[80] h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-[0_5px_16px_rgba(15,23,42,0.18)] transition-all hover:border-indigo-300 hover:text-indigo-600 hover:shadow-[0_7px_20px_rgba(15,23,42,0.22)]"
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight size={15} strokeWidth={2.2} />
+            ) : (
+              <PanelLeftClose size={15} strokeWidth={2.2} />
+            )}
+          </button>
+
+          <div className="h-full flex flex-col overflow-visible">
             {/* CONSULBUZZ PRODUCT IDENTITY — TOP LEFT */}
             {(!sidebarCollapsed || mobileSidebarOpen) ? (
-              <div className="px-5 pt-5 pb-2">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-white text-[#071321] flex items-center justify-center text-[10px] font-black tracking-tight shadow-sm">
-                    CB
-                  </div>
-
-                  <div>
-                    <div className="text-[17px] leading-none font-black tracking-[-0.03em] text-white">
-                      ConsulBuzz
+              <div className="px-4 pt-4 pb-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-[#3b82f6] via-[#4f46e5] to-[#7c3aed] text-[11px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.28)]">
+                      <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.35),transparent_42%)]" />
+                      <span className="relative">CB</span>
                     </div>
 
+                    <div className="min-w-0">
+                      <div className="truncate text-[18px] font-bold leading-none tracking-[-0.035em] text-white">
+                        ConsulBuzz
+                      </div>
+                    </div>
                   </div>
+
                 </div>
               </div>
             ) : (
-              <div className="pt-4 pb-1 flex justify-center">
-                <div
-                  className="w-10 h-10 rounded-xl bg-white text-[#071321] flex items-center justify-center text-[10px] font-black tracking-tight shadow-sm"
-                  title="ConsulBuzz"
+              <div className="pt-4 pb-2 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setSidebarCollapsed(false)}
+                  className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-[#3b82f6] via-[#4f46e5] to-[#7c3aed] text-[11px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.24)]"
+                  title="Expand menu"
+                  aria-label="Expand menu"
                 >
-                  CB
-                </div>
+                  <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.35),transparent_42%)]" />
+                  <span className="relative">CB</span>
+                </button>
               </div>
             )}
 
@@ -1917,11 +1980,11 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         }}
                         className={`relative mb-1 w-full transition-all ${
                           sidebarCollapsed && !mobileSidebarOpen
-                            ? "h-12 rounded-xl flex items-center justify-center"
-                            : "h-11 rounded-xl px-3 flex items-center gap-3"
+                            ? "h-11 rounded-lg flex items-center justify-center"
+                            : "h-11 rounded-lg px-3 flex items-center gap-3"
                         } ${
                           active
-                            ? "bg-indigo-600/90 text-white shadow-[0_8px_18px_rgba(79,70,229,0.22)]"
+                            ? "bg-gradient-to-r from-[#3457eb] to-[#4f46e5] text-white shadow-[0_8px_18px_rgba(79,70,229,0.20)] ring-1 ring-inset ring-indigo-400/15"
                             : "text-slate-300 hover:bg-white/[0.06] hover:text-white"
                         }`}
                       >
@@ -1993,7 +2056,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         onClick={() =>
                           toggleGroup(group.key)
                         }
-                        className={`relative h-11 w-full rounded-xl px-3 flex items-center gap-3 transition-all ${
+                        className={`relative h-11 w-full rounded-lg px-3 flex items-center gap-3 transition-all ${
                           groupActive
                             ? "bg-white/[0.08] text-white"
                             : open
@@ -2115,7 +2178,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             >
               {(!sidebarCollapsed ||
                 mobileSidebarOpen) ? (
-                <div className="rounded-2xl border border-indigo-400/20 bg-gradient-to-br from-indigo-500/20 via-indigo-500/10 to-violet-500/10 px-4 py-4 shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
+                <div className="rounded-[12px] border border-white/10 bg-white/[0.045] px-4 py-4">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-[11px] font-medium text-slate-300">
                       Current Plan
@@ -2141,7 +2204,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   <button
                     type="button"
                     onClick={openBilling}
-                    className="mt-4 h-9 w-full rounded-xl border border-indigo-400/15 bg-indigo-500/25 text-[11px] font-semibold text-white transition-colors hover:bg-indigo-500/35"
+                    className="mt-4 h-9 w-full rounded-lg border border-white/10 bg-white/[0.06] text-[11px] font-semibold text-white transition-colors hover:bg-white/[0.10]"
                   >
                     Upgrade Plan
                   </button>
@@ -2166,23 +2229,23 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
         {/* MAIN WORKSPACE */}
         <div
-          className={`flex-1 min-w-0 bg-[#071321] transition-[margin] duration-300 ${
-            sidebarCollapsed ? "lg:ml-[82px]" : "lg:ml-[260px]"
+          className={`flex-1 min-w-0 bg-[#f6f7fa] transition-[margin] duration-300 ${
+            sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[252px]"
           }`}
         >
           {/* TOP BAR — continuous with sidebar */}
           <header
-            className={`fixed top-0 right-0 z-40 h-[84px] bg-[#071321] text-white transition-[left] duration-300 ${
+            className={`fixed top-0 right-0 z-40 h-[68px] border-b border-slate-200/80 bg-white/95 text-slate-900 backdrop-blur-xl transition-[left] duration-300 ${
               sidebarCollapsed
-                ? "left-[82px]"
-                : "left-[260px]"
+                ? "left-[72px]"
+                : "left-[252px]"
             }`}
           >
             <div className="h-full px-4 sm:px-6 lg:px-7 flex items-center gap-4">
               <button
                 type="button"
                 onClick={() => setSidebarCollapsed((current) => !current)}
-                className="hidden lg:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white"
+                className="hidden lg:flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-950"
                 title={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
                 aria-label={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
               >
@@ -2203,7 +2266,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   value={workspaceSearch}
                   onChange={(event) => setWorkspaceSearch(event.target.value)}
                   placeholder="Search leads, admissions, modules..."
-                  className="w-full h-11 pl-12 pr-4 rounded-xl border border-white/15 bg-white/[0.035] text-sm text-white placeholder:text-slate-500 outline-none transition-colors focus:border-indigo-400/70 focus:bg-white/[0.055]"
+                  className="w-full h-10 pl-11 pr-4 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 />
 
                 {workspaceSearch.trim() && (
@@ -2250,23 +2313,26 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
               <div className="ml-auto flex items-center gap-2 sm:gap-3">
                 {/* GLOBAL PERIOD */}
-                <div className="hidden md:flex h-10 items-center rounded-xl border border-white/10 bg-white/[0.04] overflow-hidden">
-                  <div className="px-3 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500 border-r border-white/10">
+                <div className="hidden md:flex h-9 items-center rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+                  <div className="px-3 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 border-r border-slate-200">
                     Period
                   </div>
 
                   <select
                     value={selectedYear}
-                    onChange={(event) => setSelectedYear(event.target.value)}
-                    className="h-full min-w-[104px] bg-transparent px-3 text-xs font-semibold text-slate-200 outline-none cursor-pointer"
-                    aria-label="Global reporting year"
+                    onChange={(event) => {
+                      if (event.target.value === "__add_year__") { setYearError(""); setNewWorkspaceYear(""); setAddYearOpen(true); return; }
+                      setSelectedYear(event.target.value);
+                      setModule("dashboard");
+                    }}
+                    className="h-full min-w-[108px] bg-transparent px-3 text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+                    aria-label="Global CRM workspace year"
                   >
-                    <option value="all">All Time</option>
                     {availableYears.map((year) => (
-                      <option key={year} value={String(year)}>
-                        {year}
-                      </option>
+                      <option key={year} value={String(year)}>{year}</option>
                     ))}
+                    <option value="all">All Time</option>
+                    <option value="__add_year__">+ Add Year</option>
                   </select>
                 </div>
 
@@ -2283,7 +2349,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         loadNotifications();
                       }
                     }}
-                    className="relative w-10 h-10 rounded-xl text-slate-300 flex items-center justify-center hover:bg-white/[0.07] hover:text-white"
+                    className="relative w-9 h-9 rounded-lg text-slate-600 flex items-center justify-center hover:bg-slate-100 hover:text-slate-950"
                     aria-label="Notifications"
                   >
                     <Bell size={18} />
@@ -2362,14 +2428,14 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       setProfileMenuOpen((current) => !current);
                       setNotificationsOpen(false);
                     }}
-                    className="h-11 pl-1 pr-2 sm:pr-3 rounded-xl hover:bg-white/[0.06] flex items-center gap-2.5 transition-colors"
+                    className="h-10 pl-1 pr-2 sm:pr-3 rounded-lg hover:bg-slate-100 flex items-center gap-2.5 transition-colors"
                   >
                     <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold ring-2 ring-white/10">
                       {initials}
                     </div>
 
                     <div className="hidden sm:block text-left min-w-0">
-                      <div className="text-[13px] font-bold text-white truncate max-w-[130px]">
+                      <div className="text-[13px] font-bold text-slate-900 truncate max-w-[130px]">
                         {user.name || tenant.name}
                       </div>
 
@@ -2444,114 +2510,9 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           </header>
 
           {/* MAIN CONTENT */}
-          <main className="mt-[84px] min-h-[calc(100vh-84px)] rounded-tl-[22px] bg-[#f7f8fb] px-3 py-4 sm:px-5 sm:py-5 lg:p-7 lg:pl-8">
+          <main className="mt-[68px] min-h-[calc(100vh-68px)] bg-[#f6f7fa] px-3 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
             <div className="max-w-[1560px] mx-auto">
-              {module === "dashboard" && (
-                <div className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_28px_rgba(15,23,42,0.05)]">
-                  <div className="relative min-h-[138px] px-5 sm:px-7 py-5 flex items-center justify-between gap-6">
-                    <div className="relative z-10 min-w-0">
-                      <div className="text-[25px] sm:text-[30px] leading-tight font-black tracking-[-0.045em] text-slate-950">
-                        {timeGreeting},{" "}
-                        <span className="text-indigo-600">
-                          {(user?.name || tenant.ownerName || "Admin").split(" ")[0]}
-                        </span>
-                        <span className="ml-2" aria-hidden="true">🚀</span>
-                      </div>
-
-                      <div className="mt-2 text-[12px] sm:text-[13px] text-slate-500">
-                        Here&apos;s your ConsulBuzz CRM activity for today.
-                      </div>
-
-                      <div className="mt-2 text-[10px] sm:text-[11px] font-medium text-slate-400">
-                        {new Date().toLocaleDateString("en-IN", {
-                          weekday: "long",
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="hidden md:flex w-[250px] lg:w-[320px] self-stretch items-center justify-end flex-shrink-0">
-                      <svg
-                        viewBox="0 0 360 150"
-                        className="w-full max-h-[128px]"
-                        role="img"
-                        aria-label="CRM activity illustration"
-                      >
-                        <path
-                          d="M88 0h272v150H45c20-24 18-48 1-70C28 56 36 22 88 0Z"
-                          fill="#eef4ff"
-                        />
-                        <rect
-                          x="78"
-                          y="36"
-                          width="88"
-                          height="62"
-                          rx="8"
-                          fill="#ffffff"
-                          stroke="#0f172a"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M98 56h47M98 70h36"
-                          stroke="#0f172a"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                        />
-                        <rect
-                          x="64"
-                          y="103"
-                          width="118"
-                          height="9"
-                          rx="4.5"
-                          fill="#4f46e5"
-                        />
-                        <path
-                          d="M222 36l55 26-40 30-52-26 37-30Z"
-                          fill="#4f46e5"
-                        />
-                        <path
-                          d="M222 36l15 56M277 62l-92 4"
-                          stroke="#a5b4fc"
-                          strokeWidth="2"
-                        />
-                        <circle
-                          cx="280"
-                          cy="45"
-                          r="16"
-                          fill="#111827"
-                        />
-                        <path
-                          d="M268 61c-16 7-25 23-25 48v29h57v-29c0-22-7-39-21-48h-11Z"
-                          fill="#111827"
-                        />
-                        <path
-                          d="M249 83l-26-8-5 12 30 15M295 82l21-18"
-                          fill="none"
-                          stroke="#111827"
-                          strokeWidth="8"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M258 137l-8 13M288 137l9 13"
-                          stroke="#111827"
-                          strokeWidth="6"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M207 23l-9-11M219 20l2-14M231 27l10-10"
-                          stroke="#4f46e5"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {renderModule()}
+{renderModule()}
             </div>
           </main>
         </div>
@@ -3088,6 +3049,26 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               ) : null}
             </div>
           </div>
+        </div>
+      )}
+
+      {addYearOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+          <form onSubmit={createYearWorkspace} className="w-full max-w-lg overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+              <div><div className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-500">CRM Year Workspace</div><h2 className="mt-1 text-xl font-bold text-slate-950">Add Year</h2><p className="mt-1 text-xs leading-5 text-slate-500">Create a fresh historical workspace. Existing {selectedYear} data stays untouched.</p></div>
+              <button type="button" onClick={() => setAddYearOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100"><X size={17}/></button>
+            </div>
+            <div className="space-y-5 px-6 py-5">
+              <div><label className="mb-1.5 block text-xs font-bold text-slate-700">Year</label><input type="number" min="2000" max="2100" value={newWorkspaceYear} onChange={(e)=>setNewWorkspaceYear(e.target.value)} placeholder="Example: 2025" className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm font-semibold outline-none focus:border-indigo-400" autoFocus/></div>
+              <div><div className="mb-2 text-xs font-bold text-slate-700">How should this year start?</div><div className="grid gap-3 sm:grid-cols-2">
+                <button type="button" onClick={()=>setYearMode("EMPTY")} className={`rounded-2xl border p-4 text-left ${yearMode === "EMPTY" ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100" : "border-slate-200"}`}><div className="text-sm font-bold">Start Empty</div><div className="mt-1 text-[11px] leading-5 text-slate-500">Yearly leads, admissions, revenue and activity start empty.</div></button>
+                <button type="button" onClick={()=>setYearMode("COPY_STRUCTURE")} className={`rounded-2xl border p-4 text-left ${yearMode === "COPY_STRUCTURE" ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100" : "border-slate-200"}`}><div className="text-sm font-bold">Use Current Setup</div><div className="mt-1 text-[11px] leading-5 text-slate-500">Keep company setup and admission structure, but no yearly records.</div></button>
+              </div></div>
+              {yearError && <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-semibold text-rose-700">{yearError}</div>}
+            </div>
+            <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/70 px-6 py-4"><button type="button" onClick={()=>setAddYearOpen(false)} disabled={yearSaving} className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold">Cancel</button><button type="submit" disabled={yearSaving} className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white disabled:opacity-50">{yearSaving ? <Loader2 size={14} className="animate-spin"/> : <Plus size={14}/>} {yearSaving ? "Creating..." : "Create & Open Year"}</button></div>
+          </form>
         </div>
       )}
 

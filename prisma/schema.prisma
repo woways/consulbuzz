@@ -214,6 +214,7 @@ model Company {
   admissionStreams        AdmissionStream[]
   admissionBranches       AdmissionBranch[]
   calendarEvents          CalendarEvent[]
+  workspaceYears          CompanyWorkspaceYear[]
 }
 
 model User {
@@ -397,6 +398,20 @@ model PaymentTransaction {
   @@index([subscriptionId])
   @@index([planId])
   @@index([initiatedByUserId])
+}
+
+model CompanyWorkspaceYear {
+  id             String   @id @default(cuid())
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  year           Int
+  structureMode  String   @default("EMPTY")
+  copiedFromYear Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([companyId, year])
+  @@index([companyId, year])
 }
 
 model CompanySettings {

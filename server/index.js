@@ -46,6 +46,7 @@ import clientAuditLogsRoutes from "./routes/clientAuditLogs.js";
 import clientWalkinsRoutes from "./routes/clientWalkins.js";
 import clientCounsellingRoutes from "./routes/clientCounselling.js";
 import clientCalendarRoutes from "./routes/clientCalendar.js";
+import clientYearsRoutes from "./routes/clientYears.js";
 
 import razorpayWebhook from "./routes/razorpayWebhook.js";
 
@@ -325,6 +326,11 @@ app.use(
 app.use(
   "/api/client/calendar",
   clientCalendarRoutes
+);
+
+app.use(
+  "/api/client/years",
+  clientYearsRoutes
 );
 
 app.use(
