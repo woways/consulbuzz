@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import prisma from "../lib/prisma.js";
+import { integrationApiKey } from "../lib/integrationAuth.js";
 import {
   requireClientUser,
   requireClientPermission,
@@ -507,6 +508,220 @@ router.put(
     }
   }
 );
+
+
+/* =========================================================
+   ACCESS DETAILS FOR PUBLIC INGESTION INTEGRATIONS
+========================================================= */
+
+router.get(
+  "/:provider/access",
+  async (req, res) => {
+    try {
+      const companyId = req.clientUser.companyId;
+      const provider = String(req.params.provider || "").trim().toUpperCase();
+
+      if (!["WEBSITE_API", "GENERIC_WEBHOOK"].includes(provider)) {
+        return res.status(400).json({
+          success: false,
+          message: "Access details are only available for Website API and Generic Webhook",
+        });
+      }
+
+      const integration = await findCompanyIntegration(companyId, provider);
+
+      if (!integration) {
+        return res.status(400).json({
+          success: false,
+          message: "Save the integration configuration first",
+        });
+      }
+
+      const company = await prisma.company.findUnique({
+        where: { id: companyId },
+        select: { slug: true },
+      });
+
+      if (!company) {
+        return res.status(404).json({ success: false, message: "Company not found" });
+      }
+
+      let apiKey;
+      try {
+        apiKey = integrationApiKey(companyId, provider, integration.apiKeyVersion || 1);
+      } catch (error) {
+        return res.status(503).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const path =
+        provider === "WEBSITE_API"
+          ? `/api/integrations/website/${company.slug}/leads`
+          : `/api/integrations/webhook/${company.slug}`;
+
+      return res.json({
+        success: true,
+        access: {
+          endpoint: `${baseUrl}${path}`,
+          apiKey,
+          header: "X-ConsulBuzz-Key",
+          method: "POST",
+        },
+      });
+    } catch (error) {
+      console.error("Failed to generate integration access details:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Unable to generate integration access details",
+      });
+    }
+  }
+);
+
+
+
+/* =========================================================
+   REGENERATE PUBLIC API KEY
+========================================================= */
+
+router.post("/:provider/access/regenerate", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+    const provider = String(req.params.provider || "").trim().toUpperCase();
+
+    if (!["WEBSITE_API", "GENERIC_WEBHOOK"].includes(provider)) {
+      return res.status(400).json({
+        success: false,
+        message: "API key regeneration is only available for Website API and Generic Webhook",
+      });
+    }
+
+    const existing = await findCompanyIntegration(companyId, provider);
+
+    if (!existing) {
+      return res.status(400).json({
+        success: false,
+        message: "Save the integration configuration first",
+      });
+    }
+
+    const integration = await prisma.companyIntegration.update({
+      where: { id: existing.id },
+      data: {
+        apiKeyVersion: { increment: 1 },
+        status: "CONFIGURED",
+        lastError: null,
+      },
+    });
+
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { slug: true },
+    });
+
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const path =
+      provider === "WEBSITE_API"
+        ? `/api/integrations/website/${company.slug}/leads`
+        : `/api/integrations/webhook/${company.slug}`;
+
+    return res.json({
+      success: true,
+      message: "API key regenerated. The previous key is no longer valid.",
+      access: {
+        endpoint: `${baseUrl}${path}`,
+        apiKey: integrationApiKey(
+          companyId,
+          provider,
+          integration.apiKeyVersion || 1
+        ),
+        header: "X-ConsulBuzz-Key",
+        method: "POST",
+      },
+      integration: formatIntegration(provider, integration),
+    });
+  } catch (error) {
+    console.error("Failed to regenerate integration API key:", error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Unable to regenerate API key",
+    });
+  }
+});
+
+/* =========================================================
+   VERIFY WEBSITE / WEBHOOK SETUP
+   This verifies ConsulBuzz-side readiness. CONNECTED is set only
+   after a real external request successfully reaches the endpoint.
+========================================================= */
+
+router.post("/:provider/verify", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+    const provider = String(req.params.provider || "").trim().toUpperCase();
+
+    if (!["WEBSITE_API", "GENERIC_WEBHOOK"].includes(provider)) {
+      return res.status(400).json({
+        success: false,
+        message: "Setup verification is only available for Website API and Generic Webhook",
+      });
+    }
+
+    const integration = await findCompanyIntegration(companyId, provider);
+
+    if (!integration) {
+      return res.status(400).json({
+        success: false,
+        message: "Save the integration configuration first",
+      });
+    }
+
+    integrationApiKey(
+      companyId,
+      provider,
+      integration.apiKeyVersion || 1
+    );
+
+    const config =
+      integration.config &&
+      typeof integration.config === "object" &&
+      !Array.isArray(integration.config)
+        ? integration.config
+        : {};
+
+    if (
+      provider === "WEBSITE_API" &&
+      (!config.websiteName || !config.allowedOrigin)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Website Name and Allowed Origin are required before testing setup",
+      });
+    }
+
+    return res.json({
+      success: true,
+      ready: true,
+      connected: integration.status === "CONNECTED",
+      message:
+        integration.status === "CONNECTED"
+          ? "Website API is connected and has received a successful request."
+          : "ConsulBuzz setup is ready. Connect the website and submit a real test lead to mark it Connected.",
+      lastConnectedAt: integration.lastConnectedAt || null,
+      lastError: integration.lastError || null,
+    });
+  } catch (error) {
+    console.error("Failed to verify integration setup:", error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Unable to verify integration setup",
+    });
+  }
+});
+
 
 /* =========================================================
    ENABLE / DISABLE INTEGRATION

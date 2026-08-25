@@ -590,6 +590,13 @@ export default function SettingsView({
     config: {},
   });
 
+  const [integrationAccess, setIntegrationAccess] = useState(null);
+  const [integrationAccessLoading, setIntegrationAccessLoading] = useState(false);
+  const [integrationAccessError, setIntegrationAccessError] = useState("");
+  const [integrationKeyVisible, setIntegrationKeyVisible] = useState(false);
+  const [integrationVerifyMessage, setIntegrationVerifyMessage] = useState("");
+  const [integrationVerifyLoading, setIntegrationVerifyLoading] = useState(false);
+
   const [
     auditLogs,
     setAuditLogs,
@@ -1572,9 +1579,20 @@ export default function SettingsView({
     });
 
     setIntegrationsError("");
+    setIntegrationAccess(null);
+    setIntegrationAccessError("");
+    setIntegrationVerifyMessage("");
+    setIntegrationKeyVisible(false);
     setIntegrationModalOpen(
       true
     );
+
+    if (
+      integration.status !== "NOT_CONFIGURED" &&
+      ["WEBSITE_API", "GENERIC_WEBHOOK"].includes(integration.provider)
+    ) {
+      loadIntegrationAccess(integration);
+    }
   }
 
   async function saveIntegration() {
@@ -1613,12 +1631,21 @@ export default function SettingsView({
           )
       );
 
-      setIntegrationModalOpen(
-        false
-      );
-      setEditingIntegration(
-        null
-      );
+      if (
+        ["WEBSITE_API", "GENERIC_WEBHOOK"].includes(
+          data.integration.provider
+        )
+      ) {
+        setEditingIntegration(data.integration);
+        setIntegrationForm({
+          displayName: data.integration.name || "",
+          config: data.integration.config || {},
+        });
+        await loadIntegrationAccess(data.integration);
+      } else {
+        setIntegrationModalOpen(false);
+        setEditingIntegration(null);
+      }
     } catch (error) {
       setIntegrationsError(
         error?.data?.message ||
@@ -1662,6 +1689,105 @@ export default function SettingsView({
         error?.data?.message ||
           "Unable to update integration"
       );
+    }
+  }
+
+
+  async function loadIntegrationAccess(integration) {
+    if (!integration || !["WEBSITE_API", "GENERIC_WEBHOOK"].includes(integration.provider)) {
+      return;
+    }
+
+    setIntegrationAccessLoading(true);
+    setIntegrationAccessError("");
+    setIntegrationVerifyMessage("");
+
+    try {
+      const data = await apiRequest(
+        `/api/client/integrations/${integration.provider}/access`
+      );
+      setIntegrationAccess(data.access || null);
+    } catch (error) {
+      setIntegrationAccess(null);
+      setIntegrationAccessError(
+        error?.data?.message || "Unable to load connection details"
+      );
+    } finally {
+      setIntegrationAccessLoading(false);
+    }
+  }
+
+  async function copyIntegrationValue(value, label) {
+    try {
+      await navigator.clipboard.writeText(String(value || ""));
+      setIntegrationVerifyMessage(`${label} copied`);
+    } catch {
+      setIntegrationAccessError(`Unable to copy ${label.toLowerCase()}`);
+    }
+  }
+
+  async function regenerateIntegrationKey() {
+    if (!editingIntegration) return;
+
+    const confirmed = window.confirm(
+      "Regenerate this API key? The previous key will stop working immediately."
+    );
+    if (!confirmed) return;
+
+    setIntegrationAccessLoading(true);
+    setIntegrationAccessError("");
+    setIntegrationVerifyMessage("");
+
+    try {
+      const data = await apiRequest(
+        `/api/client/integrations/${editingIntegration.provider}/access/regenerate`,
+        { method: "POST" }
+      );
+
+      setIntegrationAccess(data.access || null);
+      setIntegrationKeyVisible(true);
+      setIntegrationVerifyMessage(data.message || "API key regenerated");
+
+      if (data.integration) {
+        setIntegrations((current) =>
+          current.map((item) =>
+            item.provider === data.integration.provider
+              ? data.integration
+              : item
+          )
+        );
+        setEditingIntegration(data.integration);
+      }
+    } catch (error) {
+      setIntegrationAccessError(
+        error?.data?.message || "Unable to regenerate API key"
+      );
+    } finally {
+      setIntegrationAccessLoading(false);
+    }
+  }
+
+  async function verifyIntegrationSetup() {
+    if (!editingIntegration) return;
+
+    setIntegrationVerifyLoading(true);
+    setIntegrationAccessError("");
+    setIntegrationVerifyMessage("");
+
+    try {
+      const data = await apiRequest(
+        `/api/client/integrations/${editingIntegration.provider}/verify`,
+        { method: "POST" }
+      );
+
+      setIntegrationVerifyMessage(data.message || "Setup verified");
+      await loadIntegrations();
+    } catch (error) {
+      setIntegrationAccessError(
+        error?.data?.message || "Unable to verify integration setup"
+      );
+    } finally {
+      setIntegrationVerifyLoading(false);
     }
   }
 
@@ -3126,10 +3252,15 @@ export default function SettingsView({
                                 </span>
 
                                 <span className="inline-flex rounded-full bg-slate-50 border border-slate-200 text-slate-500 px-2.5 py-1 text-[11px] font-semibold">
-                                  Credentials{" "}
-                                  {integration.credentialsConfigured
-                                    ? "ready"
-                                    : "later"}
+                                  {["WEBSITE_API", "GENERIC_WEBHOOK"].includes(
+                                    integration.provider
+                                  )
+                                    ? "API access"
+                                    : `Credentials ${
+                                        integration.credentialsConfigured
+                                          ? "ready"
+                                          : "later"
+                                      }`}
                                 </span>
                               </div>
 
@@ -3155,7 +3286,12 @@ export default function SettingsView({
                                   <Settings
                                     size={12}
                                   />
-                                  Configure
+                                  {configured &&
+                                  ["WEBSITE_API", "GENERIC_WEBHOOK"].includes(
+                                    integration.provider
+                                  )
+                                    ? "Manage Connection"
+                                    : "Configure"}
                                 </button>
                               </div>
                             </div>
@@ -4704,6 +4840,163 @@ export default function SettingsView({
                     />
                   </div>
                 )
+              )}
+
+              {["WEBSITE_API", "GENERIC_WEBHOOK"].includes(
+                editingIntegration.provider
+              ) &&
+                editingIntegration.status !== "NOT_CONFIGURED" && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-[14px] font-bold text-slate-900">
+                        Connection Details
+                      </div>
+                      <div className="mt-1 text-[12px] text-slate-500">
+                        Use these details in the external website or system.
+                      </div>
+                    </div>
+
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                        editingIntegration.status === "CONNECTED"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-amber-50 text-amber-700"
+                      }`}
+                    >
+                      {editingIntegration.status === "CONNECTED"
+                        ? "CONNECTED"
+                        : "READY TO CONNECT"}
+                    </span>
+                  </div>
+
+                  {integrationAccessLoading ? (
+                    <div className="py-5 flex items-center justify-center gap-2 text-[13px] text-slate-500">
+                      <Loader2 size={14} className="animate-spin" />
+                      Loading connection details...
+                    </div>
+                  ) : integrationAccess ? (
+                    <>
+                      <div>
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                          API Endpoint
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            readOnly
+                            value={integrationAccess.endpoint || ""}
+                            className="min-w-0 flex-1 h-10 px-3 rounded-lg border border-slate-200 bg-white text-[12px] font-mono text-slate-700"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              copyIntegrationValue(
+                                integrationAccess.endpoint,
+                                "Endpoint"
+                              )
+                            }
+                            className="h-10 px-3 rounded-lg border border-slate-200 bg-white text-[12px] font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                          API Key
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            readOnly
+                            type={integrationKeyVisible ? "text" : "password"}
+                            value={integrationAccess.apiKey || ""}
+                            className="min-w-0 flex-1 h-10 px-3 rounded-lg border border-slate-200 bg-white text-[12px] font-mono text-slate-700"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setIntegrationKeyVisible((current) => !current)
+                            }
+                            className="h-10 px-3 rounded-lg border border-slate-200 bg-white text-[12px] font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            {integrationKeyVisible ? "Hide" : "Show"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              copyIntegrationValue(
+                                integrationAccess.apiKey,
+                                "API key"
+                              )
+                            }
+                            className="h-10 px-3 rounded-lg border border-slate-200 bg-white text-[12px] font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                        <div className="mt-1.5 text-[11px] text-slate-500">
+                          Header: {integrationAccess.header || "X-ConsulBuzz-Key"} · Method:{" "}
+                          {integrationAccess.method || "POST"}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={verifyIntegrationSetup}
+                          disabled={integrationVerifyLoading}
+                          className="h-9 px-3.5 rounded-lg bg-slate-950 text-white text-[12px] font-semibold inline-flex items-center gap-2 disabled:opacity-50"
+                        >
+                          {integrationVerifyLoading && (
+                            <Loader2 size={13} className="animate-spin" />
+                          )}
+                          Verify Setup
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={regenerateIntegrationKey}
+                          disabled={integrationAccessLoading}
+                          className="h-9 px-3.5 rounded-lg border border-rose-200 bg-white text-rose-700 text-[12px] font-semibold hover:bg-rose-50 disabled:opacity-50"
+                        >
+                          Regenerate API Key
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[12px]">
+                        <div className="rounded-lg border border-slate-200 bg-white p-3">
+                          <div className="text-slate-400">Last successful request</div>
+                          <div className="mt-1 font-semibold text-slate-700">
+                            {editingIntegration.lastConnectedAt
+                              ? new Date(
+                                  editingIntegration.lastConnectedAt
+                                ).toLocaleString()
+                              : "No request received yet"}
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white p-3">
+                          <div className="text-slate-400">Last error</div>
+                          <div className="mt-1 font-semibold text-slate-700">
+                            {editingIntegration.lastError || "No errors recorded"}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {integrationAccessError && (
+                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-[12px] text-rose-700">
+                      {integrationAccessError}
+                    </div>
+                  )}
+
+                  {integrationVerifyMessage && (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-[12px] text-emerald-700">
+                      {integrationVerifyMessage}
+                    </div>
+                  )}
+                </div>
               )}
 
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-[13px] text-amber-800 leading-5">

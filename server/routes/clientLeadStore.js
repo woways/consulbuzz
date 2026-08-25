@@ -185,6 +185,131 @@ function cleanString(
     null;
 }
 
+function normalizeCustomFieldInput(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, fieldValue]) => [
+      String(key).trim().toUpperCase(),
+      fieldValue,
+    ])
+  );
+}
+
+function serializeCustomFieldValue(field, value) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  if (field.fieldType === "CHECKBOX") {
+    return value === true ||
+      String(value).toLowerCase() === "true"
+      ? "true"
+      : "false";
+  }
+
+  if (field.fieldType === "NUMBER") {
+    const number = Number(value);
+
+    if (!Number.isFinite(number)) {
+      throw new Error(`${field.name} must be a valid number`);
+    }
+
+    return String(number);
+  }
+
+  if (field.fieldType === "DROPDOWN") {
+    const cleanValue = String(value).trim();
+    const options = Array.isArray(field.options)
+      ? field.options.map((item) => String(item))
+      : [];
+
+    if (!options.includes(cleanValue)) {
+      throw new Error(`${field.name} has an invalid option`);
+    }
+
+    return cleanValue;
+  }
+
+  if (field.fieldType === "DATE") {
+    const cleanValue = String(value).trim();
+
+    if (cleanValue && Number.isNaN(new Date(cleanValue).getTime())) {
+      throw new Error(`${field.name} must be a valid date`);
+    }
+
+    return cleanValue;
+  }
+
+  if (field.fieldType === "EMAIL") {
+    const cleanValue = String(value).trim();
+
+    if (cleanValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanValue)) {
+      throw new Error(`${field.name} must be a valid email`);
+    }
+
+    return cleanValue;
+  }
+
+  if (field.fieldType === "PHONE") {
+    const cleanValue = String(value).trim();
+    const digits = cleanValue.replace(/\D/g, "");
+
+    if (cleanValue && digits.length < 7) {
+      throw new Error(`${field.name} must be a valid phone number`);
+    }
+
+    return cleanValue;
+  }
+
+  return String(value).trim();
+}
+
+async function prepareCustomFieldValues(companyId, customFields) {
+  const input = normalizeCustomFieldInput(customFields);
+
+  const fields = await prisma.customField.findMany({
+    where: {
+      companyId,
+      entityType: "LEAD",
+      active: true,
+      showInForms: true,
+    },
+    orderBy: [
+      { sortOrder: "asc" },
+      { name: "asc" },
+    ],
+  });
+
+  return fields.map((field) => {
+    const hasValue = Object.prototype.hasOwnProperty.call(
+      input,
+      field.key
+    );
+
+    const rawValue = input[field.key];
+
+    if (
+      field.required &&
+      (!hasValue ||
+        rawValue === "" ||
+        rawValue === null ||
+        rawValue === undefined)
+    ) {
+      throw new Error(`${field.name} is required`);
+    }
+
+    return {
+      field,
+      value: hasValue
+        ? serializeCustomFieldValue(field, rawValue)
+        : null,
+    };
+  });
+}
+
 function normalizePhone(
   value
 ) {
@@ -993,6 +1118,239 @@ router.get(
 
 
 /* =========================================================
+   LIST INDIVIDUAL LEADS
+========================================================= */
+
+router.get(
+  "/manual",
+  async (req, res) => {
+    try {
+      const companyId = req.clientUser.companyId;
+      const selectedYear = parseYear(req.query.year);
+      const search = String(req.query.search || "").trim();
+
+      const where = {
+        companyId,
+        source: "LEAD_STORE",
+        campaign: "Individual Lead",
+        ...(selectedYear ? { createdAt: yearRange(selectedYear) } : {}),
+      };
+
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: "insensitive" } },
+          { phone: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+          { course: { contains: search, mode: "insensitive" } },
+          { assignedToName: { contains: search, mode: "insensitive" } },
+        ];
+      }
+
+      const leads = await prisma.lead.findMany({
+        where,
+        include: {
+          customFieldValues: {
+            include: {
+              customField: {
+                select: { id: true, name: true, key: true, fieldType: true },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      return res.json({
+        success: true,
+        leads: leads.map((lead) => ({
+          id: lead.id,
+          name: lead.name,
+          phone: lead.phone,
+          email: lead.email,
+          course: lead.course,
+          source: lead.source,
+          stage: lead.stage,
+          type: lead.medium,
+          assignedToName: lead.assignedToName,
+          createdAt: lead.createdAt,
+          sourceName: (lead.notes || "")
+            .split("\n")
+            .find((line) => line.startsWith("Lead Store source: "))
+            ?.replace("Lead Store source: ", "") || "",
+          notes: (lead.notes || "")
+            .split("\n")
+            .filter((line) =>
+              !line.startsWith("Lead Store source: ") &&
+              !line.startsWith("Lead Store type: ") &&
+              line !== "Added individually from Lead Store"
+            )
+            .join("\n"),
+          customFields: lead.customFieldValues.map((item) => ({
+            id: item.customField.id,
+            name: item.customField.name,
+            key: item.customField.key,
+            fieldType: item.customField.fieldType,
+            value: item.value,
+          })),
+        })),
+      });
+    } catch (error) {
+      console.error("Failed to fetch individual Lead Store leads:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Unable to fetch individual leads",
+      });
+    }
+  }
+);
+
+/* =========================================================
+   EDIT INDIVIDUAL LEAD
+========================================================= */
+
+router.patch(
+  "/manual/:id",
+  async (req, res) => {
+    try {
+      const companyId = req.clientUser.companyId;
+      const leadId = String(req.params.id || "").trim();
+
+      const existing = await prisma.lead.findFirst({
+        where: {
+          id: leadId,
+          companyId,
+          source: "LEAD_STORE",
+          campaign: "Individual Lead",
+        },
+      });
+
+      if (!existing) {
+        return res.status(404).json({ success: false, message: "Lead not found" });
+      }
+
+      const name = String(req.body?.name || "").trim();
+      const phone = normalizePhone(req.body?.phone);
+      const email = normalizeEmail(req.body?.email);
+      const course = cleanString(req.body?.course);
+      const type = String(req.body?.type || existing.medium || "EXTERNAL_DATA").trim().toUpperCase();
+      const sourceName = cleanString(req.body?.sourceName);
+      const notes = cleanString(req.body?.notes);
+      const assignedToUserId = cleanString(req.body?.assignedToUserId);
+      const customFields = req.body?.customFields || {};
+
+      if (!name) return res.status(400).json({ success: false, message: "Lead name is required" });
+      if (!phone || phone.length < 7) return res.status(400).json({ success: false, message: "Phone number is invalid" });
+      if (!VALID_TYPES.includes(type)) return res.status(400).json({ success: false, message: "Invalid lead type" });
+
+      const assignee = await getAssignee(companyId, assignedToUserId);
+      if (assignedToUserId && !assignee) {
+        return res.status(400).json({ success: false, message: "Selected assignee is invalid" });
+      }
+
+      let preparedCustomFields;
+      try {
+        preparedCustomFields = await prepareCustomFieldValues(companyId, customFields);
+      } catch (error) {
+        return res.status(400).json({ success: false, message: error?.message || "Invalid custom field value" });
+      }
+
+      const duplicate = await prisma.lead.findFirst({
+        where: {
+          companyId,
+          id: { not: leadId },
+          OR: [
+            { phone },
+            ...(email ? [{ email }] : []),
+          ],
+        },
+        select: { id: true, phone: true, email: true },
+      });
+
+      if (duplicate) {
+        return res.status(409).json({
+          success: false,
+          duplicate: true,
+          message: `A lead already exists with this ${duplicate.phone === phone ? "phone number" : "email address"}`,
+        });
+      }
+
+      const updated = await prisma.$transaction(async (tx) => {
+        const lead = await tx.lead.update({
+          where: { id: leadId },
+          data: {
+            name,
+            phone,
+            email: email || null,
+            course,
+            medium: type,
+            assignedToName: assignee?.name || null,
+            notes: [
+              notes,
+              sourceName ? `Lead Store source: ${sourceName}` : null,
+              `Lead Store type: ${TYPE_LABELS[type] || type}`,
+              "Added individually from Lead Store",
+            ].filter(Boolean).join("\n"),
+          },
+        });
+
+        await tx.customFieldValue.deleteMany({ where: { leadId } });
+        const values = preparedCustomFields.filter((item) => item.value !== null && item.value !== "");
+        if (values.length) {
+          await tx.customFieldValue.createMany({
+            data: values.map((item) => ({
+              customFieldId: item.field.id,
+              leadId,
+              value: item.value,
+            })),
+          });
+        }
+        return lead;
+      });
+
+      return res.json({ success: true, message: "Lead updated successfully", lead: updated });
+    } catch (error) {
+      console.error("Failed to update individual Lead Store lead:", error);
+      return res.status(500).json({ success: false, message: "Unable to update lead" });
+    }
+  }
+);
+
+/* =========================================================
+   DELETE INDIVIDUAL LEAD
+========================================================= */
+
+router.delete(
+  "/manual/:id",
+  async (req, res) => {
+    try {
+      const companyId = req.clientUser.companyId;
+      const leadId = String(req.params.id || "").trim();
+
+      const lead = await prisma.lead.findFirst({
+        where: {
+          id: leadId,
+          companyId,
+          source: "LEAD_STORE",
+          campaign: "Individual Lead",
+        },
+        select: { id: true, name: true },
+      });
+
+      if (!lead) {
+        return res.status(404).json({ success: false, message: "Lead not found" });
+      }
+
+      await prisma.lead.delete({ where: { id: leadId } });
+
+      return res.json({ success: true, message: "Lead deleted successfully", lead });
+    } catch (error) {
+      console.error("Failed to delete individual Lead Store lead:", error);
+      return res.status(500).json({ success: false, message: "Unable to delete lead" });
+    }
+  }
+);
+
+/* =========================================================
    ADD INDIVIDUAL LEAD
    Single leads are stored directly in the main Lead table.
    We do NOT create a fake one-row dataset.
@@ -1052,6 +1410,9 @@ router.post(
           req.body
             ?.assignedToUserId
         );
+
+      const customFields =
+        req.body?.customFields || {};
 
       if (!name) {
         return res
@@ -1116,6 +1477,25 @@ router.post(
             success: false,
             message:
               "Selected assignee is invalid",
+          });
+      }
+
+      let preparedCustomFields;
+
+      try {
+        preparedCustomFields =
+          await prepareCustomFieldValues(
+            companyId,
+            customFields
+          );
+      } catch (error) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              error?.message ||
+              "Invalid custom field value",
           });
       }
 
@@ -1203,7 +1583,7 @@ router.post(
               },
             });
 
-            return tx.lead.create({
+            const lead = await tx.lead.create({
               data: {
                 companyId,
                 name,
@@ -1245,6 +1625,25 @@ router.post(
                     ),
               },
             });
+
+            const valuesToCreate =
+              preparedCustomFields.filter(
+                (item) =>
+                  item.value !== null &&
+                  item.value !== ""
+              );
+
+            if (valuesToCreate.length) {
+              await tx.customFieldValue.createMany({
+                data: valuesToCreate.map((item) => ({
+                  customFieldId: item.field.id,
+                  leadId: lead.id,
+                  value: item.value,
+                })),
+              });
+            }
+
+            return lead;
           }
         );
 

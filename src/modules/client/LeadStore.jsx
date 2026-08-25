@@ -126,7 +126,8 @@ function Field({
 function IndividualLeadModal({
   assignees,
   onClose,
-  onCreated,
+  onSaved,
+  lead = null,
 }) {
   const [
     saving,
@@ -141,20 +142,33 @@ function IndividualLeadModal({
     useState("");
 
   const [
+    customFields,
+    setCustomFields,
+  ] = useState([]);
+
+  const [
+    customFieldsLoading,
+    setCustomFieldsLoading,
+  ] = useState(true);
+
+  const [
+    customFieldValues,
+    setCustomFieldValues,
+  ] = useState({});
+
+  const [
     form,
     setForm,
   ] =
     useState({
-      name: "",
-      phone: "",
-      email: "",
-      course: "",
-      type:
-        "EXTERNAL_DATA",
-      sourceName: "",
-      assignedToUserId:
-        "",
-      notes: "",
+      name: lead?.name || "",
+      phone: lead?.phone || "",
+      email: lead?.email || "",
+      course: lead?.course || "",
+      type: lead?.type || "EXTERNAL_DATA",
+      sourceName: lead?.sourceName || "",
+      assignedToUserId: "",
+      notes: lead?.notes || "",
     });
 
   function update(
@@ -170,6 +184,86 @@ function IndividualLeadModal({
     );
   }
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadCustomFields() {
+      setCustomFieldsLoading(true);
+
+      try {
+        const data = await apiRequest(
+          "/api/client/leads/meta/custom-fields"
+        );
+
+        if (!active) return;
+
+        const fields = data.fields || [];
+        setCustomFields(fields);
+
+        setCustomFieldValues((current) => {
+          const next = { ...current };
+
+          fields.forEach((field) => {
+            const existing = lead?.customFields?.find(
+              (item) => item.key === field.key
+            );
+
+            if (existing) {
+              next[field.key] =
+                field.fieldType === "CHECKBOX"
+                  ? String(existing.value).toLowerCase() === "true"
+                  : existing.value ?? "";
+            } else if (!(field.key in next)) {
+              next[field.key] =
+                field.fieldType === "CHECKBOX"
+                  ? false
+                  : "";
+            }
+          });
+
+          return next;
+        });
+      } catch (error) {
+        if (active) {
+          setError(
+            error?.data?.message ||
+              "Unable to load custom fields"
+          );
+        }
+      } finally {
+        if (active) {
+          setCustomFieldsLoading(false);
+        }
+      }
+    }
+
+    loadCustomFields();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!lead?.assignedToName || !assignees.length) return;
+    const match = assignees.find(
+      (user) => user.name === lead.assignedToName
+    );
+    if (match) {
+      setForm((current) => ({
+        ...current,
+        assignedToUserId: match.id,
+      }));
+    }
+  }, [lead, assignees]);
+
+  function updateCustomField(key, value) {
+    setCustomFieldValues((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
   async function submit(
     event
   ) {
@@ -181,18 +275,21 @@ function IndividualLeadModal({
     try {
       const data =
         await apiRequest(
-          "/api/client/lead-store/manual",
+          lead
+            ? `/api/client/lead-store/manual/${lead.id}`
+            : "/api/client/lead-store/manual",
           {
-            method:
-              "POST",
+            method: lead ? "PATCH" : "POST",
             body:
-              JSON.stringify(
-                form
-              ),
+              JSON.stringify({
+                ...form,
+                customFields:
+                  customFieldValues,
+              }),
           }
         );
 
-      onCreated(
+      onSaved(
         data
       );
     } catch (error) {
@@ -211,11 +308,13 @@ function IndividualLeadModal({
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
           <div>
             <h2 className="text-[17px] font-semibold">
-              Add Individual Lead
+              {lead ? "Edit Individual Lead" : "Add Individual Lead"}
             </h2>
 
             <p className="text-[13px] text-slate-500 mt-1">
-              Add one lead directly to the CRM without creating a spreadsheet.
+              {lead
+                ? "Update this lead and its custom field values."
+                : "Add one lead directly to the CRM without creating a spreadsheet."}
             </p>
           </div>
 
@@ -239,6 +338,7 @@ function IndividualLeadModal({
           onSubmit={
             submit
           }
+          className="overflow-y-auto max-h-[calc(92vh-78px)]"
         >
           <div className="p-6 grid md:grid-cols-2 gap-4">
             {error && (
@@ -430,6 +530,139 @@ function IndividualLeadModal({
               </select>
             </Field>
 
+            {customFieldsLoading ? (
+              <div className="md:col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-[13px] text-slate-500 inline-flex items-center gap-2">
+                <Loader2
+                  size={14}
+                  className="animate-spin"
+                />
+                Loading custom fields...
+              </div>
+            ) : customFields.length ? (
+              <div className="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                <div className="mb-4">
+                  <div className="text-[15px] font-bold text-slate-900">
+                    Custom Fields
+                  </div>
+                  <div className="mt-1 text-[13px] text-slate-500">
+                    Fields configured in Settings → Custom Fields.
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {customFields.map((field) => {
+                    const value =
+                      customFieldValues[field.key] ??
+                      (field.fieldType === "CHECKBOX"
+                        ? false
+                        : "");
+
+                    if (field.fieldType === "CHECKBOX") {
+                      return (
+                        <label
+                          key={field.id}
+                          className="md:col-span-2 flex items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={Boolean(value)}
+                            onChange={(event) =>
+                              updateCustomField(
+                                field.key,
+                                event.target.checked
+                              )
+                            }
+                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600"
+                          />
+
+                          <span>
+                            <span className="block text-[13px] font-semibold text-slate-700">
+                              {field.name}
+                              {field.required ? (
+                                <span className="ml-0.5 text-rose-500">
+                                  *
+                                </span>
+                              ) : null}
+                            </span>
+
+                            {field.description ? (
+                              <span className="mt-1 block text-xs text-slate-500">
+                                {field.description}
+                              </span>
+                            ) : null}
+                          </span>
+                        </label>
+                      );
+                    }
+
+                    return (
+                      <Field
+                        key={field.id}
+                        label={field.name}
+                        required={field.required}
+                      >
+                        {field.fieldType === "DROPDOWN" ? (
+                          <select
+                            required={field.required}
+                            value={value}
+                            onChange={(event) =>
+                              updateCustomField(
+                                field.key,
+                                event.target.value
+                              )
+                            }
+                            className="form-input"
+                          >
+                            <option value="">
+                              Select {field.name}
+                            </option>
+
+                            {(field.options || []).map(
+                              (option) => (
+                                <option
+                                  key={option}
+                                  value={option}
+                                >
+                                  {option}
+                                </option>
+                              )
+                            )}
+                          </select>
+                        ) : (
+                          <input
+                            type={
+                              field.fieldType === "NUMBER"
+                                ? "number"
+                                : field.fieldType === "DATE"
+                                ? "date"
+                                : field.fieldType === "EMAIL"
+                                ? "email"
+                                : field.fieldType === "PHONE"
+                                ? "tel"
+                                : "text"
+                            }
+                            required={field.required}
+                            value={value}
+                            onChange={(event) =>
+                              updateCustomField(
+                                field.key,
+                                event.target.value
+                              )
+                            }
+                            className="form-input"
+                            placeholder={
+                              field.description ||
+                              `Enter ${field.name}`
+                            }
+                          />
+                        )}
+                      </Field>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
             <Field
               label="Notes"
               full
@@ -489,8 +722,8 @@ function IndividualLeadModal({
               )}
 
               {saving
-                ? "Adding..."
-                : "Add Lead"}
+                ? lead ? "Saving..." : "Adding..."
+                : lead ? "Save Changes" : "Add Lead"}
             </button>
           </div>
         </form>
@@ -1522,6 +1755,11 @@ export default function LeadStore({ selectedYear = "all" }) {
     useState([]);
 
   const [
+    individualLeads,
+    setIndividualLeads,
+  ] = useState([]);
+
+  const [
     assignees,
     setAssignees,
   ] =
@@ -1550,6 +1788,11 @@ export default function LeadStore({ selectedYear = "all" }) {
     setShowIndividual,
   ] =
     useState(false);
+
+  const [
+    editingIndividual,
+    setEditingIndividual,
+  ] = useState(null);
 
   const [
     showUpload,
@@ -1593,6 +1836,17 @@ export default function LeadStore({ selectedYear = "all" }) {
     }
   }
 
+  async function loadIndividualLeads() {
+    try {
+      const data = await apiRequest(
+        `/api/client/lead-store/manual?year=${encodeURIComponent(selectedYear)}`
+      );
+      setIndividualLeads(data.leads || []);
+    } catch (error) {
+      setError(error?.data?.message || "Unable to load individual leads");
+    }
+  }
+
   async function loadAssignees() {
     try {
       const data =
@@ -1613,6 +1867,7 @@ export default function LeadStore({ selectedYear = "all" }) {
 
   useEffect(() => {
     loadDatasets();
+    loadIndividualLeads();
     loadAssignees();
   }, [selectedYear]);
 
@@ -1806,9 +2061,9 @@ export default function LeadStore({ selectedYear = "all" }) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={
-              loadDatasets
-            }
+            onClick={async () => {
+              await Promise.all([loadDatasets(), loadIndividualLeads()]);
+            }}
             disabled={
               loading
             }
@@ -1827,11 +2082,10 @@ export default function LeadStore({ selectedYear = "all" }) {
 
           <button
             type="button"
-            onClick={() =>
-              setShowIndividual(
-                true
-              )
-            }
+            onClick={() => {
+              setEditingIndividual(null);
+              setShowIndividual(true);
+            }}
             className="h-9 px-3.5 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm"
           >
             <UserPlus
@@ -1915,6 +2169,18 @@ export default function LeadStore({ selectedYear = "all" }) {
 
       <div className="bg-white border border-slate-200 rounded-xl px-3 py-2.5 flex flex-col md:flex-row md:items-center gap-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
         <div className="flex gap-1 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setSub("individual")}
+            className={`px-3 py-2 text-[13px] font-semibold border-b-2 whitespace-nowrap ${
+              sub === "individual"
+                ? "border-indigo-600 text-indigo-600"
+                : "border-transparent text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            Individual Leads
+          </button>
+
           {TYPES.map(
             (
               type
@@ -1961,7 +2227,7 @@ export default function LeadStore({ selectedYear = "all" }) {
                 event.target.value
               )
             }
-            placeholder="Search dataset, source, file or assignee..."
+            placeholder={sub === "individual" ? "Search name, phone, email or course..." : "Search dataset, source, file or assignee..."}
             className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
           />
         </div>
@@ -1996,6 +2262,86 @@ export default function LeadStore({ selectedYear = "all" }) {
         </div>
       ) : (
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+          {sub === "individual" ? (
+            <Table
+              columns={[
+                "Name",
+                "Phone",
+                "Email",
+                "Course",
+                "Custom Fields",
+                "Assigned To",
+                "Status",
+                "Created",
+                "Actions",
+              ]}
+              empty="No individual leads found"
+              rows={individualLeads
+                .filter((lead) => {
+                  const query = search.trim().toLowerCase();
+                  if (!query) return true;
+                  return [lead.name, lead.phone, lead.email, lead.course, lead.assignedToName]
+                    .filter(Boolean)
+                    .some((value) => String(value).toLowerCase().includes(query));
+                })
+                .map((lead) => (
+                  <tr key={lead.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-4 py-2.5 text-[15px] font-semibold text-slate-900">{lead.name}</td>
+                    <td className="px-4 py-2.5 text-[15px] text-slate-600">{lead.phone || "—"}</td>
+                    <td className="px-4 py-2.5 text-[15px] text-slate-600">{lead.email || "—"}</td>
+                    <td className="px-4 py-2.5 text-[15px] text-slate-600">{lead.course || "—"}</td>
+                    <td className="px-4 py-2.5">
+                      {lead.customFields?.length ? (
+                        <div className="space-y-1">
+                          {lead.customFields.map((field) => (
+                            <div key={field.id} className="text-[12px] text-slate-600">
+                              <span className="font-semibold text-slate-700">{field.name}:</span> {field.value || "—"}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[13px] text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-[15px] text-slate-600">{lead.assignedToName || "Unassigned"}</td>
+                    <td className="px-4 py-2.5"><Badge tone="slate">{lead.stage || "NEW"}</Badge></td>
+                    <td className="px-4 py-2.5 text-[13px] text-slate-500">{formatDate(lead.createdAt)}</td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingIndividual(lead);
+                            setShowIndividual(true);
+                          }}
+                          title="Edit lead"
+                          className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!window.confirm(`Delete ${lead.name}? This cannot be undone.`)) return;
+                            try {
+                              await apiRequest(`/api/client/lead-store/manual/${lead.id}`, { method: "DELETE" });
+                              setSuccessMessage(`${lead.name} deleted successfully.`);
+                              await loadIndividualLeads();
+                            } catch (error) {
+                              setError(error?.data?.message || "Unable to delete lead");
+                            }
+                          }}
+                          title="Delete lead"
+                          className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+            />
+          ) : (
           <Table
             columns={[
               "Dataset",
@@ -2152,29 +2498,27 @@ export default function LeadStore({ selectedYear = "all" }) {
               }
             )}
           />
+          )}
         </div>
       )}
 
       {showIndividual && (
         <IndividualLeadModal
-          assignees={
-            assignees
-          }
-          onClose={() =>
-            setShowIndividual(
-              false
-            )
-          }
-          onCreated={async (
-            data
-          ) => {
-            setShowIndividual(
-              false
-            );
-
+          assignees={assignees}
+          lead={editingIndividual}
+          onClose={() => {
+            setShowIndividual(false);
+            setEditingIndividual(null);
+          }}
+          onSaved={async (data) => {
+            const wasEditing = Boolean(editingIndividual);
+            setShowIndividual(false);
+            setEditingIndividual(null);
             setSuccessMessage(
-              `${data.lead.name} added successfully. It is now available in Leads.`
+              `${data.lead.name} ${wasEditing ? "updated" : "added"} successfully.`
             );
+            setSub("individual");
+            await loadIndividualLeads();
           }}
         />
       )}

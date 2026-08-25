@@ -990,6 +990,7 @@ model CompanyIntegration {
   config      Json?
 
   credentialsConfigured Boolean @default(false)
+  apiKeyVersion         Int     @default(1)
 
   lastConnectedAt DateTime?
   lastError       String?

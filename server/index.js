@@ -49,6 +49,7 @@ import clientCalendarRoutes from "./routes/clientCalendar.js";
 import clientYearsRoutes from "./routes/clientYears.js";
 
 import razorpayWebhook from "./routes/razorpayWebhook.js";
+import publicIntegrationsRoutes from "./routes/publicIntegrations.js";
 
 const config = loadServerConfig();
 
@@ -150,6 +151,12 @@ const apiLimiter =
 app.use(
   "/api",
   apiLimiter
+);
+
+
+app.use(
+  "/api/integrations",
+  publicIntegrationsRoutes
 );
 
 app.get(
