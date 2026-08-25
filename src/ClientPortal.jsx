@@ -27,7 +27,6 @@ import {
   AlertCircle,
   ReceiptIndianRupee,
   CalendarClock,
-  Menu,
   Search,
   Sun,
   ChevronRight,
@@ -1851,15 +1850,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
       {/* MOBILE APP BAR */}
       <div className="lg:hidden sticky top-0 z-40 h-14 bg-[#f6f7fb]/95 backdrop-blur-xl border-b border-slate-200/70 px-4 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setMobileSidebarOpen(true)}
-          className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-600 shadow-sm flex items-center justify-center active:scale-95 transition"
-          aria-label="Open navigation"
-        >
-          <Menu size={18} />
-        </button>
-
+        
         <div className="min-w-0 px-3 text-center">
           <div className="text-[13px] font-bold text-slate-950 truncate">
             {company.brandName}
@@ -2242,19 +2233,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             }`}
           >
             <div className="h-full px-4 sm:px-6 lg:px-7 flex items-center gap-4">
-              <button
-                type="button"
-                onClick={() => setSidebarCollapsed((current) => !current)}
-                className="hidden lg:flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-950"
-                title={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
-                aria-label={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
-              >
-                {sidebarCollapsed ? (
-                  <PanelLeftOpen size={18} />
-                ) : (
-                  <Menu size={18} />
-                )}
-              </button>
+              
 
               <div className="relative flex-1 max-w-[570px]">
                 <Search

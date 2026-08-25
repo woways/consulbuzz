@@ -88,7 +88,7 @@ function WalkinMetric({
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-400">
             {label}
           </div>
           <div className="mt-2 text-[22px] leading-none font-bold tracking-tight text-slate-950">
@@ -99,7 +99,7 @@ function WalkinMetric({
           <Icon size={17} />
         </div>
       </div>
-      <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+      <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
         {detail}
       </div>
     </div>
@@ -109,7 +109,7 @@ function WalkinMetric({
 function Field({ label, required, full, children }) {
   return (
     <label className={full ? "sm:col-span-2" : ""}>
-      <div className="text-xs font-semibold text-slate-600 mb-1.5">
+      <div className="text-[13px] font-semibold text-slate-600 mb-1.5">
         {label}
         {required ? <span className="text-rose-500"> *</span> : null}
       </div>
@@ -273,13 +273,13 @@ export default function Walkins({ selectedYear = "all" }) {
     <div className="space-y-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
             Leads / Offline engagement
           </div>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
             Walk-ins
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-[15px] text-slate-500">
             Track office visitors, counsellor interactions and conversion outcomes.
           </p>
         </div>
@@ -287,7 +287,7 @@ export default function Walkins({ selectedYear = "all" }) {
         <button
           type="button"
           onClick={openCreate}
-          className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
+          className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
         >
           <Plus size={14} />
           Log Walk-in
@@ -335,7 +335,7 @@ export default function Walkins({ selectedYear = "all" }) {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search visitor, phone, purpose or counsellor..."
-            className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+            className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
           />
         </div>
 
@@ -344,7 +344,7 @@ export default function Walkins({ selectedYear = "all" }) {
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700"
+            className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-[13px] font-semibold text-slate-700"
           >
             <option value="">All Statuses</option>
             {STATUS_OPTIONS.map(([value, label]) => (
@@ -357,7 +357,7 @@ export default function Walkins({ selectedYear = "all" }) {
       </div>
 
       {loadError ? (
-        <div className="flex items-start gap-2 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3">
+        <div className="flex items-start gap-2 text-[13px] text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3">
           <AlertCircle size={14} className="mt-0.5" />
           {loadError}
         </div>
@@ -365,17 +365,17 @@ export default function Walkins({ selectedYear = "all" }) {
 
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         {loading ? (
-          <div className="py-16 flex items-center justify-center gap-2 text-sm text-slate-500">
+          <div className="py-16 flex items-center justify-center gap-2 text-[15px] text-slate-500">
             <Loader2 size={16} className="animate-spin" />
             Loading walk-ins...
           </div>
         ) : walkIns.length === 0 ? (
           <div className="py-16 text-center px-5">
             <UserPlus size={24} className="mx-auto text-slate-300" />
-            <div className="mt-3 text-sm font-semibold text-slate-800">
+            <div className="mt-3 text-[15px] font-semibold text-slate-800">
               No walk-ins found
             </div>
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="mt-1 text-[13px] text-slate-500">
               Log your first visitor to start tracking walk-ins.
             </div>
           </div>
@@ -394,32 +394,32 @@ export default function Walkins({ selectedYear = "all" }) {
             ]}
             rows={walkIns.map((walkIn) => (
               <tr key={walkIn.id} className="hover:bg-slate-50/80 transition-colors">
-                <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                <td className="px-4 py-3 text-[13px] text-slate-500 whitespace-nowrap">
                   {formatDateTime(walkIn.arrivedAt)}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-[15px] font-semibold text-slate-900">
                     {walkIn.visitorName}
                   </div>
                   {walkIn.course ? (
-                    <div className="text-[11px] text-slate-400 mt-0.5">
+                    <div className="text-xs text-slate-400 mt-0.5">
                       {walkIn.course}
                     </div>
                   ) : null}
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                <td className="px-4 py-3 text-[15px] text-slate-600 whitespace-nowrap">
                   {walkIn.phone}
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-700">
+                <td className="px-4 py-3 text-[15px] text-slate-700">
                   {walkIn.purpose}
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600">
+                <td className="px-4 py-3 text-[15px] text-slate-600">
                   {walkIn.accompaniedBy}
                 </td>
-                <td className="px-4 py-3 text-sm font-medium text-slate-700">
+                <td className="px-4 py-3 text-[15px] font-medium text-slate-700">
                   {walkIn.counsellor}
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-600">
+                <td className="px-4 py-3 text-[15px] text-slate-600">
                   {walkIn.outcome}
                 </td>
                 <td className="px-4 py-3">
@@ -471,10 +471,10 @@ export default function Walkins({ selectedYear = "all" }) {
           <div className="w-full max-w-2xl max-h-[92vh] bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <div className="text-base font-bold text-slate-950">
+                <div className="text-[17px] font-bold text-slate-950">
                   {editing ? "Edit Walk-in" : "Log Walk-in"}
                 </div>
-                <div className="text-xs text-slate-500 mt-1">
+                <div className="text-[13px] text-slate-500 mt-1">
                   Record visitor and counselling context.
                 </div>
               </div>
@@ -494,7 +494,7 @@ export default function Walkins({ selectedYear = "all" }) {
                     required
                     value={form.visitorName}
                     onChange={(event) => updateForm("visitorName", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Phone" required>
@@ -502,7 +502,7 @@ export default function Walkins({ selectedYear = "all" }) {
                     required
                     value={form.phone}
                     onChange={(event) => updateForm("phone", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Email">
@@ -510,14 +510,14 @@ export default function Walkins({ selectedYear = "all" }) {
                     type="email"
                     value={form.email}
                     onChange={(event) => updateForm("email", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Course / Interest">
                   <input
                     value={form.course}
                     onChange={(event) => updateForm("course", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Purpose" required>
@@ -525,28 +525,28 @@ export default function Walkins({ selectedYear = "all" }) {
                     required
                     value={form.purpose}
                     onChange={(event) => updateForm("purpose", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Came With">
                   <input
                     value={form.accompaniedBy}
                     onChange={(event) => updateForm("accompaniedBy", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Counsellor">
                   <input
                     value={form.counsellorName}
                     onChange={(event) => updateForm("counsellorName", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Status">
                   <select
                     value={form.status}
                     onChange={(event) => updateForm("status", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-white"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
                   >
                     {STATUS_OPTIONS.map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
@@ -558,7 +558,7 @@ export default function Walkins({ selectedYear = "all" }) {
                     type="datetime-local"
                     value={form.arrivedAt}
                     onChange={(event) => updateForm("arrivedAt", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Outcome / Notes" full>
@@ -566,13 +566,13 @@ export default function Walkins({ selectedYear = "all" }) {
                     rows={3}
                     value={form.outcome}
                     onChange={(event) => updateForm("outcome", event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
               </div>
 
               {formError ? (
-                <div className="mt-4 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3">
+                <div className="mt-4 text-[13px] text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3">
                   {formError}
                 </div>
               ) : null}
@@ -581,14 +581,14 @@ export default function Walkins({ selectedYear = "all" }) {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="h-9 px-4 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700"
+                  className="h-9 px-4 border border-slate-200 rounded-lg text-[13px] font-semibold text-slate-700"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2"
+                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2"
                 >
                   {saving ? <Loader2 size={13} className="animate-spin" /> : null}
                   {editing ? "Save Changes" : "Log Walk-in"}

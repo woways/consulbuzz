@@ -140,7 +140,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-slate-600 mb-1">
+      <label className="block text-[13px] font-medium text-slate-600 mb-1">
         {label}
         {required && (
           <span className="text-rose-500 ml-0.5">
@@ -159,7 +159,7 @@ function Field({
             event.target.value
           )
         }
-        className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-colors"
+        className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-colors"
       />
     </div>
   );
@@ -333,15 +333,15 @@ function ExpenseModal({
       <div className="bg-white rounded-2xl shadow-2xl border border-white/70 w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-500">
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-500">
               Finance / Expense Claim
             </div>
 
-            <h2 className="mt-1 text-lg font-bold text-slate-950">
+            <h2 className="mt-1 text-xl font-bold text-slate-950">
               Add Expense
             </h2>
 
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-[13px] text-slate-500">
               Add expense details, payment information and receipt proof. New expenses remain pending until approved.
             </p>
           </div>
@@ -361,7 +361,7 @@ function ExpenseModal({
         >
           <div className="p-6 overflow-y-auto space-y-5">
             {error && (
-              <div className="bg-rose-50 text-rose-700 border border-rose-200 rounded-xl px-3 py-2 text-sm">
+              <div className="bg-rose-50 text-rose-700 border border-rose-200 rounded-xl px-3 py-2 text-[15px]">
                 {error}
               </div>
             )}
@@ -369,7 +369,7 @@ function ExpenseModal({
             <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
               <div className="flex items-center gap-2 mb-4">
                 <Receipt size={15} className="text-indigo-600" />
-                <div className="text-sm font-bold text-slate-900">
+                <div className="text-[15px] font-bold text-slate-900">
                   Expense Details
                 </div>
               </div>
@@ -433,7 +433,7 @@ function ExpenseModal({
                 />
 
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                  <label className="block text-[13px] font-medium text-slate-600 mb-1">
                     Description
                   </label>
 
@@ -449,7 +449,7 @@ function ExpenseModal({
                       )
                     }
                     placeholder="Why this expense was incurred..."
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-colors"
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-[15px] resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-colors"
                   />
                 </div>
               </div>
@@ -458,7 +458,7 @@ function ExpenseModal({
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="flex items-center gap-2 mb-4">
                 <CreditCard size={15} className="text-indigo-600" />
-                <div className="text-sm font-bold text-slate-900">
+                <div className="text-[15px] font-bold text-slate-900">
                   Vendor & Payment
                 </div>
               </div>
@@ -525,12 +525,12 @@ function ExpenseModal({
             <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4">
               <div className="flex items-center gap-2 mb-2">
                 <FileText size={15} className="text-indigo-600" />
-                <div className="text-sm font-bold text-slate-900">
+                <div className="text-[15px] font-bold text-slate-900">
                   Receipt / Invoice / Proof
                 </div>
               </div>
 
-              <p className="text-[11px] text-slate-500 mb-4">
+              <p className="text-xs text-slate-500 mb-4">
                 Upload JPG, PNG, WEBP or PDF proof. Maximum file size: 8 MB.
               </p>
 
@@ -556,7 +556,7 @@ function ExpenseModal({
                           className="mx-auto text-indigo-600 animate-spin"
                         />
 
-                        <div className="mt-3 text-sm font-semibold text-slate-800">
+                        <div className="mt-3 text-[15px] font-semibold text-slate-800">
                           Uploading proof...
                         </div>
                       </>
@@ -566,11 +566,11 @@ function ExpenseModal({
                           <Upload size={19} />
                         </div>
 
-                        <div className="mt-3 text-sm font-semibold text-slate-800">
+                        <div className="mt-3 text-[15px] font-semibold text-slate-800">
                           Choose receipt or invoice
                         </div>
 
-                        <div className="mt-1 text-[11px] text-slate-500">
+                        <div className="mt-1 text-xs text-slate-500">
                           Click to upload image or PDF
                         </div>
                       </>
@@ -585,11 +585,11 @@ function ExpenseModal({
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-semibold text-slate-800 truncate">
+                      <div className="text-[13px] font-semibold text-slate-800 truncate">
                         {proofName || "Expense proof document"}
                       </div>
 
-                      <div className="mt-0.5 text-[10px] text-emerald-600 font-semibold">
+                      <div className="mt-0.5 text-[11px] text-emerald-600 font-semibold">
                         Upload complete
                       </div>
                     </div>
@@ -630,14 +630,14 @@ function ExpenseModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-9 px-4 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-700"
+              className="h-9 px-4 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700"
             >
               Cancel
             </button>
 
             <button
               disabled={saving || proofUploading}
-              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-sm inline-flex items-center gap-2"
+              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-[13px] font-semibold shadow-sm inline-flex items-center gap-2"
             >
               {saving ? (
                 <Loader2 size={13} className="animate-spin" />
@@ -679,11 +679,11 @@ function ExpenseDetails({
       <div className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white shadow-2xl border-l border-slate-200 flex flex-col">
         <div className="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-4">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
+            <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">
               Expense Details
             </div>
 
-            <h2 className="mt-1 text-lg font-bold text-slate-950">
+            <h2 className="mt-1 text-xl font-bold text-slate-950">
               {expense.title}
             </h2>
 
@@ -705,7 +705,7 @@ function ExpenseDetails({
 
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           <div className="rounded-2xl bg-slate-950 text-white p-5">
-            <div className="text-[10px] uppercase tracking-[0.1em] text-slate-400 font-semibold">
+            <div className="text-[11px] uppercase tracking-[0.1em] text-slate-400 font-semibold">
               Expense Amount
             </div>
 
@@ -720,11 +720,11 @@ function ExpenseDetails({
                 key={label}
                 className="rounded-xl border border-slate-200 bg-slate-50/60 p-3"
               >
-                <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
                   {label}
                 </div>
 
-                <div className="mt-1.5 text-xs font-semibold text-slate-800 break-words">
+                <div className="mt-1.5 text-[13px] font-semibold text-slate-800 break-words">
                   {value}
                 </div>
               </div>
@@ -732,17 +732,17 @@ function ExpenseDetails({
           </div>
 
           <div>
-            <div className="text-xs font-bold text-slate-900">
+            <div className="text-[13px] font-bold text-slate-900">
               Description
             </div>
 
-            <div className="mt-2 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600 leading-6">
+            <div className="mt-2 rounded-xl border border-slate-200 bg-white p-3 text-[15px] text-slate-600 leading-6">
               {expense.description || "No description provided."}
             </div>
           </div>
 
           <div>
-            <div className="text-xs font-bold text-slate-900">
+            <div className="text-[13px] font-bold text-slate-900">
               Receipt / Invoice Proof
             </div>
 
@@ -751,7 +751,7 @@ function ExpenseDetails({
                 <div className="flex items-center gap-2">
                   <FileText size={15} className="text-indigo-600" />
 
-                  <div className="min-w-0 flex-1 text-xs font-mono text-slate-600 truncate">
+                  <div className="min-w-0 flex-1 text-[13px] font-mono text-slate-600 truncate">
                     {expense.receiptUrl}
                   </div>
                 </div>
@@ -761,7 +761,7 @@ function ExpenseDetails({
                     href={expense.receiptUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold inline-flex items-center gap-1.5"
+                    className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold inline-flex items-center gap-1.5"
                   >
                     <Eye size={12} />
                     Preview
@@ -772,7 +772,7 @@ function ExpenseDetails({
                     download
                     target="_blank"
                     rel="noreferrer"
-                    className="h-8 px-3 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 text-indigo-700 text-[11px] font-semibold inline-flex items-center gap-1.5"
+                    className="h-8 px-3 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 text-indigo-700 text-xs font-semibold inline-flex items-center gap-1.5"
                   >
                     <Download size={12} />
                     Download
@@ -780,7 +780,7 @@ function ExpenseDetails({
                 </div>
               </div>
             ) : (
-              <div className="mt-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center text-xs text-slate-500">
+              <div className="mt-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center text-[13px] text-slate-500">
                 No proof document attached.
               </div>
             )}
@@ -792,7 +792,7 @@ function ExpenseDetails({
             <button
               type="button"
               onClick={() => onStatus(expense.id, "REJECTED")}
-              className="flex-1 h-10 rounded-xl border border-rose-200 bg-white hover:bg-rose-50 text-rose-700 text-xs font-semibold inline-flex items-center justify-center gap-2"
+              className="flex-1 h-10 rounded-xl border border-rose-200 bg-white hover:bg-rose-50 text-rose-700 text-[13px] font-semibold inline-flex items-center justify-center gap-2"
             >
               <Ban size={14} />
               Reject
@@ -801,7 +801,7 @@ function ExpenseDetails({
             <button
               type="button"
               onClick={() => onStatus(expense.id, "APPROVED")}
-              className="flex-1 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center justify-center gap-2"
+              className="flex-1 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-semibold inline-flex items-center justify-center gap-2"
             >
               <Check size={14} />
               Approve
@@ -887,7 +887,7 @@ function IncentiveModal({
               Add Incentive
             </h2>
 
-            <p className="text-xs text-slate-500">
+            <p className="text-[13px] text-slate-500">
               Incentive affects profit
               only after approval.
             </p>
@@ -903,7 +903,7 @@ function IncentiveModal({
         <form onSubmit={submit}>
           <div className="p-6 space-y-4">
             {error && (
-              <div className="bg-rose-50 text-rose-700 border border-rose-200 rounded p-2 text-sm">
+              <div className="bg-rose-50 text-rose-700 border border-rose-200 rounded p-2 text-[15px]">
                 {error}
               </div>
             )}
@@ -965,7 +965,7 @@ function IncentiveModal({
             />
 
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
+              <label className="block text-[13px] font-medium text-slate-600 mb-1">
                 Description
               </label>
 
@@ -980,7 +980,7 @@ function IncentiveModal({
                     event.target.value
                   )
                 }
-                className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-colors"
+                className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-[15px] resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-colors"
               />
             </div>
           </div>
@@ -989,14 +989,14 @@ function IncentiveModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-9 px-4 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-700"
+              className="h-9 px-4 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700"
             >
               Cancel
             </button>
 
             <button
               disabled={saving}
-              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-sm"
+              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-[13px] font-semibold shadow-sm"
             >
               {saving
                 ? "Creating..."
@@ -1037,7 +1037,7 @@ function RevenueMetric({
       <div className="flex items-start justify-between gap-3">
         <div>
           <div
-            className={`text-[10px] font-semibold uppercase tracking-[0.09em] ${
+            className={`text-[11px] font-semibold uppercase tracking-[0.09em] ${
               featured ? "text-slate-400" : "text-slate-400"
             }`}
           >
@@ -1045,7 +1045,7 @@ function RevenueMetric({
           </div>
 
           <div
-            className={`mt-2 text-xl leading-none font-bold tracking-tight ${
+            className={`mt-2 text-[22px] leading-none font-bold tracking-tight ${
               featured ? "text-white" : "text-slate-950"
             }`}
           >
@@ -1065,7 +1065,7 @@ function RevenueMetric({
       </div>
 
       <div
-        className={`mt-3 pt-3 border-t text-[11px] ${
+        className={`mt-3 pt-3 border-t text-xs ${
           featured
             ? "border-white/10 text-slate-400"
             : "border-slate-100 text-slate-500"
@@ -1449,7 +1449,7 @@ export default function Revenue({ selectedYear = "all" }) {
     <div className="space-y-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
             Finance / Revenue management
           </div>
 
@@ -1457,7 +1457,7 @@ export default function Revenue({ selectedYear = "all" }) {
             Revenue
           </h1>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-[15px] text-slate-500">
             Monitor collections, outstanding revenue, approved costs, incentives and operating profit.
           </p>
         </div>
@@ -1466,7 +1466,7 @@ export default function Revenue({ selectedYear = "all" }) {
           type="button"
           onClick={loadRevenue}
           disabled={loading}
-          className="h-9 px-3.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 inline-flex items-center justify-center gap-2 shadow-sm"
+          className="h-9 px-3.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 inline-flex items-center justify-center gap-2 shadow-sm"
         >
           <RefreshCw
             size={13}
@@ -1477,14 +1477,14 @@ export default function Revenue({ selectedYear = "all" }) {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 text-rose-700 px-3 py-2 rounded-lg text-sm">
+        <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 text-rose-700 px-3 py-2 rounded-lg text-[15px]">
           <AlertCircle size={15} />
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-14 flex items-center justify-center gap-2 text-sm text-slate-500">
+        <div className="bg-white border border-slate-200 rounded-xl p-14 flex items-center justify-center gap-2 text-[15px] text-slate-500">
           <Loader2
             size={16}
             className="animate-spin"
@@ -1545,7 +1545,7 @@ export default function Revenue({ selectedYear = "all" }) {
                 key={item}
                 type="button"
                 onClick={() => setTab(item)}
-                className={`h-8 px-3 rounded-lg text-xs font-semibold transition-colors ${
+                className={`h-8 px-3 rounded-lg text-[13px] font-semibold transition-colors ${
                   tab === item
                     ? "bg-slate-950 text-white shadow-sm"
                     : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
@@ -1560,11 +1560,11 @@ export default function Revenue({ selectedYear = "all" }) {
             "overview" && (
             <div className="grid lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-                <h3 className="font-semibold text-sm text-slate-900 mb-1">
+                <h3 className="font-semibold text-[15px] text-slate-900 mb-1">
                   Monthly Revenue
                 </h3>
 
-                <div className="text-xs text-slate-500 mb-5">
+                <div className="text-[13px] text-slate-500 mb-5">
                   Potential versus collected revenue by month
                 </div>
 
@@ -1623,15 +1623,15 @@ export default function Revenue({ selectedYear = "all" }) {
               </div>
 
               <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-                <h3 className="font-semibold text-sm text-slate-900 mb-1">
+                <h3 className="font-semibold text-[15px] text-slate-900 mb-1">
                   Breakdown
                 </h3>
 
-                <div className="text-xs text-slate-500 mb-5">
+                <div className="text-[13px] text-slate-500 mb-5">
                   Current financial position
                 </div>
 
-                <div className="space-y-3 text-sm">
+                <div className="space-y-3 text-[15px]">
                   <Row
                     label="Received"
                     value={money(
@@ -1727,7 +1727,7 @@ export default function Revenue({ selectedYear = "all" }) {
                       )
                     }
                     placeholder="Search expense, vendor, invoice, employee..."
-                    className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                    className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-xl text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                   />
                 </div>
 
@@ -1745,7 +1745,7 @@ export default function Revenue({ selectedYear = "all" }) {
                           event.target.value
                         )
                       }
-                      className="h-9 pl-8 pr-8 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-700"
+                      className="h-9 pl-8 pr-8 border border-slate-200 bg-white rounded-xl text-[13px] font-semibold text-slate-700"
                     >
                       <option value="ALL">
                         All Status
@@ -1769,7 +1769,7 @@ export default function Revenue({ selectedYear = "all" }) {
                         event.target.value
                       )
                     }
-                    className="h-9 px-3 border border-slate-200 bg-white rounded-xl text-xs font-semibold text-slate-700"
+                    className="h-9 px-3 border border-slate-200 bg-white rounded-xl text-[13px] font-semibold text-slate-700"
                   >
                     <option value="ALL">
                       All Categories
@@ -1791,7 +1791,7 @@ export default function Revenue({ selectedYear = "all" }) {
                     type="button"
                     onClick={exportExpenses}
                     disabled={!filteredExpenses.length}
-                    className="h-9 px-3 border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 rounded-xl text-xs font-semibold text-slate-700 inline-flex items-center gap-2"
+                    className="h-9 px-3 border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 rounded-xl text-[13px] font-semibold text-slate-700 inline-flex items-center gap-2"
                   >
                     <Download size={13} />
                     Export
@@ -1802,7 +1802,7 @@ export default function Revenue({ selectedYear = "all" }) {
                     onClick={() =>
                       setShowExpense(true)
                     }
-                    className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-2 shadow-sm"
+                    className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm"
                   >
                     <Plus size={14} />
                     Add Expense
@@ -1813,42 +1813,42 @@ export default function Revenue({ selectedYear = "all" }) {
               <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
                 <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-sm font-bold text-slate-900">
+                    <div className="text-[15px] font-bold text-slate-900">
                       Expense Claims
                     </div>
 
-                    <div className="mt-0.5 text-[11px] text-slate-500">
+                    <div className="mt-0.5 text-xs text-slate-500">
                       {filteredExpenses.length} visible · click any row to view complete details and proof
                     </div>
                   </div>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full text-[15px]">
                     <thead className="bg-slate-50/80">
                       <tr>
-                        <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Expense
                         </th>
-                        <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Category
                         </th>
-                        <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Vendor
                         </th>
-                        <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Amount
                         </th>
-                        <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Date
                         </th>
-                        <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Proof
                         </th>
-                        <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Status
                         </th>
-                        <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Actions
                         </th>
                       </tr>
@@ -1873,7 +1873,7 @@ export default function Revenue({ selectedYear = "all" }) {
                                 {expense.title}
                               </div>
 
-                              <div className="mt-0.5 text-[11px] text-slate-500">
+                              <div className="mt-0.5 text-xs text-slate-500">
                                 {expense.submittedByName || "—"}
                               </div>
                             </td>
@@ -1907,13 +1907,13 @@ export default function Revenue({ selectedYear = "all" }) {
                                   onClick={(event) =>
                                     event.stopPropagation()
                                   }
-                                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+                                  className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-indigo-600 hover:text-indigo-700"
                                 >
                                   <FileText size={13} />
                                   View
                                 </a>
                               ) : (
-                                <span className="text-xs text-slate-400">
+                                <span className="text-[13px] text-slate-400">
                                   —
                                 </span>
                               )}
@@ -1997,11 +1997,11 @@ export default function Revenue({ selectedYear = "all" }) {
                               <Receipt size={18} />
                             </div>
 
-                            <div className="mt-3 text-sm font-semibold text-slate-700">
+                            <div className="mt-3 text-[15px] font-semibold text-slate-700">
                               No expenses found
                             </div>
 
-                            <div className="mt-1 text-xs text-slate-500">
+                            <div className="mt-1 text-[13px] text-slate-500">
                               Try changing the filters or add a new expense.
                             </div>
                           </td>
@@ -2024,7 +2024,7 @@ export default function Revenue({ selectedYear = "all" }) {
                       true
                     )
                   }
-                  className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2 shadow-sm"
+                  className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm"
                 >
                   <Plus size={14} />
                   Add Incentive
@@ -2032,25 +2032,25 @@ export default function Revenue({ selectedYear = "all" }) {
               </div>
 
               <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-                <table className="w-full text-sm">
+                <table className="w-full text-[15px]">
                   <thead className="bg-slate-50/80">
                     <tr>
-                      <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Employee
                       </th>
-                      <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Title
                       </th>
-                      <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Amount
                       </th>
-                      <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Date
                       </th>
-                      <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Actions
                       </th>
                     </tr>
@@ -2147,7 +2147,7 @@ export default function Revenue({ selectedYear = "all" }) {
                                     "PAID"
                                   )
                                 }
-                                className="h-8 px-2.5 text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-700 rounded-lg inline-flex items-center gap-1.5"
+                                className="h-8 px-2.5 text-[13px] font-semibold bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-700 rounded-lg inline-flex items-center gap-1.5"
                               >
                                 <Wallet
                                   size={

@@ -204,7 +204,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+      <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
         {label}
       </label>
 
@@ -226,7 +226,7 @@ function Field({
         placeholder={
           placeholder
         }
-        className={`w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 disabled:bg-slate-50 disabled:text-slate-500 ${
+        className={`w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 disabled:bg-slate-50 disabled:text-slate-500 ${
           mono
             ? "font-mono"
             : ""
@@ -248,15 +248,15 @@ function PlaceholderPanel({
           <Icon size={20} />
         </div>
 
-        <h3 className="mt-4 text-base font-bold text-slate-900">
+        <h3 className="mt-4 text-[17px] font-bold text-slate-900">
           {title}
         </h3>
 
-        <p className="mt-2 text-sm leading-relaxed text-slate-500">
+        <p className="mt-2 text-[15px] leading-relaxed text-slate-500">
           {description}
         </p>
 
-        <div className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-full px-3 py-1.5">
+        <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 rounded-full px-3 py-1.5">
           <ShieldCheck size={12} />
           Production configuration
         </div>
@@ -1889,7 +1889,7 @@ export default function SettingsView({
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
             Workspace / Configuration
           </div>
 
@@ -1897,7 +1897,7 @@ export default function SettingsView({
             Settings
           </h1>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-[15px] text-slate-500">
             Manage company profile,
             branding, access,
             lead configuration and
@@ -1914,7 +1914,7 @@ export default function SettingsView({
             workspaceSettingsSaving ||
             workspaceSettingsLoading
           }
-          className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
+          className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[13px] font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
         >
           {workspaceSettingsSaving ? (
             <Loader2
@@ -1932,13 +1932,13 @@ export default function SettingsView({
       </div>
 
       {workspaceSettingsError && (
-        <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl px-4 py-3 text-xs">
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-xl px-4 py-3 text-[13px]">
           {workspaceSettingsError}
         </div>
       )}
 
       {workspaceSettingsMessage && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 text-xs">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 text-[13px]">
           {workspaceSettingsMessage}
         </div>
       )}
@@ -1950,7 +1950,7 @@ export default function SettingsView({
           <div
             className={`w-10 h-10 rounded-xl ${getAccent(
               selectedColor
-            )} text-white flex items-center justify-center text-xs font-bold overflow-hidden`}
+            )} text-white flex items-center justify-center text-[13px] font-bold overflow-hidden`}
           >
             {logoPreview ? (
               <img
@@ -1965,7 +1965,7 @@ export default function SettingsView({
           </div>
 
           <div>
-            <div className="text-sm font-bold text-slate-900">
+            <div className="text-[15px] font-bold text-slate-900">
               {
                 form.portalName ||
                 form.companyName ||
@@ -1975,7 +1975,7 @@ export default function SettingsView({
               }
             </div>
 
-            <div className="text-xs text-slate-500 mt-0.5">
+            <div className="text-[13px] text-slate-500 mt-0.5">
               {
                 form.subdomain ||
                 tenant?.subdomain ||
@@ -1985,9 +1985,9 @@ export default function SettingsView({
           </div>
         </div>
 
-        <div className="flex items-center gap-5 text-xs text-slate-500">
+        <div className="flex items-center gap-5 text-[13px] text-slate-500">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-400">
+            <div className="text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-400">
               Business
             </div>
 
@@ -2001,7 +2001,7 @@ export default function SettingsView({
           </div>
 
           <div>
-            <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-400">
+            <div className="text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-400">
               City
             </div>
 
@@ -2024,7 +2024,7 @@ export default function SettingsView({
 
         <aside className="bg-white border border-slate-200 rounded-xl p-2 shadow-[0_1px_2px_rgba(15,23,42,0.03)] h-fit">
           <div className="px-3 pt-2 pb-3">
-            <div className="text-[10px] uppercase tracking-[0.12em] font-semibold text-slate-400">
+            <div className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-400">
               Configuration
             </div>
           </div>
@@ -2052,7 +2052,7 @@ export default function SettingsView({
                         item.k
                       )
                     }
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] transition-colors ${
                       active
                         ? "bg-slate-950 text-white font-semibold"
                         : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -2093,7 +2093,7 @@ export default function SettingsView({
                 />
               )}
 
-              <h2 className="text-base font-bold text-slate-950">
+              <h2 className="text-[17px] font-bold text-slate-950">
                 {
                   activeTab
                     ?.l
@@ -2108,11 +2108,11 @@ export default function SettingsView({
             "company" && (
             <div className="p-6 space-y-6">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-[15px] font-bold text-slate-900">
                   Company Profile
                 </h3>
 
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-[13px] text-slate-500 mt-1">
                   Core workspace identity
                   shown throughout the CRM.
                 </p>
@@ -2188,11 +2188,11 @@ export default function SettingsView({
                 />
 
                 <div>
-                  <div className="text-xs font-semibold text-slate-800">
+                  <div className="text-[13px] font-semibold text-slate-800">
                     Workspace identity
                   </div>
 
-                  <div className="text-xs text-slate-500 mt-1">
+                  <div className="text-[13px] text-slate-500 mt-1">
                     Company profile changes are saved to this tenant and reflected across the client portal after save.
                   </div>
                 </div>
@@ -2206,11 +2206,11 @@ export default function SettingsView({
             "branding" && (
             <div className="p-6 space-y-7">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-[15px] font-bold text-slate-900">
                   Brand Appearance
                 </h3>
 
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-[13px] text-slate-500 mt-1">
                   Configure the visual
                   identity used inside the
                   client portal.
@@ -2218,7 +2218,7 @@ export default function SettingsView({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-3">
+                <label className="block text-[13px] font-semibold text-slate-600 mb-3">
                   Primary Color
                 </label>
 
@@ -2262,7 +2262,7 @@ export default function SettingsView({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-2">
+                <label className="block text-[13px] font-semibold text-slate-600 mb-2">
                   Company Logo
                 </label>
 
@@ -2276,7 +2276,7 @@ export default function SettingsView({
                       />
                     </div>
                   ) : (
-                    <div className="h-24 rounded-xl bg-slate-50 border border-dashed border-slate-300 flex items-center justify-center text-xs text-slate-400">
+                    <div className="h-24 rounded-xl bg-slate-50 border border-dashed border-slate-300 flex items-center justify-center text-[13px] text-slate-400">
                       No logo uploaded
                     </div>
                   )}
@@ -2302,10 +2302,10 @@ export default function SettingsView({
                         );
                       }}
                       placeholder="https://example.com/logo.png"
-                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                     />
 
-                    <label className="h-10 px-4 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center gap-2 cursor-pointer">
+                    <label className="h-10 px-4 border border-slate-200 rounded-lg text-[13px] font-semibold text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center gap-2 cursor-pointer">
                       <Upload size={14} />
                       Upload Logo
 
@@ -2321,7 +2321,7 @@ export default function SettingsView({
                   </div>
 
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-[10px] text-slate-400">
+                    <div className="text-[11px] text-slate-400">
                       PNG, JPG, WEBP or SVG. Maximum 500 KB for local storage.
                     </div>
 
@@ -2331,7 +2331,7 @@ export default function SettingsView({
                         onClick={
                           removeLogo
                         }
-                        className="text-[11px] font-semibold text-rose-600 hover:text-rose-700"
+                        className="text-xs font-semibold text-rose-600 hover:text-rose-700"
                       >
                         Remove logo
                       </button>
@@ -2349,11 +2349,11 @@ export default function SettingsView({
             <div className="p-6 space-y-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-[15px] font-bold text-slate-900">
                     Users & Roles
                   </h3>
 
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-[13px] text-slate-500 mt-1">
                     Manage team members, account status and workspace permissions.
                   </p>
                 </div>
@@ -2363,7 +2363,7 @@ export default function SettingsView({
                   onClick={
                     openCreateUser
                   }
-                  className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
+                  className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Plus size={14} />
                   Add User
@@ -2371,7 +2371,7 @@ export default function SettingsView({
               </div>
 
               {usersError && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-xs">
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-[13px]">
                   {usersError}
                 </div>
               )}
@@ -2394,12 +2394,12 @@ export default function SettingsView({
                     )
                   }
                   placeholder="Search users..."
-                  className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                  className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                 />
               </div>
 
               {usersLoading ? (
-                <div className="py-16 flex items-center justify-center gap-2 text-sm text-slate-500">
+                <div className="py-16 flex items-center justify-center gap-2 text-[15px] text-slate-500">
                   <Loader2
                     size={16}
                     className="animate-spin"
@@ -2409,22 +2409,22 @@ export default function SettingsView({
               ) : (
                 <div className="border border-slate-200 rounded-xl overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-[15px]">
                       <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             User
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Role
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Department
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Status
                           </th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-right text-[13px] font-semibold text-slate-500">
                             Actions
                           </th>
                         </tr>
@@ -2444,19 +2444,19 @@ export default function SettingsView({
                                   {user.name}
                                 </div>
 
-                                <div className="text-xs text-slate-500 mt-0.5">
+                                <div className="text-[13px] text-slate-500 mt-0.5">
                                   {user.email}
                                 </div>
 
                                 {user.jobTitle && (
-                                  <div className="text-[10px] text-slate-400 mt-1">
+                                  <div className="text-[11px] text-slate-400 mt-1">
                                     {user.jobTitle}
                                   </div>
                                 )}
                               </td>
 
                               <td className="px-4 py-3">
-                                <span className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[10px] font-semibold">
+                                <span className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[11px] font-semibold">
                                   {user.role.replaceAll(
                                     "_",
                                     " "
@@ -2464,7 +2464,7 @@ export default function SettingsView({
                                 </span>
                               </td>
 
-                              <td className="px-4 py-3 text-xs text-slate-600">
+                              <td className="px-4 py-3 text-[13px] text-slate-600">
                                 {user.department ||
                                   "—"}
                               </td>
@@ -2477,7 +2477,7 @@ export default function SettingsView({
                                       user
                                     )
                                   }
-                                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                                     user.active
                                       ? "bg-emerald-50 text-emerald-700"
                                       : "bg-slate-100 text-slate-600"
@@ -2533,7 +2533,7 @@ export default function SettingsView({
                           <tr>
                             <td
                               colSpan={5}
-                              className="py-12 text-center text-sm text-slate-500"
+                              className="py-12 text-center text-[15px] text-slate-500"
                             >
                               No users found.
                             </td>
@@ -2554,11 +2554,11 @@ export default function SettingsView({
             <div className="p-6 space-y-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-[15px] font-bold text-slate-900">
                     Lead Sources
                   </h3>
 
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-[13px] text-slate-500 mt-1">
                     Control which acquisition sources are available in this company workspace.
                   </p>
                 </div>
@@ -2568,7 +2568,7 @@ export default function SettingsView({
                   onClick={
                     openCreateSource
                   }
-                  className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
+                  className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Plus size={14} />
                   Add Source
@@ -2576,13 +2576,13 @@ export default function SettingsView({
               </div>
 
               {sourcesError && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-xs">
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-[13px]">
                   {sourcesError}
                 </div>
               )}
 
               {sourcesLoading ? (
-                <div className="py-16 flex items-center justify-center gap-2 text-sm text-slate-500">
+                <div className="py-16 flex items-center justify-center gap-2 text-[15px] text-slate-500">
                   <Loader2
                     size={16}
                     className="animate-spin"
@@ -2592,25 +2592,25 @@ export default function SettingsView({
               ) : (
                 <div className="border border-slate-200 rounded-xl overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-[15px]">
                       <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Order
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Source
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Key
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Active
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Forms
                           </th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-right text-[13px] font-semibold text-slate-500">
                             Actions
                           </th>
                         </tr>
@@ -2626,7 +2626,7 @@ export default function SettingsView({
                               className="hover:bg-slate-50/70"
                             >
                               <td className="px-4 py-3">
-                                <div className="inline-flex items-center gap-2 text-xs text-slate-500">
+                                <div className="inline-flex items-center gap-2 text-[13px] text-slate-500">
                                   <GripVertical
                                     size={13}
                                     className="text-slate-300"
@@ -2640,20 +2640,20 @@ export default function SettingsView({
                                   {source.name}
                                 </div>
 
-                                <div className="text-xs text-slate-500 mt-0.5 max-w-sm">
+                                <div className="text-[13px] text-slate-500 mt-0.5 max-w-sm">
                                   {source.description ||
                                     "—"}
                                 </div>
 
                                 {source.system && (
-                                  <span className="inline-flex mt-1.5 rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide">
+                                  <span className="inline-flex mt-1.5 rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                                     Default
                                   </span>
                                 )}
                               </td>
 
                               <td className="px-4 py-3">
-                                <code className="text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded px-2 py-1">
+                                <code className="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded px-2 py-1">
                                   {source.key}
                                 </code>
                               </td>
@@ -2751,7 +2751,7 @@ export default function SettingsView({
                           <tr>
                             <td
                               colSpan={6}
-                              className="py-12 text-center text-sm text-slate-500"
+                              className="py-12 text-center text-[15px] text-slate-500"
                             >
                               No lead sources configured.
                             </td>
@@ -2763,7 +2763,7 @@ export default function SettingsView({
                 </div>
               )}
 
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-500">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-[13px] text-slate-500">
                 Disabling a source keeps historical leads intact. Turning off “Forms” hides it from new lead-entry source lists without disabling existing data.
               </div>
             </div>
@@ -2776,11 +2776,11 @@ export default function SettingsView({
             <div className="p-6 space-y-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-[15px] font-bold text-slate-900">
                     Custom Fields
                   </h3>
 
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-[13px] text-slate-500 mt-1">
                     Create company-specific fields for lead forms and records without changing the database schema each time.
                   </p>
                 </div>
@@ -2790,7 +2790,7 @@ export default function SettingsView({
                   onClick={
                     openCreateCustomField
                   }
-                  className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
+                  className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Plus size={14} />
                   Add Custom Field
@@ -2798,13 +2798,13 @@ export default function SettingsView({
               </div>
 
               {customFieldsError && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-xs">
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-[13px]">
                   {customFieldsError}
                 </div>
               )}
 
               {customFieldsLoading ? (
-                <div className="py-16 flex items-center justify-center gap-2 text-sm text-slate-500">
+                <div className="py-16 flex items-center justify-center gap-2 text-[15px] text-slate-500">
                   <Loader2
                     size={16}
                     className="animate-spin"
@@ -2814,25 +2814,25 @@ export default function SettingsView({
               ) : (
                 <div className="border border-slate-200 rounded-xl overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-[15px]">
                       <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Field
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Type
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Required
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Forms
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Active
                           </th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-right text-[13px] font-semibold text-slate-500">
                             Actions
                           </th>
                         </tr>
@@ -2853,24 +2853,24 @@ export default function SettingsView({
                                 </div>
 
                                 <div className="mt-1 flex items-center gap-2">
-                                  <code className="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5">
+                                  <code className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5">
                                     {field.key}
                                   </code>
 
-                                  <span className="text-[10px] text-slate-400">
+                                  <span className="text-[11px] text-slate-400">
                                     Order {field.sortOrder}
                                   </span>
                                 </div>
 
                                 {field.description && (
-                                  <div className="text-xs text-slate-500 mt-1.5 max-w-md">
+                                  <div className="text-[13px] text-slate-500 mt-1.5 max-w-md">
                                     {field.description}
                                   </div>
                                 )}
                               </td>
 
                               <td className="px-4 py-3">
-                                <span className="inline-flex rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[10px] font-semibold">
+                                <span className="inline-flex rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[11px] font-semibold">
                                   {field.fieldType.replaceAll(
                                     "_",
                                     " "
@@ -2878,7 +2878,7 @@ export default function SettingsView({
                                 </span>
                               </td>
 
-                              <td className="px-4 py-3 text-xs text-slate-600">
+                              <td className="px-4 py-3 text-[13px] text-slate-600">
                                 {field.required
                                   ? "Yes"
                                   : "No"}
@@ -2975,7 +2975,7 @@ export default function SettingsView({
                           <tr>
                             <td
                               colSpan={6}
-                              className="py-12 text-center text-sm text-slate-500"
+                              className="py-12 text-center text-[15px] text-slate-500"
                             >
                               No custom fields configured yet.
                             </td>
@@ -2987,7 +2987,7 @@ export default function SettingsView({
                 </div>
               )}
 
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-500">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-[13px] text-slate-500">
                 Custom fields are isolated per company. For this step they apply to Leads. Disabling a field keeps existing stored values; deleting a field removes its stored values.
               </div>
             </div>
@@ -2999,23 +2999,23 @@ export default function SettingsView({
             "integrations" && (
             <div className="p-6 space-y-5">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-[15px] font-bold text-slate-900">
                   Integrations
                 </h3>
 
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-[13px] text-slate-500 mt-1">
                   Prepare company-specific external connections now. Secret credentials and final live connection testing can be completed later when the required provider accounts are available.
                 </p>
               </div>
 
               {integrationsError && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-xs">
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-[13px]">
                   {integrationsError}
                 </div>
               )}
 
               {integrationsLoading ? (
-                <div className="py-16 flex items-center justify-center gap-2 text-sm text-slate-500">
+                <div className="py-16 flex items-center justify-center gap-2 text-[15px] text-slate-500">
                   <Loader2
                     size={16}
                     className="animate-spin"
@@ -3058,11 +3058,11 @@ export default function SettingsView({
                             <div className="min-w-0 flex-1">
                               <div className="flex items-start justify-between gap-3">
                                 <div>
-                                  <div className="text-sm font-bold text-slate-900">
+                                  <div className="text-[15px] font-bold text-slate-900">
                                     {integration.name}
                                   </div>
 
-                                  <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-0.5">
+                                  <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mt-0.5">
                                     {integration.category}
                                   </div>
                                 </div>
@@ -3104,13 +3104,13 @@ export default function SettingsView({
                                 </button>
                               </div>
 
-                              <p className="text-xs text-slate-500 leading-5 mt-2">
+                              <p className="text-[13px] text-slate-500 leading-5 mt-2">
                                 {integration.description}
                               </p>
 
                               <div className="flex flex-wrap items-center gap-2 mt-3">
                                 <span
-                                  className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                                  className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                                     integration.status ===
                                     "CONNECTED"
                                       ? "bg-emerald-50 text-emerald-700"
@@ -3125,7 +3125,7 @@ export default function SettingsView({
                                   )}
                                 </span>
 
-                                <span className="inline-flex rounded-full bg-slate-50 border border-slate-200 text-slate-500 px-2.5 py-1 text-[10px] font-semibold">
+                                <span className="inline-flex rounded-full bg-slate-50 border border-slate-200 text-slate-500 px-2.5 py-1 text-[11px] font-semibold">
                                   Credentials{" "}
                                   {integration.credentialsConfigured
                                     ? "ready"
@@ -3134,7 +3134,7 @@ export default function SettingsView({
                               </div>
 
                               <div className="mt-4 flex items-center justify-between gap-3">
-                                <div className="text-[10px] text-slate-400">
+                                <div className="text-[11px] text-slate-400">
                                   {configured
                                     ? `${Object.keys(
                                         integration.config ||
@@ -3150,7 +3150,7 @@ export default function SettingsView({
                                       integration
                                     )
                                   }
-                                  className="h-8 px-3 border border-slate-200 hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5"
+                                  className="h-8 px-3 border border-slate-200 hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 inline-flex items-center gap-1.5"
                                 >
                                   <Settings
                                     size={12}
@@ -3174,11 +3174,11 @@ export default function SettingsView({
                 />
 
                 <div>
-                  <div className="text-xs font-semibold text-slate-800">
+                  <div className="text-[13px] font-semibold text-slate-800">
                     Credentials are intentionally not stored in this step
                   </div>
 
-                  <div className="text-xs text-slate-500 mt-1 leading-5">
+                  <div className="text-[13px] text-slate-500 mt-1 leading-5">
                     This creates the real tenant-level integration configuration layer without saving API secrets, access tokens or passwords in plain text. Live credentials and provider-specific OAuth/webhook connections can be added safely during the final integration phase.
                   </div>
                 </div>
@@ -3193,11 +3193,11 @@ export default function SettingsView({
             <div className="p-6 space-y-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-[15px] font-bold text-slate-900">
                     Notification Preferences
                   </h3>
 
-                  <p className="text-xs text-slate-500 mt-1 max-w-2xl">
+                  <p className="text-[13px] text-slate-500 mt-1 max-w-2xl">
                     Control how this user receives workspace updates. Email and SMS use the company defaults until this user saves their own preferences.
                   </p>
                 </div>
@@ -3211,7 +3211,7 @@ export default function SettingsView({
                     notificationPreferencesSaving ||
                     notificationPreferencesLoading
                   }
-                  className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
+                  className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-[13px] font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
                 >
                   {notificationPreferencesSaving ? (
                     <Loader2
@@ -3227,19 +3227,19 @@ export default function SettingsView({
               </div>
 
               {notificationPreferencesError && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-xs">
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-[13px]">
                   {notificationPreferencesError}
                 </div>
               )}
 
               {notificationPreferencesMessage && (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg p-3 text-xs">
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg p-3 text-[13px]">
                   {notificationPreferencesMessage}
                 </div>
               )}
 
               {notificationPreferencesLoading ? (
-                <div className="py-16 flex items-center justify-center gap-2 text-sm text-slate-500">
+                <div className="py-16 flex items-center justify-center gap-2 text-[15px] text-slate-500">
                   <Loader2
                     size={16}
                     className="animate-spin"
@@ -3249,7 +3249,7 @@ export default function SettingsView({
               ) : (
                 <>
                   <div>
-                    <div className="text-xs font-bold text-slate-800 mb-3">
+                    <div className="text-[13px] font-bold text-slate-800 mb-3">
                       Delivery Channels
                     </div>
 
@@ -3313,15 +3313,15 @@ export default function SettingsView({
                                 </div>
 
                                 <div>
-                                  <div className="text-sm font-semibold text-slate-900">
+                                  <div className="text-[15px] font-semibold text-slate-900">
                                     {item.label}
                                   </div>
 
-                                  <div className="text-xs text-slate-500 mt-1">
+                                  <div className="text-[13px] text-slate-500 mt-1">
                                     {item.description}
                                   </div>
 
-                                  <div className="text-[10px] text-slate-400 mt-1.5">
+                                  <div className="text-[11px] text-slate-400 mt-1.5">
                                     {item.defaultText}
                                   </div>
                                 </div>
@@ -3357,7 +3357,7 @@ export default function SettingsView({
                   </div>
 
                   <div>
-                    <div className="text-xs font-bold text-slate-800 mb-3">
+                    <div className="text-[13px] font-bold text-slate-800 mb-3">
                       Notification Categories
                     </div>
 
@@ -3417,11 +3417,11 @@ export default function SettingsView({
                             />
 
                             <div>
-                              <div className="text-xs font-semibold text-slate-800">
+                              <div className="text-[13px] font-semibold text-slate-800">
                                 {label}
                               </div>
 
-                              <div className="text-[11px] text-slate-500 mt-1 leading-5">
+                              <div className="text-xs text-slate-500 mt-1 leading-5">
                                 {description}
                               </div>
                             </div>
@@ -3431,7 +3431,7 @@ export default function SettingsView({
                     </div>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-500 leading-5">
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-[13px] text-slate-500 leading-5">
                     These preferences are now stored in the database. Real email and SMS delivery still depends on connecting the relevant provider integrations later.
                   </div>
                 </>
@@ -3447,11 +3447,11 @@ export default function SettingsView({
             <div className="p-6 space-y-5">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-[15px] font-bold text-slate-900">
                     Activity Log
                   </h3>
 
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-[13px] text-slate-500 mt-1">
                     Review important workspace and user-management changes for this company.
                   </p>
                 </div>
@@ -3464,7 +3464,7 @@ export default function SettingsView({
                   disabled={
                     auditLogsLoading
                   }
-                  className="h-9 px-3.5 border border-slate-200 hover:bg-slate-50 disabled:opacity-50 text-slate-700 text-xs font-semibold rounded-lg inline-flex items-center justify-center gap-2"
+                  className="h-9 px-3.5 border border-slate-200 hover:bg-slate-50 disabled:opacity-50 text-slate-700 text-[13px] font-semibold rounded-lg inline-flex items-center justify-center gap-2"
                 >
                   <RefreshCw
                     size={13}
@@ -3507,7 +3507,7 @@ export default function SettingsView({
                       }
                     }}
                     placeholder="Search actor, email or activity..."
-                    className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                    className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                   />
                 </div>
 
@@ -3522,7 +3522,7 @@ export default function SettingsView({
                       event.target.value
                     )
                   }
-                  className="h-9 px-3 border border-slate-200 rounded-lg text-xs bg-white text-slate-700"
+                  className="h-9 px-3 border border-slate-200 rounded-lg text-[13px] bg-white text-slate-700"
                 >
                   <option value="">
                     All Activity
@@ -3540,30 +3540,30 @@ export default function SettingsView({
                   onClick={
                     loadAuditLogs
                   }
-                  className="h-9 px-4 bg-slate-950 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold"
+                  className="h-9 px-4 bg-slate-950 hover:bg-slate-800 text-white rounded-lg text-[13px] font-semibold"
                 >
                   Search
                 </button>
               </div>
 
               {auditLogsError && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-xs">
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-[13px]">
                   {auditLogsError}
                 </div>
               )}
 
               <div className="flex items-center justify-between">
-                <div className="text-[11px] text-slate-500">
+                <div className="text-xs text-slate-500">
                   Showing up to 100 latest records
                 </div>
 
-                <div className="text-[11px] font-semibold text-slate-600">
+                <div className="text-xs font-semibold text-slate-600">
                   {auditTotal} record{auditTotal === 1 ? "" : "s"}
                 </div>
               </div>
 
               {auditLogsLoading ? (
-                <div className="py-16 flex items-center justify-center gap-2 text-sm text-slate-500">
+                <div className="py-16 flex items-center justify-center gap-2 text-[15px] text-slate-500">
                   <Loader2
                     size={16}
                     className="animate-spin"
@@ -3573,19 +3573,19 @@ export default function SettingsView({
               ) : (
                 <div className="border border-slate-200 rounded-xl overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-[15px]">
                       <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Date & Time
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             User
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Action
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             Activity
                           </th>
                         </tr>
@@ -3600,19 +3600,19 @@ export default function SettingsView({
                               }
                               className="hover:bg-slate-50/70 align-top"
                             >
-                              <td className="px-4 py-3 whitespace-nowrap text-xs text-slate-500">
+                              <td className="px-4 py-3 whitespace-nowrap text-[13px] text-slate-500">
                                 {formatAuditDate(
                                   log.createdAt
                                 )}
                               </td>
 
                               <td className="px-4 py-3">
-                                <div className="text-xs font-semibold text-slate-800">
+                                <div className="text-[13px] font-semibold text-slate-800">
                                   {log.actorName ||
                                     "System"}
                                 </div>
 
-                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                <div className="text-[11px] text-slate-400 mt-0.5">
                                   {log.actorEmail ||
                                     log.actorRole ||
                                     "—"}
@@ -3620,24 +3620,24 @@ export default function SettingsView({
                               </td>
 
                               <td className="px-4 py-3">
-                                <span className="inline-flex rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[10px] font-semibold">
+                                <span className="inline-flex rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[11px] font-semibold">
                                   {auditActionLabel(
                                     log.action
                                   )}
                                 </span>
 
-                                <div className="text-[10px] text-slate-400 mt-1">
+                                <div className="text-[11px] text-slate-400 mt-1">
                                   {log.entityType}
                                 </div>
                               </td>
 
                               <td className="px-4 py-3">
-                                <div className="text-xs text-slate-700 max-w-xl">
+                                <div className="text-[13px] text-slate-700 max-w-xl">
                                   {log.summary}
                                 </div>
 
                                 {log.ipAddress && (
-                                  <div className="text-[10px] text-slate-400 mt-1.5">
+                                  <div className="text-[11px] text-slate-400 mt-1.5">
                                     IP: {log.ipAddress}
                                   </div>
                                 )}
@@ -3650,7 +3650,7 @@ export default function SettingsView({
                           <tr>
                             <td
                               colSpan={4}
-                              className="py-14 text-center text-sm text-slate-500"
+                              className="py-14 text-center text-[15px] text-slate-500"
                             >
                               No activity logs found yet. Make a company or user-management change, then refresh this page.
                             </td>
@@ -3662,7 +3662,7 @@ export default function SettingsView({
                 </div>
               )}
 
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-500 leading-5">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-[13px] text-slate-500 leading-5">
                 Audit entries are company-isolated and read-only. Password values and logo image data are never written into the activity log.
               </div>
             </div>
@@ -3676,13 +3676,13 @@ export default function SettingsView({
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-2xl">
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <div className="text-base font-bold text-slate-950">
+                <div className="text-[17px] font-bold text-slate-950">
                   {editingUser
                     ? "Edit User"
                     : "Add User"}
                 </div>
 
-                <div className="text-xs text-slate-500 mt-1">
+                <div className="text-[13px] text-slate-500 mt-1">
                   Configure account details, role and permissions.
                 </div>
               </div>
@@ -3713,7 +3713,7 @@ export default function SettingsView({
                     type,
                   ]) => (
                     <div key={key}>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                         {label}
                       </label>
 
@@ -3738,7 +3738,7 @@ export default function SettingsView({
                             })
                           )
                         }
-                        className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                        className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                       />
                     </div>
                   )
@@ -3746,7 +3746,7 @@ export default function SettingsView({
 
                 {!editingUser && (
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                       Temporary Password
                     </label>
 
@@ -3769,13 +3769,13 @@ export default function SettingsView({
                           })
                         )
                       }
-                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                     />
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                     Role
                   </label>
 
@@ -3790,7 +3790,7 @@ export default function SettingsView({
                         event.target.value
                       )
                     }
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-white"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
                   >
                     <option value="CLIENT_ADMIN">
                       Client Admin
@@ -3806,7 +3806,7 @@ export default function SettingsView({
               </div>
 
               <div>
-                <div className="text-xs font-semibold text-slate-700">
+                <div className="text-[13px] font-semibold text-slate-700">
                   Permissions
                 </div>
 
@@ -3829,7 +3829,7 @@ export default function SettingsView({
                         key={key}
                         className="flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2.5"
                       >
-                        <span className="text-xs text-slate-700">
+                        <span className="text-[13px] text-slate-700">
                           {label}
                         </span>
 
@@ -3869,7 +3869,7 @@ export default function SettingsView({
               </div>
 
               {editingUser && (
-                <label className="flex items-center gap-2 text-xs text-slate-700">
+                <label className="flex items-center gap-2 text-[13px] text-slate-700">
                   <input
                     type="checkbox"
                     checked={
@@ -3900,7 +3900,7 @@ export default function SettingsView({
                   onClick={() =>
                     setUserModalOpen(false)
                   }
-                  className="h-9 px-4 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  className="h-9 px-4 border border-slate-200 rounded-lg text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   Cancel
                 </button>
@@ -3911,7 +3911,7 @@ export default function SettingsView({
                   disabled={
                     userSaving
                   }
-                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2"
+                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2"
                 >
                   {userSaving && (
                     <Loader2
@@ -3935,11 +3935,11 @@ export default function SettingsView({
           <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl">
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <div className="text-base font-bold text-slate-950">
+                <div className="text-[17px] font-bold text-slate-950">
                   Reset Password
                 </div>
 
-                <div className="text-xs text-slate-500 mt-1">
+                <div className="text-[13px] text-slate-500 mt-1">
                   Set a new password for {resetPasswordUser.name}.
                 </div>
               </div>
@@ -3957,7 +3957,7 @@ export default function SettingsView({
 
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                   New Password
                 </label>
 
@@ -3973,11 +3973,11 @@ export default function SettingsView({
                       event.target.value
                     )
                   }
-                  className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                  className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                 />
               </div>
 
-              <div className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-3">
+              <div className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-3">
                 Minimum 8 characters with uppercase, lowercase and a number.
               </div>
 
@@ -3987,7 +3987,7 @@ export default function SettingsView({
                   onClick={() =>
                     setResetPasswordUser(null)
                   }
-                  className="h-9 px-4 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700"
+                  className="h-9 px-4 border border-slate-200 rounded-lg text-[13px] font-semibold text-slate-700"
                 >
                   Cancel
                 </button>
@@ -4000,7 +4000,7 @@ export default function SettingsView({
                   disabled={
                     resetSaving
                   }
-                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2"
+                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2"
                 >
                   {resetSaving && (
                     <Loader2
@@ -4023,13 +4023,13 @@ export default function SettingsView({
           <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <div className="text-base font-bold text-slate-950">
+                <div className="text-[17px] font-bold text-slate-950">
                   {editingSource
                     ? "Edit Lead Source"
                     : "Add Lead Source"}
                 </div>
 
-                <div className="text-xs text-slate-500 mt-1">
+                <div className="text-[13px] text-slate-500 mt-1">
                   Configure how this source appears across CRM forms and reporting.
                 </div>
               </div>
@@ -4047,7 +4047,7 @@ export default function SettingsView({
 
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                   Source Name
                 </label>
 
@@ -4080,12 +4080,12 @@ export default function SettingsView({
                     )
                   }
                   placeholder="Referral"
-                  className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                  className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                   Source Key
                 </label>
 
@@ -4109,12 +4109,12 @@ export default function SettingsView({
                       })
                     )
                   }
-                  className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                  className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] font-mono focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                   Description
                 </label>
 
@@ -4134,12 +4134,12 @@ export default function SettingsView({
                       })
                     )
                   }
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-[15px] resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                   Sort Order
                 </label>
 
@@ -4161,13 +4161,13 @@ export default function SettingsView({
                       })
                     )
                   }
-                  className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                  className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <label className="border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold text-slate-700">
+                  <span className="text-[13px] font-semibold text-slate-700">
                     Active
                   </span>
 
@@ -4191,7 +4191,7 @@ export default function SettingsView({
                 </label>
 
                 <label className="border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold text-slate-700">
+                  <span className="text-[13px] font-semibold text-slate-700">
                     Show in Forms
                   </span>
 
@@ -4216,7 +4216,7 @@ export default function SettingsView({
               </div>
 
               {sourcesError && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-xs">
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-[13px]">
                   {sourcesError}
                 </div>
               )}
@@ -4227,7 +4227,7 @@ export default function SettingsView({
                   onClick={() =>
                     setSourceModalOpen(false)
                   }
-                  className="h-9 px-4 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  className="h-9 px-4 border border-slate-200 rounded-lg text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   Cancel
                 </button>
@@ -4240,7 +4240,7 @@ export default function SettingsView({
                   disabled={
                     sourceSaving
                   }
-                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2"
+                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2"
                 >
                   {sourceSaving && (
                     <Loader2
@@ -4265,13 +4265,13 @@ export default function SettingsView({
           <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-2xl">
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <div className="text-base font-bold text-slate-950">
+                <div className="text-[17px] font-bold text-slate-950">
                   {editingCustomField
                     ? "Edit Custom Field"
                     : "Add Custom Field"}
                 </div>
 
-                <div className="text-xs text-slate-500 mt-1">
+                <div className="text-[13px] text-slate-500 mt-1">
                   Configure a field for this company’s lead records.
                 </div>
               </div>
@@ -4290,7 +4290,7 @@ export default function SettingsView({
             <div className="p-5 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                     Field Name
                   </label>
 
@@ -4323,12 +4323,12 @@ export default function SettingsView({
                       )
                     }
                     placeholder="Student College"
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                     Field Key
                   </label>
 
@@ -4353,12 +4353,12 @@ export default function SettingsView({
                       )
                     }
                     placeholder="STUDENT_COLLEGE"
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] font-mono focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                     Applies To
                   </label>
 
@@ -4367,7 +4367,7 @@ export default function SettingsView({
                       customFieldForm.entityType
                     }
                     disabled
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-slate-50 text-slate-600"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-slate-50 text-slate-600"
                   >
                     <option value="LEAD">
                       Leads
@@ -4376,7 +4376,7 @@ export default function SettingsView({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                     Field Type
                   </label>
 
@@ -4395,7 +4395,7 @@ export default function SettingsView({
                         })
                       )
                     }
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-white"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
                   >
                     <option value="TEXT">
                       Text
@@ -4423,7 +4423,7 @@ export default function SettingsView({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                   Description
                 </label>
 
@@ -4444,14 +4444,14 @@ export default function SettingsView({
                     )
                   }
                   placeholder="Optional help text for this field"
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-[15px] resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                 />
               </div>
 
               {customFieldForm.fieldType ===
                 "DROPDOWN" && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                     Dropdown Options
                   </label>
 
@@ -4472,17 +4472,17 @@ export default function SettingsView({
                       )
                     }
                     placeholder={"Option 1\nOption 2\nOption 3"}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-[15px] resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                   />
 
-                  <div className="text-[10px] text-slate-400 mt-1">
+                  <div className="text-[11px] text-slate-400 mt-1">
                     Enter one option per line.
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                   Sort Order
                 </label>
 
@@ -4504,7 +4504,7 @@ export default function SettingsView({
                       })
                     )
                   }
-                  className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                  className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                 />
               </div>
 
@@ -4531,7 +4531,7 @@ export default function SettingsView({
                       key={key}
                       className="border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-3"
                     >
-                      <span className="text-xs font-semibold text-slate-700">
+                      <span className="text-[13px] font-semibold text-slate-700">
                         {label}
                       </span>
 
@@ -4562,7 +4562,7 @@ export default function SettingsView({
               </div>
 
               {customFieldsError && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-xs">
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-[13px]">
                   {customFieldsError}
                 </div>
               )}
@@ -4573,7 +4573,7 @@ export default function SettingsView({
                   onClick={() =>
                     setCustomFieldModalOpen(false)
                   }
-                  className="h-9 px-4 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  className="h-9 px-4 border border-slate-200 rounded-lg text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   Cancel
                 </button>
@@ -4586,7 +4586,7 @@ export default function SettingsView({
                   disabled={
                     customFieldSaving
                   }
-                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2"
+                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2"
                 >
                   {customFieldSaving && (
                     <Loader2
@@ -4612,11 +4612,11 @@ export default function SettingsView({
           <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-2xl">
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <div className="text-base font-bold text-slate-950">
+                <div className="text-[17px] font-bold text-slate-950">
                   Configure {editingIntegration.defaultName}
                 </div>
 
-                <div className="text-xs text-slate-500 mt-1">
+                <div className="text-[13px] text-slate-500 mt-1">
                   Save non-secret workspace configuration now. Live credentials will be added later.
                 </div>
               </div>
@@ -4636,7 +4636,7 @@ export default function SettingsView({
 
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                   Display Name
                 </label>
 
@@ -4655,7 +4655,7 @@ export default function SettingsView({
                       })
                     )
                   }
-                  className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                  className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                 />
               </div>
 
@@ -4670,7 +4670,7 @@ export default function SettingsView({
                   <div
                     key={key}
                   >
-                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                    <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                       {label}
                     </label>
 
@@ -4700,18 +4700,18 @@ export default function SettingsView({
                       placeholder={
                         placeholder
                       }
-                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                     />
                   </div>
                 )
               )}
 
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 leading-5">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-[13px] text-amber-800 leading-5">
                 Do not enter API secrets, passwords, access tokens or private keys here. This Step 6 screen stores only non-secret integration configuration.
               </div>
 
               {integrationsError && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-xs">
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-[13px]">
                   {integrationsError}
                 </div>
               )}
@@ -4724,7 +4724,7 @@ export default function SettingsView({
                       false
                     )
                   }
-                  className="h-9 px-4 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  className="h-9 px-4 border border-slate-200 rounded-lg text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   Cancel
                 </button>
@@ -4737,7 +4737,7 @@ export default function SettingsView({
                   disabled={
                     integrationSaving
                   }
-                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2"
+                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2"
                 >
                   {integrationSaving && (
                     <Loader2

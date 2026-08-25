@@ -324,7 +324,7 @@ function Field({
           : ""
       }
     >
-      <div className="mb-1.5 text-xs font-semibold text-slate-600">
+      <div className="mb-1.5 text-[13px] font-semibold text-slate-600">
         {label}
         {required ? (
           <span className="text-rose-500">
@@ -346,15 +346,15 @@ function Stat({
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-      <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+      <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">
         {label}
       </div>
 
-      <div className="mt-1.5 text-xl font-bold tracking-[-0.03em] text-slate-950">
+      <div className="mt-1.5 text-2xl font-bold tracking-[-0.03em] text-slate-950">
         {value}
       </div>
 
-      <div className="mt-1 text-[11px] text-slate-500">
+      <div className="mt-1 text-xs text-slate-500">
         {detail}
       </div>
     </div>
@@ -365,7 +365,7 @@ function Breadcrumbs({
   items,
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-1 text-xs font-medium text-slate-500">
+    <div className="flex flex-wrap items-center gap-1 text-[13px] font-medium text-slate-500">
       {items.map(
         (
           item,
@@ -422,12 +422,12 @@ function ModalShell({
       >
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div>
-            <div className="text-base font-bold text-slate-950">
+            <div className="text-[17px] font-bold text-slate-950">
               {title}
             </div>
 
             {subtitle ? (
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="mt-1 text-[13px] text-slate-500">
                 {subtitle}
               </div>
             ) : null}
@@ -558,7 +558,7 @@ function StreamModal({
         className="space-y-4 p-5"
       >
         {error ? (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-700">
             {error}
           </div>
         ) : null}
@@ -618,7 +618,7 @@ function StreamModal({
               </option>
             </select>
 
-            <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               <span>
                 Recommended:
               </span>
@@ -663,7 +663,7 @@ function StreamModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-9 rounded-lg border border-slate-200 px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="h-9 rounded-lg border border-slate-200 px-4 text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
           >
             Cancel
           </button>
@@ -671,7 +671,7 @@ function StreamModal({
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-950 px-4 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+            className="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-950 px-4 text-[13px] font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
           >
             {saving ? (
               <Loader2
@@ -785,7 +785,7 @@ function CollegeModal({
         className="space-y-4 p-5"
       >
         {error ? (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-700">
             {error}
           </div>
         ) : null}
@@ -872,7 +872,7 @@ function CollegeModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-9 rounded-lg border border-slate-200 px-4 text-xs font-semibold text-slate-700"
+            className="h-9 rounded-lg border border-slate-200 px-4 text-[13px] font-semibold text-slate-700"
           >
             Cancel
           </button>
@@ -880,7 +880,7 @@ function CollegeModal({
           <button
             type="submit"
             disabled={saving}
-            className="h-9 rounded-lg bg-slate-950 px-4 text-xs font-semibold text-white disabled:opacity-50"
+            className="h-9 rounded-lg bg-slate-950 px-4 text-[13px] font-semibold text-white disabled:opacity-50"
           >
             {editing
               ? "Save"
@@ -978,7 +978,7 @@ function BranchModal({
         className="space-y-4 p-5"
       >
         {error ? (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-700">
             {error}
           </div>
         ) : null}
@@ -1025,7 +1025,7 @@ function BranchModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-9 rounded-lg border border-slate-200 px-4 text-xs font-semibold text-slate-700"
+            className="h-9 rounded-lg border border-slate-200 px-4 text-[13px] font-semibold text-slate-700"
           >
             Cancel
           </button>
@@ -1033,7 +1033,7 @@ function BranchModal({
           <button
             type="submit"
             disabled={saving}
-            className="h-9 rounded-lg bg-slate-950 px-4 text-xs font-semibold text-white disabled:opacity-50"
+            className="h-9 rounded-lg bg-slate-950 px-4 text-[13px] font-semibold text-white disabled:opacity-50"
           >
             {editing
               ? "Save"
@@ -1288,7 +1288,7 @@ function AdmissionModal({
       >
         <div className="space-y-5 p-6">
           {error ? (
-            <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+            <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-[13px] text-rose-700">
               <AlertCircle
                 size={14}
                 className="mt-0.5"
@@ -1299,11 +1299,11 @@ function AdmissionModal({
           ) : null}
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
+            <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">
               Admission Path
             </div>
 
-            <div className="mt-1 text-sm font-bold text-slate-900">
+            <div className="mt-1 text-[15px] font-bold text-slate-900">
               {partner.stream?.name ||
                 ""}{" "}
               → {partner.name} →{" "}
@@ -1573,7 +1573,7 @@ function AdmissionModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-9 rounded-lg border border-slate-200 px-4 text-xs font-semibold text-slate-700"
+            className="h-9 rounded-lg border border-slate-200 px-4 text-[13px] font-semibold text-slate-700"
           >
             Cancel
           </button>
@@ -1581,7 +1581,7 @@ function AdmissionModal({
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-950 px-4 text-xs font-semibold text-white disabled:opacity-50"
+            className="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-950 px-4 text-[13px] font-semibold text-white disabled:opacity-50"
           >
             {saving ? (
               <Loader2
@@ -1678,7 +1678,7 @@ function ImportModal({
         className="space-y-4 p-5"
       >
         {error ? (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-700">
             {error}
           </div>
         ) : null}
@@ -1705,13 +1705,13 @@ function ImportModal({
               className="mx-auto text-slate-500"
             />
 
-            <div className="mt-2 text-sm font-bold text-slate-800">
+            <div className="mt-2 text-[15px] font-bold text-slate-800">
               {file
                 ? file.name
                 : "Choose CSV or XLSX"}
             </div>
 
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="mt-1 text-[13px] text-slate-500">
               Name is required. Course column is ignored because the selected branch is used.
             </div>
           </div>
@@ -1721,7 +1721,7 @@ function ImportModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-9 rounded-lg border border-slate-200 px-4 text-xs font-semibold text-slate-700"
+            className="h-9 rounded-lg border border-slate-200 px-4 text-[13px] font-semibold text-slate-700"
           >
             Cancel
           </button>
@@ -1732,7 +1732,7 @@ function ImportModal({
               saving ||
               !file
             }
-            className="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-950 px-4 text-xs font-semibold text-white disabled:opacity-50"
+            className="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-950 px-4 text-[13px] font-semibold text-white disabled:opacity-50"
           >
             {saving ? (
               <Loader2
@@ -2471,13 +2471,13 @@ export default function Admissions({
     return (
       <>
         {success ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[15px] font-medium text-emerald-700">
             {success}
           </div>
         ) : null}
 
         {error ? (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-[15px] font-medium text-rose-700">
             {error}
           </div>
         ) : null}
@@ -2492,7 +2492,7 @@ export default function Admissions({
       <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           <div className="rounded-xl bg-slate-950 px-4 py-4 text-white">
-            <div className="text-[11px] font-semibold text-slate-300">
+            <div className="text-xs font-semibold text-slate-300">
               Total Admissions
             </div>
 
@@ -2500,7 +2500,7 @@ export default function Admissions({
               {overall.admissions}
             </div>
 
-            <div className="mt-2 text-xs text-slate-400">
+            <div className="mt-2 text-[13px] text-slate-400">
               Across all streams
             </div>
           </div>
@@ -2518,7 +2518,7 @@ export default function Admissions({
                 key={stream.id}
                 className={`rounded-xl px-4 py-4 text-white ${gradient.bg}`}
               >
-                <div className="text-[11px] font-semibold text-white/75">
+                <div className="text-xs font-semibold text-white/75">
                   {stream.name}
                 </div>
 
@@ -2526,7 +2526,7 @@ export default function Admissions({
                   {stream.totalAdmissions || 0}
                 </div>
 
-                <div className="mt-2 text-xs text-white/70">
+                <div className="mt-2 text-[13px] text-white/70">
                   {stream.totalColleges || 0} colleges
                 </div>
               </div>
@@ -2593,16 +2593,16 @@ export default function Admissions({
           </div>
 
           <div className="mt-7">
-            <div className="text-xl font-bold tracking-[-0.02em]">
+            <div className="text-2xl font-bold tracking-[-0.02em]">
               {title}
             </div>
 
-            <div className="mt-2 text-sm font-semibold text-white/90">
+            <div className="mt-2 text-[15px] font-semibold text-white/90">
               {subtitle}
             </div>
 
             {description ? (
-              <div className="mt-2 min-h-[38px] text-xs leading-5 text-white/72">
+              <div className="mt-2 min-h-[38px] text-[13px] leading-5 text-white/72">
                 {description}
               </div>
             ) : (
@@ -2619,7 +2619,7 @@ export default function Admissions({
           <button
             type="button"
             onClick={onOpen}
-            className={`mt-5 flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-bold ${gradient.button}`}
+            className={`mt-5 flex w-full items-center justify-between rounded-xl px-4 py-3 text-[15px] font-bold ${gradient.button}`}
           >
             {openLabel}
             <ChevronRight size={16} />
@@ -2639,7 +2639,7 @@ export default function Admissions({
             <button
               type="button"
               onClick={() => setShowAllAdmissions(false)}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
+              className="inline-flex items-center gap-2 text-[15px] font-semibold text-slate-500 hover:text-slate-900"
             >
               <ArrowLeft size={15} />
               Back to Admissions Done
@@ -2649,7 +2649,7 @@ export default function Admissions({
               All Admissions
             </h1>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-[15px] text-slate-500">
               View every admission across streams, colleges and branches.
             </p>
           </div>
@@ -2663,7 +2663,7 @@ export default function Admissions({
               )
             }
             disabled={!filteredAllAdmissions.length}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-[13px] font-bold text-white disabled:opacity-50"
           >
             <Download size={14} />
             Export Admissions
@@ -2710,7 +2710,7 @@ export default function Admissions({
                   setAllSearch(event.target.value)
                 }
                 placeholder="Search student, stream, college, branch, counsellor..."
-                className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-sm outline-none focus:border-slate-400"
+                className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-[15px] outline-none focus:border-slate-400"
               />
             </div>
 
@@ -2727,7 +2727,7 @@ export default function Admissions({
                   key={key}
                   type="button"
                   onClick={() => setDateFilter(key)}
-                  className={`h-9 rounded-xl px-3 text-xs font-bold ${
+                  className={`h-9 rounded-xl px-3 text-[13px] font-bold ${
                     dateFilter === key
                       ? "bg-slate-950 text-white"
                       : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
@@ -2742,7 +2742,7 @@ export default function Admissions({
           {dateFilter === "custom" ? (
             <div className="mt-3 grid gap-3 border-t border-slate-100 pt-3 sm:grid-cols-2 lg:max-w-xl">
               <label>
-                <div className="mb-1.5 text-[11px] font-semibold text-slate-500">
+                <div className="mb-1.5 text-xs font-semibold text-slate-500">
                   From Date
                 </div>
                 <input
@@ -2753,12 +2753,12 @@ export default function Admissions({
                       event.target.value
                     )
                   }
-                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm text-slate-700 outline-none focus:border-slate-400"
+                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[15px] text-slate-700 outline-none focus:border-slate-400"
                 />
               </label>
 
               <label>
-                <div className="mb-1.5 text-[11px] font-semibold text-slate-500">
+                <div className="mb-1.5 text-xs font-semibold text-slate-500">
                   To Date
                 </div>
                 <input
@@ -2770,7 +2770,7 @@ export default function Admissions({
                     )
                   }
                   min={customStartDate || undefined}
-                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-sm text-slate-700 outline-none focus:border-slate-400"
+                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[15px] text-slate-700 outline-none focus:border-slate-400"
                 />
               </label>
             </div>
@@ -2780,7 +2780,7 @@ export default function Admissions({
         <PageMessage />
 
         {allLoading ? (
-          <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-16 text-sm text-slate-500">
+          <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-16 text-[15px] text-slate-500">
             <Loader2 size={16} className="animate-spin" />
             Loading all admissions...
           </div>
@@ -2805,35 +2805,35 @@ export default function Admissions({
                   className="hover:bg-slate-50/70"
                 >
                   <td className="px-4 py-3">
-                    <div className="text-sm font-semibold text-slate-900">
+                    <div className="text-[15px] font-semibold text-slate-900">
                       {admission.name}
                     </div>
-                    <div className="mt-0.5 text-xs text-slate-500">
+                    <div className="mt-0.5 text-[13px] text-slate-500">
                       {admission.phone || "—"}
                     </div>
                   </td>
 
-                  <td className="px-4 py-3 text-sm font-semibold text-slate-700">
+                  <td className="px-4 py-3 text-[15px] font-semibold text-slate-700">
                     {admission.partner?.stream?.name || "—"}
                   </td>
 
-                  <td className="px-4 py-3 text-sm text-slate-700">
+                  <td className="px-4 py-3 text-[15px] text-slate-700">
                     {admission.college ||
                       admission.partner?.name ||
                       "—"}
                   </td>
 
-                  <td className="px-4 py-3 text-sm text-slate-700">
+                  <td className="px-4 py-3 text-[15px] text-slate-700">
                     {admission.branch?.name ||
                       admission.course ||
                       "—"}
                   </td>
 
-                  <td className="px-4 py-3 text-sm font-semibold text-emerald-700">
+                  <td className="px-4 py-3 text-[15px] font-semibold text-emerald-700">
                     {money(admission.paid)}
                   </td>
 
-                  <td className="px-4 py-3 text-sm font-semibold text-amber-700">
+                  <td className="px-4 py-3 text-[15px] font-semibold text-amber-700">
                     {money(admission.pending)}
                   </td>
 
@@ -2843,11 +2843,11 @@ export default function Admissions({
                     </Badge>
                   </td>
 
-                  <td className="px-4 py-3 text-sm text-slate-700">
+                  <td className="px-4 py-3 text-[15px] text-slate-700">
                     {admission.counsellor}
                   </td>
 
-                  <td className="px-4 py-3 text-xs text-slate-500">
+                  <td className="px-4 py-3 text-[13px] text-slate-500">
                     {formatDate(admission.admissionDate)}
                   </td>
                 </tr>
@@ -2870,7 +2870,7 @@ export default function Admissions({
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
               Admissions
             </div>
 
@@ -2878,7 +2878,7 @@ export default function Admissions({
               Admissions Done
             </h1>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-[15px] text-slate-500">
               Manage streams, colleges, branches and completed admissions.
             </p>
           </div>
@@ -2887,7 +2887,7 @@ export default function Admissions({
             <button
               type="button"
               onClick={() => setShowAllAdmissions(true)}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50"
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-bold text-slate-700 shadow-sm hover:bg-slate-50"
             >
               <UserCheck size={14} />
               View All Admissions
@@ -2898,7 +2898,7 @@ export default function Admissions({
               onClick={() =>
                 setStreamModal({ mode: "create" })
               }
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white"
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-[13px] font-bold text-white"
             >
               <Plus size={14} />
               Add Stream
@@ -2910,7 +2910,7 @@ export default function Admissions({
         <PageMessage />
 
         {loading ? (
-          <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-20 text-sm text-slate-500">
+          <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-20 text-[15px] text-slate-500">
             <Loader2 size={16} className="animate-spin" />
             Loading streams...
           </div>
@@ -2949,19 +2949,19 @@ export default function Admissions({
                   extra={
                     <div className="grid grid-cols-2 gap-2">
                       <div className="rounded-xl bg-white/12 px-3 py-2.5">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/65">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
                           Colleges
                         </div>
-                        <div className="mt-1 text-lg font-bold">
+                        <div className="mt-1 text-xl font-bold">
                           {stream.totalColleges || 0}
                         </div>
                       </div>
 
                       <div className="rounded-xl bg-white/12 px-3 py-2.5">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/65">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
                           Branches
                         </div>
-                        <div className="mt-1 text-lg font-bold">
+                        <div className="mt-1 text-xl font-bold">
                           {stream.totalBranches || 0}
                         </div>
                       </div>
@@ -3012,7 +3012,7 @@ export default function Admissions({
             <button
               type="button"
               onClick={() => setSelectedStream(null)}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
+              className="inline-flex items-center gap-2 text-[15px] font-semibold text-slate-500 hover:text-slate-900"
             >
               <ArrowLeft size={15} />
               Back to Streams
@@ -3022,7 +3022,7 @@ export default function Admissions({
               {selectedStream.name}
             </h1>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-[15px] text-slate-500">
               Choose a college inside this stream.
             </p>
           </div>
@@ -3032,7 +3032,7 @@ export default function Admissions({
             onClick={() =>
               setCollegeModal({ mode: "create" })
             }
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-[13px] font-bold text-white"
           >
             <Plus size={14} />
             Add College
@@ -3095,19 +3095,19 @@ export default function Admissions({
               extra={
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-xl bg-white/12 px-3 py-2.5">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/65">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
                       Branches
                     </div>
-                    <div className="mt-1 text-lg font-bold">
+                    <div className="mt-1 text-xl font-bold">
                       {partner.totalBranches || 0}
                     </div>
                   </div>
 
                   <div className="rounded-xl bg-white/12 px-3 py-2.5">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/65">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
                       Received
                     </div>
-                    <div className="mt-1 text-sm font-bold">
+                    <div className="mt-1 text-[15px] font-bold">
                       {money(partner.received)}
                     </div>
                   </div>
@@ -3123,10 +3123,10 @@ export default function Admissions({
               size={24}
               className="mx-auto text-slate-300"
             />
-            <div className="mt-3 text-sm font-bold text-slate-800">
+            <div className="mt-3 text-[15px] font-bold text-slate-800">
               No colleges yet
             </div>
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="mt-1 text-[13px] text-slate-500">
               Add the first college inside {selectedStream.name}.
             </div>
           </div>
@@ -3184,7 +3184,7 @@ export default function Admissions({
             <button
               type="button"
               onClick={() => setSelectedPartner(null)}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
+              className="inline-flex items-center gap-2 text-[15px] font-semibold text-slate-500 hover:text-slate-900"
             >
               <ArrowLeft size={15} />
               Back to Colleges
@@ -3194,7 +3194,7 @@ export default function Admissions({
               {selectedPartner.name}
             </h1>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-[15px] text-slate-500">
               Select a branch such as MBBS, BDS, Pharmacy, CSE or MBA.
             </p>
           </div>
@@ -3204,7 +3204,7 @@ export default function Admissions({
             onClick={() =>
               setBranchModal({ mode: "create" })
             }
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-[13px] font-bold text-white"
           >
             <Plus size={14} />
             Add Branch
@@ -3264,19 +3264,19 @@ export default function Admissions({
               extra={
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-xl bg-white/12 px-3 py-2.5">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/65">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
                       Received
                     </div>
-                    <div className="mt-1 text-sm font-bold">
+                    <div className="mt-1 text-[15px] font-bold">
                       {money(branch.received)}
                     </div>
                   </div>
 
                   <div className="rounded-xl bg-white/12 px-3 py-2.5">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/65">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
                       Pending
                     </div>
-                    <div className="mt-1 text-sm font-bold">
+                    <div className="mt-1 text-[15px] font-bold">
                       {money(branch.pending)}
                     </div>
                   </div>
@@ -3292,10 +3292,10 @@ export default function Admissions({
               size={24}
               className="mx-auto text-slate-300"
             />
-            <div className="mt-3 text-sm font-bold text-slate-800">
+            <div className="mt-3 text-[15px] font-bold text-slate-800">
               No branches yet
             </div>
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="mt-1 text-[13px] text-slate-500">
               For Medical, add MBBS, BDS, Pharmacy and Nursing separately.
             </div>
           </div>
@@ -3360,7 +3360,7 @@ export default function Admissions({
           <button
             type="button"
             onClick={() => setSelectedBranch(null)}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900"
+            className="inline-flex items-center gap-2 text-[15px] font-semibold text-slate-500 hover:text-slate-900"
           >
             <ArrowLeft size={15} />
             Back to Branches
@@ -3370,7 +3370,7 @@ export default function Admissions({
             {selectedBranch.name} Admissions
           </h1>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-[15px] text-slate-500">
             {selectedStream.name} → {selectedPartner.name} →{" "}
             {selectedBranch.name}
           </p>
@@ -3380,7 +3380,7 @@ export default function Admissions({
           <button
             type="button"
             onClick={() => setShowImport(true)}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 hover:bg-slate-50"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-bold text-slate-700 hover:bg-slate-50"
           >
             <Upload size={14} />
             Import
@@ -3391,7 +3391,7 @@ export default function Admissions({
             onClick={() =>
               setAdmissionModal({ mode: "create" })
             }
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-[13px] font-bold text-white"
           >
             <Plus size={14} />
             New Admission
@@ -3440,7 +3440,7 @@ export default function Admissions({
               setSearch(event.target.value)
             }
             placeholder={`Search ${selectedBranch.name} admissions...`}
-            className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-sm outline-none focus:border-slate-400"
+            className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-[15px] outline-none focus:border-slate-400"
           />
         </div>
 
@@ -3450,7 +3450,7 @@ export default function Admissions({
             onChange={(event) =>
               setSortBy(event.target.value)
             }
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700"
+            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-700"
           >
             <option value="date-desc">Latest first</option>
             <option value="name-asc">Student A-Z</option>
@@ -3467,7 +3467,7 @@ export default function Admissions({
               )
             }
             disabled={!filtered.length}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-700 disabled:opacity-50"
           >
             <Download size={13} />
             Export
@@ -3479,7 +3479,7 @@ export default function Admissions({
               loadAdmissions(selectedBranch.id)
             }
             disabled={loading}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-700"
           >
             <RefreshCw
               size={13}
@@ -3491,7 +3491,7 @@ export default function Admissions({
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-16 text-sm text-slate-500">
+        <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-16 text-[15px] text-slate-500">
           <Loader2 size={16} className="animate-spin" />
           Loading admissions...
         </div>
@@ -3516,28 +3516,28 @@ export default function Admissions({
                 className="hover:bg-slate-50/70"
               >
                 <td className="px-4 py-3">
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-[15px] font-semibold text-slate-900">
                     {admission.name}
                   </div>
-                  <div className="mt-0.5 text-xs text-slate-500">
+                  <div className="mt-0.5 text-[13px] text-slate-500">
                     {admission.phone || "—"}
                   </div>
                 </td>
 
-                <td className="px-4 py-3 text-sm font-semibold text-slate-700">
+                <td className="px-4 py-3 text-[15px] font-semibold text-slate-700">
                   {admission.branch?.name ||
                     admission.course}
                 </td>
 
-                <td className="px-4 py-3 text-sm font-semibold text-emerald-700">
+                <td className="px-4 py-3 text-[15px] font-semibold text-emerald-700">
                   {money(admission.paid)}
                 </td>
 
-                <td className="px-4 py-3 text-sm text-slate-700">
+                <td className="px-4 py-3 text-[15px] text-slate-700">
                   {money(admission.total)}
                 </td>
 
-                <td className="px-4 py-3 text-sm font-semibold text-amber-700">
+                <td className="px-4 py-3 text-[15px] font-semibold text-amber-700">
                   {money(admission.pending)}
                 </td>
 
@@ -3547,11 +3547,11 @@ export default function Admissions({
                   </Badge>
                 </td>
 
-                <td className="px-4 py-3 text-sm text-slate-700">
+                <td className="px-4 py-3 text-[15px] text-slate-700">
                   {admission.counsellor}
                 </td>
 
-                <td className="px-4 py-3 text-xs text-slate-500">
+                <td className="px-4 py-3 text-[13px] text-slate-500">
                   {formatDate(admission.admissionDate)}
                 </td>
 

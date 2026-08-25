@@ -196,11 +196,11 @@ function LeadModal({
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[92vh] overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-[17px] font-semibold text-slate-900">
               New Lead
             </h2>
 
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[13px] text-slate-500 mt-0.5">
               Add a lead to your
               company CRM.
             </p>
@@ -222,7 +222,7 @@ function LeadModal({
         >
           <div className="p-5">
             {error && (
-              <div className="mb-4 flex items-center gap-2 px-3 py-2 border border-rose-200 bg-rose-50 rounded-lg text-sm text-rose-700">
+              <div className="mb-4 flex items-center gap-2 px-3 py-2 border border-rose-200 bg-rose-50 rounded-lg text-[15px] text-rose-700">
                 <AlertCircle
                   size={14}
                 />
@@ -284,7 +284,7 @@ function LeadModal({
               />
 
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
+                <label className="block text-[13px] font-medium text-slate-600 mb-1">
                   Source
                   <span className="text-rose-500 ml-0.5">
                     *
@@ -299,7 +299,7 @@ function LeadModal({
                       event.target.value
                     )
                   }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-[15px]"
                 >
                   {SOURCES.map(
                     (source) => (
@@ -319,7 +319,7 @@ function LeadModal({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">
+                <label className="block text-[13px] font-medium text-slate-600 mb-1">
                   Stage
                 </label>
 
@@ -331,7 +331,7 @@ function LeadModal({
                       event.target.value
                     )
                   }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-[15px]"
                 >
                   {STAGES.map(
                     (stage) => (
@@ -391,7 +391,7 @@ function LeadModal({
               />
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-slate-600 mb-1">
+                <label className="block text-[13px] font-medium text-slate-600 mb-1">
                   Notes
                 </label>
 
@@ -404,7 +404,7 @@ function LeadModal({
                     )
                   }
                   rows={3}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-sm resize-none focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-[15px] resize-none focus:outline-none focus:ring-1 focus:ring-indigo-400"
                   placeholder="Optional notes"
                 />
               </div>
@@ -416,7 +416,7 @@ function LeadModal({
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-4 py-2 border border-slate-200 rounded-md text-sm text-slate-700"
+              className="px-4 py-2 border border-slate-200 rounded-md text-[15px] text-slate-700"
             >
               Cancel
             </button>
@@ -424,7 +424,7 @@ function LeadModal({
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-md text-sm inline-flex items-center gap-2"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-md text-[15px] inline-flex items-center gap-2"
             >
               {saving && (
                 <Loader2
@@ -589,13 +589,13 @@ function LinkModal({
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-slate-950">
+            <h2 className="text-[17px] font-bold text-slate-950">
               {editing
                 ? "Edit UTM Link"
                 : "Create UTM Link"}
             </h2>
 
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-[13px] text-slate-500 mt-1">
               Generate a tracked URL or save an existing UTM URL manually.
             </p>
           </div>
@@ -613,7 +613,7 @@ function LinkModal({
         <form onSubmit={submit}>
           <div className="p-5 space-y-4">
             {error ? (
-              <div className="px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-sm">
+              <div className="px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-[15px]">
                 {error}
               </div>
             ) : null}
@@ -627,7 +627,7 @@ function LinkModal({
                       "generate"
                     )
                   }
-                  className={`h-8 px-3 rounded-lg text-xs font-semibold ${
+                  className={`h-8 px-3 rounded-lg text-[13px] font-semibold ${
                     mode ===
                     "generate"
                       ? "bg-white text-slate-950 shadow-sm"
@@ -644,7 +644,7 @@ function LinkModal({
                       "manual"
                     )
                   }
-                  className={`h-8 px-3 rounded-lg text-xs font-semibold ${
+                  className={`h-8 px-3 rounded-lg text-[13px] font-semibold ${
                     mode ===
                     "manual"
                       ? "bg-white text-slate-950 shadow-sm"
@@ -731,11 +731,11 @@ function LinkModal({
               "generate" &&
             generatedUrl ? (
               <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3">
-                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-500">
+                <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-indigo-500">
                   Generated URL
                 </div>
 
-                <div className="mt-2 text-xs font-mono text-slate-700 break-all">
+                <div className="mt-2 text-[13px] font-mono text-slate-700 break-all">
                   {generatedUrl}
                 </div>
               </div>
@@ -747,7 +747,7 @@ function LinkModal({
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="h-9 px-4 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              className="h-9 px-4 border border-slate-200 rounded-lg text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
             >
               Cancel
             </button>
@@ -764,7 +764,7 @@ function LinkModal({
                   "generate" &&
                   !generatedUrl)
               }
-              className="h-9 px-4 bg-slate-950 hover:bg-slate-800 disabled:opacity-50 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2"
+              className="h-9 px-4 bg-slate-950 hover:bg-slate-800 disabled:opacity-50 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2"
             >
               {saving ? (
                 <Loader2
@@ -801,7 +801,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-slate-600 mb-1">
+      <label className="block text-[13px] font-medium text-slate-600 mb-1">
         {label}
 
         {required && (
@@ -821,7 +821,7 @@ function Field({
           )
         }
         placeholder={placeholder}
-        className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+        className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
       />
     </div>
   );
@@ -848,7 +848,7 @@ function PlatformSelect({
 
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-slate-600">
+      <label className="mb-1 block text-[13px] font-medium text-slate-600">
         {label}
       </label>
 
@@ -860,7 +860,7 @@ function PlatformSelect({
               event.target.value
             )
           }
-          className="h-10 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-10 text-sm text-slate-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+          className="h-10 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-10 text-[15px] text-slate-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
         >
           <option value="">
             Select platform
@@ -895,7 +895,7 @@ function MetricCard({
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">
             {label}
           </div>
 
@@ -909,7 +909,7 @@ function MetricCard({
         </div>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+      <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
         {detail}
       </div>
     </div>
@@ -1611,7 +1611,7 @@ export default function UTMLeads({
 
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
-        <div className="text-sm font-bold text-slate-900">
+        <div className="text-[15px] font-bold text-slate-900">
           {title}
         </div>
 
@@ -1623,11 +1623,11 @@ export default function UTMLeads({
             return (
               <div key={row[labelKey]}>
                 <div className="flex items-center justify-between gap-3">
-                  <div className="truncate text-xs font-semibold text-slate-700">
+                  <div className="truncate text-[13px] font-semibold text-slate-700">
                     {row[labelKey]}
                   </div>
 
-                  <div className="text-xs font-bold text-slate-950">
+                  <div className="text-[13px] font-bold text-slate-950">
                     {value}
                   </div>
                 </div>
@@ -1643,7 +1643,7 @@ export default function UTMLeads({
           })}
 
           {!rows.length ? (
-            <div className="py-8 text-center text-xs text-slate-500">
+            <div className="py-8 text-center text-[13px] text-slate-500">
               No data yet.
             </div>
           ) : null}
@@ -1655,7 +1655,7 @@ export default function UTMLeads({
   return (
     <div className="space-y-6">
       <div>
-        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+        <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
           Campaign tracking
         </div>
 
@@ -1663,13 +1663,13 @@ export default function UTMLeads({
           UTM Leads
         </h1>
 
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-[15px] text-slate-500">
           Generate links, save influencer links, review UTM leads and analyse performance.
         </p>
       </div>
 
       {error ? (
-        <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-[15px] text-rose-700">
           <AlertCircle size={15} />
           {error}
         </div>
@@ -1678,22 +1678,22 @@ export default function UTMLeads({
       {/* 1. Generate UTM Link */}
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_4px_18px_rgba(15,23,42,0.04)]">
         <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-5 py-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-600">
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-600">
             UTM Generator
           </div>
 
-          <h2 className="mt-1 text-lg font-bold text-slate-950">
+          <h2 className="mt-1 text-xl font-bold text-slate-950">
             Generate UTM Link
           </h2>
 
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-[13px] text-slate-500">
             Build a tracked campaign URL and save it directly.
           </p>
         </div>
 
         <div className="space-y-4 p-5">
           {generateError ? (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[15px] text-rose-700">
               {generateError}
             </div>
           ) : null}
@@ -1752,11 +1752,11 @@ export default function UTMLeads({
           </div>
 
           <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
-            <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-600">
+            <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-indigo-600">
               Generated Link
             </div>
 
-            <div className="mt-2 min-h-[22px] break-all font-mono text-xs text-slate-700">
+            <div className="mt-2 min-h-[22px] break-all font-mono text-[13px] text-slate-700">
               {generatedUrl ||
                 "Complete the fields to preview the generated UTM URL."}
             </div>
@@ -1770,7 +1770,7 @@ export default function UTMLeads({
                 generateSaving ||
                 !generatedUrl
               }
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-[13px] font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
             >
               {generateSaving ? (
                 <Loader2
@@ -1787,7 +1787,7 @@ export default function UTMLeads({
               type="button"
               onClick={copyGeneratedLink}
               disabled={!generatedUrl}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 disabled:opacity-50"
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-bold text-slate-700 disabled:opacity-50"
             >
               {copiedGenerated ? (
                 <Check size={13} />
@@ -1803,22 +1803,22 @@ export default function UTMLeads({
       {/* 2. Manually Add UTM Link */}
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_4px_18px_rgba(15,23,42,0.04)]">
         <div className="border-b border-slate-100 px-5 py-4">
-          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
             Existing link
           </div>
 
-          <h2 className="mt-1 text-lg font-bold text-slate-950">
+          <h2 className="mt-1 text-xl font-bold text-slate-950">
             Manually Add UTM Link
           </h2>
 
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-[13px] text-slate-500">
             Save an already-created influencer or campaign UTM link.
           </p>
         </div>
 
         <div className="space-y-4 p-5">
           {manualError ? (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[15px] text-rose-700">
               {manualError}
             </div>
           ) : null}
@@ -1880,7 +1880,7 @@ export default function UTMLeads({
             type="button"
             onClick={saveManual}
             disabled={manualSaving}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-[13px] font-bold text-white disabled:opacity-50"
           >
             {manualSaving ? (
               <Loader2
@@ -1902,15 +1902,15 @@ export default function UTMLeads({
       >
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
               Saved links
             </div>
 
-            <h2 className="mt-1 text-xl font-bold tracking-[-0.02em] text-slate-950">
+            <h2 className="mt-1 text-2xl font-bold tracking-[-0.02em] text-slate-950">
               Saved Influencer Links
             </h2>
 
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-[13px] text-slate-500">
               Search, filter, copy, edit and review performance for every saved link.
             </p>
           </div>
@@ -1919,7 +1919,7 @@ export default function UTMLeads({
             type="button"
             onClick={() => downloadCsv(filteredLinks)}
             disabled={!filteredLinks.length}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-bold text-slate-700 disabled:opacity-50"
           >
             <Download size={13} />
             Export
@@ -1940,7 +1940,7 @@ export default function UTMLeads({
                   setLinkSearch(event.target.value)
                 }
                 placeholder="Search campaign, source, medium, URL or latest lead..."
-                className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-sm"
+                className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-[15px]"
               />
             </div>
 
@@ -1949,7 +1949,7 @@ export default function UTMLeads({
               onChange={(event) =>
                 setSourceFilter(event.target.value)
               }
-              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700"
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[13px] text-slate-700"
             >
               <option value="">All Sources</option>
               {sourceOptions.map((item) => (
@@ -1964,7 +1964,7 @@ export default function UTMLeads({
               onChange={(event) =>
                 setMediumFilter(event.target.value)
               }
-              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700"
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[13px] text-slate-700"
             >
               <option value="">All Mediums</option>
               {mediumOptions.map((item) => (
@@ -1979,7 +1979,7 @@ export default function UTMLeads({
               onChange={(event) =>
                 setDateFilter(event.target.value)
               }
-              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700"
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[13px] text-slate-700"
             >
               <option value="all">All Dates</option>
               <option value="month">This Month</option>
@@ -1991,7 +1991,7 @@ export default function UTMLeads({
               onChange={(event) =>
                 setSort(event.target.value)
               }
-              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-700"
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[13px] text-slate-700"
             >
               <option value="newest">Newest</option>
               <option value="oldest">Oldest</option>
@@ -2023,21 +2023,21 @@ export default function UTMLeads({
                 className="hover:bg-slate-50/80"
               >
                 <td className="px-4 py-3">
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-[15px] font-semibold text-slate-900">
                     {link.campaign}
                   </div>
-                  <div className="mt-0.5 text-[10px] text-slate-400">
+                  <div className="mt-0.5 text-[11px] text-slate-400">
                     {formatDate(link.createdAt)}
                   </div>
                 </td>
 
-                <td className="px-4 py-3 text-sm capitalize text-slate-600">
+                <td className="px-4 py-3 text-[15px] capitalize text-slate-600">
                   {link.source} / {link.medium}
                 </td>
 
                 <td className="px-4 py-3">
                   <div className="flex max-w-[250px] items-center gap-2">
-                    <span className="truncate font-mono text-xs text-slate-600">
+                    <span className="truncate font-mono text-[13px] text-slate-600">
                       {link.url}
                     </span>
 
@@ -2064,23 +2064,23 @@ export default function UTMLeads({
                   </div>
                 </td>
 
-                <td className="px-4 py-3 text-sm font-bold text-slate-900">
+                <td className="px-4 py-3 text-[15px] font-bold text-slate-900">
                   {link.leads || 0}
                 </td>
 
-                <td className="px-4 py-3 text-sm text-slate-700">
+                <td className="px-4 py-3 text-[15px] text-slate-700">
                   ₹{Number(link.cost || 0).toLocaleString("en-IN")}
                 </td>
 
-                <td className="px-4 py-3 text-sm font-semibold text-slate-700">
+                <td className="px-4 py-3 text-[15px] font-semibold text-slate-700">
                   ₹{Number(link.costPerLead || 0).toLocaleString("en-IN")}
                 </td>
 
                 <td className="px-4 py-3">
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-[15px] font-semibold text-slate-900">
                     {link.latestLead?.name || "—"}
                   </div>
-                  <div className="mt-0.5 text-xs text-slate-500">
+                  <div className="mt-0.5 text-[13px] text-slate-500">
                     {link.latestLead?.phone ||
                       (link.latestLead?.createdAt
                         ? formatDate(link.latestLead.createdAt)
@@ -2088,11 +2088,11 @@ export default function UTMLeads({
                   </div>
                 </td>
 
-                <td className="px-4 py-3 text-sm font-bold text-emerald-700">
+                <td className="px-4 py-3 text-[15px] font-bold text-emerald-700">
                   {link.adm || 0}
                 </td>
 
-                <td className="px-4 py-3 text-sm font-bold text-slate-900">
+                <td className="px-4 py-3 text-[15px] font-bold text-slate-900">
                   ₹{Number(link.rev || 0).toLocaleString("en-IN")}
                 </td>
 
@@ -2128,15 +2128,15 @@ export default function UTMLeads({
       {/* Lead source views — restored from Student Mentor */}
       <section className="space-y-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
             Lead Sources
           </div>
 
-          <h2 className="mt-1 text-xl font-bold tracking-[-0.02em] text-slate-950">
+          <h2 className="mt-1 text-2xl font-bold tracking-[-0.02em] text-slate-950">
             Lead Sources
           </h2>
 
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-[13px] text-slate-500">
             Open Google Form, Website Form, IM Leads, DM Leads or Internal Leads.
           </p>
         </div>
@@ -2159,7 +2159,7 @@ export default function UTMLeads({
                     item.key
                   )
                 }
-                className={`inline-flex h-10 items-center gap-2 rounded-xl px-3.5 text-xs font-bold ${
+                className={`inline-flex h-10 items-center gap-2 rounded-xl px-3.5 text-[13px] font-bold ${
                   leadSourceView === item.key
                     ? "bg-indigo-600 text-white"
                     : "text-slate-600 hover:bg-slate-50"
@@ -2167,7 +2167,7 @@ export default function UTMLeads({
               >
                 <Icon size={14} />
                 {item.label}
-                <span className={`rounded-full px-2 py-0.5 text-[10px] ${
+                <span className={`rounded-full px-2 py-0.5 text-[11px] ${
                   leadSourceView === item.key
                     ? "bg-white/15"
                     : "bg-slate-100"
@@ -2182,14 +2182,14 @@ export default function UTMLeads({
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="text-sm font-bold text-slate-900">
+                <div className="text-[15px] font-bold text-slate-900">
                   {SOURCE_VIEWS.find(
                     (item) =>
                       item.key === leadSourceView
                   )?.label || "Lead Details"}
                 </div>
 
-                <div className="mt-1 text-xs text-slate-500">
+                <div className="mt-1 text-[13px] text-slate-500">
                   {sourceViewLeads.length} leads in this source.
                 </div>
               </div>
@@ -2204,7 +2204,7 @@ export default function UTMLeads({
                     )
                   }
                   disabled={!sourceViewLeads.length}
-                  className="inline-flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  className="inline-flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                 >
                   <Download size={13} />
                   Export
@@ -2217,13 +2217,13 @@ export default function UTMLeads({
                       onClick={() =>
                         setShowInternalLeadModal(true)
                       }
-                      className="inline-flex h-9 items-center gap-2 rounded-xl bg-indigo-600 px-3 text-xs font-bold text-white hover:bg-indigo-700"
+                      className="inline-flex h-9 items-center gap-2 rounded-xl bg-indigo-600 px-3 text-[13px] font-bold text-white hover:bg-indigo-700"
                     >
                       <Plus size={13} />
                       Add Internal Lead
                     </button>
 
-                    <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-xl bg-slate-950 px-3 text-xs font-bold text-white hover:bg-slate-800">
+                    <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-xl bg-slate-950 px-3 text-[13px] font-bold text-white hover:bg-slate-800">
                       <Upload size={13} />
                       {importingInternal
                         ? "Importing..."
@@ -2249,7 +2249,7 @@ export default function UTMLeads({
 
             {leadSourceView === "INTERNAL" &&
             internalImportMessage ? (
-              <div className="border-b border-emerald-100 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-700">
+              <div className="border-b border-emerald-100 bg-emerald-50 px-4 py-3 text-[13px] font-semibold text-emerald-700">
                 {internalImportMessage}
               </div>
             ) : null}
@@ -2272,27 +2272,27 @@ export default function UTMLeads({
                   className="hover:bg-slate-50/80"
                 >
                   <td className="px-4 py-3">
-                    <div className="text-sm font-semibold text-slate-900">
+                    <div className="text-[15px] font-semibold text-slate-900">
                       {lead.name}
                     </div>
-                    <div className="mt-0.5 text-xs text-slate-500">
+                    <div className="mt-0.5 text-[13px] text-slate-500">
                       {lead.phone}
                     </div>
                   </td>
 
-                  <td className="px-4 py-3 text-sm text-slate-700">
+                  <td className="px-4 py-3 text-[15px] text-slate-700">
                     {lead.course || "—"}
                   </td>
 
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="px-4 py-3 text-[15px] text-slate-600">
                     {lead.source || "—"}
                   </td>
 
-                  <td className="px-4 py-3 text-sm font-semibold text-slate-700">
+                  <td className="px-4 py-3 text-[15px] font-semibold text-slate-700">
                     {lead.campaign || "—"}
                   </td>
 
-                  <td className="px-4 py-3 text-sm text-slate-600">
+                  <td className="px-4 py-3 text-[15px] text-slate-600">
                     {lead.medium || "—"}
                   </td>
 
@@ -2302,11 +2302,11 @@ export default function UTMLeads({
                     </Badge>
                   </td>
 
-                  <td className="px-4 py-3 text-sm text-slate-700">
+                  <td className="px-4 py-3 text-[15px] text-slate-700">
                     {lead.assigned || "Unassigned"}
                   </td>
 
-                  <td className="px-4 py-3 text-xs text-slate-500">
+                  <td className="px-4 py-3 text-[13px] text-slate-500">
                     {formatDate(lead.createdAt)}
                   </td>
                 </tr>
@@ -2320,15 +2320,15 @@ export default function UTMLeads({
       <section className="space-y-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
               Lead details
             </div>
 
-            <h2 className="mt-1 text-xl font-bold tracking-[-0.02em] text-slate-950">
+            <h2 className="mt-1 text-2xl font-bold tracking-[-0.02em] text-slate-950">
               UTM Lead Details
             </h2>
 
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-[13px] text-slate-500">
               Actual leads generated from the saved UTM links.
             </p>
           </div>
@@ -2341,7 +2341,7 @@ export default function UTMLeads({
               )
             }
             disabled={!utmLeads.length}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             <Download size={13} />
             Export UTM Lead Details
@@ -2363,7 +2363,7 @@ export default function UTMLeads({
                 )
               }
               placeholder="Search UTM lead by name, phone, campaign, source or stage..."
-              className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-sm"
+              className="h-10 w-full rounded-xl border border-slate-200 pl-9 pr-3 text-[15px]"
             />
           </div>
         </div>
@@ -2387,28 +2387,28 @@ export default function UTMLeads({
                 className="hover:bg-slate-50/80"
               >
                 <td className="px-4 py-3">
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-[15px] font-semibold text-slate-900">
                     {lead.name}
                   </div>
 
-                  <div className="mt-0.5 text-xs text-slate-500">
+                  <div className="mt-0.5 text-[13px] text-slate-500">
                     {lead.phone}
                   </div>
                 </td>
 
-                <td className="px-4 py-3 text-sm text-slate-700">
+                <td className="px-4 py-3 text-[15px] text-slate-700">
                   {lead.course || "—"}
                 </td>
 
-                <td className="px-4 py-3 text-sm text-slate-600">
+                <td className="px-4 py-3 text-[15px] text-slate-600">
                   {lead.source || "—"}
                 </td>
 
-                <td className="px-4 py-3 text-sm font-semibold text-slate-700">
+                <td className="px-4 py-3 text-[15px] font-semibold text-slate-700">
                   {lead.campaign || "—"}
                 </td>
 
-                <td className="px-4 py-3 text-sm text-slate-600">
+                <td className="px-4 py-3 text-[15px] text-slate-600">
                   {lead.medium || "—"}
                 </td>
 
@@ -2418,11 +2418,11 @@ export default function UTMLeads({
                   </Badge>
                 </td>
 
-                <td className="px-4 py-3 text-sm text-slate-700">
+                <td className="px-4 py-3 text-[15px] text-slate-700">
                   {lead.assigned || "Unassigned"}
                 </td>
 
-                <td className="px-4 py-3 text-xs text-slate-500">
+                <td className="px-4 py-3 text-[13px] text-slate-500">
                   {formatDate(
                     lead.createdAt
                   )}
@@ -2436,15 +2436,15 @@ export default function UTMLeads({
       {/* UTM Analysis */}
       <section className="space-y-4">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
             Performance
           </div>
 
-          <h2 className="mt-1 text-xl font-bold tracking-[-0.02em] text-slate-950">
+          <h2 className="mt-1 text-2xl font-bold tracking-[-0.02em] text-slate-950">
             UTM Analysis
           </h2>
 
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-[13px] text-slate-500">
             Campaign performance for the selected year.
           </p>
         </div>

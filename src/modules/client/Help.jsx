@@ -242,7 +242,7 @@ function SupportMetric({
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-400">
             {label}
           </div>
 
@@ -265,7 +265,7 @@ function SupportMetric({
         </div>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+      <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
         {detail}
       </div>
     </div>
@@ -400,11 +400,11 @@ function NewTicketModal({
 
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-slate-950">
+            <h2 className="text-[17px] font-bold text-slate-950">
               New Support Ticket
             </h2>
 
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-[13px] text-slate-500 mt-1">
               Submit a request to
               ConsulBuzz support.
             </p>
@@ -434,7 +434,7 @@ function NewTicketModal({
           <div className="p-6 space-y-4">
 
             {error && (
-              <div className="px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-sm">
+              <div className="px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-[15px]">
                 {
                   error
                 }
@@ -444,7 +444,7 @@ function NewTicketModal({
             {/* TYPE */}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+              <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                 Ticket Type
               </label>
 
@@ -462,7 +462,7 @@ function NewTicketModal({
                       .value
                   )
                 }
-                className="w-full h-10 px-3 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                className="w-full h-10 px-3 border border-slate-200 rounded-lg bg-white text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
               >
                 {availableTypes.map(
                   (
@@ -488,7 +488,7 @@ function NewTicketModal({
             {/* TITLE */}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+              <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                 Title
 
                 <span className="text-rose-500 ml-0.5">
@@ -512,14 +512,14 @@ function NewTicketModal({
                   )
                 }
                 placeholder="Describe your request briefly"
-                className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
               />
             </div>
 
             {/* PRIORITY */}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+              <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                 Priority
               </label>
 
@@ -537,7 +537,7 @@ function NewTicketModal({
                       .value
                   )
                 }
-                className="w-full h-10 px-3 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                className="w-full h-10 px-3 border border-slate-200 rounded-lg bg-white text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
               >
                 {PRIORITIES.map(
                   (
@@ -563,7 +563,7 @@ function NewTicketModal({
             {/* DESCRIPTION */}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+              <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                 Description
 
                 <span className="text-rose-500 ml-0.5">
@@ -598,7 +598,7 @@ function NewTicketModal({
                     ? "Explain your subscription, invoice, renewal or payment issue..."
                     : "Explain what is not working and what you expected to happen..."
                 }
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-[15px] resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
               />
             </div>
           </div>
@@ -614,7 +614,7 @@ function NewTicketModal({
               disabled={
                 saving
               }
-              className="h-9 px-4 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-700"
+              className="h-9 px-4 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700"
             >
               Cancel
             </button>
@@ -624,7 +624,7 @@ function NewTicketModal({
               disabled={
                 saving
               }
-              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2 disabled:opacity-50 shadow-sm"
+              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2 disabled:opacity-50 shadow-sm"
             >
               {saving && (
                 <Loader2
@@ -658,11 +658,11 @@ function TicketDetailsModal({
       <div className="w-full max-w-2xl max-h-[92vh] overflow-hidden bg-white border border-white/70 rounded-2xl shadow-2xl">
         <div className="px-6 py-5 border-b border-slate-200 flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="text-[11px] font-mono font-semibold text-slate-500">
+            <div className="text-xs font-mono font-semibold text-slate-500">
               {ticket.ticketNumber}
             </div>
 
-            <h2 className="mt-1 text-lg font-bold text-slate-950 break-words">
+            <h2 className="mt-1 text-xl font-bold text-slate-950 break-words">
               {ticket.title}
             </h2>
           </div>
@@ -703,7 +703,7 @@ function TicketDetailsModal({
             </Badge>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4 text-xs">
+          <div className="grid sm:grid-cols-2 gap-4 text-[13px]">
             <DetailItem
               label="Submitted By"
               value={
@@ -751,17 +751,17 @@ function TicketDetailsModal({
           </div>
 
           <div>
-            <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-400">
+            <div className="text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-400">
               Description
             </div>
 
-            <div className="mt-2 text-sm leading-6 text-slate-700 whitespace-pre-wrap bg-slate-50 border border-slate-200 rounded-xl p-4">
+            <div className="mt-2 text-[15px] leading-6 text-slate-700 whitespace-pre-wrap bg-slate-50 border border-slate-200 rounded-xl p-4">
               {ticket.description}
             </div>
           </div>
 
           <div>
-            <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-400 inline-flex items-center gap-1.5">
+            <div className="text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-400 inline-flex items-center gap-1.5">
               <MessageSquareText
                 size={12}
               />
@@ -769,11 +769,11 @@ function TicketDetailsModal({
             </div>
 
             {ticket.adminRemarks ? (
-              <div className="mt-2 text-sm leading-6 text-slate-700 whitespace-pre-wrap bg-indigo-50/60 border border-indigo-100 rounded-xl p-4">
+              <div className="mt-2 text-[15px] leading-6 text-slate-700 whitespace-pre-wrap bg-indigo-50/60 border border-indigo-100 rounded-xl p-4">
                 {ticket.adminRemarks}
               </div>
             ) : (
-              <div className="mt-2 text-sm text-slate-500 bg-white border border-dashed border-slate-200 rounded-xl p-4">
+              <div className="mt-2 text-[15px] text-slate-500 bg-white border border-dashed border-slate-200 rounded-xl p-4">
                 No support response has been added yet.
               </div>
             )}
@@ -790,11 +790,11 @@ function DetailItem({
 }) {
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-3">
-      <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-400">
+      <div className="text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-400">
         {label}
       </div>
 
-      <div className="mt-1 text-xs font-semibold text-slate-700 break-words">
+      <div className="mt-1 text-[13px] font-semibold text-slate-700 break-words">
         {value}
       </div>
     </div>
@@ -1049,7 +1049,7 @@ export default function Help({
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
             Support / Service Desk
           </div>
 
@@ -1057,7 +1057,7 @@ export default function Help({
             Help & Support
           </h1>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-[15px] text-slate-500">
             Manage technical issues,
             billing requests and
             Advanced-plan customization
@@ -1074,7 +1074,7 @@ export default function Help({
             disabled={
               loading
             }
-            className="h-9 px-3.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 inline-flex items-center gap-2 shadow-sm disabled:opacity-50"
+            className="h-9 px-3.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 inline-flex items-center gap-2 shadow-sm disabled:opacity-50"
           >
             <RefreshCw
               size={13}
@@ -1093,7 +1093,7 @@ export default function Help({
             onClick={() =>
               createTicket()
             }
-            className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2 shadow-sm"
+            className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm"
           >
             <Plus
               size={14}
@@ -1191,7 +1191,7 @@ export default function Help({
                 }`}
               >
                 {locked && (
-                  <div className="absolute right-4 top-4 inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-1">
+                  <div className="absolute right-4 top-4 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-1">
                     <Lock
                       size={10}
                     />
@@ -1208,13 +1208,13 @@ export default function Help({
                   />
                 </div>
 
-                <div className="text-sm font-bold text-slate-900">
+                <div className="text-[15px] font-bold text-slate-900">
                   {
                     type.label
                   }
                 </div>
 
-                <div className="text-xs text-slate-500 mt-1.5 leading-relaxed pr-3">
+                <div className="text-[13px] text-slate-500 mt-1.5 leading-relaxed pr-3">
                   {
                     type.description
                   }
@@ -1222,7 +1222,7 @@ export default function Help({
 
                 {type.advancedOnly &&
                   isAdvanced && (
-                    <div className="inline-flex items-center gap-1.5 mt-3 text-[10px] text-amber-700 font-semibold">
+                    <div className="inline-flex items-center gap-1.5 mt-3 text-[11px] text-amber-700 font-semibold">
                       <Crown
                         size={10}
                       />
@@ -1239,7 +1239,7 @@ export default function Help({
       {/* ERROR */}
 
       {error && (
-        <div className="px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-sm">
+        <div className="px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-[15px]">
           {
             error
           }
@@ -1247,7 +1247,7 @@ export default function Help({
       )}
 
       {successMessage && (
-        <div className="px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-sm inline-flex items-center gap-2">
+        <div className="px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-[15px] inline-flex items-center gap-2">
           <CheckCircle2
             size={15}
           />
@@ -1276,7 +1276,7 @@ export default function Help({
               )
             }
             placeholder="Search ticket number, title, description or response..."
-            className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+            className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
           />
         </div>
 
@@ -1291,7 +1291,7 @@ export default function Help({
               event.target.value
             )
           }
-          className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700"
+          className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-[13px] font-semibold text-slate-700"
         >
           <option value="">
             All Statuses
@@ -1333,7 +1333,7 @@ export default function Help({
               event.target.value
             )
           }
-          className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700"
+          className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-[13px] font-semibold text-slate-700"
         >
           <option value="">
             All Types
@@ -1360,7 +1360,7 @@ export default function Help({
               event.target.value
             )
           }
-          className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700"
+          className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-[13px] font-semibold text-slate-700"
         >
           <option value="">
             All Priorities
@@ -1389,7 +1389,7 @@ export default function Help({
       {/* TICKETS */}
 
       {loading ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-14 flex items-center justify-center gap-2 text-sm text-slate-500">
+        <div className="bg-white border border-slate-200 rounded-xl p-14 flex items-center justify-center gap-2 text-[15px] text-slate-500">
           <Loader2
             size={16}
             className="animate-spin"
@@ -1402,18 +1402,18 @@ export default function Help({
 
           <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">
+              <h3 className="text-[15px] font-bold text-slate-900">
                 Support Tickets
               </h3>
 
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-[13px] text-slate-500 mt-1">
                 Track all requests and
                 their current support
                 status.
               </p>
             </div>
 
-            <div className="text-xs text-slate-500">
+            <div className="text-[13px] text-slate-500">
               {
                 filteredTickets.length
               }{" "}
@@ -1442,20 +1442,20 @@ export default function Help({
                   }
                   className="hover:bg-slate-50/80 transition-colors"
                 >
-                  <td className="px-4 py-3 text-sm font-mono font-medium text-slate-600 whitespace-nowrap">
+                  <td className="px-4 py-3 text-[15px] font-mono font-medium text-slate-600 whitespace-nowrap">
                     {
                       ticket.ticketNumber
                     }
                   </td>
 
                   <td className="px-4 py-3">
-                    <div className="text-sm font-semibold text-slate-900">
+                    <div className="text-[15px] font-semibold text-slate-900">
                       {
                         ticket.title
                       }
                     </div>
 
-                    <div className="text-xs text-slate-500 mt-1 max-w-md truncate">
+                    <div className="text-[13px] text-slate-500 mt-1 max-w-md truncate">
                       {
                         ticket.description
                       }
@@ -1496,7 +1496,7 @@ export default function Help({
                     </Badge>
                   </td>
 
-                  <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                  <td className="px-4 py-3 text-[13px] text-slate-500 whitespace-nowrap">
                     {formatDate(
                       ticket.createdAt
                     )}
@@ -1510,7 +1510,7 @@ export default function Help({
                           ticket
                         )
                       }
-                      className="h-8 px-2.5 rounded-lg inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100"
+                      className="h-8 px-2.5 rounded-lg inline-flex items-center gap-1.5 text-[13px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100"
                     >
                       <Eye
                         size={12}

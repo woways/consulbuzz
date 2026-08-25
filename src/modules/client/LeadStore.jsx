@@ -107,7 +107,7 @@ function Field({
           : ""
       }
     >
-      <div className="block text-xs font-medium text-slate-600 mb-1">
+      <div className="block text-[13px] font-medium text-slate-600 mb-1">
         {label}
 
         {required && (
@@ -210,11 +210,11 @@ function IndividualLeadModal({
       <div className="bg-white rounded-2xl shadow-2xl border border-white/70 w-full max-w-2xl max-h-[92vh] overflow-hidden">
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold">
+            <h2 className="text-[17px] font-semibold">
               Add Individual Lead
             </h2>
 
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-[13px] text-slate-500 mt-1">
               Add one lead directly to the CRM without creating a spreadsheet.
             </p>
           </div>
@@ -242,7 +242,7 @@ function IndividualLeadModal({
         >
           <div className="p-6 grid md:grid-cols-2 gap-4">
             {error && (
-              <div className="md:col-span-2 px-3 py-2 bg-rose-50 border border-rose-200 rounded-lg text-sm text-rose-700 flex items-start gap-2">
+              <div className="md:col-span-2 px-3 py-2 bg-rose-50 border border-rose-200 rounded-lg text-[15px] text-rose-700 flex items-start gap-2">
                 <AlertCircle
                   size={15}
                   className="mt-0.5 flex-shrink-0"
@@ -451,7 +451,7 @@ function IndividualLeadModal({
               />
             </Field>
 
-            <div className="md:col-span-2 bg-indigo-50/60 border border-indigo-100 rounded-lg px-3 py-2.5 text-xs text-indigo-800 leading-5">
+            <div className="md:col-span-2 bg-indigo-50/60 border border-indigo-100 rounded-lg px-3 py-2.5 text-[13px] text-indigo-800 leading-5">
               This lead is stored directly in the main CRM Leads table. We do not create a fake one-row dataset. It will immediately appear in the normal Leads module.
             </div>
           </div>
@@ -465,7 +465,7 @@ function IndividualLeadModal({
               disabled={
                 saving
               }
-              className="h-9 px-4 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-700"
+              className="h-9 px-4 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700"
             >
               Cancel
             </button>
@@ -475,7 +475,7 @@ function IndividualLeadModal({
               disabled={
                 saving
               }
-              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2 shadow-sm"
+              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm"
             >
               {saving ? (
                 <Loader2
@@ -716,11 +716,11 @@ function UploadDatasetModal({
       <div className="bg-white rounded-2xl shadow-2xl border border-white/70 w-full max-w-3xl max-h-[92vh] overflow-hidden">
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold">
+            <h2 className="text-[17px] font-semibold">
               Import Lead Dataset
             </h2>
 
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-[13px] text-slate-500 mt-1">
               CSV/XLSX rows become real CRM leads. Name and Phone columns are required.
             </p>
           </div>
@@ -749,7 +749,7 @@ function UploadDatasetModal({
         >
           <div className="p-6 space-y-5">
             {error && (
-              <div className="px-3 py-2 bg-rose-50 border border-rose-200 rounded-lg text-sm text-rose-700 flex items-start gap-2">
+              <div className="px-3 py-2 bg-rose-50 border border-rose-200 rounded-lg text-[15px] text-rose-700 flex items-start gap-2">
                 <AlertCircle
                   size={15}
                   className="mt-0.5 flex-shrink-0"
@@ -759,7 +759,7 @@ function UploadDatasetModal({
             )}
 
             <div>
-              <div className="text-xs font-medium text-slate-600 mb-1">
+              <div className="text-[13px] font-medium text-slate-600 mb-1">
                 Lead File
                 <span className="text-rose-500 ml-0.5">
                   *
@@ -802,13 +802,13 @@ function UploadDatasetModal({
                     />
                   )}
 
-                  <div className="mt-2 text-sm font-semibold text-slate-800">
+                  <div className="mt-2 text-[15px] font-semibold text-slate-800">
                     {file
                       ? file.name
                       : "Choose CSV or XLSX"}
                   </div>
 
-                  <div className="mt-1 text-xs text-slate-500">
+                  <div className="mt-1 text-[13px] text-slate-500">
                     Maximum 5 MB · Maximum 5,000 lead rows
                   </div>
                 </div>
@@ -819,11 +819,11 @@ function UploadDatasetModal({
               <div className="border border-slate-200 rounded-xl overflow-hidden">
                 <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <div className="text-xs font-bold text-slate-800">
+                    <div className="text-[13px] font-bold text-slate-800">
                       Import Preview
                     </div>
 
-                    <div className="text-[11px] text-slate-500 mt-0.5">
+                    <div className="text-xs text-slate-500 mt-0.5">
                       Invalid and duplicate records will be skipped.
                     </div>
                   </div>
@@ -873,7 +873,7 @@ function UploadDatasetModal({
                 {preview.sample?.length >
                   0 && (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
+                    <table className="w-full text-[13px]">
                       <thead className="bg-white text-slate-400">
                         <tr>
                           <th className="px-3 py-2 text-left">
@@ -1075,7 +1075,7 @@ function UploadDatasetModal({
               </Field>
             </div>
 
-            <div className="bg-indigo-50/60 border border-indigo-100 rounded-lg px-3 py-2.5 text-xs text-indigo-800 leading-5">
+            <div className="bg-indigo-50/60 border border-indigo-100 rounded-lg px-3 py-2.5 text-[13px] text-indigo-800 leading-5">
               Imported leads are added directly to the CRM with source <strong>Lead Store</strong>. Duplicate phone/email rows are skipped.
             </div>
           </div>
@@ -1089,7 +1089,7 @@ function UploadDatasetModal({
               disabled={
                 saving
               }
-              className="h-9 px-4 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-700"
+              className="h-9 px-4 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700"
             >
               Cancel
             </button>
@@ -1101,7 +1101,7 @@ function UploadDatasetModal({
                 previewing ||
                 !preview
               }
-              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2 shadow-sm"
+              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm"
             >
               {saving ? (
                 <Loader2
@@ -1216,11 +1216,11 @@ function EditDatasetModal({
       <div className="bg-white rounded-2xl shadow-2xl border border-white/70 w-full max-w-xl overflow-hidden">
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold">
+            <h2 className="text-[17px] font-semibold">
               Edit Dataset
             </h2>
 
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-[13px] text-slate-500 mt-1">
               Assignment changes are also applied to the dataset's imported CRM leads.
             </p>
           </div>
@@ -1248,7 +1248,7 @@ function EditDatasetModal({
         >
           <div className="p-6 grid md:grid-cols-2 gap-4">
             {error && (
-              <div className="md:col-span-2 px-3 py-2 bg-rose-50 border border-rose-200 rounded-lg text-sm text-rose-700">
+              <div className="md:col-span-2 px-3 py-2 bg-rose-50 border border-rose-200 rounded-lg text-[15px] text-rose-700">
                 {error}
               </div>
             )}
@@ -1393,7 +1393,7 @@ function EditDatasetModal({
               onClick={
                 onClose
               }
-              className="h-9 px-4 border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700"
+              className="h-9 px-4 border border-slate-200 bg-white rounded-lg text-[13px] font-semibold text-slate-700"
             >
               Cancel
             </button>
@@ -1403,7 +1403,7 @@ function EditDatasetModal({
               disabled={
                 saving
               }
-              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2"
+              className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2"
             >
               {saving && (
                 <Loader2
@@ -1439,7 +1439,7 @@ function MiniPill({
 
   return (
     <div
-      className={`px-2 py-1 border rounded-md text-[10px] font-semibold ${
+      className={`px-2 py-1 border rounded-md text-[11px] font-semibold ${
         tones[
           tone
         ] ||
@@ -1476,7 +1476,7 @@ function StoreMetric({
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-400">
             {label}
           </div>
 
@@ -1499,7 +1499,7 @@ function StoreMetric({
         </div>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+      <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
         {detail}
       </div>
     </div>
@@ -1790,15 +1790,15 @@ export default function LeadStore({ selectedYear = "all" }) {
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
             Data / Lead inventory
           </div>
 
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
             Lead Store
           </h1>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-[15px] text-slate-500">
             Import, validate, assign and track external lead datasets as real CRM leads.
           </p>
         </div>
@@ -1812,7 +1812,7 @@ export default function LeadStore({ selectedYear = "all" }) {
             disabled={
               loading
             }
-            className="h-9 px-3.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 inline-flex items-center gap-2 shadow-sm"
+            className="h-9 px-3.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 inline-flex items-center gap-2 shadow-sm"
           >
             <RefreshCw
               size={13}
@@ -1832,7 +1832,7 @@ export default function LeadStore({ selectedYear = "all" }) {
                 true
               )
             }
-            className="h-9 px-3.5 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold inline-flex items-center gap-2 shadow-sm"
+            className="h-9 px-3.5 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm"
           >
             <UserPlus
               size={14}
@@ -1847,7 +1847,7 @@ export default function LeadStore({ selectedYear = "all" }) {
                 true
               )
             }
-            className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2 shadow-sm"
+            className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm"
           >
             <Plus
               size={14}
@@ -1929,7 +1929,7 @@ export default function LeadStore({ selectedYear = "all" }) {
                     type.key
                   )
                 }
-                className={`px-3 py-2 text-xs font-semibold border-b-2 whitespace-nowrap ${
+                className={`px-3 py-2 text-[13px] font-semibold border-b-2 whitespace-nowrap ${
                   sub ===
                   type.key
                     ? "border-indigo-600 text-indigo-600"
@@ -1962,13 +1962,13 @@ export default function LeadStore({ selectedYear = "all" }) {
               )
             }
             placeholder="Search dataset, source, file or assignee..."
-            className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+            className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
           />
         </div>
       </div>
 
       {successMessage && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-sm">
+        <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-[15px]">
           <CheckCircle2
             size={15}
           />
@@ -1977,7 +1977,7 @@ export default function LeadStore({ selectedYear = "all" }) {
       )}
 
       {error && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-sm">
+        <div className="flex items-center gap-2 px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-[15px]">
           <AlertCircle
             size={15}
           />
@@ -1986,7 +1986,7 @@ export default function LeadStore({ selectedYear = "all" }) {
       )}
 
       {loading ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-14 flex justify-center gap-2 text-sm text-slate-500 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+        <div className="bg-white border border-slate-200 rounded-xl p-14 flex justify-center gap-2 text-[15px] text-slate-500 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
           <Loader2
             size={16}
             className="animate-spin"
@@ -2034,14 +2034,14 @@ export default function LeadStore({ selectedYear = "all" }) {
                     className="hover:bg-slate-50/80 transition-colors"
                   >
                     <td className="px-4 py-2.5">
-                      <div className="text-sm font-medium text-slate-900">
+                      <div className="text-[15px] font-medium text-slate-900">
                         {
                           dataset.name
                         }
                       </div>
 
                       {dataset.sourceFileName && (
-                        <div className="text-[10px] text-slate-400 mt-0.5 inline-flex items-center gap-1">
+                        <div className="text-[11px] text-slate-400 mt-0.5 inline-flex items-center gap-1">
                           <FileSpreadsheet
                             size={10}
                           />
@@ -2060,12 +2060,12 @@ export default function LeadStore({ selectedYear = "all" }) {
                       </Badge>
                     </td>
 
-                    <td className="px-4 py-2.5 text-sm text-slate-600">
+                    <td className="px-4 py-2.5 text-[15px] text-slate-600">
                       {dataset.sourceName ||
                         "—"}
                     </td>
 
-                    <td className="px-4 py-2.5 text-sm text-slate-700 font-medium">
+                    <td className="px-4 py-2.5 text-[15px] text-slate-700 font-medium">
                       {Number(
                         dataset.count
                       ).toLocaleString(
@@ -2073,7 +2073,7 @@ export default function LeadStore({ selectedYear = "all" }) {
                       )}
                     </td>
 
-                    <td className="px-4 py-2.5 text-xs text-slate-500">
+                    <td className="px-4 py-2.5 text-[13px] text-slate-500">
                       <div>
                         Dup:{" "}
                         {
@@ -2090,7 +2090,7 @@ export default function LeadStore({ selectedYear = "all" }) {
                       </div>
                     </td>
 
-                    <td className="px-4 py-2.5 text-sm text-slate-500">
+                    <td className="px-4 py-2.5 text-[15px] text-slate-500">
                       {
                         formatDate(
                           dataset.uploadedAt
@@ -2098,19 +2098,19 @@ export default function LeadStore({ selectedYear = "all" }) {
                       }
                     </td>
 
-                    <td className="px-4 py-2.5 text-sm text-slate-700">
+                    <td className="px-4 py-2.5 text-[15px] text-slate-700">
                       {
                         dataset.assignedTo
                       }
                     </td>
 
-                    <td className="px-4 py-2.5 text-sm text-emerald-700 font-medium">
+                    <td className="px-4 py-2.5 text-[15px] text-emerald-700 font-medium">
                       {
                         dataset.converted
                       }
                     </td>
 
-                    <td className="px-4 py-2.5 text-sm">
+                    <td className="px-4 py-2.5 text-[15px]">
                       {conversion}%
                     </td>
 

@@ -80,7 +80,7 @@ function AnalyticsMetric({
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-400">
             {label}
           </div>
 
@@ -103,7 +103,7 @@ function AnalyticsMetric({
         </div>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+      <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
         {detail}
       </div>
     </div>
@@ -118,12 +118,12 @@ function ChartCard({
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
       <div>
-        <h3 className="text-sm font-bold text-slate-900">
+        <h3 className="text-[15px] font-bold text-slate-900">
           {title}
         </h3>
 
         {subtitle && (
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-[13px] text-slate-500 mt-1">
             {subtitle}
           </p>
         )}
@@ -274,21 +274,21 @@ export default function Analytics({ selectedYear = "all" }) {
 
     return (
       <div className="bg-white border border-slate-200 rounded-xl p-4">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-400">
           {label}
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
-            <div className="text-[10px] text-slate-400">{primaryYear}</div>
-            <div className="mt-1 text-lg font-bold text-slate-950">
+            <div className="text-[11px] text-slate-400">{primaryYear}</div>
+            <div className="mt-1 text-xl font-bold text-slate-950">
               {formatValue(current)}
             </div>
           </div>
 
           <div>
-            <div className="text-[10px] text-slate-400">{comparisonYear}</div>
-            <div className="mt-1 text-lg font-bold text-slate-600">
+            <div className="text-[11px] text-slate-400">{comparisonYear}</div>
+            <div className="mt-1 text-xl font-bold text-slate-600">
               {formatValue(previous)}
             </div>
           </div>
@@ -296,12 +296,12 @@ export default function Analytics({ selectedYear = "all" }) {
 
         <div className="mt-3 pt-3 border-t border-slate-100">
           {change === null ? (
-            <span className="text-[11px] font-semibold text-slate-500">
+            <span className="text-xs font-semibold text-slate-500">
               New vs zero in {comparisonYear}
             </span>
           ) : (
             <span
-              className={`inline-flex items-center gap-1 text-[11px] font-semibold ${
+              className={`inline-flex items-center gap-1 text-xs font-semibold ${
                 positive
                   ? "text-emerald-700"
                   : negative
@@ -332,7 +332,7 @@ export default function Analytics({ selectedYear = "all" }) {
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
             Insights / Business Analytics
           </div>
 
@@ -340,7 +340,7 @@ export default function Analytics({ selectedYear = "all" }) {
             Analytics
           </h1>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-[15px] text-slate-500">
             Monitor lead performance,
             source conversion,
             admissions, campaigns and
@@ -356,7 +356,7 @@ export default function Analytics({ selectedYear = "all" }) {
           disabled={
             loading
           }
-          className="h-9 px-3.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 inline-flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+          className="h-9 px-3.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 inline-flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
         >
           <RefreshCw
             size={13}
@@ -374,7 +374,7 @@ export default function Analytics({ selectedYear = "all" }) {
       {/* ERROR */}
 
       {error && (
-        <div className="flex items-center gap-2 px-3 py-2 border border-rose-200 bg-rose-50 rounded-lg text-sm text-rose-700">
+        <div className="flex items-center gap-2 px-3 py-2 border border-rose-200 bg-rose-50 rounded-lg text-[15px] text-rose-700">
           <AlertCircle
             size={15}
           />
@@ -390,7 +390,7 @@ export default function Analytics({ selectedYear = "all" }) {
         <button
           type="button"
           onClick={() => setAnalyticsTab("overview")}
-          className={`h-8 px-4 rounded-lg text-xs font-semibold transition-colors ${
+          className={`h-8 px-4 rounded-lg text-[13px] font-semibold transition-colors ${
             analyticsTab === "overview"
               ? "bg-slate-950 text-white"
               : "text-slate-600 hover:bg-slate-50"
@@ -402,7 +402,7 @@ export default function Analytics({ selectedYear = "all" }) {
         <button
           type="button"
           onClick={() => setAnalyticsTab("comparison")}
-          className={`h-8 px-4 rounded-lg text-xs font-semibold transition-colors ${
+          className={`h-8 px-4 rounded-lg text-[13px] font-semibold transition-colors ${
             analyticsTab === "comparison"
               ? "bg-slate-950 text-white"
               : "text-slate-600 hover:bg-slate-50"
@@ -413,7 +413,7 @@ export default function Analytics({ selectedYear = "all" }) {
       </div>
 
       {loading ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-14 flex items-center justify-center gap-2 text-sm text-slate-500 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+        <div className="bg-white border border-slate-200 rounded-xl p-14 flex items-center justify-center gap-2 text-[15px] text-slate-500 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
           <Loader2
             size={17}
             className="animate-spin"
@@ -499,21 +499,21 @@ export default function Analytics({ selectedYear = "all" }) {
                     </div>
 
                     <div>
-                      <h2 className="text-sm font-bold text-slate-900">
+                      <h2 className="text-[15px] font-bold text-slate-900">
                         Year Comparison
                       </h2>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-[13px] text-slate-500">
                         Compare {primaryYear} performance against another year.
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <div className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 inline-flex items-center text-xs font-bold text-slate-700">
+                    <div className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 inline-flex items-center text-[13px] font-bold text-slate-700">
                       {primaryYear}
                     </div>
 
-                    <span className="text-xs font-semibold text-slate-400">
+                    <span className="text-[13px] font-semibold text-slate-400">
                       vs
                     </span>
 
@@ -522,7 +522,7 @@ export default function Analytics({ selectedYear = "all" }) {
                       onChange={(event) =>
                         setCompareYear(Number(event.target.value))
                       }
-                      className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100"
+                      className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-[13px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100"
                     >
                       {Array.from({ length: 8 }, (_, index) => currentYear - index)
                         .filter((year) => year !== primaryYear)
@@ -836,7 +836,7 @@ export default function Analytics({ selectedYear = "all" }) {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[280px] flex items-center justify-center text-sm text-slate-500">
+                <div className="h-[280px] flex items-center justify-center text-[15px] text-slate-500">
                   No source conversion
                   data yet.
                 </div>
@@ -937,14 +937,14 @@ export default function Analytics({ selectedYear = "all" }) {
                               }}
                             />
 
-                            <span className="text-xs text-slate-600 truncate">
+                            <span className="text-[13px] text-slate-600 truncate">
                               {
                                 stage.name
                               }
                             </span>
                           </div>
 
-                          <span className="text-xs font-semibold text-slate-900">
+                          <span className="text-[13px] font-semibold text-slate-900">
                             {
                               stage.value
                             }
@@ -955,7 +955,7 @@ export default function Analytics({ selectedYear = "all" }) {
                   </div>
                 </div>
               ) : (
-                <div className="h-[280px] flex items-center justify-center text-sm text-slate-500">
+                <div className="h-[280px] flex items-center justify-center text-[15px] text-slate-500">
                   No lead stage data
                   yet.
                 </div>
@@ -1089,7 +1089,7 @@ export default function Analytics({ selectedYear = "all" }) {
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[280px] flex items-center justify-center text-sm text-slate-500">
+                <div className="h-[280px] flex items-center justify-center text-[15px] text-slate-500">
                   No monthly activity
                   yet.
                 </div>
@@ -1210,7 +1210,7 @@ export default function Analytics({ selectedYear = "all" }) {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[280px] flex items-center justify-center text-sm text-slate-500">
+                <div className="h-[280px] flex items-center justify-center text-[15px] text-slate-500">
                   No employee
                   performance data yet.
                 </div>
@@ -1229,19 +1229,19 @@ export default function Analytics({ selectedYear = "all" }) {
                     className="text-indigo-600"
                   />
 
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-[15px] font-bold text-slate-900">
                     Top Campaigns
                   </h3>
                 </div>
 
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-[13px] text-slate-500 mt-1">
                   Campaigns ranked by
                   lead and admission
                   performance.
                 </p>
               </div>
 
-              <div className="text-xs text-slate-500">
+              <div className="text-[13px] text-slate-500">
                 {
                   data
                     .topCampaigns
@@ -1252,22 +1252,22 @@ export default function Analytics({ selectedYear = "all" }) {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-[15px]">
                 <thead className="bg-slate-50/80">
                   <tr>
-                    <th className="px-5 py-3 text-left text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-500">
+                    <th className="px-5 py-3 text-left text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-500">
                       Campaign
                     </th>
 
-                    <th className="px-5 py-3 text-left text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-500">
+                    <th className="px-5 py-3 text-left text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-500">
                       Leads
                     </th>
 
-                    <th className="px-5 py-3 text-left text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-500">
+                    <th className="px-5 py-3 text-left text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-500">
                       Admissions
                     </th>
 
-                    <th className="px-5 py-3 text-left text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-500">
+                    <th className="px-5 py-3 text-left text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-500">
                       Conversion
                     </th>
                   </tr>
@@ -1322,7 +1322,7 @@ export default function Analytics({ selectedYear = "all" }) {
                               />
                             </div>
 
-                            <span className="text-xs font-semibold text-slate-700 tabular-nums">
+                            <span className="text-[13px] font-semibold text-slate-700 tabular-nums">
                               {
                                 campaign.conversion
                               }
@@ -1342,7 +1342,7 @@ export default function Analytics({ selectedYear = "all" }) {
                         colSpan={
                           4
                         }
-                        className="px-5 py-12 text-center text-sm text-slate-500"
+                        className="px-5 py-12 text-center text-[15px] text-slate-500"
                       >
                         No campaign data
                         yet.

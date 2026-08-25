@@ -108,7 +108,7 @@ function CounsellingMetric({
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-400">
             {label}
           </div>
           <div className="mt-2 text-[22px] leading-none font-bold tracking-tight text-slate-950">
@@ -119,7 +119,7 @@ function CounsellingMetric({
           <Icon size={17} />
         </div>
       </div>
-      <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+      <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
         {detail}
       </div>
     </div>
@@ -129,10 +129,10 @@ function CounsellingMetric({
 function Info({ label, value }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-400">
+      <div className="text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-400">
         {label}
       </div>
-      <div className="text-sm font-semibold text-slate-800 mt-1">
+      <div className="text-[15px] font-semibold text-slate-800 mt-1">
         {value || "—"}
       </div>
     </div>
@@ -142,7 +142,7 @@ function Info({ label, value }) {
 function Field({ label, required, full, children }) {
   return (
     <label className={full ? "sm:col-span-2" : ""}>
-      <div className="text-xs font-semibold text-slate-600 mb-1.5">
+      <div className="text-[13px] font-semibold text-slate-600 mb-1.5">
         {label}
         {required ? <span className="text-rose-500"> *</span> : null}
       </div>
@@ -336,13 +336,13 @@ export default function Counselling({ selectedYear = "all" }) {
     <div className="space-y-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
             Engagement / Counselling
           </div>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
             Counselling
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-[15px] text-slate-500">
             Manage sessions, meeting links, remarks and follow-up activity.
           </p>
         </div>
@@ -350,7 +350,7 @@ export default function Counselling({ selectedYear = "all" }) {
         <button
           type="button"
           onClick={openCreate}
-          className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
+          className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
         >
           <Plus size={14} />
           Schedule Session
@@ -398,7 +398,7 @@ export default function Counselling({ selectedYear = "all" }) {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search student, course, counsellor or mode..."
-            className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+            className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
           />
         </div>
 
@@ -407,7 +407,7 @@ export default function Counselling({ selectedYear = "all" }) {
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700"
+            className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-[13px] font-semibold text-slate-700"
           >
             <option value="">All Statuses</option>
             {STATUS_OPTIONS.map(([value, label]) => (
@@ -418,7 +418,7 @@ export default function Counselling({ selectedYear = "all" }) {
       </div>
 
       {loadError ? (
-        <div className="flex items-start gap-2 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3">
+        <div className="flex items-start gap-2 text-[13px] text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3">
           <AlertCircle size={14} className="mt-0.5" />
           {loadError}
         </div>
@@ -426,17 +426,17 @@ export default function Counselling({ selectedYear = "all" }) {
 
       <div className="space-y-3">
         {loading ? (
-          <div className="bg-white border border-slate-200 rounded-xl py-16 flex items-center justify-center gap-2 text-sm text-slate-500">
+          <div className="bg-white border border-slate-200 rounded-xl py-16 flex items-center justify-center gap-2 text-[15px] text-slate-500">
             <Loader2 size={16} className="animate-spin" />
             Loading counselling sessions...
           </div>
         ) : sessions.length === 0 ? (
           <div className="bg-white border border-slate-200 rounded-xl py-16 text-center px-5">
             <Calendar size={24} className="mx-auto text-slate-300" />
-            <div className="mt-3 text-sm font-semibold text-slate-800">
+            <div className="mt-3 text-[15px] font-semibold text-slate-800">
               No counselling sessions found
             </div>
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="mt-1 text-[13px] text-slate-500">
               Schedule the first counselling session to start tracking activity.
             </div>
           </div>
@@ -450,7 +450,7 @@ export default function Counselling({ selectedYear = "all" }) {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <div className="text-[15px] font-bold text-slate-950">
+                      <div className="text-base font-bold text-slate-950">
                         {session.student}
                       </div>
                       <Badge tone="slate">{session.course}</Badge>
@@ -467,14 +467,14 @@ export default function Counselling({ selectedYear = "all" }) {
 
                     {session.meetingLink ? (
                       <div className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2 flex-wrap">
-                        <div className="h-8 max-w-full inline-flex items-center gap-2 text-xs font-mono bg-indigo-50 border border-indigo-100 text-indigo-700 px-2.5 rounded-lg">
+                        <div className="h-8 max-w-full inline-flex items-center gap-2 text-[13px] font-mono bg-indigo-50 border border-indigo-100 text-indigo-700 px-2.5 rounded-lg">
                           <Video size={12} />
                           <span className="truncate max-w-[360px]">{session.meetingLink}</span>
                         </div>
                         <button
                           type="button"
                           onClick={() => copyLink(session)}
-                          className="h-8 px-2.5 text-xs font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg inline-flex items-center gap-1.5"
+                          className="h-8 px-2.5 text-[13px] font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg inline-flex items-center gap-1.5"
                         >
                           {copiedId === session.id ? (
                             <CheckCircle2 size={12} className="text-emerald-600" />
@@ -487,7 +487,7 @@ export default function Counselling({ selectedYear = "all" }) {
                           href={session.meetingLink}
                           target="_blank"
                           rel="noreferrer"
-                          className="h-8 px-2.5 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 rounded-lg inline-flex items-center gap-1.5"
+                          className="h-8 px-2.5 text-[13px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 rounded-lg inline-flex items-center gap-1.5"
                         >
                           <ExternalLink size={12} />
                           Join
@@ -496,14 +496,14 @@ export default function Counselling({ selectedYear = "all" }) {
                     ) : null}
 
                     {session.remarks !== "—" ? (
-                      <div className="mt-4 text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
+                      <div className="mt-4 text-[13px] bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
                         <span className="font-semibold text-slate-700">Remarks:</span>{" "}
                         <span className="text-slate-600">{session.remarks}</span>
                       </div>
                     ) : null}
 
                     {session.followUpAt ? (
-                      <div className="mt-3 text-xs font-medium text-slate-500 inline-flex items-center gap-1.5">
+                      <div className="mt-3 text-[13px] font-medium text-slate-500 inline-flex items-center gap-1.5">
                         <Clock size={12} />
                         Follow-up:
                         <span className="text-slate-700">
@@ -548,10 +548,10 @@ export default function Counselling({ selectedYear = "all" }) {
           <div className="w-full max-w-3xl max-h-[92vh] bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <div className="text-base font-bold text-slate-950">
+                <div className="text-[17px] font-bold text-slate-950">
                   {editing ? "Edit Counselling Session" : "Schedule Counselling Session"}
                 </div>
-                <div className="text-xs text-slate-500 mt-1">
+                <div className="text-[13px] text-slate-500 mt-1">
                   Link a CRM lead or enter student details manually.
                 </div>
               </div>
@@ -570,7 +570,7 @@ export default function Counselling({ selectedYear = "all" }) {
                   <select
                     value={form.leadId}
                     onChange={(event) => selectLead(event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-white"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
                   >
                     <option value="">Manual / No linked lead</option>
                     {leads.map((lead) => (
@@ -586,14 +586,14 @@ export default function Counselling({ selectedYear = "all" }) {
                     required
                     value={form.studentName}
                     onChange={(event) => updateForm("studentName", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Phone">
                   <input
                     value={form.studentPhone}
                     onChange={(event) => updateForm("studentPhone", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Email">
@@ -601,28 +601,28 @@ export default function Counselling({ selectedYear = "all" }) {
                     type="email"
                     value={form.studentEmail}
                     onChange={(event) => updateForm("studentEmail", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Course / Interest">
                   <input
                     value={form.course}
                     onChange={(event) => updateForm("course", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Counsellor">
                   <input
                     value={form.counsellorName}
                     onChange={(event) => updateForm("counsellorName", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Mode">
                   <select
                     value={form.mode}
                     onChange={(event) => updateForm("mode", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-white"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
                   >
                     {MODE_OPTIONS.map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
@@ -635,14 +635,14 @@ export default function Counselling({ selectedYear = "all" }) {
                     required
                     value={form.scheduledAt}
                     onChange={(event) => updateForm("scheduledAt", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Status">
                   <select
                     value={form.status}
                     onChange={(event) => updateForm("status", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm bg-white"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
                   >
                     {STATUS_OPTIONS.map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
@@ -653,7 +653,7 @@ export default function Counselling({ selectedYear = "all" }) {
                   <input
                     value={form.accompaniedBy}
                     onChange={(event) => updateForm("accompaniedBy", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Meeting Link">
@@ -662,7 +662,7 @@ export default function Counselling({ selectedYear = "all" }) {
                     value={form.meetingLink}
                     onChange={(event) => updateForm("meetingLink", event.target.value)}
                     placeholder="https://meet.google.com/..."
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Follow-up Date & Time">
@@ -670,7 +670,7 @@ export default function Counselling({ selectedYear = "all" }) {
                     type="datetime-local"
                     value={form.followUpAt}
                     onChange={(event) => updateForm("followUpAt", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
                 <Field label="Remarks" full>
@@ -678,11 +678,11 @@ export default function Counselling({ selectedYear = "all" }) {
                     rows={3}
                     value={form.remarks}
                     onChange={(event) => updateForm("remarks", event.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
 
-                <label className="sm:col-span-2 inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <label className="sm:col-span-2 inline-flex items-center gap-2 text-[13px] font-semibold text-slate-700">
                   <input
                     type="checkbox"
                     checked={form.converted}
@@ -694,7 +694,7 @@ export default function Counselling({ selectedYear = "all" }) {
               </div>
 
               {formError ? (
-                <div className="mt-4 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3">
+                <div className="mt-4 text-[13px] text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3">
                   {formError}
                 </div>
               ) : null}
@@ -703,14 +703,14 @@ export default function Counselling({ selectedYear = "all" }) {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="h-9 px-4 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700"
+                  className="h-9 px-4 border border-slate-200 rounded-lg text-[13px] font-semibold text-slate-700"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-2"
+                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2"
                 >
                   {saving ? <Loader2 size={13} className="animate-spin" /> : null}
                   {editing ? "Save Changes" : "Schedule Session"}

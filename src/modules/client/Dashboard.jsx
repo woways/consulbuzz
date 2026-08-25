@@ -137,7 +137,7 @@ function MetricCard({
         </div>
 
         <div className="min-w-0">
-          <div className="truncate text-[11px] font-semibold text-slate-500">
+          <div className="truncate text-[13px] font-semibold text-slate-600">
             {label}
           </div>
 
@@ -148,7 +148,7 @@ function MetricCard({
       </div>
 
       {detail ? (
-        <div className="mt-2 truncate pl-12 text-[10px] text-slate-400">
+        <div className="mt-2 truncate pl-12 text-[11px] text-slate-500">
           {detail}
         </div>
       ) : null}
@@ -965,7 +965,7 @@ export default function Dashboard({
                     size={13}
                     className="text-indigo-600"
                   />
-                  <div className="text-[11px] font-bold uppercase tracking-[0.11em] text-indigo-600">
+                  <div className="text-[12px] font-bold uppercase tracking-[0.10em] text-indigo-600">
                     Business Pulse
                   </div>
                 </div>
@@ -985,7 +985,7 @@ export default function Dashboard({
                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
                   <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5">
                     <div>
-                      <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                      <div className="text-[12px] font-bold uppercase tracking-[0.07em] text-slate-500">
                         New Leads
                       </div>
                       <div className="mt-0.5 text-[15px] font-bold text-slate-950">
@@ -997,7 +997,7 @@ export default function Dashboard({
 
                   <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5">
                     <div>
-                      <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                      <div className="text-[12px] font-bold uppercase tracking-[0.07em] text-slate-500">
                         Received Revenue
                       </div>
                       <div className="mt-0.5 text-[15px] font-bold text-slate-950">
@@ -1009,7 +1009,7 @@ export default function Dashboard({
 
                   <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5">
                     <div>
-                      <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                      <div className="text-[12px] font-bold uppercase tracking-[0.07em] text-slate-500">
                         Pending Revenue
                       </div>
                       <div className="mt-0.5 text-[15px] font-bold text-slate-950">
@@ -1026,10 +1026,10 @@ export default function Dashboard({
                 <section className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-5">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
-                      <h2 className="text-[14px] font-bold text-slate-950">
+                      <h2 className="text-[15px] font-bold text-slate-950">
                         Revenue Trend
                       </h2>
-                      <p className="mt-1 text-[10px] text-slate-400">
+                      <p className="mt-1 text-[11px] text-slate-500">
                         Potential vs received revenue
                       </p>
                     </div>
@@ -1128,10 +1128,10 @@ export default function Dashboard({
 
                 <section className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-5">
                   <div className="mb-3">
-                    <h2 className="text-[14px] font-bold text-slate-950">
+                    <h2 className="text-[15px] font-bold text-slate-950">
                       Leads by Source
                     </h2>
-                    <p className="mt-1 text-[10px] text-slate-400">
+                    <p className="mt-1 text-[11px] text-slate-500">
                       Source mix for the selected period
                     </p>
                   </div>
@@ -1248,10 +1248,10 @@ export default function Dashboard({
                 <section className="overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
                   <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5">
                     <div>
-                      <h2 className="text-[14px] font-bold text-slate-950">
+                      <h2 className="text-[15px] font-bold text-slate-950">
                         Recent Admissions
                       </h2>
-                      <p className="mt-0.5 text-[9px] text-slate-400">
+                      <p className="mt-0.5 text-[11px] text-slate-500">
                         Latest recorded admissions
                       </p>
                     </div>
@@ -1261,7 +1261,7 @@ export default function Dashboard({
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[620px] text-left">
                         <thead>
-                          <tr className="border-b border-slate-100 bg-slate-50/60 text-[8px] font-bold uppercase tracking-[0.07em] text-slate-400">
+                          <tr className="border-b border-slate-100 bg-slate-50/60 text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">
                             <th className="px-4 py-2.5">Student</th>
                             <th className="px-3 py-2.5">College</th>
                             <th className="px-3 py-2.5">Counsellor</th>
@@ -1274,7 +1274,7 @@ export default function Dashboard({
                           {recentAdmissionsData.slice(0, 5).map((item, index) => (
                             <tr
                               key={item.id || `${item.studentName || item.leadName || "admission"}-${index}`}
-                              className="border-b border-slate-50 text-[9px] text-slate-600 last:border-0"
+                              className="border-b border-slate-50 text-[11px] text-slate-600 last:border-0"
                             >
                               <td className="px-4 py-3 font-semibold text-slate-900">
                                 {item.studentName || item.leadName || item.name || "—"}
@@ -1312,10 +1312,10 @@ export default function Dashboard({
                   ) : (
                     <div className="flex h-[220px] flex-col items-center justify-center text-center">
                       <UserCheck size={20} className="text-slate-300" />
-                      <div className="mt-2 text-[11px] font-semibold text-slate-600">
+                      <div className="mt-2 text-[12px] font-semibold text-slate-700">
                         No recent admissions available
                       </div>
-                      <div className="mt-1 max-w-[260px] text-[9px] text-slate-400">
+                      <div className="mt-1 max-w-[260px] text-[10px] text-slate-500">
                         This section will use real admission records returned by the dashboard API.
                       </div>
                     </div>
@@ -1324,10 +1324,10 @@ export default function Dashboard({
 
                 <section className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
                   <div className="mb-3">
-                    <h2 className="text-[14px] font-bold text-slate-950">
+                    <h2 className="text-[15px] font-bold text-slate-950">
                       Admissions by Month
                     </h2>
-                    <p className="mt-0.5 text-[9px] text-slate-400">
+                    <p className="mt-0.5 text-[11px] text-slate-500">
                       Monthly admission performance
                     </p>
                   </div>
@@ -1378,10 +1378,10 @@ export default function Dashboard({
                   ) : (
                     <div className="flex h-[220px] flex-col items-center justify-center text-center">
                       <BarChart3 size={20} className="text-slate-300" />
-                      <div className="mt-2 text-[11px] font-semibold text-slate-600">
+                      <div className="mt-2 text-[12px] font-semibold text-slate-700">
                         No monthly admission data available
                       </div>
-                      <div className="mt-1 max-w-[260px] text-[9px] text-slate-400">
+                      <div className="mt-1 max-w-[260px] text-[10px] text-slate-500">
                         No mock chart values are being inserted.
                       </div>
                     </div>
@@ -1424,7 +1424,7 @@ export default function Dashboard({
                     <ChevronLeft size={15} />
                   </button>
 
-                  <div className="text-[11px] font-bold text-slate-800">
+                  <div className="text-[12px] font-bold text-slate-800">
                     {calendarMonth.toLocaleDateString(
                       "en-IN",
                       {
@@ -1460,7 +1460,7 @@ export default function Dashboard({
                     (day) => (
                       <div
                         key={day}
-                        className="pb-2 text-[8px] font-bold tracking-[0.08em] text-slate-400"
+                        className="pb-2 text-[10px] font-bold tracking-[0.06em] text-slate-500"
                       >
                         {day}
                       </div>
@@ -1493,7 +1493,7 @@ export default function Dashboard({
                             );
                           }
                         }}
-                        className={`relative mx-auto my-0.5 flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-semibold ${
+                        className={`relative mx-auto my-0.5 flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-semibold ${
                           cell.isSelected
                             ? "bg-indigo-600 text-white shadow-[0_5px_12px_rgba(79,70,229,.25)]"
                             : cell.isToday
@@ -1539,7 +1539,7 @@ export default function Dashboard({
               <div className="border-t border-slate-100 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-[12px] font-bold text-slate-950">
+                    <div className="text-[14px] font-bold text-slate-950">
                       {dateKey(
                         agendaDate
                       ) ===
@@ -1565,7 +1565,7 @@ export default function Dashboard({
                       )}
                     </div>
 
-                    <div className="mt-1 text-[9px] text-slate-400">
+                    <div className="mt-1 text-[10px] text-slate-500">
                       {agendaEvents.length}
                       {" "}
                       {agendaEvents.length ===
@@ -1618,7 +1618,7 @@ export default function Dashboard({
                       size={19}
                       className="text-slate-300"
                     />
-                    <div className="mt-2 text-[11px] font-semibold text-slate-600">
+                    <div className="mt-2 text-[12px] font-semibold text-slate-700">
                       No events scheduled
                     </div>
                     <button
@@ -1672,12 +1672,12 @@ export default function Dashboard({
 
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-2">
-                                  <div className="truncate text-[10px] font-bold text-slate-900">
+                                  <div className="truncate text-[11px] font-bold text-slate-900">
                                     {
                                       item.title
                                     }
                                   </div>
-                                  <div className="flex-shrink-0 text-[9px] font-semibold text-slate-400">
+                                  <div className="flex-shrink-0 text-[10px] font-semibold text-slate-500">
                                     {
                                       eventTime(
                                         item
@@ -1686,7 +1686,7 @@ export default function Dashboard({
                                   </div>
                                 </div>
 
-                                <div className="mt-1 text-[9px] text-slate-400">
+                                <div className="mt-1 text-[10px] text-slate-500">
                                   {typeLabel(
                                     item.type
                                   )}
@@ -1722,10 +1722,10 @@ export default function Dashboard({
               <div className="border-t border-slate-100 p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-[12px] font-bold text-slate-950">
+                    <h3 className="text-[14px] font-bold text-slate-950">
                       Recent Activity
                     </h3>
-                    <p className="mt-0.5 text-[9px] text-slate-400">
+                    <p className="mt-0.5 text-[11px] text-slate-500">
                       Latest CRM activity
                     </p>
                   </div>
@@ -1747,10 +1747,10 @@ export default function Dashboard({
                             .toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <div className="text-[9px] font-semibold text-slate-800">
+                          <div className="text-[11px] font-semibold text-slate-800">
                             {item.title || item.action || item.description || "CRM activity"}
                           </div>
-                          <div className="mt-0.5 text-[8px] text-slate-400">
+                          <div className="mt-0.5 text-[10px] text-slate-500">
                             {item.createdAt
                               ? new Date(item.createdAt).toLocaleString("en-IN", {
                                   day: "2-digit",
@@ -1767,7 +1767,7 @@ export default function Dashboard({
                 ) : (
                   <div className="py-7 text-center">
                     <Activity size={17} className="mx-auto text-slate-300" />
-                    <div className="mt-2 text-[10px] font-semibold text-slate-500">
+                    <div className="mt-2 text-[11px] font-semibold text-slate-600">
                       No recent activity available
                     </div>
                   </div>
@@ -1780,7 +1780,7 @@ export default function Dashboard({
 
           <div className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-5">
             <div className="flex items-center justify-between gap-3 mb-4">
-              <h3 className="text-sm font-bold text-slate-900">
+              <h3 className="text-[15px] font-bold text-slate-900">
                 Team Performance
               </h3>
 
@@ -1968,7 +1968,7 @@ export default function Dashboard({
                     />
                   </button>
 
-                  <div className="text-sm font-bold text-slate-900">
+                  <div className="text-[15px] font-bold text-slate-900">
                     {calendarMonth.toLocaleDateString(
                       "en-IN",
                       {
