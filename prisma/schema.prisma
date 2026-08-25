@@ -111,22 +111,6 @@ enum CustomFieldType {
   PHONE
 }
 
-enum IntegrationProvider {
-  WEBSITE_API
-  GOOGLE_FORMS
-  META_LEADS
-  WHATSAPP
-  EMAIL_SMTP
-  GENERIC_WEBHOOK
-}
-
-enum IntegrationStatus {
-  NOT_CONFIGURED
-  CONFIGURED
-  CONNECTED
-  ERROR
-}
-
 enum SupportTicketType {
   TECHNICAL_ISSUE
   FEATURE_REQUEST
@@ -205,7 +189,6 @@ model Company {
   payments                PaymentTransaction[]
   leadSources             LeadSourceConfig[]
   customFields            CustomField[]
-  integrations            CompanyIntegration[]
   notificationPreferences UserNotificationPreference[]
   auditLogs               AuditLog[]
   walkIns                 WalkIn[]
@@ -973,34 +956,6 @@ model CustomFieldValue {
   @@unique([customFieldId, leadId])
   @@index([leadId])
   @@index([customFieldId])
-}
-
-model CompanyIntegration {
-  id String @id @default(cuid())
-
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  provider IntegrationProvider
-
-  enabled Boolean           @default(false)
-  status  IntegrationStatus @default(NOT_CONFIGURED)
-
-  displayName String?
-  config      Json?
-
-  credentialsConfigured Boolean @default(false)
-  apiKeyVersion         Int     @default(1)
-
-  lastConnectedAt DateTime?
-  lastError       String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([companyId, provider])
-  @@index([companyId, enabled])
-  @@index([companyId, status])
 }
 
 model AuditLog {

@@ -40,7 +40,6 @@ import clientBillingRoutes from "./routes/clientBilling.js";
 import clientUsersRoutes from "./routes/clientUsers.js";
 import clientLeadSourcesRoutes from "./routes/clientLeadSources.js";
 import clientCustomFieldsRoutes from "./routes/clientCustomFields.js";
-import clientIntegrationsRoutes from "./routes/clientIntegrations.js";
 import clientSettingsRoutes from "./routes/clientSettings.js";
 import clientAuditLogsRoutes from "./routes/clientAuditLogs.js";
 import clientWalkinsRoutes from "./routes/clientWalkins.js";
@@ -49,7 +48,6 @@ import clientCalendarRoutes from "./routes/clientCalendar.js";
 import clientYearsRoutes from "./routes/clientYears.js";
 
 import razorpayWebhook from "./routes/razorpayWebhook.js";
-import publicIntegrationsRoutes from "./routes/publicIntegrations.js";
 
 const config = loadServerConfig();
 
@@ -153,11 +151,6 @@ app.use(
   apiLimiter
 );
 
-
-app.use(
-  "/api/integrations",
-  publicIntegrationsRoutes
-);
 
 app.get(
   "/",
@@ -307,10 +300,6 @@ app.use(
 app.use(
   "/api/client/custom-fields",
   clientCustomFieldsRoutes
-);
-app.use(
-  "/api/client/integrations",
-  clientIntegrationsRoutes
 );
 app.use(
   "/api/client/settings",
