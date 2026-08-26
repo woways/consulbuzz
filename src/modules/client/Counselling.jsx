@@ -357,7 +357,7 @@ export default function Counselling({ selectedYear = "all" }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-4">
         <CounsellingMetric
           label="Sessions Today"
           value={summary.sessionsToday}
@@ -389,7 +389,7 @@ export default function Counselling({ selectedYear = "all" }) {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center gap-2">
-        <div className="relative flex-1 max-w-lg">
+        <div className="relative flex-1 min-w-0 max-w-lg">
           <Search
             size={14}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -458,7 +458,7 @@ export default function Counselling({ selectedYear = "all" }) {
                       {session.converted ? <Badge tone="emerald">Converted</Badge> : null}
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 mt-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-6 gap-y-4 mt-5">
                       <Info label="When" value={formatDateTime(session.scheduledAt)} />
                       <Info label="Counsellor" value={session.counsellor} />
                       <Info label="Mode" value={prettyMode(session.mode)} />
@@ -469,7 +469,7 @@ export default function Counselling({ selectedYear = "all" }) {
                       <div className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2 flex-wrap">
                         <div className="h-8 max-w-full inline-flex items-center gap-2 text-[13px] font-mono bg-indigo-50 border border-indigo-100 text-indigo-700 px-2.5 rounded-lg">
                           <Video size={12} />
-                          <span className="truncate max-w-[360px]">{session.meetingLink}</span>
+                          <span className="truncate max-w-[min(360px,65vw)]">{session.meetingLink}</span>
                         </div>
                         <button
                           type="button"

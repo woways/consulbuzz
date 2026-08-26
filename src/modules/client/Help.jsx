@@ -1106,7 +1106,7 @@ export default function Help({
 
       {/* METRICS */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-4">
         <SupportMetric
           label="Total Tickets"
           value={
@@ -1158,7 +1158,7 @@ export default function Help({
 
       {/* SUPPORT TYPES */}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {TYPES.map(
           (
             type

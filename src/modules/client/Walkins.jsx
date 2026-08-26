@@ -294,7 +294,7 @@ export default function Walkins({ selectedYear = "all" }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-4">
         <WalkinMetric
           label="Walk-ins"
           value={summary.total}
@@ -326,7 +326,7 @@ export default function Walkins({ selectedYear = "all" }) {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center gap-2">
-        <div className="relative flex-1 max-w-lg">
+        <div className="relative flex-1 min-w-0 max-w-lg">
           <Search
             size={14}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -380,6 +380,7 @@ export default function Walkins({ selectedYear = "all" }) {
             </div>
           </div>
         ) : (
+          <div className="w-full overflow-x-auto">
           <Table
             columns={[
               "Arrived",
@@ -463,6 +464,7 @@ export default function Walkins({ selectedYear = "all" }) {
               </tr>
             ))}
           />
+          </div>
         )}
       </div>
 

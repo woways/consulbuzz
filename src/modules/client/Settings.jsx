@@ -1867,7 +1867,7 @@ export default function SettingsView({
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <Field
                   label="Company Name"
                   value={
@@ -3253,7 +3253,7 @@ export default function SettingsView({
             </div>
 
             <div className="p-5 space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {[
                   ["name", "Name", "text"],
                   ["email", "Email", "email"],
@@ -3719,7 +3719,7 @@ export default function SettingsView({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-3">
                   <span className="text-[13px] font-semibold text-slate-700">
                     Active
@@ -3842,7 +3842,7 @@ export default function SettingsView({
             </div>
 
             <div className="p-5 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
                     Field Name
@@ -4062,7 +4062,7 @@ export default function SettingsView({
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                 {[
                   [
                     "required",

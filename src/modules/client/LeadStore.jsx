@@ -2111,7 +2111,7 @@ export default function LeadStore({ selectedYear = "all" }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-4">
         <StoreMetric
           label="Datasets"
           value={
@@ -2210,7 +2210,7 @@ export default function LeadStore({ selectedYear = "all" }) {
           )}
         </div>
 
-        <div className="relative md:ml-auto w-full md:w-[320px]">
+        <div className="relative md:ml-auto w-full md:w-[320px] md:max-w-full">
           <Search
             size={14}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
