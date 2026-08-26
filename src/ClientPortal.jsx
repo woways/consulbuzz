@@ -31,6 +31,7 @@ import {
   Sun,
   ChevronRight,
   Plus,
+  Rocket,
 } from "lucide-react";
 
 import {
@@ -327,6 +328,37 @@ export default function ClientPortal({
   ] = useState(false);
 
   const [
+    sidebarHoverExpanded,
+    setSidebarHoverExpanded,
+  ] = useState(false);
+
+  const sidebarHoverTimerRef = useRef(null);
+
+  const openSidebarHover = () => {
+    if (!sidebarCollapsed || mobileSidebarOpen) return;
+
+    if (sidebarHoverTimerRef.current) {
+      window.clearTimeout(sidebarHoverTimerRef.current);
+      sidebarHoverTimerRef.current = null;
+    }
+
+    setSidebarHoverExpanded(true);
+  };
+
+  const closeSidebarHover = () => {
+    if (!sidebarCollapsed || mobileSidebarOpen) return;
+
+    if (sidebarHoverTimerRef.current) {
+      window.clearTimeout(sidebarHoverTimerRef.current);
+    }
+
+    sidebarHoverTimerRef.current = window.setTimeout(() => {
+      setSidebarHoverExpanded(false);
+      sidebarHoverTimerRef.current = null;
+    }, 90);
+  };
+
+  const [
     mobileSidebarOpen,
     setMobileSidebarOpen,
   ] = useState(false);
@@ -436,6 +468,11 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     paymentProcessing,
     setPaymentProcessing,
   ] = useState("");
+
+  const [
+    billingCycleView,
+    setBillingCycleView,
+  ] = useState("MONTHLY");
   const [
     receiptOpen,
     setReceiptOpen,
@@ -1573,7 +1610,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             key
           )
         }
-        className={`relative mx-2 w-[calc(100%-16px)] rounded-xl flex items-center py-2.5 text-[13px] font-semibold transition-all ${
+        className={`relative mx-2 w-[calc(100%-16px)] rounded-xl flex items-center py-2.5 text-[13px] font-semibold transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
           sidebarCollapsed
             ? "justify-center px-2"
             : "gap-3 px-4"
@@ -1664,7 +1701,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             key
           )
         }
-        className={`relative mx-2 w-[calc(100%-16px)] rounded-lg flex items-center gap-2.5 pl-[42px] pr-3 py-2 text-[12px] transition-all ${
+        className={`relative mx-2 w-[calc(100%-16px)] rounded-lg flex items-center gap-2.5 pl-[42px] pr-3 py-2 text-[12px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
           active
             ? "text-white bg-white/[0.07]"
             : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
@@ -1785,6 +1822,33 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
   const timeGreeting = getTimeGreeting();
 
+  const annualSavingsPercent = (() => {
+    const percentages = (billingData.plans || [])
+      .map((billingPlan) => {
+        const monthly = Number(billingPlan.monthlyPrice || 0);
+        const yearly = Number(billingPlan.yearlyPrice || 0);
+
+        if (!monthly || !yearly) return 0;
+
+        const regularYearly = monthly * 12;
+        if (yearly >= regularYearly) return 0;
+
+        return Math.round(
+          ((regularYearly - yearly) / regularYearly) * 100
+        );
+      })
+      .filter((value) => value > 0);
+
+    return percentages.length
+      ? Math.max(...percentages)
+      : 0;
+  })();
+
+  const sidebarCompact =
+    sidebarCollapsed &&
+    !sidebarHoverExpanded &&
+    !mobileSidebarOpen;
+
   return (
     <div className="min-h-screen bg-[#f6f7fa] text-slate-900 overflow-x-hidden">
       <style>{`
@@ -1896,18 +1960,27 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       <div className="flex">
         {/* FIXED LIGHT SIDEBAR */}
         <aside
-          className={`fixed inset-y-0 left-0 z-50 lg:z-30 overflow-visible border-r border-white/[0.06] bg-[#07111d] shadow-[8px_0_28px_rgba(2,8,23,0.10)] transition-[width,transform] duration-300 ${
+          onMouseEnter={openSidebarHover}
+          onMouseLeave={closeSidebarHover}
+          className={`fixed inset-y-0 left-0 z-[70] overflow-visible border-r border-white/[0.06] bg-[#07111d] transition-[width,transform,box-shadow] duration-200 ease-out ${
             mobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           } ${
-            sidebarCollapsed ? "w-[72px]" : "w-[252px]"
+            sidebarCompact
+              ? "w-[72px] shadow-[5px_0_18px_rgba(2,8,23,0.08)]"
+              : sidebarCollapsed
+              ? "w-[252px] shadow-[16px_0_40px_rgba(2,8,23,0.28)]"
+              : "w-[252px] shadow-[8px_0_28px_rgba(2,8,23,0.10)]"
           }`}
         >
           <button
             type="button"
-            onClick={() => setSidebarCollapsed((current) => !current)}
+            onClick={() => {
+              setSidebarHoverExpanded(false);
+              setSidebarCollapsed((current) => !current);
+            }}
             title={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
             aria-label={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
-            className="hidden lg:flex absolute top-1/2 right-[-14px] z-[80] h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-[0_5px_16px_rgba(15,23,42,0.18)] transition-all hover:border-indigo-300 hover:text-indigo-600 hover:shadow-[0_7px_20px_rgba(15,23,42,0.22)]"
+            className="hidden lg:flex absolute top-1/2 right-[-14px] z-[80] h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-[0_5px_16px_rgba(15,23,42,0.18)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-indigo-300 hover:text-indigo-600 hover:shadow-[0_7px_20px_rgba(15,23,42,0.22)]"
           >
             {sidebarCollapsed ? (
               <ChevronRight size={15} strokeWidth={2.2} />
@@ -1918,43 +1991,40 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
           <div className="h-full flex flex-col overflow-visible">
             {/* CONSULBUZZ PRODUCT IDENTITY — TOP LEFT */}
-            {(!sidebarCollapsed || mobileSidebarOpen) ? (
-              <div className="px-4 pt-4 pb-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-[#3b82f6] via-[#4f46e5] to-[#7c3aed] text-[11px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.28)]">
-                      <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.35),transparent_42%)]" />
-                      <span className="relative">CB</span>
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="truncate text-[18px] font-bold leading-none tracking-[-0.035em] text-white">
-                        ConsulBuzz
-                      </div>
-                    </div>
+            {!sidebarCompact ? (
+              <div className="px-5 pt-4 pb-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-[#3b82f6] via-[#4f46e5] to-[#7c3aed] text-[11px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.28)]">
+                    <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.35),transparent_42%)]" />
+                    <span className="relative">CB</span>
                   </div>
 
+                  <div className="min-w-0 overflow-visible">
+                    <div className="whitespace-nowrap text-[17px] font-black leading-none tracking-[-0.03em] text-white">
+                      Consul<span className="text-[#4f8cff]">Buzz</span>
+                    </div>
+                    <div className="mt-1 whitespace-nowrap text-[8px] font-bold uppercase tracking-[0.20em] text-slate-500">
+                      CRM Made Simple
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="pt-4 pb-2 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => setSidebarCollapsed(false)}
+                <div
                   className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-[#3b82f6] via-[#4f46e5] to-[#7c3aed] text-[11px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.24)]"
-                  title="Expand menu"
-                  aria-label="Expand menu"
+                  title="ConsulBuzz"
                 >
                   <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.35),transparent_42%)]" />
                   <span className="relative">CB</span>
-                </button>
+                </div>
               </div>
             )}
 
             {/* MENU — integrated dark navigation */}
             <nav
               className={`relative mx-2 mb-3 flex-1 min-h-0 overflow-hidden ${
-                sidebarCollapsed && !mobileSidebarOpen
+                sidebarCompact
                   ? "px-1.5 py-2"
                   : "px-2 py-2"
               }`}
@@ -1975,13 +2045,13 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       <button
                         key={group.key}
                         type="button"
-                        title={sidebarCollapsed ? group.label : undefined}
+                        title={sidebarCompact ? group.label : undefined}
                         onClick={() => {
                           setModule(key);
                           setMobileSidebarOpen(false);
                         }}
-                        className={`relative mb-1 w-full transition-all ${
-                          sidebarCollapsed && !mobileSidebarOpen
+                        className={`relative mb-1 w-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                          sidebarCompact
                             ? "h-11 rounded-lg flex items-center justify-center"
                             : "h-11 rounded-lg px-3 flex items-center gap-3"
                         } ${
@@ -1995,12 +2065,12 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         )}
 
                         <Icon
-                          size={sidebarCollapsed && !mobileSidebarOpen ? 20 : 18}
+                          size={sidebarCompact ? 20 : 18}
                           strokeWidth={2}
                           className={active ? "text-white" : "text-slate-400"}
                         />
 
-                        {(!sidebarCollapsed || mobileSidebarOpen) && (
+                        {!sidebarCompact && (
                           <>
                             <span className="flex-1 text-left text-[13px] font-semibold">
                               {group.label}
@@ -2017,34 +2087,72 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
                   const open = Boolean(openGroups[group.key]);
 
-                  if (sidebarCollapsed && !mobileSidebarOpen) {
+                  if (sidebarCompact) {
                     return (
-                      <button
-                        key={group.key}
-                        type="button"
-                        title={group.label}
-                        onClick={() => {
-                          setSidebarCollapsed(false);
-                          setOpenGroups((current) => ({
-                            ...current,
-                            [group.key]: true,
-                          }));
-                        }}
-                        className={`relative mb-1 h-12 w-full rounded-xl flex items-center justify-center transition-all ${
-                          groupActive
-                            ? "bg-white/10 text-white"
-                            : "text-slate-400 hover:bg-white/[0.06] hover:text-white"
-                        }`}
-                      >
-                        {groupActive && (
-                          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-400" />
-                        )}
+                      <div key={group.key} className="mb-1">
+                        <button
+                          type="button"
+                          title={group.label}
+                          onClick={() =>
+                            setOpenGroups((current) => ({
+                              ...current,
+                              [group.key]: !current[group.key],
+                            }))
+                          }
+                          className={`relative h-11 w-full rounded-lg flex items-center justify-center transition-all duration-300 ${
+                            groupActive
+                              ? "bg-white/10 text-white"
+                              : "text-slate-400 hover:bg-white/[0.06] hover:text-white"
+                          }`}
+                        >
+                          {groupActive && (
+                            <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-400" />
+                          )}
+                          <Icon size={20} strokeWidth={2} />
+                        </button>
 
-                        <Icon
-                          size={20}
-                          strokeWidth={2}
-                        />
-                      </button>
+                        {open && (
+                          <div className="mt-1 space-y-1">
+                            {group.items.map((key) => {
+                              const meta = MODULE_META[key];
+                              if (!meta) return null;
+
+                              const ChildIcon = meta.icon;
+                              const active = module === key;
+                              const locked =
+                                !enabledFeatures.includes(key) ||
+                                !hasModulePermission(key);
+
+                              return (
+                                <button
+                                  key={key}
+                                  type="button"
+                                  title={meta.label}
+                                  onClick={() => setModule(key)}
+                                  className={`relative mx-auto flex h-9 w-10 items-center justify-center rounded-lg transition-all duration-200 ${
+                                    active
+                                      ? "bg-indigo-500/20 text-indigo-200"
+                                      : "text-slate-500 hover:bg-white/[0.06] hover:text-white"
+                                  }`}
+                                >
+                                  {active && (
+                                    <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-indigo-400" />
+                                  )}
+                                  <ChildIcon size={15} strokeWidth={1.9} />
+
+                                  {(key === "walkins" || key === "counselling") && (
+                                    <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-400" />
+                                  )}
+
+                                  {locked && (
+                                    <span className="absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full bg-slate-500" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     );
                   }
 
@@ -2058,7 +2166,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         onClick={() =>
                           toggleGroup(group.key)
                         }
-                        className={`relative h-11 w-full rounded-lg px-3 flex items-center gap-3 transition-all ${
+                        className={`relative h-11 w-full rounded-lg px-3 flex items-center gap-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                           groupActive
                             ? "bg-white/[0.08] text-white"
                             : open
@@ -2086,7 +2194,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
                         <ChevronDown
                           size={14}
-                          className={`text-slate-500 transition-transform duration-200 ${
+                          className={`text-slate-500 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                             open ? "rotate-180" : ""
                           }`}
                         />
@@ -2172,14 +2280,12 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             {/* CURRENT PLAN — exact approved sidebar style */}
             <div
               className={`${
-                sidebarCollapsed &&
-                !mobileSidebarOpen
+                sidebarCompact
                   ? "px-2"
                   : "px-3"
               } pb-3`}
             >
-              {(!sidebarCollapsed ||
-                mobileSidebarOpen) ? (
+              {!sidebarCompact ? (
                 <div className="rounded-[12px] border border-white/10 bg-white/[0.045] px-4 py-4">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-[11px] font-medium text-slate-300">
@@ -2206,22 +2312,20 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   <button
                     type="button"
                     onClick={openBilling}
-                    className="mt-4 h-9 w-full rounded-lg border border-white/10 bg-white/[0.06] text-[11px] font-semibold text-white transition-colors hover:bg-white/[0.10]"
+                    className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#7c3aed] px-3 text-[11px] font-bold text-white shadow-[0_8px_22px_rgba(79,70,229,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(79,70,229,0.30)]"
                   >
-                    Upgrade Plan
+                    <Rocket size={14} strokeWidth={2.2} />
+                    Upgrade your plan
                   </button>
                 </div>
               ) : (
                 <button
                   type="button"
                   onClick={openBilling}
-                  className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.07] text-amber-400"
-                  title={`${planLabel} Plan`}
+                  className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#2563eb] via-[#4f46e5] to-[#7c3aed] text-white shadow-[0_8px_20px_rgba(79,70,229,0.26)] transition-all duration-300 hover:scale-[1.04]"
+                  title="Upgrade your plan"
                 >
-                  <Crown
-                    size={17}
-                    strokeWidth={2}
-                  />
+                  <Rocket size={17} strokeWidth={2.2} />
                 </button>
               )}
             </div>
@@ -2231,13 +2335,13 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
         {/* MAIN WORKSPACE */}
         <div
-          className={`flex-1 min-w-0 bg-[#f6f7fa] transition-[margin] duration-300 ${
+          className={`flex-1 min-w-0 bg-[#f6f7fa] transition-[margin] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
             sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[252px]"
           }`}
         >
           {/* TOP BAR — continuous with sidebar */}
           <header
-            className={`fixed top-0 right-0 z-40 h-[68px] border-b border-slate-200/80 bg-white/95 text-slate-900 backdrop-blur-xl transition-[left] duration-300 ${
+            className={`fixed top-0 right-0 z-40 h-[68px] border-b border-slate-200/80 bg-white/95 text-slate-900 backdrop-blur-xl transition-[left] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
               sidebarCollapsed
                 ? "left-[72px]"
                 : "left-[252px]"
@@ -2510,7 +2614,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
       {billingOpen && (
         <div className="fixed inset-0 z-[95] bg-slate-950/55 backdrop-blur-[2px] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="w-full max-w-4xl max-h-[94vh] sm:max-h-[90vh] bg-white border border-slate-200 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+          <div className="w-full max-w-5xl max-h-[94vh] sm:max-h-[90vh] bg-white border border-slate-200 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col">
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <div className="text-base font-bold text-slate-950">
@@ -2518,7 +2622,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 </div>
 
                 <div className="text-xs text-slate-500 mt-1">
-                  Manage the ConsulBuzz plan for {company.name}.
+                  Review plans, billing cycles and upgrade options for {company.name}.
                 </div>
               </div>
 
@@ -2598,98 +2702,247 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   </div>
 
                   <div>
-                    <div className="text-sm font-bold text-slate-900">
-                      Choose a plan
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
-                      {billingData.plans.map(
-                        (billingPlan) => (
-                          <div
-                            key={billingPlan.id}
-                            className={`border rounded-xl p-4 ${
-                              billingData.subscription?.plan?.key ===
-                              billingPlan.key
-                                ? "border-indigo-300 bg-indigo-50/40"
-                                : "border-slate-200"
+                    <div>
+                      <div className="flex justify-center">
+                        <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-sm">
+                          <button
+                            type="button"
+                            onClick={() => setBillingCycleView("MONTHLY")}
+                            className={`h-10 min-w-[112px] rounded-lg px-5 text-xs font-bold transition-all ${
+                              billingCycleView === "MONTHLY"
+                                ? "bg-white text-slate-950 shadow-sm"
+                                : "text-slate-500 hover:text-slate-800"
                             }`}
                           >
-                            <div className="text-sm font-bold text-slate-900">
-                              {billingPlan.name}
-                            </div>
+                            Monthly
+                          </button>
 
-                            <div className="text-xs text-slate-500 mt-1 min-h-[32px]">
-                              {billingPlan.tagline}
-                            </div>
+                          <button
+                            type="button"
+                            onClick={() => setBillingCycleView("YEARLY")}
+                            className={`relative h-10 min-w-[132px] rounded-lg px-5 text-xs font-bold transition-all ${
+                              billingCycleView === "YEARLY"
+                                ? "bg-white text-slate-950 shadow-sm"
+                                : "text-slate-500 hover:text-slate-800"
+                            }`}
+                          >
+                            Annually
+                            {annualSavingsPercent > 0 && (
+                              <span className="absolute -right-2 -top-2 rounded-full bg-emerald-600 px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-white shadow-sm">
+                                Save up to {annualSavingsPercent}%
+                              </span>
+                            )}
+                          </button>
+                        </div>
+                      </div>
 
-                            <div className="mt-4">
-                              <div className="text-lg font-bold text-slate-950">
-                                ₹{Number(
-                                  billingPlan.monthlyPrice
-                                ).toLocaleString("en-IN")}
-                                <span className="text-xs font-medium text-slate-400">
-                                  /mo
-                                </span>
+                      <div className="mt-5 text-center">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-500">
+                          Upgrade Workspace
+                        </div>
+                        <div className="mt-1 text-[20px] font-bold tracking-[-0.025em] text-slate-950">
+                          Choose the plan that fits your team
+                        </div>
+                        <div className="mx-auto mt-1 max-w-2xl text-xs leading-5 text-slate-500">
+                          Switch plans without changing your existing CRM data or workspace setup.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 mt-5 md:grid-cols-3">
+                      {billingData.plans.map((billingPlan) => {
+                        const isCurrent =
+                          billingData.subscription?.plan?.key === billingPlan.key;
+
+                        const isPopular =
+                          String(billingPlan.key || "").toLowerCase() === "pro";
+
+                        const yearlyAvailable =
+                          billingPlan.yearlyPrice !== null &&
+                          billingPlan.yearlyPrice !== undefined;
+
+                        const selectedPrice =
+                          billingCycleView === "YEARLY" && yearlyAvailable
+                            ? Number(billingPlan.yearlyPrice || 0)
+                            : Number(billingPlan.monthlyPrice || 0);
+
+                        const priceSuffix =
+                          billingCycleView === "YEARLY" && yearlyAvailable
+                            ? "/year"
+                            : "/month";
+
+                        const planDescriptions = {
+                          basic:
+                            "Essential CRM tools for teams getting started.",
+                          pro:
+                            "More automation and operational tools for growing teams.",
+                          advanced:
+                            "Complete CRM capabilities for larger and more complex operations.",
+                        };
+
+                        const description =
+                          planDescriptions[
+                            String(billingPlan.key || "").toLowerCase()
+                          ] ||
+                          billingPlan.tagline ||
+                          "Flexible CRM tools for your business.";
+
+                        const featureMap = {
+                          basic: [
+                            "Core lead management",
+                            "Admissions workspace",
+                            "Revenue tracking",
+                            "In-app notifications",
+                            "Standard support",
+                          ],
+                          pro: [
+                            "Everything in Basic",
+                            "Walk-ins & Counselling",
+                            "Advanced analytics",
+                            "Expanded team workflows",
+                            "Priority support",
+                          ],
+                          advanced: [
+                            "Everything in Pro",
+                            "Advanced customization access",
+                            "Extended operational controls",
+                            "Premium CRM modules",
+                            "Customization request support",
+                          ],
+                        };
+
+                        const features =
+                          featureMap[
+                            String(billingPlan.key || "").toLowerCase()
+                          ] || [];
+
+                        return (
+                          <div
+                            key={billingPlan.id}
+                            className={`relative flex min-h-[390px] flex-col rounded-2xl border p-5 transition-all duration-300 ${
+                              isPopular
+                                ? "border-indigo-300 bg-gradient-to-b from-indigo-50/70 to-white shadow-[0_14px_40px_rgba(79,70,229,0.10)]"
+                                : isCurrent
+                                ? "border-slate-300 bg-slate-50/70"
+                                : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_12px_28px_rgba(15,23,42,0.07)]"
+                            }`}
+                          >
+                            {isPopular && (
+                              <div className="absolute -top-3 left-5 rounded-full bg-indigo-600 px-3 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-sm">
+                                Most Popular
+                              </div>
+                            )}
+
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="text-[17px] font-bold text-slate-950">
+                                  {billingPlan.name}
+                                </div>
+
+                                <div className="mt-2 min-h-[42px] text-xs leading-5 text-slate-500">
+                                  {description}
+                                </div>
                               </div>
 
-                              <button
-                                type="button"
-                                disabled={
-                                  Boolean(
-                                    paymentProcessing
-                                  )
-                                }
-                                onClick={() =>
-                                  startSubscriptionPayment(
-                                    billingPlan.key,
-                                    "MONTHLY"
-                                  )
-                                }
-                                className="w-full mt-3 h-9 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-2"
-                              >
-                                {paymentProcessing ===
-                                  `${billingPlan.key}:MONTHLY` && (
-                                  <Loader2
-                                    size={13}
-                                    className="animate-spin"
-                                  />
-                                )}
-                                Pay Monthly
-                              </button>
+                              {isCurrent && (
+                                <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide text-slate-600">
+                                  Current
+                                </span>
+                              )}
+                            </div>
 
-                              {billingPlan.yearlyPrice !==
-                                null && (
+                            <div className="mt-5">
+                              <div className="flex items-end gap-1.5">
+                                <div className="text-[27px] font-black tracking-[-0.04em] text-slate-950">
+                                  ₹{selectedPrice.toLocaleString("en-IN")}
+                                </div>
+
+                                <div className="pb-1 text-[11px] font-medium text-slate-400">
+                                  {priceSuffix}
+                                </div>
+                              </div>
+
+                              {billingCycleView === "YEARLY" &&
+                                yearlyAvailable &&
+                                Number(billingPlan.monthlyPrice || 0) > 0 && (
+                                  <div className="mt-1 text-[10px] font-medium text-emerald-700">
+                                    Equivalent to ₹
+                                    {Math.round(
+                                      Number(billingPlan.yearlyPrice || 0) / 12
+                                    ).toLocaleString("en-IN")}
+                                    /month
+                                  </div>
+                                )}
+                            </div>
+
+                            <div className="my-5 h-px bg-slate-100" />
+
+                            <div className="space-y-3">
+                              {features.map((feature) => (
+                                <div
+                                  key={feature}
+                                  className="flex items-start gap-2.5 text-xs leading-5 text-slate-600"
+                                >
+                                  <CheckCircle2
+                                    size={14}
+                                    className="mt-0.5 flex-shrink-0 text-indigo-600"
+                                  />
+                                  <span>{feature}</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="mt-auto pt-6">
+                              {isCurrent ? (
+                                <button
+                                  type="button"
+                                  disabled
+                                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-500"
+                                >
+                                  Current Plan
+                                </button>
+                              ) : (
                                 <button
                                   type="button"
                                   disabled={
-                                    Boolean(
-                                      paymentProcessing
-                                    )
+                                    Boolean(paymentProcessing) ||
+                                    (billingCycleView === "YEARLY" &&
+                                      !yearlyAvailable)
                                   }
                                   onClick={() =>
                                     startSubscriptionPayment(
                                       billingPlan.key,
-                                      "YEARLY"
+                                      billingCycleView
                                     )
                                   }
-                                  className="w-full mt-2 h-9 border border-slate-200 hover:bg-slate-50 disabled:opacity-50 text-slate-700 rounded-lg text-xs font-semibold inline-flex items-center justify-center gap-2"
+                                  className={`inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 ${
+                                    isPopular
+                                      ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-[0_8px_20px_rgba(79,70,229,0.16)]"
+                                      : "border border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
+                                  }`}
                                 >
                                   {paymentProcessing ===
-                                    `${billingPlan.key}:YEARLY` && (
+                                    `${billingPlan.key}:${billingCycleView}` && (
                                     <Loader2
                                       size={13}
                                       className="animate-spin"
                                     />
                                   )}
-                                  ₹{Number(
-                                    billingPlan.yearlyPrice
-                                  ).toLocaleString("en-IN")} / year
+
+                                  {billingCycleView === "YEARLY" &&
+                                  !yearlyAvailable
+                                    ? "Annual plan unavailable"
+                                    : `Upgrade to ${billingPlan.name}`}
                                 </button>
                               )}
                             </div>
                           </div>
-                        )
-                      )}
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-[11px] leading-5 text-slate-500">
+                      Your existing CRM records remain unchanged when you upgrade. New plan capabilities become available after successful payment verification.
                     </div>
                   </div>
 
