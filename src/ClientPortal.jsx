@@ -1796,6 +1796,17 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           background: #f6f7fa;
         }
 
+        .sidebar-scroll {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar {
+          display: none;
+          width: 0;
+          height: 0;
+        }
+
       `}</style>
       <style>{`
         @media print {
@@ -1948,7 +1959,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   : "px-2 py-2"
               }`}
             >
-              <div className="h-full overflow-y-auto overflow-x-hidden pr-0.5">
+              <div className="sidebar-scroll h-full overflow-y-auto overflow-x-hidden pr-0.5">
                 {NAV_GROUPS.map((group) => {
                   const Icon = group.icon;
                   const groupActive = group.items.includes(module);
