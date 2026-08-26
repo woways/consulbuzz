@@ -137,18 +137,18 @@ function MetricCard({
         </div>
 
         <div className="min-w-0">
-          <div className="truncate text-[13px] font-semibold text-slate-600">
+          <div className="text-[13px] font-semibold leading-5 text-slate-600 break-words">
             {label}
           </div>
 
-          <div className="mt-1 truncate text-[21px] font-bold tracking-[-0.035em] text-slate-950">
+          <div className="mt-1 text-[20px] sm:text-[21px] font-bold leading-tight tracking-[-0.035em] text-slate-950 break-words">
             {value}
           </div>
         </div>
       </div>
 
       {detail ? (
-        <div className="mt-2 truncate pl-12 text-[11px] text-slate-500">
+        <div className="mt-2 pl-12 text-[11px] leading-4 text-slate-500 break-words">
           {detail}
         </div>
       ) : null}
@@ -971,7 +971,7 @@ export default function Dashboard({
                 </div>
 
                 <div className="overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-                  <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-5">
+                  <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-3 2xl:grid-cols-5">
                     {pulseMetrics.map((metric) => (
                       <MetricCard
                         key={metric.label}

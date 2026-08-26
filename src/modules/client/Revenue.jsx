@@ -1493,7 +1493,7 @@ export default function Revenue({ selectedYear = "all" }) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-4">
             <RevenueMetric
               label="Potential Revenue"
               value={money(summary.potentialRevenue)}
@@ -1670,7 +1670,7 @@ export default function Revenue({ selectedYear = "all" }) {
           {tab ===
             "expenses" && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-3">
                 <RevenueMetric
                   label="Total Expenses"
                   value={money(expenseStats.total)}
