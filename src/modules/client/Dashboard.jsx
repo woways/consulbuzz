@@ -889,9 +889,22 @@ export default function Dashboard({
       {/* WORKSPACE HEADER */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-[28px] font-bold tracking-[-0.045em] text-slate-950 sm:text-[32px]">
-            Good evening,{" "}
-            <span className="text-indigo-600">
+          <h1 className="text-[34px] font-normal leading-[1.08] tracking-[-0.045em] text-slate-950 sm:text-[40px]">
+            {(() => {
+              const hour = new Date().getHours();
+
+              if (hour < 12) {
+                return "Good Morning";
+              }
+
+              if (hour < 17) {
+                return "Good Afternoon";
+              }
+
+              return "Good Evening";
+            })()}
+            ,{" "}
+            <span className="font-normal text-slate-950">
               {(user?.name ||
                 tenant?.ownerName ||
                 "Admin")
@@ -899,8 +912,8 @@ export default function Dashboard({
             </span>
           </h1>
 
-          <p className="mt-1.5 text-[13px] text-slate-500">
-            Here&apos;s your ConsulBuzz CRM overview for{" "}
+          <p className="mt-2 text-[14px] font-normal tracking-[-0.01em] text-slate-500">
+            It&apos;s{" "}
             {new Date().toLocaleDateString(
               "en-IN",
               {
@@ -2203,7 +2216,7 @@ export default function Dashboard({
 
             <div className="bg-white border border-slate-200 rounded-xl shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
               <div className="px-4 py-4 border-b border-slate-100">
-                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.10em] text-slate-400">
                   Today
                 </div>
 
@@ -2296,7 +2309,7 @@ export default function Dashboard({
                   </div>
                 )}
 
-                <div className="mt-6 mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                <div className="mt-6 mb-2 text-[10px] font-semibold uppercase tracking-[0.10em] text-slate-400">
                   Upcoming
                 </div>
 

@@ -32,6 +32,17 @@ import {
   ChevronRight,
   Plus,
   Rocket,
+  UserRound,
+  ShieldCheck,
+  SlidersHorizontal,
+  MonitorSmartphone,
+  Camera,
+  Mail,
+  Phone,
+  Building2,
+  KeyRound,
+  Smartphone,
+  Save,
 } from "lucide-react";
 
 import {
@@ -230,7 +241,37 @@ const NAV_GROUPS = [
     items: ["settings"],
     direct: true,
   },
+
 ];
+
+const PAGE_META = {
+  dashboard: { label: "Dashboard" },
+  "utm-leads": { label: "UTM Leads" },
+  "lead-store": { label: "Lead Store" },
+  admissions: {
+    group: "Admissions",
+    label: "Admissions Done",
+  },
+  walkins: {
+    group: "Admissions",
+    label: "Walk-ins",
+  },
+  counselling: {
+    group: "Admissions",
+    label: "Counselling",
+  },
+  revenue: {
+    group: "Finance",
+    label: "Revenue",
+  },
+  analytics: {
+    group: "Insights",
+    label: "Analytics",
+  },
+  help: { label: "Help & Support" },
+  settings: { label: "Settings" },
+  profile: { label: "My Profile" },
+};
 
 const MODULE_PERMISSION_MAP = {
   dashboard:
@@ -396,6 +437,47 @@ export default function ClientPortal({
     setProfileMenuOpen,
   ] = useState(false);
 const [accountActionsOpen, setAccountActionsOpen] = useState(false);
+
+  const [profileTab, setProfileTab] = useState("profile");
+  const [profilePhoto, setProfilePhoto] = useState("");
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: clientSession?.user?.name || "",
+    email: clientSession?.user?.email || "",
+    phone: clientSession?.user?.phone || clientSession?.company?.phone || "",
+  });
+  const profilePhotoInputRef = useRef(null);
+
+  const [uiPreferences, setUiPreferences] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem("cb_ui_preferences");
+
+      if (saved) {
+        return {
+          appearance: "light",
+          density: "comfortable",
+          showGreeting: true,
+          showCalendar: true,
+          dateFormat: "DD/MM/YYYY",
+          timeFormat: "12H",
+          ...JSON.parse(saved),
+        };
+      }
+    } catch (error) {
+      console.error("Unable to load UI preferences:", error);
+    }
+
+    return {
+      appearance: "light",
+      density: "comfortable",
+      showGreeting: true,
+      showCalendar: true,
+      dateFormat: "DD/MM/YYYY",
+      timeFormat: "12H",
+    };
+  });
+
+  const [uiPreferencesSaved, setUiPreferencesSaved] = useState(false);
 
   const [workspaceSearch, setWorkspaceSearch] = useState("");
 
@@ -585,6 +667,15 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       clientSession?.company ||
         null
     );
+
+    setProfileForm({
+      name: clientSession?.user?.name || "",
+      email: clientSession?.user?.email || "",
+      phone:
+        clientSession?.user?.phone ||
+        clientSession?.company?.phone ||
+        "",
+    });
   }, [
     clientSession,
   ]);
@@ -1306,7 +1397,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           <style>
             @page {
               size: A4;
-              margin: 10mm;
+              margin: 6mm;
             }
 
             html,
@@ -1438,7 +1529,645 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     );
   }
 
+  function renderProfile() {
+    const tabs = [
+      { key: "profile", label: "Profile", icon: UserRound },
+      { key: "security", label: "Security", icon: ShieldCheck },
+      { key: "preferences", label: "Preferences", icon: SlidersHorizontal },
+      { key: "sessions", label: "Sessions", icon: MonitorSmartphone },
+    ];
+
+    const displayName = profileForm.name || user.name || "Client Admin";
+    const displayEmail = profileForm.email || user.email || "—";
+    const displayPhone = profileForm.phone || company.phone || "—";
+    const companyDisplayName =
+      company.brandName || company.name || "Company";
+
+    function saveProfile(event) {
+      event?.preventDefault?.();
+      setProfileSaved(true);
+      window.setTimeout(() => setProfileSaved(false), 2200);
+    }
+
+    function selectProfilePhoto(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => setProfilePhoto(String(reader.result || ""));
+      reader.readAsDataURL(file);
+    }
+
+    function updateUiPreference(key, value) {
+      setUiPreferences((current) => ({
+        ...current,
+        [key]: value,
+      }));
+      setUiPreferencesSaved(false);
+    }
+
+    function saveUiPreferences() {
+      try {
+        window.localStorage.setItem(
+          "cb_ui_preferences",
+          JSON.stringify(uiPreferences)
+        );
+        setUiPreferencesSaved(true);
+        window.setTimeout(() => setUiPreferencesSaved(false), 2200);
+      } catch (error) {
+        console.error("Unable to save UI preferences:", error);
+      }
+    }
+
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-[22px] font-black tracking-[-0.035em] text-slate-950">
+            My Profile
+          </h1>
+          <p className="mt-1 text-xs text-slate-500">
+            Update your personal information and account settings.
+          </p>
+        </div>
+
+        <section className="overflow-hidden rounded-[22px] border border-slate-800 bg-[#101114] shadow-[0_14px_36px_rgba(15,23,42,0.12)]">
+          <div className="relative px-5 py-6 sm:px-7">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_10%,rgba(255,255,255,0.08),transparent_35%)]" />
+            <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
+              <div className="relative flex-shrink-0">
+                <div className="flex h-[92px] w-[92px] items-center justify-center overflow-hidden rounded-full border-[3px] border-white/80 bg-slate-800 text-2xl font-black text-white shadow-lg">
+                  {profilePhoto ? (
+                    <img
+                      src={profilePhoto}
+                      alt={displayName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    initials
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => profilePhotoInputRef.current?.click()}
+                  className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-[#101114] bg-white text-slate-950 shadow-md hover:bg-slate-100"
+                  aria-label="Change profile photo"
+                >
+                  <Camera size={14} />
+                </button>
+
+                <input
+                  ref={profilePhotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={selectProfilePhoto}
+                  className="hidden"
+                />
+              </div>
+
+              <div className="min-w-0 flex-1 text-white">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h2 className="truncate text-[25px] font-black tracking-[-0.04em]">
+                    {displayName}
+                  </h2>
+                  <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-bold text-slate-200">
+                    {formatRole(user.role)}
+                  </span>
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] text-slate-300">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Mail size={13} />
+                    {displayEmail}
+                  </span>
+                  <span className="hidden h-3 w-px bg-white/20 sm:block" />
+                  <span className="inline-flex items-center gap-1.5">
+                    <Phone size={13} />
+                    {displayPhone}
+                  </span>
+                </div>
+
+                <div className="mt-3 inline-flex items-center gap-2 text-[12px] font-semibold text-slate-200">
+                  <Building2 size={14} />
+                  {companyDisplayName}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[18px] border border-slate-200 bg-white shadow-[0_5px_18px_rgba(15,23,42,0.04)]">
+          <div className="grid grid-cols-4 border-b border-slate-100 px-2 sm:px-5">
+            {tabs.map((tab) => {
+              const TabIcon = tab.icon;
+              const active = profileTab === tab.key;
+
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setProfileTab(tab.key)}
+                  className={`relative flex min-h-[76px] flex-col items-center justify-center gap-1.5 px-1 text-[10px] font-bold transition-colors sm:text-xs ${
+                    active
+                      ? "text-slate-950"
+                      : "text-slate-400 hover:text-slate-700"
+                  }`}
+                >
+                  <span
+                    className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                      active
+                        ? "bg-slate-950 text-white"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    <TabIcon size={15} />
+                  </span>
+                  {tab.label}
+                  {active && (
+                    <span className="absolute bottom-0 h-[2px] w-14 rounded-full bg-slate-950" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {profileTab === "profile" && (
+            <div className="grid gap-5 p-5 lg:grid-cols-[1.45fr_0.75fr] lg:p-6">
+              <form
+                onSubmit={saveProfile}
+                className="rounded-2xl border border-slate-200 p-5"
+              >
+                <div>
+                  <h3 className="text-sm font-black text-slate-950">
+                    Personal Information
+                  </h3>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Keep your account details accurate and up to date.
+                  </p>
+                </div>
+
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                      Full Name
+                    </span>
+                    <input
+                      value={profileForm.name}
+                      onChange={(event) =>
+                        setProfileForm((current) => ({
+                          ...current,
+                          name: event.target.value,
+                        }))
+                      }
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-slate-400"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                      Email Address
+                    </span>
+                    <input
+                      type="email"
+                      value={profileForm.email}
+                      onChange={(event) =>
+                        setProfileForm((current) => ({
+                          ...current,
+                          email: event.target.value,
+                        }))
+                      }
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-slate-400"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                      Phone Number
+                    </span>
+                    <input
+                      value={profileForm.phone}
+                      onChange={(event) =>
+                        setProfileForm((current) => ({
+                          ...current,
+                          phone: event.target.value,
+                        }))
+                      }
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-slate-400"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                      Role
+                    </span>
+                    <input
+                      value={formatRole(user.role)}
+                      readOnly
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-500 outline-none"
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                  <div className="text-[11px] font-medium text-slate-500">
+                    {profileSaved
+                      ? "Profile changes saved locally."
+                      : "Review your details before saving."}
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white hover:bg-slate-800"
+                  >
+                    {profileSaved ? (
+                      <CheckCircle2 size={14} />
+                    ) : (
+                      <Save size={14} />
+                    )}
+                    {profileSaved ? "Saved" : "Save Changes"}
+                  </button>
+                </div>
+              </form>
+
+              <div className="space-y-5">
+                <div className="rounded-2xl border border-slate-200 p-5">
+                  <h3 className="text-sm font-black text-slate-950">
+                    Quick Actions
+                  </h3>
+
+                  <div className="mt-4 space-y-2">
+
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+                  <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
+                    Profile Preview
+                  </div>
+                  <div className="mt-3 flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-slate-950 text-xs font-black text-white">
+                      {profilePhoto ? (
+                        <img
+                          src={profilePhoto}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        initials
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-black text-slate-950">
+                        {displayName}
+                      </div>
+                      <div className="truncate text-[11px] text-slate-500">
+                        {displayEmail}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {profileTab === "security" && (
+            <div className="grid gap-5 p-5 lg:grid-cols-2 lg:p-6">
+              <div className="rounded-2xl border border-slate-200 p-5">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-white">
+                    <ShieldCheck size={18} />
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-950">
+                      Security Overview
+                    </h3>
+                    <p className="mt-0.5 text-[11px] text-slate-500">
+                      Manage password and account protection.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={openChangePassword}
+                  className="mt-5 inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white hover:bg-slate-800"
+                >
+                  <KeyRound size={14} />
+                  Change Password
+                </button>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 p-5">
+                <div className="text-xs font-black text-slate-950">
+                  Account Access
+                </div>
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3 text-xs">
+                    <span className="text-slate-500">Account role</span>
+                    <span className="font-bold text-slate-900">
+                      {formatRole(user.role)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500">Password</span>
+                    <span className="font-bold text-emerald-600">Configured</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {profileTab === "preferences" && (
+            <div className="p-5 lg:p-6">
+              <div className="mb-5">
+                <h3 className="text-sm font-black text-slate-950">
+                  UI Preferences
+                </h3>
+                <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                  Personalize how ConsulBuzz looks and feels for your account.
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* APPEARANCE */}
+                <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                      <Sun size={18} />
+                    </span>
+
+                    <div>
+                      <div className="text-xs font-black text-slate-950">
+                        Appearance
+                      </div>
+                      <div className="mt-1 text-[10px] leading-4 text-slate-500">
+                        Choose the visual theme you prefer.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    {[
+                      ["light", "Light"],
+                      ["dark", "Dark"],
+                      ["system", "System"],
+                    ].map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() =>
+                          updateUiPreference("appearance", value)
+                        }
+                        className={`h-9 rounded-xl border text-[11px] font-bold transition-all ${
+                          uiPreferences.appearance === value
+                            ? "border-slate-950 bg-slate-950 text-white"
+                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* DASHBOARD VIEW */}
+                <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                      <SlidersHorizontal size={18} />
+                    </span>
+
+                    <div>
+                      <div className="text-xs font-black text-slate-950">
+                        Dashboard View
+                      </div>
+                      <div className="mt-1 text-[10px] leading-4 text-slate-500">
+                        Control the spacing and information density.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    {[
+                      ["compact", "Compact"],
+                      ["comfortable", "Comfortable"],
+                    ].map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() =>
+                          updateUiPreference("density", value)
+                        }
+                        className={`h-9 rounded-xl border text-[11px] font-bold transition-all ${
+                          uiPreferences.density === value
+                            ? "border-slate-950 bg-slate-950 text-white"
+                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* DASHBOARD ELEMENTS */}
+                <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                      <CalendarClock size={18} />
+                    </span>
+
+                    <div>
+                      <div className="text-xs font-black text-slate-950">
+                        Dashboard Elements
+                      </div>
+                      <div className="mt-1 text-[10px] leading-4 text-slate-500">
+                        Choose which optional elements should be visible.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 divide-y divide-slate-100">
+                    {[
+                      ["showGreeting", "Show Greeting", "Good morning / afternoon / evening"],
+                      ["showCalendar", "Show Dashboard Calendar", "Calendar and today’s events"],
+                    ].map(([key, label, description]) => (
+                      <div
+                        key={key}
+                        className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                      >
+                        <div>
+                          <div className="text-[11px] font-bold text-slate-800">
+                            {label}
+                          </div>
+                          <div className="mt-0.5 text-[9px] text-slate-400">
+                            {description}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={Boolean(uiPreferences[key])}
+                          onClick={() =>
+                            updateUiPreference(
+                              key,
+                              !uiPreferences[key]
+                            )
+                          }
+                          className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors ${
+                            uiPreferences[key]
+                              ? "bg-slate-950"
+                              : "bg-slate-200"
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                              uiPreferences[key]
+                                ? "translate-x-6"
+                                : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* DATE & TIME */}
+                <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                      <CalendarClock size={18} />
+                    </span>
+
+                    <div>
+                      <div className="text-xs font-black text-slate-950">
+                        Date & Time
+                      </div>
+                      <div className="mt-1 text-[10px] leading-4 text-slate-500">
+                        Set how dates and time are displayed.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <label className="block">
+                      <span className="mb-1.5 block text-[10px] font-bold text-slate-500">
+                        Date Format
+                      </span>
+                      <select
+                        value={uiPreferences.dateFormat}
+                        onChange={(event) =>
+                          updateUiPreference(
+                            "dateFormat",
+                            event.target.value
+                          )
+                        }
+                        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 outline-none focus:border-slate-400"
+                      >
+                        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                        <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                        <option value="DD MMM YYYY">DD MMM YYYY</option>
+                      </select>
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-1.5 block text-[10px] font-bold text-slate-500">
+                        Time Format
+                      </span>
+                      <select
+                        value={uiPreferences.timeFormat}
+                        onChange={(event) =>
+                          updateUiPreference(
+                            "timeFormat",
+                            event.target.value
+                          )
+                        }
+                        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 outline-none focus:border-slate-400"
+                      >
+                        <option value="12H">12 Hour (AM/PM)</option>
+                        <option value="24H">24 Hour</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3.5">
+                <div>
+                  <div className="text-[11px] font-bold text-slate-800">
+                    Personal UI preferences
+                  </div>
+                  <div className="mt-0.5 text-[9px] text-slate-400">
+                    These choices are stored for this browser.
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={saveUiPreferences}
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white hover:bg-slate-800"
+                >
+                  {uiPreferencesSaved ? (
+                    <CheckCircle2 size={14} />
+                  ) : (
+                    <Save size={14} />
+                  )}
+                  {uiPreferencesSaved
+                    ? "Preferences Saved"
+                    : "Save Preferences"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {profileTab === "sessions" && (
+            <div className="p-5 lg:p-6">
+              <div className="max-w-2xl rounded-2xl border border-slate-200 p-5">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                    <Smartphone size={18} />
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-950">
+                      Current Session
+                    </h3>
+                    <p className="mt-0.5 text-[11px] text-slate-500">
+                      This browser is currently signed in to ConsulBuzz.
+                    </p>
+                  </div>
+                  <span className="ml-auto rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-emerald-700">
+                    Active
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={signOut}
+                  disabled={signingOut}
+                  className="mt-5 inline-flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-xs font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                >
+                  {signingOut ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <LogOut size={14} />
+                  )}
+                  Sign out this session
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
+    );
+  }
+
   function renderModule() {
+    if (module === "profile") {
+      return renderProfile();
+    }
+
     if (
       !hasModulePermission(
         module
@@ -1849,6 +2578,13 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     !sidebarHoverExpanded &&
     !mobileSidebarOpen;
 
+  const currentPage =
+    PAGE_META[module] || {
+      label:
+        MODULE_META[module]?.label ||
+        module,
+    };
+
   return (
     <div className="min-h-screen bg-[#f6f7fa] text-slate-900 overflow-x-hidden">
       <style>{`
@@ -1858,6 +2594,16 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           margin: 0;
           min-height: 100%;
           background: #f6f7fa;
+          font-family:
+            Inter,
+            "Helvetica Neue",
+            Arial,
+            ui-sans-serif,
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            sans-serif;
         }
 
         .sidebar-scroll {
@@ -1903,7 +2649,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           #consulbuzz-payment-receipt {
             display: block !important;
             position: static !important;
-            width: 100% !important;
+            width: 113.64% !important;
             max-width: none !important;
             margin: 0 !important;
             box-shadow: none !important;
@@ -1911,6 +2657,8 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             overflow: visible !important;
             page-break-inside: avoid !important;
             break-inside: avoid-page !important;
+            transform: scale(0.88);
+            transform-origin: top left;
           }
 
           #consulbuzz-payment-receipt * {
@@ -2020,6 +2768,129 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 </div>
               </div>
             )}
+
+            {/* SIDEBAR SEARCH */}
+            <div
+              className={`${
+                sidebarCompact
+                  ? "px-2 pb-2"
+                  : "px-3 pb-3"
+              }`}
+            >
+              {sidebarCompact ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSidebarHoverExpanded(true);
+                    window.setTimeout(() => {
+                      document
+                        .getElementById("client-sidebar-search")
+                        ?.focus();
+                    }, 180);
+                  }}
+                  title="Search modules"
+                  aria-label="Search modules"
+                  className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.05] text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
+                >
+                  <Search size={16} />
+                </button>
+              ) : (
+                <div className="relative">
+                  <Search
+                    size={15}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+                  />
+
+                  <input
+                    id="client-sidebar-search"
+                    value={workspaceSearch}
+                    onChange={(event) =>
+                      setWorkspaceSearch(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Search modules..."
+                    className="h-10 w-full rounded-lg border border-white/10 bg-white/[0.055] pl-9 pr-9 text-[12px] font-medium text-white outline-none transition-all placeholder:text-slate-500 focus:border-indigo-400/50 focus:bg-white/[0.08]"
+                  />
+
+                  {workspaceSearch && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setWorkspaceSearch("")
+                      }
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                      aria-label="Clear search"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+
+                  {workspaceSearch.trim() && (
+                    <div className="absolute left-0 right-0 top-[46px] z-[95] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_45px_rgba(15,23,42,0.24)]">
+                      {NAV_GROUPS.flatMap(
+                        (group) =>
+                          group.items.map((key) => ({
+                            key,
+                            groupLabel:
+                              group.label,
+                            label:
+                              key === "dashboard"
+                                ? "Dashboard"
+                                : key === "settings"
+                                ? "Settings"
+                                : MODULE_META[key]
+                                    ?.label ||
+                                  key,
+                          }))
+                      )
+                        .filter((item) => {
+                          const query =
+                            workspaceSearch
+                              .trim()
+                              .toLowerCase();
+
+                          return (
+                            item.label
+                              .toLowerCase()
+                              .includes(query) ||
+                            item.groupLabel
+                              .toLowerCase()
+                              .includes(query)
+                          );
+                        })
+                        .slice(0, 8)
+                        .map((item) => (
+                          <button
+                            key={item.key}
+                            type="button"
+                            onClick={() => {
+                              setModule(item.key);
+                              setWorkspaceSearch("");
+                              setMobileSidebarOpen(false);
+                            }}
+                            className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left hover:bg-slate-50"
+                          >
+                            <div className="min-w-0">
+                              <div className="truncate text-[12px] font-semibold text-slate-900">
+                                {item.label}
+                              </div>
+                              <div className="mt-0.5 text-[10px] text-slate-500">
+                                {item.groupLabel}
+                              </div>
+                            </div>
+
+                            <ChevronRight
+                              size={13}
+                              className="flex-shrink-0 text-slate-400"
+                            />
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* MENU — integrated dark navigation */}
             <nav
@@ -2341,7 +3212,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
         >
           {/* TOP BAR — continuous with sidebar */}
           <header
-            className={`fixed top-0 right-0 z-40 h-[68px] border-b border-slate-200/80 bg-white/95 text-slate-900 backdrop-blur-xl transition-[left] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+            className={`fixed top-0 right-0 z-40 h-[64px] bg-[#f6f7fa]/96 text-slate-900 backdrop-blur-xl transition-[left] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
               sidebarCollapsed
                 ? "left-[72px]"
                 : "left-[252px]"
@@ -2350,64 +3221,32 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             <div className="h-full px-4 sm:px-6 lg:px-7 flex items-center gap-4">
               
 
-              <div className="relative flex-1 max-w-[570px]">
-                <Search
-                  size={19}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
-                />
+              <div className="flex min-w-0 flex-1 items-center gap-2 text-[13px] font-medium tracking-[-0.01em]">
+                {currentPage.group ? (
+                  <>
+                    <span className="truncate text-slate-400">
+                      {currentPage.group}
+                    </span>
 
-                <input
-                  value={workspaceSearch}
-                  onChange={(event) => setWorkspaceSearch(event.target.value)}
-                  placeholder="Search leads, admissions, modules..."
-                  className="w-full h-10 pl-11 pr-4 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-                />
+                    <ChevronRight
+                      size={14}
+                      className="flex-shrink-0 text-slate-300"
+                    />
 
-                {workspaceSearch.trim() && (
-                  <div className="absolute left-0 right-0 top-[50px] z-[90] rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
-                    {NAV_GROUPS.flatMap((group) => group.items)
-                      .filter((key) => {
-                        const label =
-                          key === "dashboard"
-                            ? "Dashboard"
-                            : key === "settings"
-                            ? "Settings"
-                            : MODULE_META[key]?.label || key;
-
-                        return label
-                          .toLowerCase()
-                          .includes(workspaceSearch.trim().toLowerCase());
-                      })
-                      .slice(0, 8)
-                      .map((key) => {
-                        const label =
-                          key === "dashboard"
-                            ? "Dashboard"
-                            : key === "settings"
-                            ? "Settings"
-                            : MODULE_META[key]?.label || key;
-
-                        return (
-                          <button
-                            key={key}
-                            type="button"
-                            onClick={() => {
-                              setModule(key);
-                              setWorkspaceSearch("");
-                            }}
-                            className="w-full px-3 py-2.5 rounded-lg text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
-                  </div>
+                    <span className="truncate font-semibold text-slate-700">
+                      {currentPage.label}
+                    </span>
+                  </>
+                ) : (
+                  <span className="truncate font-semibold text-slate-700">
+                    {currentPage.label}
+                  </span>
                 )}
               </div>
 
               <div className="ml-auto flex items-center gap-2 sm:gap-3">
                 {/* GLOBAL PERIOD */}
-                <div className="hidden md:flex h-9 items-center rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="hidden md:flex h-9 items-center rounded-xl border border-slate-200/80 bg-white/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
                   <div className="px-3 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 border-r border-slate-200">
                     Period
                   </div>
@@ -2559,12 +3398,17 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
                       <button
                         type="button"
-                        onClick={openChangePassword}
+                        onClick={() => {
+                          setProfileMenuOpen(false);
+                          setProfileTab("profile");
+                          setModule("profile");
+                        }}
                         className="mt-1 w-full h-10 px-3 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
                       >
-                        <Lock size={14} />
-                        Change Password
+                        <UserRound size={14} />
+                        My Profile
                       </button>
+
 
                       {(user.role === "CLIENT_ADMIN" ||
                         permissions.canManageSettings === true) && (
@@ -2604,9 +3448,9 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           </header>
 
           {/* MAIN CONTENT */}
-          <main className="mt-[68px] min-h-[calc(100vh-68px)] bg-[#f6f7fa] px-3 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
+          <main className="mt-[64px] min-h-[calc(100vh-64px)] bg-[#f6f7fa] px-3 pt-3 pb-4 sm:px-5 sm:pt-4 sm:pb-5 lg:px-6 lg:pt-4 lg:pb-6">
             <div className="max-w-[1560px] mx-auto">
-{renderModule()}
+              {renderModule()}
             </div>
           </main>
         </div>
@@ -2702,15 +3546,28 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   </div>
 
                   <div>
-                    <div>
-                      <div className="flex justify-center">
-                        <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-[#f8f9fb] px-4 py-5 sm:px-6 sm:py-6">
+                    <div className="mx-auto max-w-2xl text-center">
+                      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-500">
+                        Pricing Plans
+                      </div>
+
+                      <h2 className="mt-1.5 text-[24px] font-bold tracking-[-0.035em] text-slate-950 sm:text-[28px]">
+                        Choose the right plan for your business
+                      </h2>
+
+                      <p className="mt-2 text-xs leading-5 text-slate-500">
+                        Compare features, switch billing cycles and upgrade without changing your existing CRM data.
+                      </p>
+
+                      <div className="mt-5 flex justify-center">
+                        <div className="inline-flex items-center rounded-full border border-slate-200 bg-white p-1 shadow-sm">
                           <button
                             type="button"
                             onClick={() => setBillingCycleView("MONTHLY")}
-                            className={`h-10 min-w-[112px] rounded-lg px-5 text-xs font-bold transition-all ${
+                            className={`h-9 min-w-[108px] rounded-full px-4 text-xs font-bold transition-all ${
                               billingCycleView === "MONTHLY"
-                                ? "bg-white text-slate-950 shadow-sm"
+                                ? "bg-slate-950 text-white shadow-sm"
                                 : "text-slate-500 hover:text-slate-800"
                             }`}
                           >
@@ -2720,36 +3577,25 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           <button
                             type="button"
                             onClick={() => setBillingCycleView("YEARLY")}
-                            className={`relative h-10 min-w-[132px] rounded-lg px-5 text-xs font-bold transition-all ${
+                            className={`relative h-9 min-w-[120px] rounded-full px-4 text-xs font-bold transition-all ${
                               billingCycleView === "YEARLY"
-                                ? "bg-white text-slate-950 shadow-sm"
+                                ? "bg-slate-950 text-white shadow-sm"
                                 : "text-slate-500 hover:text-slate-800"
                             }`}
                           >
                             Annually
+
                             {annualSavingsPercent > 0 && (
-                              <span className="absolute -right-2 -top-2 rounded-full bg-emerald-600 px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-white shadow-sm">
-                                Save up to {annualSavingsPercent}%
+                              <span className="absolute -right-3 -top-3 rounded-full bg-emerald-600 px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-white shadow-sm">
+                                Save {annualSavingsPercent}%
                               </span>
                             )}
                           </button>
                         </div>
                       </div>
-
-                      <div className="mt-5 text-center">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-500">
-                          Upgrade Workspace
-                        </div>
-                        <div className="mt-1 text-[20px] font-bold tracking-[-0.025em] text-slate-950">
-                          Choose the plan that fits your team
-                        </div>
-                        <div className="mx-auto mt-1 max-w-2xl text-xs leading-5 text-slate-500">
-                          Switch plans without changing your existing CRM data or workspace setup.
-                        </div>
-                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 mt-5 md:grid-cols-3">
+                    <div className="mt-7 grid grid-cols-1 gap-4 lg:grid-cols-3">
                       {billingData.plans.map((billingPlan) => {
                         const isCurrent =
                           billingData.subscription?.plan?.key === billingPlan.key;
@@ -2766,38 +3612,35 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                             ? Number(billingPlan.yearlyPrice || 0)
                             : Number(billingPlan.monthlyPrice || 0);
 
-                        const priceSuffix =
+                        const monthlyEquivalent =
                           billingCycleView === "YEARLY" && yearlyAvailable
-                            ? "/year"
-                            : "/month";
+                            ? Math.round(
+                                Number(billingPlan.yearlyPrice || 0) / 12
+                              )
+                            : Number(billingPlan.monthlyPrice || 0);
 
                         const planDescriptions = {
                           basic:
                             "Essential CRM tools for teams getting started.",
                           pro:
-                            "More automation and operational tools for growing teams.",
+                            "Built for growing consultancies that need more operational control.",
                           advanced:
-                            "Complete CRM capabilities for larger and more complex operations.",
+                            "Complete CRM flexibility for larger and more complex operations.",
                         };
-
-                        const description =
-                          planDescriptions[
-                            String(billingPlan.key || "").toLowerCase()
-                          ] ||
-                          billingPlan.tagline ||
-                          "Flexible CRM tools for your business.";
 
                         const featureMap = {
                           basic: [
-                            "Core lead management",
-                            "Admissions workspace",
+                            "Dashboard & core analytics",
+                            "UTM Leads & Lead Store",
+                            "Admissions management",
                             "Revenue tracking",
                             "In-app notifications",
                             "Standard support",
                           ],
                           pro: [
                             "Everything in Basic",
-                            "Walk-ins & Counselling",
+                            "Walk-ins module",
+                            "Counselling module",
                             "Advanced analytics",
                             "Expanded team workflows",
                             "Priority support",
@@ -2805,143 +3648,201 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           advanced: [
                             "Everything in Pro",
                             "Advanced customization access",
-                            "Extended operational controls",
-                            "Premium CRM modules",
+                            "White-label capabilities",
+                            "Premium operational controls",
                             "Customization request support",
+                            "Priority assistance",
                           ],
                         };
 
+                        const planKey =
+                          String(billingPlan.key || "").toLowerCase();
+
+                        const description =
+                          planDescriptions[planKey] ||
+                          billingPlan.tagline ||
+                          "Flexible CRM tools for your business.";
+
                         const features =
-                          featureMap[
-                            String(billingPlan.key || "").toLowerCase()
-                          ] || [];
+                          featureMap[planKey] || [];
 
                         return (
                           <div
                             key={billingPlan.id}
-                            className={`relative flex min-h-[390px] flex-col rounded-2xl border p-5 transition-all duration-300 ${
+                            className={`relative overflow-hidden rounded-[22px] border transition-all duration-300 ${
                               isPopular
-                                ? "border-indigo-300 bg-gradient-to-b from-indigo-50/70 to-white shadow-[0_14px_40px_rgba(79,70,229,0.10)]"
-                                : isCurrent
-                                ? "border-slate-300 bg-slate-50/70"
-                                : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_12px_28px_rgba(15,23,42,0.07)]"
+                                ? "border-indigo-300 bg-slate-950 text-white shadow-[0_18px_50px_rgba(15,23,42,0.18)]"
+                                : "border-slate-200 bg-white text-slate-950 shadow-[0_8px_24px_rgba(15,23,42,0.05)] hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
                             }`}
                           >
                             {isPopular && (
-                              <div className="absolute -top-3 left-5 rounded-full bg-indigo-600 px-3 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-sm">
+                              <div className="absolute right-4 top-4 rounded-full bg-indigo-500/20 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-indigo-200 ring-1 ring-inset ring-indigo-400/30">
                                 Most Popular
                               </div>
                             )}
 
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <div className="text-[17px] font-bold text-slate-950">
-                                  {billingPlan.name}
-                                </div>
-
-                                <div className="mt-2 min-h-[42px] text-xs leading-5 text-slate-500">
-                                  {description}
-                                </div>
-                              </div>
-
-                              {isCurrent && (
-                                <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide text-slate-600">
-                                  Current
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="mt-5">
-                              <div className="flex items-end gap-1.5">
-                                <div className="text-[27px] font-black tracking-[-0.04em] text-slate-950">
-                                  ₹{selectedPrice.toLocaleString("en-IN")}
-                                </div>
-
-                                <div className="pb-1 text-[11px] font-medium text-slate-400">
-                                  {priceSuffix}
-                                </div>
-                              </div>
-
-                              {billingCycleView === "YEARLY" &&
-                                yearlyAvailable &&
-                                Number(billingPlan.monthlyPrice || 0) > 0 && (
-                                  <div className="mt-1 text-[10px] font-medium text-emerald-700">
-                                    Equivalent to ₹
-                                    {Math.round(
-                                      Number(billingPlan.yearlyPrice || 0) / 12
-                                    ).toLocaleString("en-IN")}
-                                    /month
+                            <div className="p-5 sm:p-6">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <div
+                                    className={`text-[10px] font-black uppercase tracking-[0.12em] ${
+                                      isPopular
+                                        ? "text-indigo-300"
+                                        : "text-slate-400"
+                                    }`}
+                                  >
+                                    {billingPlan.name}
                                   </div>
-                                )}
-                            </div>
 
-                            <div className="my-5 h-px bg-slate-100" />
-
-                            <div className="space-y-3">
-                              {features.map((feature) => (
-                                <div
-                                  key={feature}
-                                  className="flex items-start gap-2.5 text-xs leading-5 text-slate-600"
-                                >
-                                  <CheckCircle2
-                                    size={14}
-                                    className="mt-0.5 flex-shrink-0 text-indigo-600"
-                                  />
-                                  <span>{feature}</span>
+                                  <div
+                                    className={`mt-3 text-[14px] font-semibold leading-5 ${
+                                      isPopular
+                                        ? "text-white"
+                                        : "text-slate-900"
+                                    }`}
+                                  >
+                                    {description}
+                                  </div>
                                 </div>
-                              ))}
-                            </div>
 
-                            <div className="mt-auto pt-6">
-                              {isCurrent ? (
-                                <button
-                                  type="button"
-                                  disabled
-                                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-500"
-                                >
-                                  Current Plan
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  disabled={
-                                    Boolean(paymentProcessing) ||
-                                    (billingCycleView === "YEARLY" &&
-                                      !yearlyAvailable)
-                                  }
-                                  onClick={() =>
-                                    startSubscriptionPayment(
-                                      billingPlan.key,
-                                      billingCycleView
-                                    )
-                                  }
-                                  className={`inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 ${
-                                    isPopular
-                                      ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-[0_8px_20px_rgba(79,70,229,0.16)]"
-                                      : "border border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
-                                  }`}
-                                >
-                                  {paymentProcessing ===
-                                    `${billingPlan.key}:${billingCycleView}` && (
-                                    <Loader2
-                                      size={13}
-                                      className="animate-spin"
-                                    />
+                                {isCurrent && (
+                                  <span
+                                    className={`rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide ${
+                                      isPopular
+                                        ? "bg-white/10 text-white ring-1 ring-inset ring-white/15"
+                                        : "bg-slate-100 text-slate-600"
+                                    }`}
+                                  >
+                                    Current
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="mt-6">
+                                <div className="flex items-end gap-1.5">
+                                  <div
+                                    className={`text-[32px] font-black tracking-[-0.05em] ${
+                                      isPopular
+                                        ? "text-white"
+                                        : "text-slate-950"
+                                    }`}
+                                  >
+                                    ₹{selectedPrice.toLocaleString("en-IN")}
+                                  </div>
+
+                                  <div
+                                    className={`pb-1.5 text-[11px] font-medium ${
+                                      isPopular
+                                        ? "text-slate-400"
+                                        : "text-slate-400"
+                                    }`}
+                                  >
+                                    {billingCycleView === "YEARLY"
+                                      ? "/year"
+                                      : "/month"}
+                                  </div>
+                                </div>
+
+                                {billingCycleView === "YEARLY" &&
+                                  yearlyAvailable && (
+                                    <div
+                                      className={`mt-1 text-[10px] font-medium ${
+                                        isPopular
+                                          ? "text-emerald-300"
+                                          : "text-emerald-700"
+                                      }`}
+                                    >
+                                      ₹{monthlyEquivalent.toLocaleString("en-IN")}/month equivalent
+                                    </div>
                                   )}
+                              </div>
 
-                                  {billingCycleView === "YEARLY" &&
-                                  !yearlyAvailable
-                                    ? "Annual plan unavailable"
-                                    : `Upgrade to ${billingPlan.name}`}
-                                </button>
-                              )}
+                              <div
+                                className={`my-5 h-px ${
+                                  isPopular
+                                    ? "bg-white/10"
+                                    : "bg-slate-100"
+                                }`}
+                              />
+
+                              <div className="space-y-3">
+                                {features.map((feature) => (
+                                  <div
+                                    key={feature}
+                                    className={`flex items-start gap-2.5 text-xs leading-5 ${
+                                      isPopular
+                                        ? "text-slate-300"
+                                        : "text-slate-600"
+                                    }`}
+                                  >
+                                    <CheckCircle2
+                                      size={14}
+                                      className={`mt-0.5 flex-shrink-0 ${
+                                        isPopular
+                                          ? "text-indigo-300"
+                                          : "text-indigo-600"
+                                      }`}
+                                    />
+                                    <span>{feature}</span>
+                                  </div>
+                                ))}
+                              </div>
+
+                              <div className="mt-7">
+                                {isCurrent ? (
+                                  <button
+                                    type="button"
+                                    disabled
+                                    className={`h-11 w-full rounded-xl text-xs font-bold ${
+                                      isPopular
+                                        ? "bg-white text-slate-950"
+                                        : "bg-slate-100 text-slate-500"
+                                    }`}
+                                  >
+                                    Current Plan
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      Boolean(paymentProcessing) ||
+                                      (billingCycleView === "YEARLY" &&
+                                        !yearlyAvailable)
+                                    }
+                                    onClick={() =>
+                                      startSubscriptionPayment(
+                                        billingPlan.key,
+                                        billingCycleView
+                                      )
+                                    }
+                                    className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 ${
+                                      isPopular
+                                        ? "bg-white text-slate-950 hover:bg-slate-100"
+                                        : "bg-slate-950 text-white hover:bg-slate-800"
+                                    }`}
+                                  >
+                                    {paymentProcessing ===
+                                      `${billingPlan.key}:${billingCycleView}` && (
+                                      <Loader2
+                                        size={13}
+                                        className="animate-spin"
+                                      />
+                                    )}
+
+                                    {billingCycleView === "YEARLY" &&
+                                    !yearlyAvailable
+                                      ? "Annual plan unavailable"
+                                      : `Upgrade to ${billingPlan.name}`}
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         );
                       })}
                     </div>
 
-                    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-[11px] leading-5 text-slate-500">
+                    <div className="mx-auto mt-5 max-w-2xl text-center text-[10px] leading-5 text-slate-500">
                       Your existing CRM records remain unchanged when you upgrade. New plan capabilities become available after successful payment verification.
                     </div>
                   </div>
@@ -3023,6 +3924,8 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       )}
                     </div>
                   </div>
+
+                  </div>
                 </>
               )}
             </div>
@@ -3033,9 +3936,9 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       {receiptOpen && (
         <div
           id="consulbuzz-payment-receipt-print-root"
-          className="fixed inset-0 z-[120] bg-slate-950/60 backdrop-blur-[3px] p-3 sm:p-6 overflow-y-auto"
+          className="fixed inset-0 z-[120] bg-slate-950/60 backdrop-blur-[3px] p-2 sm:p-3 overflow-y-auto"
         >
-          <div className="max-w-[860px] mx-auto">
+          <div className="max-w-[780px] mx-auto">
             <div className="flex items-center justify-between gap-3 mb-3 print:hidden">
               <button
                 type="button"
@@ -3070,7 +3973,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 </div>
               ) : receiptData ? (
                 <>
-                  <div className="px-8 sm:px-10 pt-9 pb-8 border-b border-slate-100">
+                  <div className="px-6 sm:px-8 pt-6 pb-5 border-b border-slate-100">
                     <div className="flex items-start justify-between gap-6">
                       <div>
                         <div className="flex items-center gap-3">
@@ -3079,7 +3982,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           </div>
 
                           <div>
-                            <div className="text-[18px] font-black tracking-[-0.03em] text-slate-950">
+                            <div className="text-[16px] font-black tracking-[-0.03em] text-slate-950">
                               ConsulBuzz
                             </div>
                             <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] font-semibold text-slate-400">
@@ -3088,17 +3991,17 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           </div>
                         </div>
 
-                        <div className="mt-8 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                        <div className="mt-5 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">
                           Payment Receipt
                         </div>
 
-                        <div className="mt-2 text-[28px] sm:text-[34px] leading-none font-black tracking-[-0.045em] text-slate-950">
+                        <div className="mt-1.5 text-[25px] sm:text-[30px] leading-none font-black tracking-[-0.045em] text-slate-950">
                           ₹{Number(
                             receiptData.amount || 0
                           ).toLocaleString("en-IN")}
                         </div>
 
-                        <div className="mt-2 text-sm font-semibold text-emerald-600">
+                        <div className="mt-1.5 text-[12px] font-semibold text-emerald-600">
                           Payment successful
                         </div>
                       </div>
@@ -3109,14 +4012,14 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           Paid
                         </div>
 
-                        <div className="mt-5 text-[10px] text-slate-400">
+                        <div className="mt-3 text-[9px] text-slate-400">
                           Receipt No.
                         </div>
                         <div className="mt-1 text-xs font-bold text-slate-800 break-all max-w-[220px]">
                           {receiptData.receiptNumber || receiptData.id}
                         </div>
 
-                        <div className="mt-3 text-[10px] text-slate-400">
+                        <div className="mt-2 text-[9px] text-slate-400">
                           Payment Date
                         </div>
                         <div className="mt-1 text-xs font-semibold text-slate-700">
@@ -3133,8 +4036,8 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     </div>
                   </div>
 
-                  <div className="px-8 sm:px-10 py-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="px-6 sm:px-8 py-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
                         <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
                           Billed To
@@ -3184,13 +4087,13 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       </div>
                     </div>
 
-                    <div className="mt-8 rounded-2xl border border-slate-200 overflow-hidden">
-                      <div className="grid grid-cols-[1fr_auto] bg-slate-50 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                    <div className="mt-5 rounded-xl border border-slate-200 overflow-hidden">
+                      <div className="grid grid-cols-[1fr_auto] bg-slate-50 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
                         <div>Description</div>
                         <div>Amount</div>
                       </div>
 
-                      <div className="grid grid-cols-[1fr_auto] px-4 py-4 border-t border-slate-100">
+                      <div className="grid grid-cols-[1fr_auto] px-4 py-3 border-t border-slate-100">
                         <div>
                           <div className="text-sm font-semibold text-slate-900">
                             ConsulBuzz {receiptData.plan?.name} Plan
@@ -3209,7 +4112,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         </div>
                       </div>
 
-                      <div className="px-4 py-4 border-t border-slate-100 bg-slate-50/60">
+                      <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/60">
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-slate-500">Subtotal</span>
                           <span className="font-semibold text-slate-800">
@@ -3226,11 +4129,11 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           </span>
                         </div>
 
-                        <div className="mt-4 pt-4 border-t border-slate-200 flex items-end justify-between gap-3">
+                        <div className="mt-3 pt-3 border-t border-slate-200 flex items-end justify-between gap-3">
                           <span className="text-sm font-bold text-slate-950">
                             Total Paid
                           </span>
-                          <span className="text-[22px] font-black tracking-tight text-slate-950">
+                          <span className="text-[19px] font-black tracking-tight text-slate-950">
                             ₹{Number(
                               receiptData.amount || 0
                             ).toLocaleString("en-IN")}
@@ -3239,12 +4142,12 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       </div>
                     </div>
 
-                    <div className="mt-8">
+                    <div className="mt-5">
                       <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
                         Payment Details
                       </div>
 
-                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                         {[
                           ["Payment Method", "Razorpay"],
                           ["Currency", receiptData.currency || "INR"],
@@ -3258,7 +4161,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         ].map(([label, value]) => (
                           <div
                             key={label}
-                            className="border-b border-slate-100 pb-3"
+                            className="border-b border-slate-100 pb-2"
                           >
                             <div className="text-[10px] text-slate-400">
                               {label}
@@ -3271,7 +4174,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       </div>
                     </div>
 
-                    <div className="mt-9 pt-6 border-t border-slate-100 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                    <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                       <div>
                         <div className="text-sm font-bold text-slate-900">
                           Thank you for choosing ConsulBuzz.
