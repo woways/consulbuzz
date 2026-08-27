@@ -440,9 +440,11 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
   const [profileTab, setProfileTab] = useState("profile");
   const [profileSessions, setProfileSessions] = useState([]);
+  const [profileSessionHistory, setProfileSessionHistory] = useState([]);
   const [profileSessionsLoading, setProfileSessionsLoading] = useState(false);
   const [profileSessionsError, setProfileSessionsError] = useState("");
   const [profileSessionAction, setProfileSessionAction] = useState("");
+  const [profileHistoryClearing, setProfileHistoryClearing] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState("");
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -1575,8 +1577,14 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       );
 
       setProfileSessions(
-        Array.isArray(data.sessions)
-          ? data.sessions
+        Array.isArray(data.activeSessions)
+          ? data.activeSessions
+          : []
+      );
+
+      setProfileSessionHistory(
+        Array.isArray(data.history)
+          ? data.history
           : []
       );
     } catch (error) {
@@ -1669,6 +1677,45 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     module,
     profileTab,
   ]);
+
+  async function clearProfileSessionHistory() {
+    if (
+      profileHistoryClearing ||
+      profileSessionHistory.length === 0
+    ) {
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
+        "Clear all ended session history? Active sessions will not be affected."
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setProfileHistoryClearing(true);
+    setProfileSessionsError("");
+
+    try {
+      await apiRequest(
+        "/api/client/auth/sessions/history",
+        {
+          method: "DELETE",
+        }
+      );
+
+      setProfileSessionHistory([]);
+    } catch (error) {
+      setProfileSessionsError(
+        error?.data?.message ||
+          "Unable to clear session history"
+      );
+    } finally {
+      setProfileHistoryClearing(false);
+    }
+  }
 
   function renderProfile() {
     const tabs = [
@@ -2270,10 +2317,10 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <h3 className="text-sm font-black text-slate-950">
-                    Logged-in Devices
+                    Active Sessions
                   </h3>
                   <p className="mt-1 text-[11px] leading-5 text-slate-500">
-                    Review the browsers and devices where this ConsulBuzz account is currently signed in.
+                    See every device currently signed in to this ConsulBuzz account.
                   </p>
                 </div>
 
@@ -2288,10 +2335,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-xs font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
                   >
                     {profileSessionAction === "others" ? (
-                      <Loader2
-                        size={14}
-                        className="animate-spin"
-                      />
+                      <Loader2 size={14} className="animate-spin" />
                     ) : (
                       <LogOut size={14} />
                     )}
@@ -2302,218 +2346,319 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
               {profileSessionsError && (
                 <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-3 text-xs font-semibold text-rose-700">
-                  <AlertCircle
-                    size={14}
-                    className="mt-0.5 flex-shrink-0"
-                  />
+                  <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
                   {profileSessionsError}
                 </div>
               )}
 
               {profileSessionsLoading ? (
                 <div className="flex min-h-[220px] items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-xs text-slate-500">
-                  <Loader2
-                    size={15}
-                    className="animate-spin"
-                  />
-                  Loading active devices...
+                  <Loader2 size={15} className="animate-spin" />
+                  Loading session activity...
                 </div>
-              ) : profileSessions.length ? (
-                <div className="space-y-3">
-                  {profileSessions.map(
-                    (session) => {
-                      const location =
-                        [
-                          session.city,
-                          session.country,
-                        ]
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    {profileSessions.length ? (
+                      profileSessions.map((session) => {
+                        const location = [session.city, session.country]
                           .filter(Boolean)
                           .join(", ");
 
-                      const lastActive =
-                        session.lastActiveAt
-                          ? new Date(
-                              session.lastActiveAt
-                            ).toLocaleString(
+                        const lastActive = session.current
+                          ? "Active now"
+                          : session.lastActiveAt
+                          ? new Date(session.lastActiveAt).toLocaleString(
                               "en-IN",
                               {
-                                day:
-                                  "2-digit",
-                                month:
-                                  "short",
-                                year:
-                                  "numeric",
-                                hour:
-                                  "2-digit",
-                                minute:
-                                  "2-digit",
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
                               }
                             )
                           : "—";
 
-                      const signedIn =
-                        session.createdAt
-                          ? new Date(
-                              session.createdAt
-                            ).toLocaleString(
+                        const signedIn = session.createdAt
+                          ? new Date(session.createdAt).toLocaleString(
                               "en-IN",
                               {
-                                day:
-                                  "2-digit",
-                                month:
-                                  "short",
-                                year:
-                                  "numeric",
-                                hour:
-                                  "2-digit",
-                                minute:
-                                  "2-digit",
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
                               }
                             )
                           : "—";
 
-                      return (
-                        <div
-                          key={session.id}
-                          className={`rounded-2xl border p-4 sm:p-5 ${
-                            session.current
-                              ? "border-indigo-200 bg-indigo-50/40"
-                              : "border-slate-200 bg-white"
-                          }`}
-                        >
-                          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                            <div
-                              className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${
-                                session.current
-                                  ? "bg-indigo-600 text-white"
-                                  : "bg-slate-100 text-slate-700"
-                              }`}
-                            >
-                              {session.deviceType === "Mobile" ? (
-                                <Smartphone
-                                  size={18}
-                                />
-                              ) : (
-                                <MonitorSmartphone
-                                  size={18}
-                                />
-                              )}
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <div className="text-sm font-black text-slate-950">
-                                  {session.deviceName ||
-                                    "Unknown device"}
-                                </div>
-
-                                {session.current && (
-                                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
-                                    This device
-                                  </span>
+                        return (
+                          <div
+                            key={session.id}
+                            className={`rounded-2xl border p-4 sm:p-5 ${
+                              session.current
+                                ? "border-indigo-200 bg-indigo-50/40"
+                                : "border-slate-200 bg-white"
+                            }`}
+                          >
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                              <div
+                                className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${
+                                  session.current
+                                    ? "bg-indigo-600 text-white"
+                                    : "bg-slate-100 text-slate-700"
+                                }`}
+                              >
+                                {session.deviceType === "Mobile" ? (
+                                  <Smartphone size={18} />
+                                ) : (
+                                  <MonitorSmartphone size={18} />
                                 )}
                               </div>
 
-                              <div className="mt-1 text-[11px] font-medium text-slate-500">
-                                {session.browser ||
-                                  "Unknown browser"}{" "}
-                                ·{" "}
-                                {session.os ||
-                                  "Unknown OS"}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <div className="text-sm font-black text-slate-950">
+                                    {session.deviceName || "Unknown device"}
+                                  </div>
+
+                                  {session.current && (
+                                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                                      This device
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="mt-1 text-[11px] font-medium text-slate-500">
+                                  {session.browser || "Unknown browser"} ·{" "}
+                                  {session.os || "Unknown OS"}
+                                </div>
+
+                                <div className="mt-3 grid gap-2 text-[10px] text-slate-500 sm:grid-cols-2 lg:grid-cols-4">
+                                  <div>
+                                    <div className="font-bold uppercase tracking-wide text-slate-400">
+                                      Last active
+                                    </div>
+                                    <div
+                                      className={`mt-1 font-semibold ${
+                                        session.current
+                                          ? "text-emerald-700"
+                                          : "text-slate-700"
+                                      }`}
+                                    >
+                                      {lastActive}
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <div className="font-bold uppercase tracking-wide text-slate-400">
+                                      Signed in
+                                    </div>
+                                    <div className="mt-1 font-semibold text-slate-700">
+                                      {signedIn}
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <div className="font-bold uppercase tracking-wide text-slate-400">
+                                      IP address
+                                    </div>
+                                    <div className="mt-1 font-semibold text-slate-700">
+                                      {session.ipAddress || "Unavailable"}
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <div className="font-bold uppercase tracking-wide text-slate-400">
+                                      Approx. location
+                                    </div>
+                                    <div className="mt-1 font-semibold text-slate-700">
+                                      {location || "Not available"}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
 
-                              <div className="mt-3 grid gap-2 text-[10px] text-slate-500 sm:grid-cols-2 lg:grid-cols-4">
-                                <div>
-                                  <div className="font-bold uppercase tracking-wide text-slate-400">
-                                    Last active
-                                  </div>
-                                  <div className="mt-1 font-semibold text-slate-700">
-                                    {lastActive}
-                                  </div>
+                              <button
+                                type="button"
+                                onClick={() => revokeProfileSession(session)}
+                                disabled={Boolean(profileSessionAction)}
+                                className={`inline-flex h-9 flex-shrink-0 items-center justify-center gap-2 rounded-xl px-3 text-[11px] font-bold disabled:opacity-50 ${
+                                  session.current
+                                    ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                                    : "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                                }`}
+                              >
+                                {profileSessionAction === session.id ? (
+                                  <Loader2 size={13} className="animate-spin" />
+                                ) : (
+                                  <LogOut size={13} />
+                                )}
+                                {session.current
+                                  ? "Sign out"
+                                  : "Sign out device"}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-2xl border border-slate-200 bg-white px-5 py-10 text-center">
+                        <MonitorSmartphone
+                          size={24}
+                          className="mx-auto text-slate-300"
+                        />
+                        <div className="mt-3 text-sm font-black text-slate-900">
+                          No active sessions found
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-7">
+                    <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <h3 className="text-sm font-black text-slate-950">
+                          Session History
+                        </h3>
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          Previous sessions remain visible after logout, remote sign-out, password change or expiry. History older than 90 days is removed automatically.
+                        </p>
+                      </div>
+
+                      {profileSessionHistory.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={clearProfileSessionHistory}
+                          disabled={profileHistoryClearing}
+                          className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                        >
+                          {profileHistoryClearing ? (
+                            <Loader2
+                              size={13}
+                              className="animate-spin"
+                            />
+                          ) : (
+                            <X size={13} />
+                          )}
+                          {profileHistoryClearing
+                            ? "Clearing..."
+                            : "Clear History"}
+                        </button>
+                      )}
+                    </div>
+
+                    {profileSessionHistory.length ? (
+                      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                        {profileSessionHistory.map((session) => {
+                          const reasonMap = {
+                            LOGOUT: "Logged out",
+                            REMOTE_SIGN_OUT: "Signed out remotely",
+                            PASSWORD_CHANGED: "Password changed",
+                            EXPIRED: "Session expired",
+                            SIGNED_OUT: "Signed out",
+                          };
+
+                          const endedAt = session.endedAt
+                            ? new Date(session.endedAt).toLocaleString(
+                                "en-IN",
+                                {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )
+                            : "—";
+
+                          const lastActive = session.lastActiveAt
+                            ? new Date(session.lastActiveAt).toLocaleString(
+                                "en-IN",
+                                {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )
+                            : "—";
+
+                          const location = [session.city, session.country]
+                            .filter(Boolean)
+                            .join(", ");
+
+                          return (
+                            <div
+                              key={`history-${session.id}`}
+                              className="border-b border-slate-100 px-4 py-4 last:border-0 sm:px-5"
+                            >
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                                  {session.deviceType === "Mobile" ? (
+                                    <Smartphone size={17} />
+                                  ) : (
+                                    <MonitorSmartphone size={17} />
+                                  )}
                                 </div>
 
-                                <div>
-                                  <div className="font-bold uppercase tracking-wide text-slate-400">
-                                    Signed in
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <div className="text-xs font-black text-slate-900">
+                                      {session.deviceName || "Unknown device"}
+                                    </div>
+                                    <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-black uppercase tracking-wide text-slate-500">
+                                      {reasonMap[session.historyStatus] ||
+                                        session.historyStatus ||
+                                        "Ended"}
+                                    </span>
                                   </div>
-                                  <div className="mt-1 font-semibold text-slate-700">
-                                    {signedIn}
-                                  </div>
-                                </div>
 
-                                <div>
-                                  <div className="font-bold uppercase tracking-wide text-slate-400">
-                                    IP address
+                                  <div className="mt-1 text-[10px] text-slate-500">
+                                    {session.browser || "Unknown browser"} ·{" "}
+                                    {session.os || "Unknown OS"}
+                                    {location ? ` · ${location}` : ""}
                                   </div>
-                                  <div className="mt-1 font-semibold text-slate-700">
-                                    {session.ipAddress ||
-                                      "Unavailable"}
-                                  </div>
-                                </div>
 
-                                <div>
-                                  <div className="font-bold uppercase tracking-wide text-slate-400">
-                                    Approx. location
-                                  </div>
-                                  <div className="mt-1 font-semibold text-slate-700">
-                                    {location ||
-                                      "Not available"}
+                                  <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[9px] text-slate-400">
+                                    <span>
+                                      Last active:{" "}
+                                      <strong className="font-semibold text-slate-600">
+                                        {lastActive}
+                                      </strong>
+                                    </span>
+                                    <span>
+                                      Session ended:{" "}
+                                      <strong className="font-semibold text-slate-600">
+                                        {endedAt}
+                                      </strong>
+                                    </span>
+                                    <span>
+                                      IP:{" "}
+                                      <strong className="font-semibold text-slate-600">
+                                        {session.ipAddress || "Unavailable"}
+                                      </strong>
+                                    </span>
                                   </div>
                                 </div>
                               </div>
                             </div>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                revokeProfileSession(
-                                  session
-                                )
-                              }
-                              disabled={Boolean(profileSessionAction)}
-                              className={`inline-flex h-9 flex-shrink-0 items-center justify-center gap-2 rounded-xl px-3 text-[11px] font-bold disabled:opacity-50 ${
-                                session.current
-                                  ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                                  : "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
-                              }`}
-                            >
-                              {profileSessionAction === session.id ? (
-                                <Loader2
-                                  size={13}
-                                  className="animate-spin"
-                                />
-                              ) : (
-                                <LogOut
-                                  size={13}
-                                />
-                              )}
-                              {session.current
-                                ? "Sign out"
-                                : "Sign out device"}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    }
-                  )}
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center">
-                  <MonitorSmartphone
-                    size={24}
-                    className="mx-auto text-slate-300"
-                  />
-                  <div className="mt-3 text-sm font-black text-slate-900">
-                    No active sessions found
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-5 py-8 text-center text-[11px] text-slate-500">
+                        Session history will appear here after a device signs out or a session expires.
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-1 text-[11px] text-slate-500">
-                    Sign in again to create a tracked device session.
-                  </div>
-                </div>
+                </>
               )}
 
               <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[10px] leading-5 text-amber-800">
-                For security, exact GPS location is not collected. Approximate city/country can be shown later when an IP geolocation provider is configured.
+                Multiple devices can share the same public IP when they use the same Wi-Fi or office network. ConsulBuzz identifies sessions by a unique secure session ID, not by IP address.
               </div>
             </div>
           )}

@@ -198,7 +198,7 @@ model Company {
   admissionBranches       AdmissionBranch[]
   calendarEvents          CalendarEvent[]
   workspaceYears          CompanyWorkspaceYear[]
-  clientSessions           ClientSession[]
+  clientSessions          ClientSession[]
 }
 
 model User {
@@ -237,19 +237,18 @@ model User {
   assignedLeadDatasets   LeadDataset[]               @relation("LeadDatasetAssignee")
   calendarEventsCreated  CalendarEvent[]             @relation("CalendarEventCreator")
   calendarEventsAssigned CalendarEvent[]             @relation("CalendarEventAssignee")
-  clientSessions          ClientSession[]
+  clientSessions         ClientSession[]
 
   @@index([companyId])
   @@index([companyId, role])
   @@index([companyId, active])
 }
 
-
 model ClientSession {
   id String @id @default(cuid())
 
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -265,10 +264,11 @@ model ClientSession {
   city    String?
   country String?
 
-  createdAt    DateTime @default(now())
-  lastActiveAt DateTime @default(now())
+  createdAt    DateTime  @default(now())
+  lastActiveAt DateTime  @default(now())
   expiresAt    DateTime
   revokedAt    DateTime?
+  endReason    String?
 
   @@index([userId, revokedAt, expiresAt])
   @@index([companyId, userId])

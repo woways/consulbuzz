@@ -208,6 +208,12 @@ function serializeSession(
       session.lastActiveAt,
     expiresAt:
       session.expiresAt,
+    revokedAt:
+      session.revokedAt ||
+      null,
+    endReason:
+      session.endReason ||
+      null,
   };
 }
 
@@ -854,46 +860,177 @@ router.get(
     res
   ) => {
     try {
-      const sessions =
-        await prisma.clientSession.findMany({
-          where: {
-            userId:
-              req.clientUser.userId,
-            companyId:
-              req.clientUser.companyId,
-            revokedAt:
-              null,
-            expiresAt: {
-              gt:
-                new Date(),
-            },
-          },
-          orderBy: [
+      const now =
+        new Date();
+
+      const historyCutoff =
+        new Date(
+          now.getTime() -
+            90 *
+              24 *
+              60 *
+              60 *
+              1000
+        );
+
+      // Keep session history bounded.
+      // Active sessions are never deleted by this cleanup.
+      await prisma.clientSession.deleteMany({
+        where: {
+          userId:
+            req.clientUser.userId,
+          companyId:
+            req.clientUser.companyId,
+          OR: [
             {
-              lastActiveAt:
-                "desc",
+              revokedAt: {
+                lt:
+                  historyCutoff,
+              },
             },
             {
-              createdAt:
-                "desc",
+              revokedAt:
+                null,
+              expiresAt: {
+                lt:
+                  historyCutoff,
+              },
             },
           ],
-          take:
-            50,
-        });
+        },
+      });
+
+      const [
+        activeSessions,
+        endedSessions,
+        expiredSessions,
+      ] =
+        await Promise.all([
+          prisma.clientSession.findMany({
+            where: {
+              userId:
+                req.clientUser.userId,
+              companyId:
+                req.clientUser.companyId,
+              revokedAt:
+                null,
+              expiresAt: {
+                gt:
+                  now,
+              },
+            },
+            orderBy: [
+              {
+                lastActiveAt:
+                  "desc",
+              },
+              {
+                createdAt:
+                  "desc",
+              },
+            ],
+            take:
+              50,
+          }),
+
+          prisma.clientSession.findMany({
+            where: {
+              userId:
+                req.clientUser.userId,
+              companyId:
+                req.clientUser.companyId,
+              revokedAt: {
+                not:
+                  null,
+              },
+            },
+            orderBy: {
+              revokedAt:
+                "desc",
+            },
+            take:
+              50,
+          }),
+
+          prisma.clientSession.findMany({
+            where: {
+              userId:
+                req.clientUser.userId,
+              companyId:
+                req.clientUser.companyId,
+              revokedAt:
+                null,
+              expiresAt: {
+                lte:
+                  now,
+              },
+            },
+            orderBy: {
+              expiresAt:
+                "desc",
+            },
+            take:
+              50,
+          }),
+        ]);
+
+      const history =
+        [
+          ...endedSessions.map(
+            (session) => ({
+              ...serializeSession(
+                session,
+                req.clientUser.sessionId
+              ),
+              historyStatus:
+                session.endReason ||
+                "SIGNED_OUT",
+              endedAt:
+                session.revokedAt,
+            })
+          ),
+
+          ...expiredSessions.map(
+            (session) => ({
+              ...serializeSession(
+                session,
+                req.clientUser.sessionId
+              ),
+              historyStatus:
+                "EXPIRED",
+              endedAt:
+                session.expiresAt,
+            })
+          ),
+        ]
+          .sort(
+            (a, b) =>
+              new Date(
+                b.endedAt ||
+                  0
+              ).getTime() -
+              new Date(
+                a.endedAt ||
+                  0
+              ).getTime()
+          )
+          .slice(
+            0,
+            50
+          );
 
       return res.json({
         success:
           true,
-        sessions:
-          sessions.map(
+        activeSessions:
+          activeSessions.map(
             (session) =>
               serializeSession(
                 session,
-                req.clientUser
-                  .sessionId
+                req.clientUser.sessionId
               )
           ),
+        history,
       });
     } catch (error) {
       console.error(
@@ -907,7 +1044,72 @@ router.get(
           success:
             false,
           message:
-            "Unable to load active sessions",
+            "Unable to load sessions",
+        });
+    }
+  }
+);
+
+router.delete(
+  "/sessions/history",
+  requireClientUser,
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const now =
+        new Date();
+
+      const result =
+        await prisma.clientSession.deleteMany({
+          where: {
+            userId:
+              req.clientUser.userId,
+            companyId:
+              req.clientUser.companyId,
+            OR: [
+              {
+                revokedAt: {
+                  not:
+                    null,
+                },
+              },
+              {
+                revokedAt:
+                  null,
+                expiresAt: {
+                  lte:
+                    now,
+                },
+              },
+            ],
+          },
+        });
+
+      return res.json({
+        success:
+          true,
+        deletedCount:
+          result.count,
+        message:
+          result.count === 1
+            ? "1 session history record cleared"
+            : `${result.count} session history records cleared`,
+      });
+    } catch (error) {
+      console.error(
+        "Clear client session history failed:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success:
+            false,
+          message:
+            "Unable to clear session history",
         });
     }
   }
@@ -957,6 +1159,14 @@ router.delete(
           });
       }
 
+      const current =
+        session.id ===
+        req.clientUser
+          .sessionId;
+
+      const endedAt =
+        new Date();
+
       await prisma.clientSession.update({
         where: {
           id:
@@ -964,14 +1174,19 @@ router.delete(
         },
         data: {
           revokedAt:
-            new Date(),
+            endedAt,
+          endReason:
+            current
+              ? "LOGOUT"
+              : "REMOTE_SIGN_OUT",
+          ...(current
+            ? {
+                lastActiveAt:
+                  endedAt,
+              }
+            : {}),
         },
       });
-
-      const current =
-        session.id ===
-        req.clientUser
-          .sessionId;
 
       if (current) {
         res.clearCookie(
@@ -1032,6 +1247,8 @@ router.post(
           data: {
             revokedAt:
               new Date(),
+            endReason:
+              "REMOTE_SIGN_OUT",
           },
         });
 
@@ -1250,6 +1467,8 @@ router.patch(
           data: {
             revokedAt:
               new Date(),
+            endReason:
+              "PASSWORD_CHANGED",
           },
         }),
       ]);
@@ -1315,6 +1534,9 @@ router.post(
             "object" &&
           payload.sid
         ) {
+          const endedAt =
+            new Date();
+
           await prisma.clientSession.updateMany({
             where: {
               id:
@@ -1331,7 +1553,11 @@ router.post(
             },
             data: {
               revokedAt:
-                new Date(),
+                endedAt,
+              lastActiveAt:
+                endedAt,
+              endReason:
+                "LOGOUT",
             },
           });
         }
