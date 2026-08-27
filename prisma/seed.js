@@ -17,6 +17,31 @@ const prisma = new PrismaClient({
   adapter,
 });
 
+
+function requiredEnv(name) {
+  const value = String(process.env[name] || "").trim();
+
+  if (!value) {
+    throw new Error(`${name} is not configured`);
+  }
+
+  return value;
+}
+
+const SUPER_ADMIN_EMAIL =
+  process.env.SEED_SUPER_ADMIN_EMAIL?.trim().toLowerCase() ||
+  "admin@consulbuzz.com";
+
+const SUPER_ADMIN_PASSWORD =
+  requiredEnv("SEED_SUPER_ADMIN_PASSWORD");
+
+const STUDENT_MENTOR_ADMIN_EMAIL =
+  process.env.SEED_STUDENT_MENTOR_ADMIN_EMAIL?.trim().toLowerCase() ||
+  "admin@studentmentor.co.in";
+
+const STUDENT_MENTOR_ADMIN_PASSWORD =
+  requiredEnv("SEED_STUDENT_MENTOR_ADMIN_PASSWORD");
+
 const REMOVED_MODULE_KEYS = [
   "quotation",
   "negotiation",
@@ -163,7 +188,7 @@ const planDefinitions = {
     description:
       "Complete ConsulBuzz CRM package",
     tagline:
-      "Advanced customization, integrations, white-label and priority capabilities",
+      "Advanced customization, white-label and priority capabilities",
     monthlyPrice: 7500,
     yearlyPrice: 81000,
 
@@ -354,14 +379,14 @@ async function seedSuperAdmin() {
 
   const passwordHash =
     await bcrypt.hash(
-      "ChangeMe@123",
+      SUPER_ADMIN_PASSWORD,
       12
     );
 
   await prisma.user.upsert({
     where: {
       email:
-        "admin@consulbuzz.com",
+        SUPER_ADMIN_EMAIL,
     },
 
     update: {
@@ -377,7 +402,7 @@ async function seedSuperAdmin() {
       name:
         "ConsulBuzz Super Admin",
       email:
-        "admin@consulbuzz.com",
+        SUPER_ADMIN_EMAIL,
       passwordHash,
       role: "SUPER_ADMIN",
       active: true,
@@ -572,14 +597,14 @@ async function seedStudentMentor() {
 
   const clientAdminPasswordHash =
     await bcrypt.hash(
-      "StudentMentor@123",
+      STUDENT_MENTOR_ADMIN_PASSWORD,
       12
     );
 
   await prisma.user.upsert({
     where: {
       email:
-        "admin@studentmentor.co.in",
+        STUDENT_MENTOR_ADMIN_EMAIL,
     },
 
     update: {
@@ -596,7 +621,7 @@ async function seedStudentMentor() {
       name:
         "Student Mentor Admin",
       email:
-        "admin@studentmentor.co.in",
+        STUDENT_MENTOR_ADMIN_EMAIL,
       passwordHash:
         clientAdminPasswordHash,
       role: "CLIENT_ADMIN",

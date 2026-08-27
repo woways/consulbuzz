@@ -2041,7 +2041,7 @@ function CustomizationTab({
 
             <p className="text-xs text-slate-500 mt-1">
               Feature additions, workflow changes,
-              integrations, reports, API/WhatsApp
+              workflow changes, reports, UI changes, API/WhatsApp integrations
               requests and UI changes are handled
               here.
             </p>

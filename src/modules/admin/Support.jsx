@@ -567,7 +567,7 @@ export default function Support() {
           <p className="text-sm text-slate-500 mt-1">
             {scope === "support"
               ? "Manage technical issues and billing support requests from client companies."
-              : "Review feature, integration and customization requests from client companies."}
+              : "Review customization requests from Advanced-plan client companies."}
           </p>
         </div>
 

@@ -20,10 +20,13 @@ const TYPE_LABELS = {
     "Billing Support",
   CUSTOMIZATION:
     "Customization Request",
+  // Legacy database values are intentionally mapped to the final
+  // Customization Request category. New client requests can no longer
+  // be created as separate Feature Request / Integration types.
   FEATURE_REQUEST:
-    "Feature Request",
+    "Customization Request",
   INTEGRATION:
-    "Integration Request",
+    "Customization Request",
 };
 
 const PRIORITY_LABELS = {

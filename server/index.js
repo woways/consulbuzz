@@ -54,15 +54,10 @@ const config = loadServerConfig();
 const app = express();
 
 if (config.trustProxy) {
-  app.set(
-    "trust proxy",
-    1
-  );
+  app.set("trust proxy", 1);
 }
 
-app.disable(
-  "x-powered-by"
-);
+app.disable("x-powered-by");
 
 app.use(requestId);
 app.use(securityHeaders);
@@ -70,374 +65,154 @@ app.use(requestLogger);
 
 app.use(
   cors({
-    origin(
-      origin,
-      callback
-    ) {
-      if (
-        !origin ||
-        config.clientOrigins.includes(
-          origin
-        )
-      ) {
-        return callback(
-          null,
-          true
-        );
+    origin(origin, callback) {
+      if (!origin || config.clientOrigins.includes(origin)) {
+        return callback(null, true);
       }
 
-      return callback(
-        new Error(
-          "Origin not allowed by CORS"
-        )
-      );
+      return callback(new Error("Origin not allowed by CORS"));
     },
-
     credentials: true,
-
-    methods: [
-      "GET",
-      "POST",
-      "PUT",
-      "PATCH",
-      "DELETE",
-      "OPTIONS",
-    ],
-
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Request-Id",
-    ],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Request-Id"],
   })
 );
 
 app.post(
   "/api/webhooks/razorpay",
   express.raw({
-    type:
-      "application/json",
-    limit:
-      "256kb",
+    type: "application/json",
+    limit: "256kb",
   }),
   razorpayWebhook
 );
 
 app.use(express.json({ limit: "12mb" }));
-
 app.use(
   express.urlencoded({
     extended: false,
     limit: "256kb",
   })
 );
+app.use(cookieParser());
 
-app.use(
-  cookieParser()
+const apiLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 300,
+  keyPrefix: "api",
+  message: "Too many requests. Please try again shortly.",
+});
+
+app.use("/api", apiLimiter);
+
+app.get("/", (req, res) =>
+  res.json({
+    success: true,
+    message: "ConsulBuzz API is running",
+    requestId: req.requestId,
+  })
 );
 
-const apiLimiter =
-  createRateLimiter({
-    windowMs:
-      60 * 1000,
-    max: 300,
-    keyPrefix: "api",
-    message:
-      "Too many requests. Please try again shortly.",
+app.get("/api/health", async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+
+    return res.json({
+      success: true,
+      database: "connected",
+      message: "ConsulBuzz API and database are working",
+      requestId: req.requestId,
+    });
+  } catch (error) {
+    console.error("Database health check failed:", error);
+
+    return res.status(503).json({
+      success: false,
+      database: "disconnected",
+      message: "Database connection failed",
+      requestId: req.requestId,
+    });
+  }
+});
+
+app.use("/api/admin/auth", adminAuthRoutes);
+app.use("/api/admin/clients", adminClientsRoutes);
+app.use("/api/admin/support", adminSupportRoutes);
+app.use("/api/admin/usage", adminUsageRoutes);
+app.use("/api/admin/billing", adminBillingRoutes);
+app.use("/api/admin/plans", adminPlansRoutes);
+app.use("/api/admin/modules", adminModulesRoutes);
+app.use("/api/admin/global-usage", adminGlobalUsageRoutes);
+app.use("/api/admin/global-billing", adminGlobalBillingRoutes);
+app.use("/api/admin/analytics", adminAnalyticsRoutes);
+app.use("/api/admin/system-settings", adminSystemSettingsRoutes);
+app.use("/api/admin/payments", adminPaymentsRoutes);
+app.use("/api/admin/audit-logs", adminAuditLogsRoutes);
+
+app.use("/api/client/auth", clientAuthRoutes);
+app.use("/api/client/leads", clientLeadsRoutes);
+app.use("/api/client/admissions", clientAdmissionsRoutes);
+app.use("/api/client/revenue", clientRevenueRoutes);
+app.use("/api/client/analytics", clientAnalyticsRoutes);
+app.use("/api/client/lead-store", clientLeadStoreRoutes);
+app.use("/api/client/support", clientSupportRoutes);
+app.use("/api/client/notifications", clientNotificationsRoutes);
+app.use("/api/client/billing", clientBillingRoutes);
+app.use("/api/client/users", clientUsersRoutes);
+app.use("/api/client/lead-sources", clientLeadSourcesRoutes);
+app.use("/api/client/custom-fields", clientCustomFieldsRoutes);
+app.use("/api/client/settings", clientSettingsRoutes);
+app.use("/api/client/audit-logs", clientAuditLogsRoutes);
+app.use("/api/client/walkins", clientWalkinsRoutes);
+app.use("/api/client/counselling", clientCounsellingRoutes);
+app.use("/api/client/calendar", clientCalendarRoutes);
+app.use("/api/client/years", clientYearsRoutes);
+
+app.use((req, res) =>
+  res.status(404).json({
+    success: false,
+    message: "API route not found",
+    requestId: req.requestId,
+  })
+);
+
+app.use((error, req, res, next) => {
+  console.error("Unhandled request error:", {
+    requestId: req.requestId,
+    message: error?.message,
+    stack: config.isProduction ? undefined : error?.stack,
   });
 
-app.use(
-  "/api",
-  apiLimiter
+  if (res.headersSent) {
+    return next(error);
+  }
+
+  const isCorsError = error?.message === "Origin not allowed by CORS";
+
+  return res.status(isCorsError ? 403 : 500).json({
+    success: false,
+    message: isCorsError ? "Origin not allowed" : "Internal server error",
+    requestId: req.requestId,
+  });
+});
+
+const server = app.listen(config.port, () =>
+  console.log(`ConsulBuzz API running on http://localhost:${config.port}`)
 );
 
+async function shutdown(signal) {
+  console.log(`${signal} received. Shutting down...`);
 
-app.get(
-  "/",
-  (req, res) =>
-    res.json({
-      success: true,
-      message:
-        "ConsulBuzz API is running",
-      requestId:
-        req.requestId,
-    })
-);
-
-app.get(
-  "/api/health",
-  async (req, res) => {
+  server.close(async () => {
     try {
-      await prisma.$queryRaw`SELECT 1`;
-
-      return res.json({
-        success: true,
-        database:
-          "connected",
-        message:
-          "ConsulBuzz API and database are working",
-        requestId:
-          req.requestId,
-      });
-    } catch (error) {
-      console.error(
-        "Database health check failed:",
-        error
-      );
-
-      return res
-        .status(503)
-        .json({
-          success: false,
-          database:
-            "disconnected",
-          message:
-            "Database connection failed",
-          requestId:
-            req.requestId,
-        });
+      await prisma.$disconnect();
+    } finally {
+      process.exit(0);
     }
-  }
-);
+  });
 
-app.use(
-  "/api/admin/auth",
-  adminAuthRoutes
-);
-app.use(
-  "/api/admin/clients",
-  adminClientsRoutes
-);
-app.use(
-  "/api/admin/support",
-  adminSupportRoutes
-);
-app.use(
-  "/api/admin/usage",
-  adminUsageRoutes
-);
-app.use(
-  "/api/admin/billing",
-  adminBillingRoutes
-);
-app.use(
-  "/api/admin/plans",
-  adminPlansRoutes
-);
-app.use(
-  "/api/admin/modules",
-  adminModulesRoutes
-);
-app.use(
-  "/api/admin/global-usage",
-  adminGlobalUsageRoutes
-);
-app.use(
-  "/api/admin/global-billing",
-  adminGlobalBillingRoutes
-);
-app.use(
-  "/api/admin/analytics",
-  adminAnalyticsRoutes
-);
-app.use(
-  "/api/admin/system-settings",
-  adminSystemSettingsRoutes
-);
-app.use(
-  "/api/admin/payments",
-  adminPaymentsRoutes
-);
-app.use(
-  "/api/admin/audit-logs",
-  adminAuditLogsRoutes
-);
-
-app.use(
-  "/api/client/auth",
-  clientAuthRoutes
-);
-app.use(
-  "/api/client/leads",
-  clientLeadsRoutes
-);
-app.use(
-  "/api/client/admissions",
-  clientAdmissionsRoutes
-);
-app.use(
-  "/api/client/revenue",
-  clientRevenueRoutes
-);
-app.use(
-  "/api/client/analytics",
-  clientAnalyticsRoutes
-);
-app.use(
-  "/api/client/lead-store",
-  clientLeadStoreRoutes
-);
-app.use(
-  "/api/client/support",
-  clientSupportRoutes
-);
-app.use(
-  "/api/client/notifications",
-  clientNotificationsRoutes
-);
-app.use(
-  "/api/client/billing",
-  clientBillingRoutes
-);
-app.use(
-  "/api/client/users",
-  clientUsersRoutes
-);
-app.use(
-  "/api/client/lead-sources",
-  clientLeadSourcesRoutes
-);
-app.use(
-  "/api/client/custom-fields",
-  clientCustomFieldsRoutes
-);
-app.use(
-  "/api/client/settings",
-  clientSettingsRoutes
-);
-app.use(
-  "/api/client/audit-logs",
-  clientAuditLogsRoutes
-);
-app.use(
-  "/api/client/walkins",
-  clientWalkinsRoutes
-);
-app.use(
-  "/api/client/counselling",
-  clientCounsellingRoutes
-);
-
-/* CRM CALENDAR */
-app.use(
-  "/api/client/calendar",
-  clientCalendarRoutes
-);
-
-app.use(
-  "/api/client/years",
-  clientYearsRoutes
-);
-
-app.use(
-  (req, res) =>
-    res
-      .status(404)
-      .json({
-        success: false,
-        message:
-          "API route not found",
-        requestId:
-          req.requestId,
-      })
-);
-
-app.use(
-  (
-    error,
-    req,
-    res,
-    next
-  ) => {
-    console.error(
-      "Unhandled request error:",
-      {
-        requestId:
-          req.requestId,
-        message:
-          error?.message,
-        stack:
-          config.isProduction
-            ? undefined
-            : error?.stack,
-      }
-    );
-
-    if (
-      res.headersSent
-    ) {
-      return next(
-        error
-      );
-    }
-
-    const isCorsError =
-      error?.message ===
-      "Origin not allowed by CORS";
-
-    return res
-      .status(
-        isCorsError
-          ? 403
-          : 500
-      )
-      .json({
-        success: false,
-        message:
-          isCorsError
-            ? "Origin not allowed"
-            : "Internal server error",
-        requestId:
-          req.requestId,
-      });
-  }
-);
-
-const server =
-  app.listen(
-    config.port,
-    () =>
-      console.log(
-        `ConsulBuzz API running on http://localhost:${config.port}`
-      )
-  );
-
-async function shutdown(
-  signal
-) {
-  console.log(
-    `${signal} received. Shutting down...`
-  );
-
-  server.close(
-    async () => {
-      try {
-        await prisma.$disconnect();
-      } finally {
-        process.exit(0);
-      }
-    }
-  );
-
-  setTimeout(
-    () =>
-      process.exit(1),
-    10000
-  ).unref();
+  setTimeout(() => process.exit(1), 10000).unref();
 }
 
-process.on(
-  "SIGTERM",
-  () =>
-    shutdown(
-      "SIGTERM"
-    )
-);
-
-process.on(
-  "SIGINT",
-  () =>
-    shutdown(
-      "SIGINT"
-    )
-);
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
