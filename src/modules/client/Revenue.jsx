@@ -49,6 +49,7 @@ import {
 } from "../../components/ui";
 
 import { apiRequest } from "../../lib/api";
+import { formatUiDate } from "../../lib/uiPreferences";
 
 function money(value) {
   return `₹${Number(
@@ -103,14 +104,7 @@ function dateText(value) {
     return "—";
   }
 
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }
-  );
+  return formatUiDate(date);
 }
 
 function statusTone(status) {

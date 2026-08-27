@@ -28,6 +28,7 @@ import {
 import {
   apiRequest,
 } from "../../lib/api";
+import { formatUiDateTime } from "../../lib/uiPreferences";
 
 const EMPTY_FORM = {
   visitorName: "",
@@ -61,13 +62,7 @@ function toLocalInput(value) {
 
 function formatDateTime(value) {
   if (!value) return "—";
-  return new Date(value).toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatUiDateTime(value);
 }
 
 function WalkinMetric({

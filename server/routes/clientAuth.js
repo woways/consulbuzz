@@ -87,6 +87,127 @@ function clearCookieOptions() {
   return rest;
 }
 
+function getClientIp(req) {
+  const forwarded =
+    req.headers["x-forwarded-for"];
+
+  const raw =
+    Array.isArray(forwarded)
+      ? forwarded[0]
+      : typeof forwarded === "string"
+      ? forwarded.split(",")[0]
+      : req.ip ||
+        req.socket?.remoteAddress ||
+        "";
+
+  return String(raw || "")
+    .trim()
+    .replace(/^::ffff:/, "")
+    .slice(0, 120);
+}
+
+function parseClientDevice(userAgent = "") {
+  const ua =
+    String(userAgent || "");
+
+  let os = "Unknown OS";
+
+  if (/Windows NT/i.test(ua)) {
+    os = "Windows";
+  } else if (/iPhone|iPad|iPod/i.test(ua)) {
+    os = "iOS";
+  } else if (/Android/i.test(ua)) {
+    os = "Android";
+  } else if (/Mac OS X|Macintosh/i.test(ua)) {
+    os = "macOS";
+  } else if (/Linux/i.test(ua)) {
+    os = "Linux";
+  }
+
+  let browser = "Unknown browser";
+
+  if (/Edg\//i.test(ua)) {
+    browser = "Microsoft Edge";
+  } else if (/OPR\//i.test(ua)) {
+    browser = "Opera";
+  } else if (/Chrome\//i.test(ua) && !/Chromium/i.test(ua)) {
+    browser = "Chrome";
+  } else if (/Firefox\//i.test(ua)) {
+    browser = "Firefox";
+  } else if (/Safari\//i.test(ua) && /Version\//i.test(ua)) {
+    browser = "Safari";
+  }
+
+  let deviceType = "Desktop";
+
+  if (/iPad|Tablet/i.test(ua)) {
+    deviceType = "Tablet";
+  } else if (/Mobile|iPhone|Android/i.test(ua)) {
+    deviceType = "Mobile";
+  }
+
+  let deviceName = `${browser} on ${os}`;
+
+  if (/iPhone/i.test(ua)) {
+    deviceName = `iPhone · ${browser}`;
+  } else if (/iPad/i.test(ua)) {
+    deviceName = `iPad · ${browser}`;
+  } else if (/Android/i.test(ua)) {
+    deviceName = `Android device · ${browser}`;
+  } else if (/Macintosh|Mac OS X/i.test(ua)) {
+    deviceName = `Mac · ${browser}`;
+  } else if (/Windows NT/i.test(ua)) {
+    deviceName = `Windows PC · ${browser}`;
+  }
+
+  return {
+    os,
+    browser,
+    deviceType,
+    deviceName,
+  };
+}
+
+function serializeSession(
+  session,
+  currentSessionId
+) {
+  return {
+    id:
+      session.id,
+    current:
+      session.id ===
+      currentSessionId,
+    deviceType:
+      session.deviceType ||
+      "Desktop",
+    deviceName:
+      session.deviceName ||
+      "Unknown device",
+    browser:
+      session.browser ||
+      "Unknown browser",
+    os:
+      session.os ||
+      "Unknown OS",
+    ipAddress:
+      session.ipAddress ||
+      null,
+    city:
+      session.city ||
+      null,
+    country:
+      session.country ||
+      null,
+    createdAt:
+      session.createdAt,
+    lastActiveAt:
+      session.lastActiveAt,
+    expiresAt:
+      session.expiresAt,
+  };
+}
+
 function getActiveSubscription(
   subscriptions = []
 ) {
@@ -526,6 +647,57 @@ router.post(
           });
       }
 
+      const expiresAt =
+        new Date(
+          Date.now() +
+            8 *
+              60 *
+              60 *
+              1000
+        );
+
+      const userAgent =
+        String(
+          req.headers[
+            "user-agent"
+          ] || ""
+        ).slice(
+          0,
+          1000
+        );
+
+      const device =
+        parseClientDevice(
+          userAgent
+        );
+
+      const clientSession =
+        await prisma.clientSession.create({
+          data: {
+            userId:
+              user.id,
+            companyId:
+              user.companyId,
+            ipAddress:
+              getClientIp(
+                req
+              ) ||
+              null,
+            userAgent:
+              userAgent ||
+              null,
+            deviceType:
+              device.deviceType,
+            deviceName:
+              device.deviceName,
+            browser:
+              device.browser,
+            os:
+              device.os,
+            expiresAt,
+          },
+        });
+
       const token =
         jwt.sign(
           {
@@ -535,6 +707,8 @@ router.post(
               user.companyId,
             role:
               user.role,
+            sid:
+              clientSession.id,
           },
           getJwtSecret(),
           {
@@ -649,6 +823,222 @@ router.get(
             false,
           message:
             "Unable to verify session",
+        });
+    }
+  }
+);
+
+
+router.get(
+  "/sessions",
+  requireClientUser,
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const sessions =
+        await prisma.clientSession.findMany({
+          where: {
+            userId:
+              req.clientUser.userId,
+            companyId:
+              req.clientUser.companyId,
+            revokedAt:
+              null,
+            expiresAt: {
+              gt:
+                new Date(),
+            },
+          },
+          orderBy: [
+            {
+              lastActiveAt:
+                "desc",
+            },
+            {
+              createdAt:
+                "desc",
+            },
+          ],
+          take:
+            50,
+        });
+
+      return res.json({
+        success:
+          true,
+        sessions:
+          sessions.map(
+            (session) =>
+              serializeSession(
+                session,
+                req.clientUser
+                  .sessionId
+              )
+          ),
+      });
+    } catch (error) {
+      console.error(
+        "Load client sessions failed:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success:
+            false,
+          message:
+            "Unable to load active sessions",
+        });
+    }
+  }
+);
+
+router.delete(
+  "/sessions/:sessionId",
+  requireClientUser,
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const sessionId =
+        String(
+          req.params
+            ?.sessionId ||
+            ""
+        );
+
+      const session =
+        await prisma.clientSession.findFirst({
+          where: {
+            id:
+              sessionId,
+            userId:
+              req.clientUser.userId,
+            companyId:
+              req.clientUser.companyId,
+            revokedAt:
+              null,
+          },
+          select: {
+            id:
+              true,
+          },
+        });
+
+      if (!session) {
+        return res
+          .status(404)
+          .json({
+            success:
+              false,
+            message:
+              "Session not found",
+          });
+      }
+
+      await prisma.clientSession.update({
+        where: {
+          id:
+            session.id,
+        },
+        data: {
+          revokedAt:
+            new Date(),
+        },
+      });
+
+      const current =
+        session.id ===
+        req.clientUser
+          .sessionId;
+
+      if (current) {
+        res.clearCookie(
+          COOKIE_NAME,
+          clearCookieOptions()
+        );
+      }
+
+      return res.json({
+        success:
+          true,
+        current,
+        message:
+          current
+            ? "Current session signed out"
+            : "Device signed out",
+      });
+    } catch (error) {
+      console.error(
+        "Revoke client session failed:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success:
+            false,
+          message:
+            "Unable to sign out this device",
+        });
+    }
+  }
+);
+
+router.post(
+  "/sessions/revoke-others",
+  requireClientUser,
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const result =
+        await prisma.clientSession.updateMany({
+          where: {
+            userId:
+              req.clientUser.userId,
+            companyId:
+              req.clientUser.companyId,
+            id: {
+              not:
+                req.clientUser.sessionId,
+            },
+            revokedAt:
+              null,
+          },
+          data: {
+            revokedAt:
+              new Date(),
+          },
+        });
+
+      return res.json({
+        success:
+          true,
+        revokedCount:
+          result.count,
+        message:
+          "Other devices signed out",
+      });
+    } catch (error) {
+      console.error(
+        "Revoke other client sessions failed:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success:
+            false,
+          message:
+            "Unable to sign out other devices",
         });
     }
   }
@@ -821,16 +1211,31 @@ router.patch(
           12
         );
 
-      await prisma.user.update({
-        where: {
-          id:
-            user.id,
-        },
+      await prisma.$transaction([
+        prisma.user.update({
+          where: {
+            id:
+              user.id,
+          },
 
-        data: {
-          passwordHash,
-        },
-      });
+          data: {
+            passwordHash,
+          },
+        }),
+
+        prisma.clientSession.updateMany({
+          where: {
+            userId:
+              user.id,
+            revokedAt:
+              null,
+          },
+          data: {
+            revokedAt:
+              new Date(),
+          },
+        }),
+      ]);
 
       res.clearCookie(
         COOKIE_NAME,
@@ -865,10 +1270,59 @@ router.patch(
 
 router.post(
   "/logout",
-  (
+  async (
     req,
     res
   ) => {
+    const token =
+      req.cookies?.[
+        COOKIE_NAME
+      ];
+
+    if (token) {
+      try {
+        const payload =
+          jwt.verify(
+            token,
+            getJwtSecret(),
+            {
+              algorithms: [
+                "HS256",
+              ],
+            }
+          );
+
+        if (
+          payload &&
+          typeof payload ===
+            "object" &&
+          payload.sid
+        ) {
+          await prisma.clientSession.updateMany({
+            where: {
+              id:
+                String(
+                  payload.sid
+                ),
+              userId:
+                String(
+                  payload.sub ||
+                    ""
+                ),
+              revokedAt:
+                null,
+            },
+            data: {
+              revokedAt:
+                new Date(),
+            },
+          });
+        }
+      } catch {
+        // Always clear the cookie even if the token is already invalid.
+      }
+    }
+
     res.clearCookie(
       COOKIE_NAME,
       clearCookieOptions()

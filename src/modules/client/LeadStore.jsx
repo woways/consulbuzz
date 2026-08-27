@@ -31,6 +31,7 @@ import {
 import {
   apiRequest,
 } from "../../lib/api";
+import { formatUiDate } from "../../lib/uiPreferences";
 
 const TYPES = [
   {
@@ -80,17 +81,7 @@ function formatDate(
     return "—";
   }
 
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      day:
-        "2-digit",
-      month:
-        "short",
-      year:
-        "numeric",
-    }
-  );
+  return formatUiDate(date);
 }
 
 function Field({

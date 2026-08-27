@@ -42,6 +42,7 @@ import {
 } from "../../components/ui";
 
 import { apiRequest } from "../../lib/api";
+import { formatUiDateTime } from "../../lib/uiPreferences";
 
 const SOURCES = [
   {
@@ -110,16 +111,7 @@ function formatDate(date) {
     return "—";
   }
 
-  return parsed.toLocaleString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  );
+  return formatUiDateTime(parsed);
 }
 
 function LeadModal({

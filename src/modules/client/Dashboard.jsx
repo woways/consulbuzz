@@ -41,6 +41,7 @@ import {
 } from "recharts";
 
 import { apiRequest } from "../../lib/api";
+import { formatUiDate, formatUiTime, formatUiDateTime } from "../../lib/uiPreferences";
 
 const PIE_COLORS = [
   "#1d4ed8",
@@ -203,12 +204,7 @@ function eventTime(event) {
     return "All day";
   }
 
-  return new Date(
-    event.startAt
-  ).toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatUiTime(event.startAt);
 }
 
 function typeLabel(value) {
@@ -237,6 +233,7 @@ export default function Dashboard({
   tenant,
   user,
   selectedYear = "all",
+  uiPreferences,
 }) {
   const [data, setData] = useState({
     summary: {},
@@ -885,47 +882,33 @@ export default function Dashboard({
   ];
 
   return (
-    <div className="space-y-5">
+    <div className={`cb-dashboard-root ${uiPreferences?.density === "compact" ? "space-y-3" : "space-y-5"}`}>
       {/* WORKSPACE HEADER */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-[34px] font-normal leading-[1.08] tracking-[-0.045em] text-slate-950 sm:text-[40px]">
-            {(() => {
-              const hour = new Date().getHours();
-
-              if (hour < 12) {
-                return "Good Morning";
-              }
-
-              if (hour < 17) {
-                return "Good Afternoon";
-              }
-
-              return "Good Evening";
-            })()}
-            ,{" "}
-            <span className="font-normal text-slate-950">
-              {(user?.name ||
-                tenant?.ownerName ||
-                "Admin")
-                .split(" ")[0]}
-            </span>
-          </h1>
-
-          <p className="mt-2 text-[14px] font-normal tracking-[-0.01em] text-slate-500">
-            It&apos;s{" "}
-            {new Date().toLocaleDateString(
-              "en-IN",
-              {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              }
-            )}
-            .
-          </p>
-        </div>
+        {uiPreferences?.showGreeting !== false ? (
+          <div>
+            <h1 className="text-[34px] font-normal leading-[1.08] tracking-[-0.045em] text-slate-950 sm:text-[40px]">
+              {(() => {
+                const hour = new Date().getHours();
+                if (hour < 12) return "Good Morning";
+                if (hour < 17) return "Good Afternoon";
+                return "Good Evening";
+              })()}
+              ,{" "}
+              <span className="font-normal text-slate-950">
+                {(user?.name || tenant?.ownerName || "Admin").split(" ")[0]}
+              </span>
+            </h1>
+            <p className="mt-2 text-[14px] font-normal tracking-[-0.01em] text-slate-500">
+              It&apos;s {formatUiDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <h1 className="text-[24px] font-semibold tracking-[-0.03em] text-slate-950">Dashboard</h1>
+            <p className="mt-1 text-[12px] text-slate-500">{formatUiDate(new Date())}</p>
+          </div>
+        )}
 
         <button
           type="button"
@@ -969,7 +952,7 @@ export default function Dashboard({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className={`grid grid-cols-1 gap-4 ${uiPreferences?.showCalendar === false ? "" : "xl:grid-cols-[minmax(0,1fr)_320px]"}`}>
             <div className="min-w-0 space-y-4">
               {/* BUSINESS PULSE */}
               <section>
@@ -1300,11 +1283,7 @@ export default function Dashboard({
                               </td>
                               <td className="px-3 py-3">
                                 {item.dateOfAdmission || item.admissionDate || item.createdAt
-                                  ? new Date(item.dateOfAdmission || item.admissionDate || item.createdAt).toLocaleDateString("en-IN", {
-                                      day: "2-digit",
-                                      month: "short",
-                                      year: "numeric",
-                                    })
+                                  ? formatUiDate(item.dateOfAdmission || item.admissionDate || item.createdAt)
                                   : "—"}
                               </td>
                               <td className="px-3 py-3 font-semibold text-slate-800">
@@ -1404,6 +1383,7 @@ export default function Dashboard({
             </div>
 
             {/* PRODUCTIVITY RAIL */}
+            {uiPreferences?.showCalendar !== false && (
             <aside className="overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
               <div className="p-4">
                 <div className="flex items-center justify-between gap-2">
@@ -1438,13 +1418,10 @@ export default function Dashboard({
                   </button>
 
                   <div className="text-[12px] font-bold text-slate-800">
-                    {calendarMonth.toLocaleDateString(
-                      "en-IN",
-                      {
-                        month: "long",
-                        year: "numeric",
-                      }
-                    )}
+                    {formatUiDate(calendarMonth, {
+                      month: "long",
+                      year: "numeric",
+                    })}
                   </div>
 
                   <button
@@ -1560,22 +1537,9 @@ export default function Dashboard({
                         new Date()
                       )
                         ? "Today"
-                        : agendaDate.toLocaleDateString(
-                            "en-IN",
-                            {
-                              weekday:
-                                "short",
-                            }
-                          )}
+                        : formatUiDate(agendaDate, { weekday: "short" })}
                       {" · "}
-                      {agendaDate.toLocaleDateString(
-                        "en-IN",
-                        {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        }
-                      )}
+                      {formatUiDate(agendaDate, { day: "numeric", month: "short", year: "numeric" })}
                     </div>
 
                     <div className="mt-1 text-[10px] text-slate-500">
@@ -1765,12 +1729,7 @@ export default function Dashboard({
                           </div>
                           <div className="mt-0.5 text-[10px] text-slate-500">
                             {item.createdAt
-                              ? new Date(item.createdAt).toLocaleString("en-IN", {
-                                  day: "2-digit",
-                                  month: "short",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
+                              ? formatUiDateTime(item.createdAt)
                               : item.time || ""}
                           </div>
                         </div>
@@ -1787,6 +1746,7 @@ export default function Dashboard({
                 )}
               </div>
             </aside>
+            )}
           </div>
 
           {/* TEAM PERFORMANCE */}
@@ -1982,13 +1942,10 @@ export default function Dashboard({
                   </button>
 
                   <div className="text-[15px] font-bold text-slate-900">
-                    {calendarMonth.toLocaleDateString(
-                      "en-IN",
-                      {
-                        month: "long",
-                        year: "numeric",
-                      }
-                    )}
+                    {formatUiDate(calendarMonth, {
+                      month: "long",
+                      year: "numeric",
+                    })}
                   </div>
 
                   <button
@@ -2163,17 +2120,7 @@ export default function Dashboard({
                                         }`}
                                       >
                                         {!item.allDay
-                                          ? `${new Date(
-                                              item.startAt
-                                            ).toLocaleTimeString(
-                                              "en-IN",
-                                              {
-                                                hour:
-                                                  "2-digit",
-                                                minute:
-                                                  "2-digit",
-                                              }
-                                            )} `
+                                          ? `${formatUiTime(item.startAt)} `
                                           : ""}
 
                                         {
@@ -2221,14 +2168,7 @@ export default function Dashboard({
                 </div>
 
                 <div className="mt-1 text-sm font-bold text-slate-950">
-                  {new Date().toLocaleDateString(
-                    "en-IN",
-                    {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                    }
-                  )}
+                  {formatUiDate(new Date(), { weekday: "long", day: "numeric", month: "long" })}
                 </div>
               </div>
 
@@ -2334,15 +2274,7 @@ export default function Dashboard({
                         >
                           <div className="w-10 text-center flex-shrink-0">
                             <div className="text-[9px] font-bold text-indigo-600 uppercase">
-                              {new Date(
-                                item.startAt
-                              ).toLocaleDateString(
-                                "en-IN",
-                                {
-                                  month:
-                                    "short",
-                                }
-                              )}
+                              {formatUiDate(item.startAt, { month: "short" })}
                             </div>
 
                             <div className="text-base font-bold text-slate-950">

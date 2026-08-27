@@ -56,6 +56,7 @@ export async function requireClientUser(
         "object" ||
       !payload.sub ||
       !payload.companyId ||
+      !payload.sid ||
       payload.role ===
         "SUPER_ADMIN"
     ) {
@@ -71,6 +72,7 @@ export async function requireClientUser(
     const [
       user,
       systemSettings,
+      clientSession,
     ] =
       await Promise.all([
         prisma.user.findUnique({
@@ -114,6 +116,29 @@ export async function requireClientUser(
             maintenanceMode: true,
           },
         }),
+
+        prisma.clientSession.findUnique({
+          where: {
+            id:
+              String(
+                payload.sid
+              ),
+          },
+          select: {
+            id:
+              true,
+            userId:
+              true,
+            companyId:
+              true,
+            revokedAt:
+              true,
+            expiresAt:
+              true,
+            lastActiveAt:
+              true,
+          },
+        }),
       ]);
 
     if (
@@ -139,6 +164,14 @@ export async function requireClientUser(
         payload.companyId ||
       user.role ===
         "SUPER_ADMIN" ||
+      !clientSession ||
+      clientSession.userId !==
+        user.id ||
+      clientSession.companyId !==
+        user.companyId ||
+      clientSession.revokedAt ||
+      clientSession.expiresAt <=
+        new Date() ||
       !user.company ||
       [
         "SUSPENDED",
@@ -163,6 +196,8 @@ export async function requireClientUser(
         user.companyId,
       role:
         user.role,
+      sessionId:
+        clientSession.id,
 
       permissions: {
         canManageUsers:
@@ -206,6 +241,38 @@ export async function requireClientUser(
           user.canManageSupport,
       },
     };
+
+    const fiveMinutesAgo =
+      new Date(
+        Date.now() -
+          5 *
+            60 *
+            1000
+      );
+
+    if (
+      clientSession.lastActiveAt <
+      fiveMinutesAgo
+    ) {
+      prisma.clientSession
+        .update({
+          where: {
+            id:
+              clientSession.id,
+          },
+          data: {
+            lastActiveAt:
+              new Date(),
+          },
+        })
+        .catch((error) =>
+          console.error(
+            "Unable to refresh client session activity:",
+            error?.message ||
+              error
+          )
+        );
+    }
 
     return next();
   } catch (error) {

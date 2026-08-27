@@ -31,6 +31,7 @@ import {
 import {
   apiRequest,
 } from "../../lib/api";
+import { formatUiDateTime } from "../../lib/uiPreferences";
 
 const TYPES = [
   {
@@ -197,21 +198,7 @@ function formatDate(
     return "—";
   }
 
-  return date.toLocaleString(
-    "en-IN",
-    {
-      day:
-        "2-digit",
-      month:
-        "short",
-      year:
-        "numeric",
-      hour:
-        "2-digit",
-      minute:
-        "2-digit",
-    }
-  );
+  return formatUiDateTime(date);
 }
 
 function SupportMetric({

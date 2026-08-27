@@ -439,6 +439,10 @@ export default function ClientPortal({
 const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
   const [profileTab, setProfileTab] = useState("profile");
+  const [profileSessions, setProfileSessions] = useState([]);
+  const [profileSessionsLoading, setProfileSessionsLoading] = useState(false);
+  const [profileSessionsError, setProfileSessionsError] = useState("");
+  const [profileSessionAction, setProfileSessionAction] = useState("");
   const [profilePhoto, setProfilePhoto] = useState("");
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -478,6 +482,18 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
   });
 
   const [uiPreferencesSaved, setUiPreferencesSaved] = useState(false);
+
+  const [systemPrefersDark, setSystemPrefersDark] = useState(() =>
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-color-scheme: dark)").matches
+  );
+
+  const resolvedTheme =
+    uiPreferences.appearance === "system"
+      ? systemPrefersDark
+        ? "dark"
+        : "light"
+      : uiPreferences.appearance;
 
   const [workspaceSearch, setWorkspaceSearch] = useState("");
 
@@ -605,6 +621,26 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
   useEffect(() => {
     window.localStorage.setItem("cb_global_year", selectedYear);
   }, [selectedYear]);
+
+  useEffect(() => {
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!media) return undefined;
+    const onChange = (event) => setSystemPrefersDark(event.matches);
+    setSystemPrefersDark(media.matches);
+    media.addEventListener?.("change", onChange);
+    return () => media.removeEventListener?.("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        "cb_ui_preferences",
+        JSON.stringify(uiPreferences)
+      );
+    } catch (error) {
+      console.error("Unable to save UI preferences:", error);
+    }
+  }, [uiPreferences]);
 
   async function loadAvailableYears() {
     try {
@@ -1529,6 +1565,111 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     );
   }
 
+  async function loadProfileSessions() {
+    setProfileSessionsLoading(true);
+    setProfileSessionsError("");
+
+    try {
+      const data = await apiRequest(
+        "/api/client/auth/sessions"
+      );
+
+      setProfileSessions(
+        Array.isArray(data.sessions)
+          ? data.sessions
+          : []
+      );
+    } catch (error) {
+      setProfileSessionsError(
+        error?.data?.message ||
+          "Unable to load active sessions"
+      );
+    } finally {
+      setProfileSessionsLoading(false);
+    }
+  }
+
+  async function revokeProfileSession(session) {
+    if (!session?.id || profileSessionAction) {
+      return;
+    }
+
+    setProfileSessionAction(
+      session.id
+    );
+    setProfileSessionsError("");
+
+    try {
+      const data = await apiRequest(
+        `/api/client/auth/sessions/${session.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (data.current) {
+        navigate(
+          "/login",
+          {
+            replace:
+              true,
+          }
+        );
+        return;
+      }
+
+      await loadProfileSessions();
+    } catch (error) {
+      setProfileSessionsError(
+        error?.data?.message ||
+          "Unable to sign out this device"
+      );
+    } finally {
+      setProfileSessionAction("");
+    }
+  }
+
+  async function revokeOtherProfileSessions() {
+    if (profileSessionAction) {
+      return;
+    }
+
+    setProfileSessionAction(
+      "others"
+    );
+    setProfileSessionsError("");
+
+    try {
+      await apiRequest(
+        "/api/client/auth/sessions/revoke-others",
+        {
+          method: "POST",
+        }
+      );
+
+      await loadProfileSessions();
+    } catch (error) {
+      setProfileSessionsError(
+        error?.data?.message ||
+          "Unable to sign out other devices"
+      );
+    } finally {
+      setProfileSessionAction("");
+    }
+  }
+
+  useEffect(() => {
+    if (
+      module === "profile" &&
+      profileTab === "sessions"
+    ) {
+      loadProfileSessions();
+    }
+  }, [
+    module,
+    profileTab,
+  ]);
+
   function renderProfile() {
     const tabs = [
       { key: "profile", label: "Profile", icon: UserRound },
@@ -1590,7 +1731,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           </p>
         </div>
 
-        <section className="overflow-hidden rounded-[22px] border border-slate-800 bg-[#101114] shadow-[0_14px_36px_rgba(15,23,42,0.12)]">
+        <section className="overflow-hidden rounded-[22px] border border-[#1b2a3b] bg-gradient-to-r from-[#07111d] via-[#0b1725] to-[#10243a] shadow-[0_14px_36px_rgba(2,8,23,0.16)]">
           <div className="relative px-5 py-6 sm:px-7">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_10%,rgba(255,255,255,0.08),transparent_35%)]" />
             <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -1610,7 +1751,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 <button
                   type="button"
                   onClick={() => profilePhotoInputRef.current?.click()}
-                  className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-[#101114] bg-white text-slate-950 shadow-md hover:bg-slate-100"
+                  className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-[#0b1725] bg-white text-slate-950 shadow-md hover:bg-slate-100"
                   aria-label="Change profile photo"
                 >
                   <Camera size={14} />
@@ -1920,7 +2061,9 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         }
                         className={`h-9 rounded-xl border text-[11px] font-bold transition-all ${
                           uiPreferences.appearance === value
-                            ? "border-slate-950 bg-slate-950 text-white"
+                            ? value === "dark"
+                              ? "border-[#17375e] bg-[#0b223d] text-white"
+                              : "border-slate-950 bg-slate-950 text-white"
                             : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                         }`}
                       >
@@ -2015,17 +2158,17 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                               !uiPreferences[key]
                             )
                           }
-                          className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors ${
+                          className={`relative inline-flex h-[28px] w-[52px] flex-shrink-0 items-center rounded-full border p-[3px] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 ${
                             uiPreferences[key]
-                              ? "bg-slate-950"
-                              : "bg-slate-200"
+                              ? "border-[#17375e] bg-[#0b223d] shadow-inner"
+                              : "border-slate-300 bg-slate-200"
                           }`}
                         >
                           <span
-                            className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                            className={`h-5 w-5 rounded-full bg-white shadow-[0_2px_5px_rgba(15,23,42,0.22)] transition-transform duration-200 ${
                               uiPreferences[key]
-                                ? "translate-x-6"
-                                : "translate-x-1"
+                                ? "translate-x-[24px]"
+                                : "translate-x-0"
                             }`}
                           />
                         </button>
@@ -2124,37 +2267,253 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
           {profileTab === "sessions" && (
             <div className="p-5 lg:p-6">
-              <div className="max-w-2xl rounded-2xl border border-slate-200 p-5">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-                    <Smartphone size={18} />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-950">
-                      Current Session
-                    </h3>
-                    <p className="mt-0.5 text-[11px] text-slate-500">
-                      This browser is currently signed in to ConsulBuzz.
-                    </p>
-                  </div>
-                  <span className="ml-auto rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-emerald-700">
-                    Active
-                  </span>
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h3 className="text-sm font-black text-slate-950">
+                    Logged-in Devices
+                  </h3>
+                  <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                    Review the browsers and devices where this ConsulBuzz account is currently signed in.
+                  </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={signOut}
-                  disabled={signingOut}
-                  className="mt-5 inline-flex h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-xs font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
-                >
-                  {signingOut ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <LogOut size={14} />
+                {profileSessions.some(
+                  (session) =>
+                    !session.current
+                ) && (
+                  <button
+                    type="button"
+                    onClick={revokeOtherProfileSessions}
+                    disabled={Boolean(profileSessionAction)}
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-xs font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                  >
+                    {profileSessionAction === "others" ? (
+                      <Loader2
+                        size={14}
+                        className="animate-spin"
+                      />
+                    ) : (
+                      <LogOut size={14} />
+                    )}
+                    Sign out all other devices
+                  </button>
+                )}
+              </div>
+
+              {profileSessionsError && (
+                <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-3 text-xs font-semibold text-rose-700">
+                  <AlertCircle
+                    size={14}
+                    className="mt-0.5 flex-shrink-0"
+                  />
+                  {profileSessionsError}
+                </div>
+              )}
+
+              {profileSessionsLoading ? (
+                <div className="flex min-h-[220px] items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-xs text-slate-500">
+                  <Loader2
+                    size={15}
+                    className="animate-spin"
+                  />
+                  Loading active devices...
+                </div>
+              ) : profileSessions.length ? (
+                <div className="space-y-3">
+                  {profileSessions.map(
+                    (session) => {
+                      const location =
+                        [
+                          session.city,
+                          session.country,
+                        ]
+                          .filter(Boolean)
+                          .join(", ");
+
+                      const lastActive =
+                        session.lastActiveAt
+                          ? new Date(
+                              session.lastActiveAt
+                            ).toLocaleString(
+                              "en-IN",
+                              {
+                                day:
+                                  "2-digit",
+                                month:
+                                  "short",
+                                year:
+                                  "numeric",
+                                hour:
+                                  "2-digit",
+                                minute:
+                                  "2-digit",
+                              }
+                            )
+                          : "—";
+
+                      const signedIn =
+                        session.createdAt
+                          ? new Date(
+                              session.createdAt
+                            ).toLocaleString(
+                              "en-IN",
+                              {
+                                day:
+                                  "2-digit",
+                                month:
+                                  "short",
+                                year:
+                                  "numeric",
+                                hour:
+                                  "2-digit",
+                                minute:
+                                  "2-digit",
+                              }
+                            )
+                          : "—";
+
+                      return (
+                        <div
+                          key={session.id}
+                          className={`rounded-2xl border p-4 sm:p-5 ${
+                            session.current
+                              ? "border-indigo-200 bg-indigo-50/40"
+                              : "border-slate-200 bg-white"
+                          }`}
+                        >
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                            <div
+                              className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${
+                                session.current
+                                  ? "bg-indigo-600 text-white"
+                                  : "bg-slate-100 text-slate-700"
+                              }`}
+                            >
+                              {session.deviceType === "Mobile" ? (
+                                <Smartphone
+                                  size={18}
+                                />
+                              ) : (
+                                <MonitorSmartphone
+                                  size={18}
+                                />
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <div className="text-sm font-black text-slate-950">
+                                  {session.deviceName ||
+                                    "Unknown device"}
+                                </div>
+
+                                {session.current && (
+                                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                                    This device
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="mt-1 text-[11px] font-medium text-slate-500">
+                                {session.browser ||
+                                  "Unknown browser"}{" "}
+                                ·{" "}
+                                {session.os ||
+                                  "Unknown OS"}
+                              </div>
+
+                              <div className="mt-3 grid gap-2 text-[10px] text-slate-500 sm:grid-cols-2 lg:grid-cols-4">
+                                <div>
+                                  <div className="font-bold uppercase tracking-wide text-slate-400">
+                                    Last active
+                                  </div>
+                                  <div className="mt-1 font-semibold text-slate-700">
+                                    {lastActive}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="font-bold uppercase tracking-wide text-slate-400">
+                                    Signed in
+                                  </div>
+                                  <div className="mt-1 font-semibold text-slate-700">
+                                    {signedIn}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="font-bold uppercase tracking-wide text-slate-400">
+                                    IP address
+                                  </div>
+                                  <div className="mt-1 font-semibold text-slate-700">
+                                    {session.ipAddress ||
+                                      "Unavailable"}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="font-bold uppercase tracking-wide text-slate-400">
+                                    Approx. location
+                                  </div>
+                                  <div className="mt-1 font-semibold text-slate-700">
+                                    {location ||
+                                      "Not available"}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                revokeProfileSession(
+                                  session
+                                )
+                              }
+                              disabled={Boolean(profileSessionAction)}
+                              className={`inline-flex h-9 flex-shrink-0 items-center justify-center gap-2 rounded-xl px-3 text-[11px] font-bold disabled:opacity-50 ${
+                                session.current
+                                  ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                                  : "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                              }`}
+                            >
+                              {profileSessionAction === session.id ? (
+                                <Loader2
+                                  size={13}
+                                  className="animate-spin"
+                                />
+                              ) : (
+                                <LogOut
+                                  size={13}
+                                />
+                              )}
+                              {session.current
+                                ? "Sign out"
+                                : "Sign out device"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
                   )}
-                  Sign out this session
-                </button>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center">
+                  <MonitorSmartphone
+                    size={24}
+                    className="mx-auto text-slate-300"
+                  />
+                  <div className="mt-3 text-sm font-black text-slate-900">
+                    No active sessions found
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-500">
+                    Sign in again to create a tracked device session.
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[10px] leading-5 text-amber-800">
+                For security, exact GPS location is not collected. Approximate city/country can be shown later when an IP geolocation provider is configured.
               </div>
             </div>
           )}
@@ -2233,6 +2592,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             tenant={tenant}
             user={user}
             selectedYear={selectedYear}
+            uiPreferences={uiPreferences}
           />
         );
 
@@ -2586,7 +2946,11 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     };
 
   return (
-    <div className="min-h-screen bg-[#f6f7fa] text-slate-900 overflow-x-hidden">
+    <div
+      data-cb-theme={resolvedTheme}
+      data-cb-density={uiPreferences.density}
+      className="cb-client-portal min-h-screen bg-[#f6f7fa] text-slate-900 overflow-x-hidden"
+    >
       <style>{`
         html,
         body,
@@ -2616,6 +2980,33 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           width: 0;
           height: 0;
         }
+
+        [data-cb-theme="dark"] { background: #0b0d10 !important; color: #e5e7eb !important; }
+        [data-cb-theme="dark"] main,
+        [data-cb-theme="dark"] header { background: #0f1115 !important; }
+        [data-cb-theme="dark"] .bg-white { background-color: #15181d !important; }
+        [data-cb-theme="dark"] .bg-slate-50,
+        [data-cb-theme="dark"] .bg-slate-100 { background-color: #191d23 !important; }
+        [data-cb-theme="dark"] .text-slate-950,
+        [data-cb-theme="dark"] .text-slate-900,
+        [data-cb-theme="dark"] .text-slate-800,
+        [data-cb-theme="dark"] .text-slate-700 { color: #f3f4f6 !important; }
+        [data-cb-theme="dark"] .text-slate-600,
+        [data-cb-theme="dark"] .text-slate-500,
+        [data-cb-theme="dark"] .text-slate-400 { color: #9ca3af !important; }
+        [data-cb-theme="dark"] .border-slate-100,
+        [data-cb-theme="dark"] .border-slate-200,
+        [data-cb-theme="dark"] .border-slate-300 { border-color: #2b3038 !important; }
+        [data-cb-theme="dark"] input,
+        [data-cb-theme="dark"] select,
+        [data-cb-theme="dark"] textarea { background-color: #15181d !important; border-color: #303640 !important; color: #f3f4f6 !important; }
+        [data-cb-theme="dark"] input::placeholder,
+        [data-cb-theme="dark"] textarea::placeholder { color: #6b7280 !important; }
+        [data-cb-density="compact"] main { padding-top: 10px !important; padding-bottom: 12px !important; }
+        [data-cb-density="compact"] .cb-dashboard-root { gap: .75rem !important; }
+        [data-cb-density="compact"] .cb-dashboard-root .gap-4 { gap: .65rem !important; }
+        [data-cb-density="compact"] .cb-dashboard-root .p-4,
+        [data-cb-density="compact"] .cb-dashboard-root .p-5 { padding: .85rem !important; }
 
       `}</style>
       <style>{`
