@@ -6,6 +6,9 @@ import jwt from "jsonwebtoken";
 
 import prisma from "../lib/prisma.js";
 import {
+  lookupIpLocation,
+} from "../lib/ipGeolocation.js";
+import {
   requireClientUser,
 } from "../middleware/clientAuth.js";
 import {
@@ -671,6 +674,16 @@ router.post(
           userAgent
         );
 
+      const ipAddress =
+        getClientIp(
+          req
+        );
+
+      const location =
+        await lookupIpLocation(
+          ipAddress
+        );
+
       const clientSession =
         await prisma.clientSession.create({
           data: {
@@ -679,9 +692,7 @@ router.post(
             companyId:
               user.companyId,
             ipAddress:
-              getClientIp(
-                req
-              ) ||
+              ipAddress ||
               null,
             userAgent:
               userAgent ||
@@ -694,6 +705,12 @@ router.post(
               device.browser,
             os:
               device.os,
+            city:
+              location?.city ||
+              null,
+            country:
+              location?.country ||
+              null,
             expiresAt,
           },
         });
