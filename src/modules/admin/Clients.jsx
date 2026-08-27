@@ -678,6 +678,15 @@ export default function Clients({
   const [search, setSearch] =
     useState("");
 
+  const [filterOpen, setFilterOpen] =
+    useState(false);
+
+  const [planFilter, setPlanFilter] =
+    useState("all");
+
+  const [statusFilter, setStatusFilter] =
+    useState("all");
+
   const [loading, setLoading] =
     useState(true);
 
@@ -725,29 +734,40 @@ export default function Clients({
         .trim()
         .toLowerCase();
 
-      if (!query) {
-        return clients;
-      }
+      return clients.filter((client) => {
+        const matchesSearch =
+          !query ||
+          [
+            client.name,
+            client.brandName,
+            client.business,
+            client.subdomain,
+            client.ownerName,
+            client.city,
+            client.email,
+            client.phone,
+            client.plan,
+            client.planName,
+            client.status,
+            client.subscriptionStatus,
+            client.billingCycle,
+          ]
+            .filter(Boolean)
+            .some((value) =>
+              String(value).toLowerCase().includes(query)
+            );
 
-      return clients.filter(
-        (client) =>
-          client.name
-            ?.toLowerCase()
-            .includes(query) ||
-          client.business
-            ?.toLowerCase()
-            .includes(query) ||
-          client.subdomain
-            ?.toLowerCase()
-            .includes(query) ||
-          client.ownerName
-            ?.toLowerCase()
-            .includes(query) ||
-          client.city
-            ?.toLowerCase()
-            .includes(query)
-      );
-    }, [clients, search]);
+        const matchesPlan =
+          planFilter === "all" ||
+          String(client.plan || "").toLowerCase() === planFilter;
+
+        const matchesStatus =
+          statusFilter === "all" ||
+          String(client.status || "").toLowerCase() === statusFilter;
+
+        return matchesSearch && matchesPlan && matchesStatus;
+      });
+    }, [clients, search, planFilter, statusFilter]);
 
   function handleCreated(
     client
@@ -803,7 +823,12 @@ export default function Clients({
 
         <button
           type="button"
-          className="h-9 px-3 border border-slate-200 bg-white rounded-lg text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 hover:bg-slate-50"
+          onClick={() => setFilterOpen((current) => !current)}
+          className={`h-9 px-3 border rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 ${
+            filterOpen || planFilter !== "all" || statusFilter !== "all"
+              ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+          }`}
         >
           <Filter size={13} />
           Filter
@@ -827,6 +852,59 @@ export default function Clients({
           Refresh
         </button>
       </div>
+
+      {filterOpen && (
+        <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-end">
+          <div className="min-w-[180px]">
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Plan
+            </label>
+            <select
+              value={planFilter}
+              onChange={(event) => setPlanFilter(event.target.value)}
+              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none focus:border-indigo-400"
+            >
+              <option value="all">All plans</option>
+              <option value="basic">Basic</option>
+              <option value="pro">Pro</option>
+              <option value="advanced">Advanced</option>
+            </select>
+          </div>
+
+          <div className="min-w-[180px]">
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Company Status
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 outline-none focus:border-indigo-400"
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="trial">Trial</option>
+              <option value="suspended">Suspended</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setPlanFilter("all");
+              setStatusFilter("all");
+              setSearch("");
+            }}
+            className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+          >
+            Clear Filters
+          </button>
+
+          <div className="sm:ml-auto text-[11px] font-semibold text-slate-500">
+            {filteredClients.length} of {clients.length} clients
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-rose-200 bg-rose-50 text-sm text-rose-700">

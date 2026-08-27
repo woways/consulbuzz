@@ -134,6 +134,14 @@ export default function SuperAdmin() {
     setSigningOut,
   ] = useState(false);
 
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [adminClients, setAdminClients] = useState([]);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [adminAlerts, setAdminAlerts] = useState([]);
+  const [adminAlertsLoading, setAdminAlertsLoading] = useState(false);
+  const [adminAlertsError, setAdminAlertsError] = useState("");
+  const notificationRef = useRef(null);
+
   const [adminUser, setAdminUser] = useState(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -154,9 +162,95 @@ export default function SuperAdmin() {
   }, []);
 
   useEffect(() => {
-    function outside(event) {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) setProfileMenuOpen(false);
+    apiRequest("/api/admin/clients")
+      .then((data) => setAdminClients(data.clients || []))
+      .catch((error) =>
+        console.error("Load admin clients for search failed:", error)
+      );
+  }, []);
+
+  async function loadAdminAlerts() {
+    setAdminAlertsLoading(true);
+    setAdminAlertsError("");
+
+    try {
+      const [supportData, clientsData] = await Promise.all([
+        apiRequest("/api/admin/support"),
+        apiRequest("/api/admin/clients"),
+      ]);
+
+      const now = Date.now();
+      const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+
+      const supportAlerts = (supportData.tickets || [])
+        .filter((ticket) =>
+          ["NEW", "UNDER_REVIEW", "APPROVED", "IN_PROGRESS", "DEVELOPMENT"].includes(
+            ticket.status
+          )
+        )
+        .slice(0, 8)
+        .map((ticket) => ({
+          id: `support-${ticket.id}`,
+          kind: "support",
+          title: ticket.typeLabel || "Support request",
+          message: `${ticket.company?.name || "Client"} · ${ticket.title}`,
+          time: ticket.createdAt,
+          action: () => {
+            setSelectedClient(null);
+            setSection("support");
+            setNotificationsOpen(false);
+          },
+        }));
+
+      const renewalAlerts = (clientsData.clients || [])
+        .filter((client) => {
+          if (!client.renewalDate) return false;
+          const renewal = new Date(client.renewalDate).getTime();
+          return renewal >= now && renewal - now <= thirtyDays;
+        })
+        .slice(0, 6)
+        .map((client) => ({
+          id: `renewal-${client.id}`,
+          kind: "renewal",
+          title: "Subscription renewal",
+          message: `${client.name} renews ${new Date(
+            client.renewalDate
+          ).toLocaleDateString("en-IN")}`,
+          time: client.renewalDate,
+          action: () => {
+            setSelectedClient(client.id);
+            setSection("clients");
+            setNotificationsOpen(false);
+          },
+        }));
+
+      setAdminAlerts([...supportAlerts, ...renewalAlerts]);
+    } catch (error) {
+      setAdminAlertsError(
+        error?.data?.message || "Unable to load admin notifications"
+      );
+    } finally {
+      setAdminAlertsLoading(false);
     }
+  }
+
+  useEffect(() => {
+    function outside(event) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target)
+      ) {
+        setProfileMenuOpen(false);
+      }
+
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
+        setNotificationsOpen(false);
+      }
+    }
+
     document.addEventListener("mousedown", outside);
     return () => document.removeEventListener("mousedown", outside);
   }, []);
@@ -296,6 +390,59 @@ export default function SuperAdmin() {
     }
   }
 
+  const normalizedGlobalSearch = globalSearch.trim().toLowerCase();
+
+  const globalSearchResults = normalizedGlobalSearch
+    ? [
+        ...MENU.filter((item) =>
+          item.label.toLowerCase().includes(normalizedGlobalSearch)
+        ).map((item) => ({
+          type: "section",
+          id: item.key,
+          label: item.label,
+          description: "Super Admin section",
+          action: () => {
+            setSelectedClient(null);
+            setSection(item.key);
+            setGlobalSearch("");
+          },
+        })),
+        ...adminClients
+          .filter((client) =>
+            [
+              client.name,
+              client.brandName,
+              client.business,
+              client.ownerName,
+              client.email,
+              client.subdomain,
+              client.planName,
+              client.plan,
+              client.status,
+              client.city,
+            ]
+              .filter(Boolean)
+              .some((value) =>
+                String(value).toLowerCase().includes(normalizedGlobalSearch)
+              )
+          )
+          .slice(0, 6)
+          .map((client) => ({
+            type: "client",
+            id: client.id,
+            label: client.name,
+            description: `${
+              client.planName || client.plan || "No plan"
+            } · ${client.status || "unknown"}`,
+            action: () => {
+              setSection("clients");
+              setSelectedClient(client.id);
+              setGlobalSearch("");
+            },
+          })),
+      ].slice(0, 10)
+    : [];
+
   const currentLabel =
     selectedClient
       ? "Client 360"
@@ -308,10 +455,22 @@ export default function SuperAdmin() {
 
   return (
     <div className="min-h-screen bg-[#f6f7fb] text-slate-900">
+      <style>{`
+        .admin-sidebar-scroll {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+
+        .admin-sidebar-scroll::-webkit-scrollbar {
+          display: none;
+          width: 0;
+          height: 0;
+        }
+      `}</style>
 
       {/* HEADER */}
 
-      <header className="h-[70px] bg-white border-b border-slate-200 sticky top-0 z-40 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+      <header className="fixed top-0 left-0 right-0 z-50 h-[70px] bg-white border-b border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
         <div className="h-full px-5 flex items-center justify-between gap-4">
 
           <div className="flex items-center gap-3 min-w-0">
@@ -345,24 +504,119 @@ export default function SuperAdmin() {
 
               <input
                 type="text"
+                value={globalSearch}
+                onChange={(event) => setGlobalSearch(event.target.value)}
                 placeholder="Search clients, modules or settings..."
                 className="w-full h-9 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
               />
+
+              {normalizedGlobalSearch && (
+                <div className="absolute left-0 right-0 top-[44px] z-[90] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.16)]">
+                  {globalSearchResults.length ? (
+                    <div className="p-1.5">
+                      {globalSearchResults.map((result) => (
+                        <button
+                          key={`${result.type}-${result.id}`}
+                          type="button"
+                          onClick={result.action}
+                          className="w-full rounded-lg px-3 py-2.5 text-left hover:bg-slate-50"
+                        >
+                          <div className="text-xs font-semibold text-slate-900">
+                            {result.label}
+                          </div>
+                          <div className="mt-0.5 text-[10px] text-slate-500">
+                            {result.description}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-5 text-center text-xs text-slate-500">
+                      No matching clients or sections.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="relative w-9 h-9 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-              aria-label="Notifications"
-            >
-              <Bell
-                size={17}
-              />
+            <div ref={notificationRef} className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !notificationsOpen;
+                  setNotificationsOpen(next);
+                  setProfileMenuOpen(false);
+                  if (next) loadAdminAlerts();
+                }}
+                className="relative w-9 h-9 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                aria-label="Notifications"
+              >
+                <Bell size={17} />
 
-              <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-rose-500 rounded-full ring-2 ring-white" />
-            </button>
+                {adminAlerts.length > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold leading-[17px] text-center ring-2 ring-white">
+                    {adminAlerts.length > 9 ? "9+" : adminAlerts.length}
+                  </span>
+                )}
+              </button>
+
+              {notificationsOpen && (
+                <div className="absolute right-0 top-[calc(100%+8px)] w-[360px] max-w-[calc(100vw-24px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
+                  <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                    <div>
+                      <div className="text-sm font-bold text-slate-950">
+                        Admin Notifications
+                      </div>
+                      <div className="mt-0.5 text-[10px] text-slate-500">
+                        Support requests and upcoming renewals
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={loadAdminAlerts}
+                      className="text-[10px] font-semibold text-indigo-600"
+                    >
+                      Refresh
+                    </button>
+                  </div>
+
+                  <div className="max-h-[420px] overflow-y-auto">
+                    {adminAlertsLoading ? (
+                      <div className="flex items-center justify-center gap-2 py-10 text-xs text-slate-500">
+                        <Loader2 size={14} className="animate-spin" />
+                        Loading...
+                      </div>
+                    ) : adminAlertsError ? (
+                      <div className="p-4 text-xs text-rose-600">
+                        {adminAlertsError}
+                      </div>
+                    ) : adminAlerts.length ? (
+                      adminAlerts.map((alert) => (
+                        <button
+                          key={alert.id}
+                          type="button"
+                          onClick={alert.action}
+                          className="w-full border-b border-slate-100 px-4 py-3 text-left last:border-0 hover:bg-slate-50"
+                        >
+                          <div className="text-xs font-bold text-slate-900">
+                            {alert.title}
+                          </div>
+                          <div className="mt-1 text-[11px] leading-5 text-slate-500">
+                            {alert.message}
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="py-10 text-center text-xs text-slate-500">
+                        No admin alerts right now.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div ref={profileMenuRef} className="relative">
               <button type="button" onClick={()=>setProfileMenuOpen((current)=>!current)} className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-colors">
@@ -386,18 +640,18 @@ export default function SuperAdmin() {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="pt-[70px]">
 
         {/* SIDEBAR */}
 
         <aside
-          className={`relative bg-[#071321] text-slate-300 min-h-[calc(100vh-70px)] sticky top-[70px] self-start flex-shrink-0 border-r border-white/[0.04] transition-[width] duration-300 ${
+          className={`fixed bottom-0 left-0 top-[70px] z-40 bg-[#071321] text-slate-300 border-r border-white/[0.04] transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
             sidebarCollapsed
               ? "w-[76px]"
               : "w-[248px]"
           }`}
         >
-          <div className="h-[calc(100vh-70px)] flex flex-col">
+          <div className="h-full flex flex-col">
 
             {!sidebarCollapsed && (
               <div className="px-5 pt-5 pb-3">
@@ -414,7 +668,7 @@ export default function SuperAdmin() {
               <div className="h-4" />
             )}
 
-            <nav className="flex-1 overflow-y-auto py-1">
+            <nav className="admin-sidebar-scroll flex-1 overflow-y-auto py-1">
               {MENU.map(
                 (item) => {
                   const Icon =
@@ -445,7 +699,7 @@ export default function SuperAdmin() {
                           null
                         );
                       }}
-                      className={`relative w-full flex items-center py-3 text-[13px] font-semibold transition-colors ${
+                      className={`relative w-full flex items-center py-3 text-[13px] font-semibold transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                         sidebarCollapsed
                           ? "justify-center px-2"
                           : "gap-3 px-4"
@@ -536,7 +790,11 @@ export default function SuperAdmin() {
 
         {/* MAIN */}
 
-        <main className="flex-1 min-w-0 p-6 lg:p-7">
+        <main
+          className={`min-w-0 min-h-[calc(100vh-70px)] p-6 lg:p-7 transition-[margin-left] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+            sidebarCollapsed ? "ml-[76px]" : "ml-[248px]"
+          }`}
+        >
           <div className="max-w-[1600px] mx-auto">
             {
               renderSection()

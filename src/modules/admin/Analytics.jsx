@@ -209,8 +209,8 @@ export default function Analytics() {
         />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition-shadow">
+      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5">
+        <div className="min-w-0 overflow-hidden bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition-shadow">
           <h3 className="text-sm font-bold tracking-tight text-slate-950">
             Client Growth
           </h3>
@@ -268,7 +268,7 @@ export default function Analytics() {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition-shadow">
+        <div className="min-w-0 overflow-hidden bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition-shadow">
           <h3 className="text-sm font-bold tracking-tight text-slate-950">
             Plan Distribution
           </h3>
@@ -357,8 +357,8 @@ export default function Analytics() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition-shadow">
+      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5">
+        <div className="min-w-0 overflow-hidden bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition-shadow">
           <h3 className="text-sm font-bold tracking-tight text-slate-950">
             Users by Client
           </h3>
@@ -411,7 +411,7 @@ export default function Analytics() {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition-shadow">
+        <div className="min-w-0 overflow-hidden bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition-shadow">
           <h3 className="text-sm font-bold tracking-tight text-slate-950">
             Monthly Value by Client
           </h3>
@@ -480,8 +480,8 @@ export default function Analytics() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition-shadow">
+      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-5">
+        <div className="min-w-0 overflow-hidden bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition-shadow">
           <h3 className="text-sm font-bold tracking-tight text-slate-950">
             Subscription Status
           </h3>
@@ -515,7 +515,7 @@ export default function Analytics() {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition-shadow">
+        <div className="min-w-0 overflow-hidden bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition-shadow">
           <h3 className="text-sm font-bold tracking-tight text-slate-950">
             Company Status
           </h3>
