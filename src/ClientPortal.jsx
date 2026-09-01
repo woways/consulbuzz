@@ -11,6 +11,8 @@ import {
 
 import {
   Bell,
+  MessageSquare,
+  CalendarDays,
   LogOut,
   Lock,
   Crown,
@@ -68,6 +70,8 @@ import Counselling from "./modules/client/Counselling";
 import Analytics from "./modules/client/Analytics";
 import Help from "./modules/client/Help";
 import SettingsView from "./modules/client/Settings";
+import CalendarModal from "./modules/client/CalendarModal";
+import ChatPanel from "./modules/client/ChatPanel";
 
 
 function SidebarIcon({
@@ -242,10 +246,19 @@ const NAV_GROUPS = [
     direct: true,
   },
 
+  {
+    key: "chats",
+    label: "Chats",
+    icon: MessageSquare,
+    items: ["chats"],
+    direct: true,
+  },
+
 ];
 
 const PAGE_META = {
   dashboard: { label: "Dashboard" },
+  chats: { label: "Chats" },
   "utm-leads": { label: "UTM Leads" },
   "lead-store": { label: "Lead Store" },
   admissions: {
@@ -606,6 +619,78 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     clientSession?.company ||
       null
   );
+
+  // ---- Sidebar drag-and-drop ordering (persisted per user) ----------------
+  const savedSidebarOrder = clientSession?.user?.sidebarOrder;
+
+  const orderedNavGroups = useMemo(() => {
+    const base = NAV_GROUPS;
+    if (!Array.isArray(savedSidebarOrder) || savedSidebarOrder.length === 0) {
+      return base;
+    }
+    const byKey = new Map(base.map((g) => [g.key, g]));
+    const ordered = [];
+    savedSidebarOrder.forEach((key) => {
+      if (byKey.has(key)) {
+        ordered.push(byKey.get(key));
+        byKey.delete(key);
+      }
+    });
+    base.forEach((g) => {
+      if (byKey.has(g.key)) ordered.push(g);
+    });
+    return ordered;
+  }, [savedSidebarOrder]);
+
+  const [navGroups, setNavGroups] = useState(orderedNavGroups);
+
+  useEffect(() => {
+    setNavGroups(orderedNavGroups);
+  }, [orderedNavGroups]);
+
+  const dragIndexRef = useRef(null);
+  const [dragOverKey, setDragOverKey] = useState(null);
+
+  async function persistSidebarOrder(order) {
+    try {
+      await apiRequest("/api/client/settings/sidebar-order", {
+        method: "PATCH",
+        body: JSON.stringify({ order }),
+      });
+    } catch (error) {
+      console.error("Unable to save sidebar order:", error);
+    }
+  }
+
+  function handleNavDragStart(index) {
+    dragIndexRef.current = index;
+  }
+
+  function handleNavDragOverItem(event, key) {
+    event.preventDefault();
+    if (dragOverKey !== key) setDragOverKey(key);
+  }
+
+  function handleNavDrop(index) {
+    const from = dragIndexRef.current;
+    dragIndexRef.current = null;
+    setDragOverKey(null);
+    if (from === null || from === index) return;
+    setNavGroups((current) => {
+      const next = current.slice();
+      const [moved] = next.splice(from, 1);
+      next.splice(index, 0, moved);
+      persistSidebarOrder(next.map((g) => g.key));
+      return next;
+    });
+  }
+
+  function handleNavDragEnd() {
+    dragIndexRef.current = null;
+    setDragOverKey(null);
+  }
+
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // Global CRM year workspace shared by all operational modules.
   const currentYear = new Date().getFullYear();
@@ -2672,6 +2757,10 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       return renderProfile();
     }
 
+    if (module === "chats") {
+      return <ChatPanel currentUser={user} />;
+    }
+
     if (
       !hasModulePermission(
         module
@@ -2731,6 +2820,9 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     switch (
       module
     ) {
+      case "chats":
+        return <ChatPanel currentUser={user} />;
+
       case "dashboard":
         return (
           <Dashboard
@@ -3364,7 +3456,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
                   {workspaceSearch.trim() && (
                     <div className="absolute left-0 right-0 top-[46px] z-[95] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_45px_rgba(15,23,42,0.24)]">
-                      {NAV_GROUPS.flatMap(
+                      {NAV_GROUPS.filter((group) => group.key !== "chats").flatMap(
                         (group) =>
                           group.items.map((key) => ({
                             key,
@@ -3437,33 +3529,42 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               }`}
             >
               <div className="sidebar-scroll h-full overflow-y-auto overflow-x-hidden pr-0.5">
-                {NAV_GROUPS.map((group) => {
+                {navGroups.map((group, navIndex) => {
                   const Icon = group.icon;
                   const groupActive = group.items.includes(module);
+                  const draggable = !sidebarCompact;
+                  const isDragOver = dragOverKey === group.key;
 
                   if (group.direct) {
                     const key = group.items[0];
                     const active = module === key;
                     const locked =
-                      !enabledFeatures.includes(key) ||
-                      !hasModulePermission(key);
+                      group.key === "chats"
+                        ? false
+                        : !enabledFeatures.includes(key) ||
+                          !hasModulePermission(key);
 
                     return (
                       <button
                         key={group.key}
                         type="button"
+                        draggable={draggable}
+                        onDragStart={() => handleNavDragStart(navIndex)}
+                        onDragOver={(e) => handleNavDragOverItem(e, group.key)}
+                        onDrop={() => handleNavDrop(navIndex)}
+                        onDragEnd={handleNavDragEnd}
                         title={sidebarCompact ? group.label : undefined}
                         onClick={() => {
                           setModule(key);
                           setMobileSidebarOpen(false);
                         }}
-                        className={`relative mb-1 w-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                        className={`relative mb-1 w-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isDragOver ? "opacity-60 " : ""}${
                           sidebarCompact
                             ? "h-11 rounded-lg flex items-center justify-center"
                             : "h-11 rounded-lg px-3 flex items-center gap-3"
                         } ${
                           active
-                            ? "bg-gradient-to-r from-[#3457eb] to-[#4f46e5] text-white shadow-[0_8px_18px_rgba(79,70,229,0.20)] ring-1 ring-inset ring-indigo-400/15"
+                            ? "bg-brand-600 text-white shadow-brand-sm"
                             : "text-slate-300 hover:bg-white/[0.06] hover:text-white"
                         }`}
                       >
@@ -3566,7 +3667,12 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   return (
                     <div
                       key={group.key}
-                      className="mb-1"
+                      draggable={draggable}
+                      onDragStart={() => handleNavDragStart(navIndex)}
+                      onDragOver={(e) => handleNavDragOverItem(e, group.key)}
+                      onDrop={() => handleNavDrop(navIndex)}
+                      onDragEnd={handleNavDragEnd}
+                      className={`mb-1 ${isDragOver ? "opacity-60" : ""}`}
                     >
                       <button
                         type="button"
@@ -3804,6 +3910,17 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     <option value="__add_year__">+ Add Year</option>
                   </select>
                 </div>
+
+                {/* CALENDAR */}
+                <button
+                  type="button"
+                  onClick={() => setCalendarOpen(true)}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+                  aria-label="Open calendar"
+                  title="Calendar"
+                >
+                  <CalendarDays size={18} />
+                </button>
 
                 {/* NOTIFICATIONS */}
                 <div ref={notificationRef} className="relative">
@@ -4733,6 +4850,11 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           </div>
         </div>
       )}
+
+      <CalendarModal
+        open={calendarOpen}
+        onClose={() => setCalendarOpen(false)}
+      />
 
       {addYearOpen && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">

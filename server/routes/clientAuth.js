@@ -305,6 +305,8 @@ function buildClientSession(user) {
         user.jobTitle,
       department:
         user.department,
+      sidebarOrder:
+        user.sidebarOrder || [],
 
       permissions: {
         canManageUsers:

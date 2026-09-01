@@ -46,8 +46,11 @@ import clientWalkinsRoutes from "./routes/clientWalkins.js";
 import clientCounsellingRoutes from "./routes/clientCounselling.js";
 import clientCalendarRoutes from "./routes/clientCalendar.js";
 import clientYearsRoutes from "./routes/clientYears.js";
+import clientChatRoutes from "./routes/clientChat.js";
 
 import razorpayWebhook from "./routes/razorpayWebhook.js";
+import http from "http";
+import { attachSocketServer } from "./socket.js";
 
 const config = loadServerConfig();
 
@@ -167,6 +170,7 @@ app.use("/api/client/walkins", clientWalkinsRoutes);
 app.use("/api/client/counselling", clientCounsellingRoutes);
 app.use("/api/client/calendar", clientCalendarRoutes);
 app.use("/api/client/years", clientYearsRoutes);
+app.use("/api/client/chat", clientChatRoutes);
 
 app.use((req, res) =>
   res.status(404).json({
@@ -196,7 +200,12 @@ app.use((error, req, res, next) => {
   });
 });
 
-const server = app.listen(config.port, () =>
+const server = http.createServer(app);
+
+// Attach Socket.IO for real-time chat (shares cookie-JWT auth).
+attachSocketServer(server, config);
+
+server.listen(config.port, () =>
   console.log(`ConsulBuzz API running on http://localhost:${config.port}`)
 );
 

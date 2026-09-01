@@ -199,6 +199,7 @@ model Company {
   calendarEvents          CalendarEvent[]
   workspaceYears          CompanyWorkspaceYear[]
   clientSessions          ClientSession[]
+  conversations Conversation[]
 }
 
 model User {
@@ -214,6 +215,8 @@ model User {
   jobTitle   String?
   department String?
 
+  sidebarOrder String[] @default([])
+  
   canManageUsers      Boolean @default(false)
   canManageSettings   Boolean @default(false)
   canManageBilling    Boolean @default(false)
@@ -238,6 +241,8 @@ model User {
   calendarEventsCreated  CalendarEvent[]             @relation("CalendarEventCreator")
   calendarEventsAssigned CalendarEvent[]             @relation("CalendarEventAssignee")
   clientSessions         ClientSession[]
+  chatMemberships ConversationMember[] @relation("ChatMember")
+  chatMessages    ChatMessage[]        @relation("ChatSender")
 
   @@index([companyId])
   @@index([companyId, role])
@@ -1115,4 +1120,48 @@ model CalendarEvent {
   @@index([companyId, type])
   @@index([assignedToUserId, startAt])
   @@index([createdByUserId])
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  isGroup   Boolean  @default(false)
+  name      String?  // group name; null for 1-to-1
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdByUserId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members  ConversationMember[]
+  messages ChatMessage[]
+
+  @@index([companyId])
+}
+
+model ConversationMember {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation("ChatMember", fields: [userId], references: [id], onDelete: Cascade)
+
+  lastReadAt DateTime?
+  joinedAt   DateTime @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("ChatSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
 }

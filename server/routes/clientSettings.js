@@ -517,5 +517,34 @@ router.patch("/", async (req, res) => {
     });
   }
 });
+router.patch("/sidebar-order", async (req, res) => {
+  try {
+    const { order } = req.body;
+
+    if (!Array.isArray(order)) {
+      return res.status(400).json({
+        success: false,
+        message: "order must be an array",
+      });
+    }
+
+    const clean = order
+      .filter((k) => typeof k === "string")
+      .slice(0, 50);
+
+    await prisma.user.update({
+      where: { id: req.clientUser.userId },
+      data: { sidebarOrder: clean },
+    });
+
+    return res.json({ success: true, sidebarOrder: clean });
+  } catch (error) {
+    console.error("Failed to save sidebar order:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to save sidebar order",
+    });
+  }
+});
 
 export default router;
