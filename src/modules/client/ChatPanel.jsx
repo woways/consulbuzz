@@ -85,6 +85,7 @@ export default function ChatPanel({ currentUser }) {
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState("");
+  const [listFilter, setListFilter] = useState("all"); // "all" | "unread"
 
   // New-chat modal state
   const [newOpen, setNewOpen] = useState(false);
@@ -133,10 +134,14 @@ export default function ChatPanel({ currentUser }) {
           loadConversations();
           return current;
         }
+        const isOpen = conversationId === activeIdRef.current;
         const updated = {
           ...current[idx],
           lastMessage,
           updatedAt: lastMessage.createdAt,
+          unreadCount: isOpen
+            ? 0
+            : (current[idx].unreadCount || 0) + 1,
         };
         const next = current.slice();
         next.splice(idx, 1);
@@ -203,6 +208,12 @@ export default function ChatPanel({ currentUser }) {
     if (!socket || !activeId) return undefined;
     socket.emit("conversation:join", activeId);
     loadMessages(activeId);
+    // Clear unread badge for the opened conversation.
+    setConversations((current) =>
+      current.map((c) =>
+        c.id === activeId ? { ...c, unreadCount: 0 } : c
+      )
+    );
     return () => {
       socket.emit("conversation:leave", activeId);
     };
@@ -297,12 +308,18 @@ export default function ChatPanel({ currentUser }) {
   );
 
   const filteredConversations = useMemo(() => {
+    let list = conversations;
+    if (listFilter === "unread") {
+      list = list.filter((c) => (c.unreadCount || 0) > 0);
+    }
     const q = search.trim().toLowerCase();
-    if (!q) return conversations;
-    return conversations.filter((c) =>
-      String(c.title).toLowerCase().includes(q)
-    );
-  }, [conversations, search]);
+    if (q) {
+      list = list.filter((c) =>
+        String(c.title).toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [conversations, search, listFilter]);
 
   const filteredUsers = useMemo(() => {
     const q = userSearch.trim().toLowerCase();
@@ -384,6 +401,26 @@ export default function ChatPanel({ currentUser }) {
                 <Plus size={14} />
                 New chat
               </button>
+
+              <div className="mt-2 flex gap-1">
+                {[
+                  ["all", "All"],
+                  ["unread", "Unread"],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setListFilter(value)}
+                    className={`flex-1 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-colors ${
+                      listFilter === value
+                        ? "bg-slate-950 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -429,11 +466,18 @@ export default function ChatPanel({ currentUser }) {
                             : "No messages yet"}
                         </div>
                       </div>
-                      {c.lastMessage && (
-                        <span className="flex-shrink-0 text-[9px] font-semibold text-slate-400">
-                          {formatTime(c.lastMessage.createdAt)}
-                        </span>
-                      )}
+                      <div className="flex flex-shrink-0 flex-col items-end gap-1">
+                        {c.lastMessage && (
+                          <span className="text-[9px] font-semibold text-slate-400">
+                            {formatTime(c.lastMessage.createdAt)}
+                          </span>
+                        )}
+                        {(c.unreadCount || 0) > 0 && (
+                          <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand-600 px-1 text-[9px] font-bold text-white">
+                            {c.unreadCount > 9 ? "9+" : c.unreadCount}
+                          </span>
+                        )}
+                      </div>
                     </button>
                   );
                 })

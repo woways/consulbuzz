@@ -19,7 +19,7 @@ function userMini(user) {
 
 // Shape a conversation for the list: for 1-to-1, the "title" is the other
 // person's name; for a group, the group name.
-function formatConversation(conversation, currentUserId) {
+function formatConversation(conversation, currentUserId, unreadCount = 0) {
   const others = conversation.members
     .map((m) => m.user)
     .filter((u) => u && u.id !== currentUserId);
@@ -45,6 +45,7 @@ function formatConversation(conversation, currentUserId) {
     members: conversation.members.map((m) => userMini(m.user)),
     otherMembers: others.map(userMini),
     lastMessage,
+    unreadCount,
     updatedAt: conversation.updatedAt,
   };
 }
@@ -98,11 +99,29 @@ router.get("/", async (req, res) => {
       orderBy: { updatedAt: "desc" },
     });
 
+    const me = req.clientUser.userId;
+
+    // Compute unread counts: messages after my lastReadAt, not sent by me.
+    const withUnread = await Promise.all(
+      conversations.map(async (c) => {
+        const myMembership = c.members.find((m) => m.userId === me);
+        const lastReadAt = myMembership?.lastReadAt || null;
+
+        const unreadCount = await prisma.chatMessage.count({
+          where: {
+            conversationId: c.id,
+            senderId: { not: me },
+            ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
+          },
+        });
+
+        return formatConversation(c, me, unreadCount);
+      })
+    );
+
     return res.json({
       success: true,
-      conversations: conversations.map((c) =>
-        formatConversation(c, req.clientUser.userId)
-      ),
+      conversations: withUnread,
     });
   } catch (error) {
     console.error("Failed to fetch conversations:", error);
