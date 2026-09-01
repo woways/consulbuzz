@@ -1148,6 +1148,8 @@ model ConversationMember {
 
   lastReadAt DateTime?
   joinedAt   DateTime @default(now())
+  isFavorite Boolean   @default(false)
+  isMuted    Boolean   @default(false)
 
   @@unique([conversationId, userId])
   @@index([userId])
@@ -1162,6 +1164,7 @@ model ChatMessage {
 
   body      String
   createdAt DateTime @default(now())
+  pinned Boolean @default(false)
 
   @@index([conversationId, createdAt])
 }

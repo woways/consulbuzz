@@ -24,6 +24,10 @@ function formatConversation(conversation, currentUserId, unreadCount = 0) {
     .map((m) => m.user)
     .filter((u) => u && u.id !== currentUserId);
 
+  const myMembership = conversation.members.find(
+    (m) => m.userId === currentUserId
+  );
+
   const title = conversation.isGroup
     ? conversation.name || "Group chat"
     : others[0]?.name || "Conversation";
@@ -46,6 +50,8 @@ function formatConversation(conversation, currentUserId, unreadCount = 0) {
     otherMembers: others.map(userMini),
     lastMessage,
     unreadCount,
+    isFavorite: Boolean(myMembership?.isFavorite),
+    isMuted: Boolean(myMembership?.isMuted),
     updatedAt: conversation.updatedAt,
   };
 }
@@ -181,6 +187,7 @@ router.get("/:id/messages", async (req, res) => {
       id: m.id,
       conversationId: m.conversationId,
       body: m.body,
+      pinned: m.pinned,
       createdAt: m.createdAt,
       sender: userMini(m.sender),
     }));
@@ -311,6 +318,142 @@ router.post("/", async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Unable to create conversation" });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* PATCH /:id/favorite — toggle favorite for the current user          */
+/* ------------------------------------------------------------------ */
+
+router.patch("/:id/favorite", async (req, res) => {
+  try {
+    const conversationId = req.params.id;
+    const isFavorite = Boolean(req.body?.isFavorite);
+
+    const member = await prisma.conversationMember.findUnique({
+      where: {
+        conversationId_userId: {
+          conversationId,
+          userId: req.clientUser.userId,
+        },
+      },
+    });
+    if (!member) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Conversation not found" });
+    }
+
+    await prisma.conversationMember.update({
+      where: {
+        conversationId_userId: {
+          conversationId,
+          userId: req.clientUser.userId,
+        },
+      },
+      data: { isFavorite },
+    });
+
+    return res.json({ success: true, isFavorite });
+  } catch (error) {
+    console.error("Toggle favorite failed:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Unable to update favorite" });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* PATCH /:id/mute — toggle mute for the current user                  */
+/* ------------------------------------------------------------------ */
+
+router.patch("/:id/mute", async (req, res) => {
+  try {
+    const conversationId = req.params.id;
+    const isMuted = Boolean(req.body?.isMuted);
+
+    const member = await prisma.conversationMember.findUnique({
+      where: {
+        conversationId_userId: {
+          conversationId,
+          userId: req.clientUser.userId,
+        },
+      },
+    });
+    if (!member) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Conversation not found" });
+    }
+
+    await prisma.conversationMember.update({
+      where: {
+        conversationId_userId: {
+          conversationId,
+          userId: req.clientUser.userId,
+        },
+      },
+      data: { isMuted },
+    });
+
+    return res.json({ success: true, isMuted });
+  } catch (error) {
+    console.error("Toggle mute failed:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Unable to update mute" });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* PATCH /messages/:messageId/pin — toggle a message's pinned state     */
+/* ------------------------------------------------------------------ */
+
+router.patch("/messages/:messageId/pin", async (req, res) => {
+  try {
+    const messageId = req.params.messageId;
+    const pinned = Boolean(req.body?.pinned);
+
+    const message = await prisma.chatMessage.findUnique({
+      where: { id: messageId },
+      include: { conversation: true },
+    });
+
+    if (
+      !message ||
+      message.conversation.companyId !== req.clientUser.companyId
+    ) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Message not found" });
+    }
+
+    // Must be a member of the conversation to pin.
+    const member = await prisma.conversationMember.findUnique({
+      where: {
+        conversationId_userId: {
+          conversationId: message.conversationId,
+          userId: req.clientUser.userId,
+        },
+      },
+    });
+    if (!member) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Not a member" });
+    }
+
+    await prisma.chatMessage.update({
+      where: { id: messageId },
+      data: { pinned },
+    });
+
+    return res.json({ success: true, pinned });
+  } catch (error) {
+    console.error("Toggle pin failed:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Unable to update pin" });
   }
 });
 

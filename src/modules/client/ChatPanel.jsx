@@ -13,6 +13,11 @@ import {
   Plus,
   Send,
   Smile,
+  PinOff,
+  Pin,
+  Bell,
+  BellOff,
+  Star,
   Loader2,
   Users,
   UserRound,
@@ -36,6 +41,26 @@ function initialsOf(name) {
     .map((p) => p[0])
     .join("")
     .toUpperCase();
+}
+
+// Consistent gradient per person, picked from their name.
+const AVATAR_GRADIENTS = [
+  "from-indigo-500 to-violet-500",
+  "from-rose-400 to-pink-500",
+  "from-sky-400 to-blue-500",
+  "from-emerald-400 to-teal-500",
+  "from-amber-400 to-orange-500",
+  "from-fuchsia-400 to-purple-500",
+  "from-cyan-400 to-sky-500",
+];
+
+function avatarGradient(name) {
+  const str = String(name || "?");
+  let hash = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length];
 }
 
 function formatTime(iso) {
@@ -231,6 +256,71 @@ export default function ChatPanel({ currentUser }) {
     setDraft((current) => current + emoji);
   }
 
+  async function toggleFavorite(conv, e) {
+    e?.stopPropagation();
+    const next = !conv.isFavorite;
+    setConversations((current) =>
+      current.map((c) =>
+        c.id === conv.id ? { ...c, isFavorite: next } : c
+      )
+    );
+    try {
+      await apiRequest(`/api/client/chat/${conv.id}/favorite`, {
+        method: "PATCH",
+        body: JSON.stringify({ isFavorite: next }),
+      });
+    } catch (err) {
+      // revert on failure
+      setConversations((current) =>
+        current.map((c) =>
+          c.id === conv.id ? { ...c, isFavorite: !next } : c
+        )
+      );
+    }
+  }
+
+  async function toggleMute(conv) {
+    const next = !conv.isMuted;
+    setConversations((current) =>
+      current.map((c) =>
+        c.id === conv.id ? { ...c, isMuted: next } : c
+      )
+    );
+    try {
+      await apiRequest(`/api/client/chat/${conv.id}/mute`, {
+        method: "PATCH",
+        body: JSON.stringify({ isMuted: next }),
+      });
+    } catch (err) {
+      setConversations((current) =>
+        current.map((c) =>
+          c.id === conv.id ? { ...c, isMuted: !next } : c
+        )
+      );
+    }
+  }
+
+  async function togglePin(message) {
+    const next = !message.pinned;
+    setMessages((current) =>
+      current.map((m) =>
+        m.id === message.id ? { ...m, pinned: next } : m
+      )
+    );
+    try {
+      await apiRequest(`/api/client/chat/messages/${message.id}/pin`, {
+        method: "PATCH",
+        body: JSON.stringify({ pinned: next }),
+      });
+    } catch (err) {
+      setMessages((current) =>
+        current.map((m) =>
+          m.id === message.id ? { ...m, pinned: !next } : m
+        )
+      );
+    }
+  }
+
   function sendMessage() {
     const body = draft.trim();
     if (!body || !activeId || sending) return;
@@ -318,7 +408,10 @@ export default function ChatPanel({ currentUser }) {
         String(c.title).toLowerCase().includes(q)
       );
     }
-    return list;
+    // Favorites first, preserving existing recency order within each group.
+    const favs = list.filter((c) => c.isFavorite);
+    const rest = list.filter((c) => !c.isFavorite);
+    return [...favs, ...rest];
   }, [conversations, search, listFilter]);
 
   const filteredUsers = useMemo(() => {
@@ -330,6 +423,11 @@ export default function ChatPanel({ currentUser }) {
         u.email.toLowerCase().includes(q)
     );
   }, [users, userSearch]);
+
+  const pinnedMessages = useMemo(
+    () => messages.filter((m) => m.pinned),
+    [messages]
+  );
 
   // Group messages by day for date separators.
   const groupedMessages = useMemo(() => {
@@ -350,6 +448,12 @@ export default function ChatPanel({ currentUser }) {
 
   return (
     <div className="flex h-[calc(100vh-104px)] w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <style>{`
+        .cb-bubble { transition: transform .15s ease, box-shadow .15s ease; }
+        .cb-bubble:hover { transform: translateY(-1px); }
+        .cb-send { transition: transform .15s ease, box-shadow .15s ease; }
+        .cb-send:hover:not(:disabled) { transform: translateY(-1px) scale(1.03); box-shadow: 0 8px 20px rgba(79,70,229,.35); }
+      `}</style>
         {/* HEADER */}
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-5">
           <div className="flex items-center gap-2.5">
@@ -446,16 +550,16 @@ export default function ChatPanel({ currentUser }) {
                       }`}
                     >
                       <span
-                        className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-xs font-black ${
+                        className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${
                           c.isGroup
-                            ? "bg-violet-100 text-violet-700"
-                            : "bg-slate-200 text-slate-700"
+                            ? "bg-gradient-to-br from-violet-500 to-purple-600"
+                            : "bg-gradient-to-br " + avatarGradient(c.title)
                         }`}
                       >
                         {c.isGroup ? <Users size={16} /> : initialsOf(c.title)}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-[13px] font-bold text-slate-900">
+                        <div className="truncate text-[13px] font-bold tracking-[-0.01em] text-slate-900">
                           {c.title}
                         </div>
                         <div className="truncate text-[11px] text-slate-500">
@@ -466,16 +570,36 @@ export default function ChatPanel({ currentUser }) {
                             : "No messages yet"}
                         </div>
                       </div>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => toggleFavorite(c, e)}
+                        className="flex-shrink-0 cursor-pointer p-1"
+                        aria-label={c.isFavorite ? "Unfavorite" : "Favorite"}
+                      >
+                        <Star
+                          size={14}
+                          className={
+                            c.isFavorite
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-slate-300 hover:text-amber-400"
+                          }
+                        />
+                      </span>
+
                       <div className="flex flex-shrink-0 flex-col items-end gap-1">
                         {c.lastMessage && (
                           <span className="text-[9px] font-semibold text-slate-400">
                             {formatTime(c.lastMessage.createdAt)}
                           </span>
                         )}
-                        {(c.unreadCount || 0) > 0 && (
+                        {(c.unreadCount || 0) > 0 && !c.isMuted && (
                           <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand-600 px-1 text-[9px] font-bold text-white">
                             {c.unreadCount > 9 ? "9+" : c.unreadCount}
                           </span>
+                        )}
+                        {c.isMuted && (
+                          <BellOff size={12} className="text-slate-400" />
                         )}
                       </div>
                     </button>
@@ -494,7 +618,7 @@ export default function ChatPanel({ currentUser }) {
             {activeConversation ? (
               <>
                 {/* Thread header */}
-                <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
+                <div className="flex items-center gap-3 border-b border-slate-100 bg-gradient-to-r from-white to-slate-50 px-4 py-3">
                   <button
                     type="button"
                     onClick={() => setActiveId(null)}
@@ -504,20 +628,20 @@ export default function ChatPanel({ currentUser }) {
                     <ChevronLeft size={17} />
                   </button>
                   <span
-                    className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-black ${
+                    className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white shadow-md ${
                       activeConversation.isGroup
-                        ? "bg-violet-100 text-violet-700"
-                        : "bg-slate-200 text-slate-700"
+                        ? "bg-gradient-to-br from-violet-500 to-purple-600"
+                        : "bg-gradient-to-br " + avatarGradient(activeConversation.title)
                     }`}
                   >
                     {activeConversation.isGroup ? (
-                      <Users size={15} />
+                      <Users size={16} />
                     ) : (
                       initialsOf(activeConversation.title)
                     )}
                   </span>
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-black text-slate-950">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[15px] font-bold tracking-[-0.01em] text-slate-900">
                       {activeConversation.title}
                     </div>
                     <div className="truncate text-[11px] text-slate-500">
@@ -528,10 +652,72 @@ export default function ChatPanel({ currentUser }) {
                         : activeConversation.otherMembers[0]?.email || ""}
                     </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => toggleMute(activeConversation)}
+                    title={activeConversation.isMuted ? "Unmute" : "Mute"}
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+                  >
+                    {activeConversation.isMuted ? (
+                      <BellOff size={16} />
+                    ) : (
+                      <Bell size={16} />
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => toggleFavorite(activeConversation)}
+                    title={activeConversation.isFavorite ? "Unfavorite" : "Favorite"}
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+                  >
+                    <Star
+                      size={16}
+                      className={
+                        activeConversation.isFavorite
+                          ? "fill-amber-400 text-amber-400"
+                          : ""
+                      }
+                    />
+                  </button>
                 </div>
 
+                {/* Pinned messages banner */}
+                {pinnedMessages.length > 0 && (
+                  <div className="border-b border-amber-200 bg-amber-50 px-4 py-2">
+                    <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+                      <Pin size={11} />
+                      Pinned ({pinnedMessages.length})
+                    </div>
+                    <div className="space-y-1">
+                      {pinnedMessages.map((pm) => (
+                        <div
+                          key={`pin-${pm.id}`}
+                          className="flex items-start gap-2 text-[11px] text-amber-900"
+                        >
+                          <span className="min-w-0 flex-1 truncate">
+                            <span className="font-semibold">
+                              {pm.sender?.name}:
+                            </span>{" "}
+                            {pm.body}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => togglePin(pm)}
+                            className="flex-shrink-0 text-amber-600 hover:text-amber-800"
+                            title="Unpin"
+                          >
+                            <PinOff size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Messages */}
-                <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50/50 px-4 py-4">
+                <div className="min-h-0 flex-1 overflow-y-auto bg-gradient-to-b from-indigo-50/40 via-slate-50 to-white px-4 py-5">
                   {loadingThread ? (
                     <div className="flex items-center justify-center gap-2 py-10 text-xs text-slate-500">
                       <Loader2 size={14} className="animate-spin" />
@@ -542,17 +728,19 @@ export default function ChatPanel({ currentUser }) {
                       No messages yet. Say hello 👋
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       {groupedMessages.map((item) => {
                         if (item.type === "day") {
                           return (
                             <div
                               key={item.key}
-                              className="my-3 flex items-center justify-center"
+                              className="my-4 flex items-center gap-3"
                             >
-                              <span className="rounded-full bg-slate-200/70 px-3 py-1 text-[10px] font-bold text-slate-500">
+                              <div className="h-px flex-1 bg-slate-200" />
+                              <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
                                 {item.day}
                               </span>
+                              <div className="h-px flex-1 bg-slate-200" />
                             </div>
                           );
                         }
@@ -562,15 +750,36 @@ export default function ChatPanel({ currentUser }) {
                         return (
                           <div
                             key={item.key}
-                            className={`flex ${
+                            className={`group flex items-end gap-2 ${
                               mine ? "justify-end" : "justify-start"
                             }`}
                           >
+                            {mine && (
+                              <button
+                                type="button"
+                                onClick={() => togglePin(m)}
+                                title={m.pinned ? "Unpin" : "Pin"}
+                                className="mb-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md text-slate-400 opacity-0 hover:bg-slate-100 hover:text-slate-600 group-hover:opacity-100"
+                              >
+                                {m.pinned ? <PinOff size={12} /> : <Pin size={12} />}
+                              </button>
+                            )}
+
+                            {!mine && (
+                              <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[10px] font-bold text-white shadow-sm ${avatarGradient(m.sender?.name)}`}>
+                                {initialsOf(m.sender?.name)}
+                              </span>
+                            )}
+
                             <div
-                              className={`max-w-[75%] rounded-2xl px-3.5 py-2 ${
+                              className={`cb-bubble relative max-w-[72%] px-4 py-2.5 text-[13px] leading-relaxed ${
                                 mine
-                                  ? "bg-brand-600 text-white"
-                                  : "border border-slate-200 bg-white text-slate-800"
+                                  ? "rounded-2xl rounded-br-md bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md"
+                                  : "rounded-2xl rounded-bl-md border border-slate-100 bg-white text-slate-800 shadow-sm"
+                              } ${
+                                m.pinned
+                                  ? "ring-1 ring-amber-300"
+                                  : ""
                               }`}
                             >
                               {!mine && activeConversation.isGroup && (
@@ -578,17 +787,28 @@ export default function ChatPanel({ currentUser }) {
                                   {m.sender?.name}
                                 </div>
                               )}
-                              <div className="whitespace-pre-wrap break-words text-[13px] leading-snug">
+                              <div className="whitespace-pre-wrap break-words">
                                 {m.body}
                               </div>
                               <div
-                                className={`mt-0.5 text-right text-[9px] ${
-                                  mine ? "text-white/70" : "text-slate-400"
+                                className={`mt-1 text-right text-[9px] ${
+                                  mine ? "text-white/60" : "text-slate-400"
                                 }`}
                               >
                                 {formatTime(m.createdAt)}
                               </div>
                             </div>
+
+                            {!mine && (
+                              <button
+                                type="button"
+                                onClick={() => togglePin(m)}
+                                title={m.pinned ? "Unpin" : "Pin"}
+                                className="mb-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md text-slate-400 opacity-0 hover:bg-slate-100 hover:text-slate-600 group-hover:opacity-100"
+                              >
+                                {m.pinned ? <PinOff size={12} /> : <Pin size={12} />}
+                              </button>
+                            )}
                           </div>
                         );
                       })}
@@ -605,7 +825,7 @@ export default function ChatPanel({ currentUser }) {
                       <button
                         type="button"
                         onClick={() => setEmojiOpen((o) => !o)}
-                        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-indigo-50 hover:text-indigo-500"
                         aria-label="Emoji"
                       >
                         <Smile size={18} />
@@ -648,13 +868,13 @@ export default function ChatPanel({ currentUser }) {
                       }}
                       rows={1}
                       placeholder="Type a message"
-                      className="max-h-28 min-h-[40px] flex-1 resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-brand-400"
+                      className="max-h-28 min-h-[44px] flex-1 resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-indigo-400 focus:bg-white"
                     />
                     <button
                       type="button"
                       onClick={sendMessage}
                       disabled={sending || !draft.trim()}
-                      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-40"
+                      className="cb-send flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md disabled:opacity-40"
                       aria-label="Send"
                     >
                       {sending ? (
