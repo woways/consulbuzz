@@ -95,6 +95,9 @@ function formatEvent(
     location:
       event.location,
 
+    meetingRoom:
+      event.meetingRoom,
+
     createdByUserId:
       event.createdByUserId,
 
@@ -416,6 +419,11 @@ router.post(
           req.body?.location
         );
 
+      const meetingRoom =
+        cleanString(
+          req.body?.meetingRoom
+        ) || null;
+
       const type =
         String(
           req.body?.type ||
@@ -571,6 +579,8 @@ router.post(
 
             location,
 
+            meetingRoom,
+
             createdByUserId:
               userId ||
               null,
@@ -721,6 +731,17 @@ router.patch(
           cleanString(
             req.body.location
           );
+      }
+
+      if (
+        req.body
+          ?.meetingRoom !==
+        undefined
+      ) {
+        data.meetingRoom =
+          cleanString(
+            req.body.meetingRoom
+          ) || null;
       }
 
       if (

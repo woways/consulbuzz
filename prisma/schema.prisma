@@ -1105,6 +1105,7 @@ model CalendarEvent {
   allDay Boolean @default(false)
 
   location String?
+  meetingRoom String?
 
   createdByUserId String?
   createdByUser   User?   @relation("CalendarEventCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)

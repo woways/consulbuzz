@@ -4854,6 +4854,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       <CalendarModal
         open={calendarOpen}
         onClose={() => setCalendarOpen(false)}
+        currentUser={user}
       />
 
       {addYearOpen && (

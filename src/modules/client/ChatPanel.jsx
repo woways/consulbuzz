@@ -12,6 +12,7 @@ import {
   Search,
   Plus,
   Send,
+  Video,
   Smile,
   PinOff,
   Pin,
@@ -26,6 +27,8 @@ import {
   ChevronLeft,
   Check,
 } from "lucide-react";
+
+import MeetingRoom from "./MeetingRoom";
 
 import { apiRequest, API_URL } from "../../lib/api";
 
@@ -93,6 +96,10 @@ const EMOJIS = [
   "📌","📎","📅","⏰","☕","🍕","🚀","💰","📈","🎯",
 ];
 
+// Marker used to embed a join link in a chat message.
+const MEETING_PREFIX = "\uD83D\uDCF9 Meeting started \u2014 join: ";
+const JITSI_BASE = "https://meet.jit.si/";
+
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
@@ -108,6 +115,8 @@ export default function ChatPanel({ currentUser }) {
   const [error, setError] = useState("");
   const [draft, setDraft] = useState("");
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [meetingOpen, setMeetingOpen] = useState(false);
+  const [meetingRoom, setMeetingRoom] = useState("");
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState("");
   const [listFilter, setListFilter] = useState("all"); // "all" | "unread"
@@ -319,6 +328,48 @@ export default function ChatPanel({ currentUser }) {
         )
       );
     }
+  }
+
+  function startMeeting() {
+    if (!activeId) return;
+    const socket = socketRef.current;
+    if (!socket) return;
+
+    // Unique room name: consulbuzz-<conversation>-<timestamp>.
+    const room = `consulbuzz-${activeId.slice(0, 8)}-${Date.now().toString(36)}`;
+
+    // Post the join link into the conversation so others can join.
+    socket.emit(
+      "message:send",
+      {
+        conversationId: activeId,
+        body: `${MEETING_PREFIX}${JITSI_BASE}${room}`,
+      },
+      (resp) => {
+        if (resp?.ok) {
+          setMessages((current) => {
+            if (current.some((m) => m.id === resp.message.id)) return current;
+            return [...current, resp.message];
+          });
+        }
+      }
+    );
+
+    setMeetingRoom(room);
+    setMeetingOpen(true);
+  }
+
+  function joinMeeting(room) {
+    setMeetingRoom(room);
+    setMeetingOpen(true);
+  }
+
+  // Extract a Jitsi room name from a message body, if present.
+  function meetingRoomFromBody(body) {
+    const idx = String(body).indexOf(JITSI_BASE);
+    if (idx === -1) return null;
+    const url = String(body).slice(idx + JITSI_BASE.length).trim();
+    return url.split(/\s/)[0] || null;
   }
 
   function sendMessage() {
@@ -655,6 +706,16 @@ export default function ChatPanel({ currentUser }) {
 
                   <button
                     type="button"
+                    onClick={startMeeting}
+                    title="Start a video meeting"
+                    className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-emerald-700"
+                  >
+                    <Video size={14} />
+                    Meet now
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => toggleMute(activeConversation)}
                     title={activeConversation.isMuted ? "Unmute" : "Mute"}
                     className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
@@ -787,9 +848,34 @@ export default function ChatPanel({ currentUser }) {
                                   {m.sender?.name}
                                 </div>
                               )}
-                              <div className="whitespace-pre-wrap break-words">
-                                {m.body}
-                              </div>
+                              {meetingRoomFromBody(m.body) ? (
+                                <div className="flex items-center gap-2">
+                                  <Video
+                                    size={15}
+                                    className={mine ? "text-white" : "text-emerald-600"}
+                                  />
+                                  <span className="text-[12px] font-semibold">
+                                    Meeting started
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      joinMeeting(meetingRoomFromBody(m.body))
+                                    }
+                                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold ${
+                                      mine
+                                        ? "bg-white/20 text-white hover:bg-white/30"
+                                        : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                    }`}
+                                  >
+                                    Join
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="whitespace-pre-wrap break-words">
+                                  {m.body}
+                                </div>
+                              )}
                               <div
                                 className={`mt-1 text-right text-[9px] ${
                                   mine ? "text-white/60" : "text-slate-400"
@@ -999,6 +1085,17 @@ export default function ChatPanel({ currentUser }) {
           </div>
         </div>
       )}
+
+      <MeetingRoom
+        open={meetingOpen}
+        roomName={meetingRoom}
+        displayName={currentUser?.name}
+        subject="ConsulBuzz Meeting"
+        onClose={() => {
+          setMeetingOpen(false);
+          setMeetingRoom("");
+        }}
+      />
     </div>
   );
 }

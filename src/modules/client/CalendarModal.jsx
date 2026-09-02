@@ -18,7 +18,10 @@ import {
   UserRound,
   AlertCircle,
   CalendarDays,
+  Video,
 } from "lucide-react";
+
+import MeetingRoom from "./MeetingRoom";
 
 import { apiRequest } from "../../lib/api";
 
@@ -48,14 +51,15 @@ const TYPE_LABELS = {
 
 // Colour per type — soft background + strong text, consistent with the portal.
 const TYPE_STYLES = {
-  MEETING: "bg-indigo-100 text-indigo-800 border-indigo-200",
-  FOLLOW_UP: "bg-sky-100 text-sky-800 border-sky-200",
-  COUNSELLING: "bg-purple-100 text-purple-800 border-purple-200",
-  ADMISSION: "bg-teal-100 text-teal-800 border-teal-200",
-  PAYMENT: "bg-amber-100 text-amber-800 border-amber-200",
-  REMINDER: "bg-orange-100 text-orange-800 border-orange-200",
-  OTHER: "bg-slate-100 text-slate-700 border-slate-200",
+  MEETING: "bg-sky-100 text-sky-700 border-sky-200",
+  FOLLOW_UP: "bg-violet-100 text-violet-700 border-violet-200",
+  COUNSELLING: "bg-pink-100 text-pink-700 border-pink-200",
+  ADMISSION: "bg-cyan-100 text-cyan-700 border-cyan-200",
+  PAYMENT: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  REMINDER: "bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200",
+  OTHER: "bg-slate-100 text-slate-600 border-slate-200",
 };
+
 
 const STATUS_OPTIONS = ["SCHEDULED", "COMPLETED", "CANCELLED"];
 
@@ -154,7 +158,7 @@ function formatTimeLabel(date) {
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
 
-export default function CalendarModal({ open, onClose }) {
+export default function CalendarModal({ open, onClose, currentUser }) {
   const [anchorDate, setAnchorDate] = useState(() => new Date());
   const [viewMode, setViewMode] = useState("week"); // "day" | "workweek" | "week"
   const [viewMenuOpen, setViewMenuOpen] = useState(false);
@@ -166,6 +170,8 @@ export default function CalendarModal({ open, onClose }) {
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
+  const [meetingOpen, setMeetingOpen] = useState(false);
+  const [meetingRoom, setMeetingRoom] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -257,6 +263,8 @@ export default function CalendarModal({ open, onClose }) {
       startTime: toTimeInput(base),
       endTime: toTimeInput(end),
       assignedToUserId: "",
+      hasMeeting: false,
+      meetingRoom: "",
     });
     setEditorOpen(true);
   }
@@ -276,6 +284,8 @@ export default function CalendarModal({ open, onClose }) {
       startTime: toTimeInput(start),
       endTime: toTimeInput(end),
       assignedToUserId: event.assignedToUserId || "",
+      hasMeeting: Boolean(event.meetingRoom),
+      meetingRoom: event.meetingRoom || "",
     });
     setEditorOpen(true);
   }
@@ -307,6 +317,10 @@ export default function CalendarModal({ open, onClose }) {
         ? null
         : combineDateTime(editingEvent.dateStr, editingEvent.endTime),
       assignedToUserId: editingEvent.assignedToUserId || null,
+      meetingRoom: editingEvent.hasMeeting
+        ? editingEvent.meetingRoom ||
+          `consulbuzz-evt-${Date.now().toString(36)}`
+        : null,
     };
 
     try {
@@ -549,6 +563,20 @@ export default function CalendarModal({ open, onClose }) {
                           ? "All day"
                           : formatTimeLabel(event.startAt)}
                       </div>
+                      {event.meetingRoom && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMeetingRoom(event.meetingRoom);
+                            setMeetingOpen(true);
+                          }}
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-emerald-700"
+                        >
+                          <Video size={11} />
+                          Join meeting
+                        </button>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -813,6 +841,23 @@ export default function CalendarModal({ open, onClose }) {
                 All day
               </label>
 
+              {/* Video meeting toggle */}
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={editingEvent.hasMeeting}
+                  onChange={(e) =>
+                    setEditingEvent((c) => ({
+                      ...c,
+                      hasMeeting: e.target.checked,
+                    }))
+                  }
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+                <Video size={13} className="text-emerald-600" />
+                Add video meeting
+              </label>
+
               {/* Start / end times */}
               {!editingEvent.allDay && (
                 <div className="grid grid-cols-2 gap-3">
@@ -959,6 +1004,17 @@ export default function CalendarModal({ open, onClose }) {
           </div>
         </div>
       )}
+
+      <MeetingRoom
+        open={meetingOpen}
+        roomName={meetingRoom}
+        displayName={currentUser?.name}
+        subject="ConsulBuzz Meeting"
+        onClose={() => {
+          setMeetingOpen(false);
+          setMeetingRoom("");
+        }}
+      />
     </div>
   );
 }
