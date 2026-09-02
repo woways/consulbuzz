@@ -200,6 +200,7 @@ model Company {
   workspaceYears          CompanyWorkspaceYear[]
   clientSessions          ClientSession[]
   conversations Conversation[]
+  targetTasks TargetTask[]
 }
 
 model User {
@@ -225,6 +226,7 @@ model User {
   canManageRevenue    Boolean @default(false)
   canManageLeads      Boolean @default(false)
   canManageSupport    Boolean @default(false)
+  canViewTeamTargets Boolean @default(false)
 
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -243,6 +245,8 @@ model User {
   clientSessions         ClientSession[]
   chatMemberships ConversationMember[] @relation("ChatMember")
   chatMessages    ChatMessage[]        @relation("ChatSender")
+  targetTasksOwned    TargetTask[] @relation("TargetOwner")
+  targetTasksAssigned TargetTask[] @relation("TargetAssigner")
 
   @@index([companyId])
   @@index([companyId, role])
@@ -1168,4 +1172,47 @@ model ChatMessage {
   pinned Boolean @default(false)
 
   @@index([conversationId, createdAt])
+}
+model TargetTask {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  ownerId String
+  owner   User   @relation("TargetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  title  String
+  source TargetSource @default(SELF)
+
+  assignedByUserId String?
+  assignedBy       User?   @relation("TargetAssigner", fields: [assignedByUserId], references: [id], onDelete: SetNull)
+
+  date DateTime // the day this task is for (date-only, time ignored)
+
+  type         TargetType   @default(CHECKLIST)
+  targetValue  Int?         // for NUMERIC
+  currentValue Int          @default(0)
+  status       TargetStatus @default(NOT_STARTED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, ownerId, date])
+  @@index([ownerId, date])
+}
+
+enum TargetSource {
+  SELF
+  ASSIGNED
+}
+
+enum TargetType {
+  CHECKLIST
+  NUMERIC
+}
+
+enum TargetStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  DONE
 }

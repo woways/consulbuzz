@@ -12,6 +12,7 @@ import {
 import {
   Bell,
   MessageSquare,
+  Target,
   CalendarDays,
   LogOut,
   Lock,
@@ -72,6 +73,7 @@ import Help from "./modules/client/Help";
 import SettingsView from "./modules/client/Settings";
 import CalendarModal from "./modules/client/CalendarModal";
 import ChatPanel from "./modules/client/ChatPanel";
+import TeamTarget from "./modules/client/TeamTarget";
 
 
 function SidebarIcon({
@@ -254,11 +256,20 @@ const NAV_GROUPS = [
     direct: true,
   },
 
+  {
+    key: "team-target",
+    label: "Team Target",
+    icon: Target,
+    items: ["team-target"],
+    direct: true,
+  },
+
 ];
 
 const PAGE_META = {
   dashboard: { label: "Dashboard" },
   chats: { label: "Chats" },
+  "team-target": { label: "Team Target" },
   "utm-leads": { label: "UTM Leads" },
   "lead-store": { label: "Lead Store" },
   admissions: {
@@ -2761,6 +2772,10 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       return <ChatPanel currentUser={user} />;
     }
 
+    if (module === "team-target") {
+      return <TeamTarget currentUser={user} />;
+    }
+
     if (
       !hasModulePermission(
         module
@@ -3456,7 +3471,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
                   {workspaceSearch.trim() && (
                     <div className="absolute left-0 right-0 top-[46px] z-[95] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_45px_rgba(15,23,42,0.24)]">
-                      {NAV_GROUPS.filter((group) => group.key !== "chats").flatMap(
+                      {NAV_GROUPS.filter((group) => group.key !== "chats" && group.key !== "team-target").flatMap(
                         (group) =>
                           group.items.map((key) => ({
                             key,
@@ -3539,7 +3554,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     const key = group.items[0];
                     const active = module === key;
                     const locked =
-                      group.key === "chats"
+                      group.key === "chats" || group.key === "team-target"
                         ? false
                         : !enabledFeatures.includes(key) ||
                           !hasModulePermission(key);

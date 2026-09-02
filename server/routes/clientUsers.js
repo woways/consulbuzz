@@ -24,6 +24,7 @@ const PERMISSION_KEYS = [
   "canManageRevenue",
   "canManageLeads",
   "canManageSupport",
+  "canViewTeamTargets",
 ];
 
 function defaultPermissions(role) {
@@ -37,6 +38,7 @@ function defaultPermissions(role) {
       canManageRevenue: true,
       canManageLeads: true,
       canManageSupport: true,
+      canViewTeamTargets: true,
     };
   }
 
@@ -50,6 +52,7 @@ function defaultPermissions(role) {
       canManageRevenue: true,
       canManageLeads: true,
       canManageSupport: true,
+      canViewTeamTargets: true,
     };
   }
 
@@ -62,6 +65,7 @@ function defaultPermissions(role) {
     canManageRevenue: false,
     canManageLeads: true,
     canManageSupport: true,
+    canViewTeamTargets: false,
   };
 }
 
@@ -100,6 +104,9 @@ function formatUser(user) {
       canManageSupport:
         user.role === "CLIENT_ADMIN" ||
         user.canManageSupport,
+      canViewTeamTargets:
+        user.role === "CLIENT_ADMIN" ||
+        user.canViewTeamTargets,
     },
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,

@@ -375,6 +375,7 @@ export default function SettingsView({
       canManageRevenue: false,
       canManageLeads: true,
       canManageSupport: true,
+      canViewTeamTargets: false,
     },
   };
 
@@ -779,6 +780,7 @@ export default function SettingsView({
         canManageRevenue: true,
         canManageLeads: true,
         canManageSupport: true,
+        canViewTeamTargets: true,
       };
     }
 
@@ -792,6 +794,7 @@ export default function SettingsView({
         canManageRevenue: true,
         canManageLeads: true,
         canManageSupport: true,
+        canViewTeamTargets: true,
       };
     }
 
@@ -804,6 +807,7 @@ export default function SettingsView({
       canManageRevenue: false,
       canManageLeads: true,
       canManageSupport: true,
+      canViewTeamTargets: false,
     };
   }
 
@@ -3374,6 +3378,7 @@ export default function SettingsView({
                     ["canManageRevenue", "Manage Revenue"],
                     ["canManageLeads", "Manage Leads"],
                     ["canManageSupport", "Manage Support"],
+                    ["canViewTeamTargets", "View Team Targets"],
                   ].map(
                     ([
                       key,
