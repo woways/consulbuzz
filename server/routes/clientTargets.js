@@ -304,7 +304,7 @@ router.get("/team", async (req, res) => {
 
     const users = await prisma.user.findMany({
       where: { companyId: req.clientUser.companyId, active: true },
-      select: { id: true, name: true, email: true, jobTitle: true },
+      select: { id: true, name: true, email: true, jobTitle: true, department: true, role: true },
       orderBy: { name: "asc" },
     });
 
@@ -335,6 +335,8 @@ router.get("/team", async (req, res) => {
         name: u.name,
         email: u.email,
         jobTitle: u.jobTitle,
+        department: u.department,
+        role: u.role,
         yearAveragePercent: avg,
         monthsWithData: monthOveralls.length,
       };
@@ -405,6 +407,76 @@ router.get("/user/:userId", async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Unable to load user targets" });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* GET /all?years=2026,2027 — admin/permitted: every employee x months  */
+/* Returns each employee with their months for each requested year.     */
+/* ------------------------------------------------------------------ */
+
+router.get("/all", async (req, res) => {
+  try {
+    const allowed = await canViewTeam(req);
+    if (!allowed) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to view this",
+      });
+    }
+
+    // years query: "2026" or "2026,2027". Default current/launch year.
+    const yearsRaw = String(req.query.years || "").trim();
+    let years = yearsRaw
+      ? yearsRaw.split(",").map((y) => Number(y)).filter((y) => Number.isInteger(y))
+      : [Math.max(LAUNCH_YEAR, new Date().getFullYear())];
+    years = Array.from(new Set(years)).sort((a, b) => a - b);
+    if (years.length === 0) {
+      years = [Math.max(LAUNCH_YEAR, new Date().getFullYear())];
+    }
+
+    const users = await prisma.user.findMany({
+      where: { companyId: req.clientUser.companyId, active: true },
+      select: { id: true, name: true, email: true, jobTitle: true, department: true, role: true },
+      orderBy: { name: "asc" },
+    });
+
+    const rows = await prisma.monthlyTarget.findMany({
+      where: {
+        companyId: req.clientUser.companyId,
+        year: { in: years },
+      },
+    });
+
+    // Index rows by owner+year+month.
+    const key = (o, y, m) => `${o}|${y}|${m}`;
+    const byKey = new Map(rows.map((r) => [key(r.ownerId, r.year, r.month), r]));
+
+    const employees = users.map((u) => {
+      const months = [];
+      years.forEach((y) => {
+        for (let m = startMonthFor(y); m <= 12; m += 1) {
+          const r = byKey.get(key(u.id, y, m)) || null;
+          months.push(formatRow(r, y, m));
+        }
+      });
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        jobTitle: u.jobTitle,
+        department: u.department,
+        role: u.role,
+        months,
+      };
+    });
+
+    return res.json({ success: true, years, employees });
+  } catch (error) {
+    console.error("Failed to load all targets:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Unable to load all targets" });
   }
 });
 

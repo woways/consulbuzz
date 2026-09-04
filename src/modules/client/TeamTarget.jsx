@@ -8,7 +8,12 @@ import {
   Target as TargetIcon,
   Minus,
   Plus,
+  Search,
+  X,
+  Filter,
 } from "lucide-react";
+
+import TeamTargetAll from "./TeamTargetAll";
 
 import { apiRequest } from "../../lib/api";
 
@@ -39,6 +44,7 @@ export default function TeamTarget({ currentUser }) {
   const currentYear = new Date().getFullYear();
 
   const [view, setView] = useState("me"); // "me" | "team"
+  const [showAll, setShowAll] = useState(false);
   const [year, setYear] = useState(Math.max(LAUNCH_YEAR, currentYear));
 
   const [months, setMonths] = useState([]);
@@ -46,6 +52,11 @@ export default function TeamTarget({ currentUser }) {
   const [error, setError] = useState("");
 
   const [roster, setRoster] = useState([]);
+  const [rosterSearch, setRosterSearch] = useState("");
+  const [deptFilter, setDeptFilter] = useState([]); // selected departments
+  const [deptOpen, setDeptOpen] = useState(false);
+  const [roleFilter, setRoleFilter] = useState([]); // selected roles
+  const [roleOpen, setRoleOpen] = useState(false);
   const [teamAverage, setTeamAverage] = useState(0);
   const [teamLoading, setTeamLoading] = useState(false);
   const [drill, setDrill] = useState(null);
@@ -136,6 +147,52 @@ export default function TeamTarget({ currentUser }) {
     } catch (err) {
       setError(err?.data?.message || "Unable to set target");
     }
+  }
+
+  const ROLE_LABELS = {
+    CLIENT_ADMIN: "Client Admin",
+    MANAGER: "Manager",
+    EMPLOYEE: "Employee",
+  };
+
+  // Fixed role set (roles are a known list, not derived from data).
+  const roles = ["CLIENT_ADMIN", "MANAGER", "EMPLOYEE"];
+
+  function toggleRole(x) {
+    setRoleFilter((cur) => (cur.includes(x) ? cur.filter((y) => y !== x) : [...cur, x]));
+  }
+
+  const departments = useMemo(() => {
+    const set = new Set();
+    roster.forEach((r) => {
+      const d = String(r.department || "").trim();
+      if (d) set.add(d);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [roster]);
+
+  const filteredRoster = useMemo(() => {
+    let list = roster;
+    if (deptFilter.length > 0) {
+      list = list.filter((r) => deptFilter.includes(String(r.department || "").trim()));
+    }
+    if (roleFilter.length > 0) {
+      list = list.filter((r) => roleFilter.includes(r.role));
+    }
+    const q = rosterSearch.trim().toLowerCase();
+    if (q) {
+      list = list.filter((r) =>
+        [r.name, r.email, r.department, r.id]
+          .some((v) => String(v || "").toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [roster, deptFilter, roleFilter, rosterSearch]);
+
+  function toggleDept(d) {
+    setDeptFilter((cur) =>
+      cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d]
+    );
   }
 
   /* ---- Derived: year average for the ring ------------------------ */
@@ -413,6 +470,10 @@ export default function TeamTarget({ currentUser }) {
 
   /* ---- Render ---------------------------------------------------- */
 
+  if (showAll) {
+    return <TeamTargetAll onBack={() => setShowAll(false)} />;
+  }
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -523,6 +584,17 @@ export default function TeamTarget({ currentUser }) {
           </div>
         ) : (
           <>
+            <div className="flex items-center justify-between">
+              <div className="text-[12px] font-semibold text-slate-500">Company-wide performance overview</div>
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className="inline-flex h-9 items-center gap-2 rounded-xl bg-slate-900 px-4 text-xs font-bold text-white hover:bg-slate-800"
+              >
+                View all
+                <ChevronRight size={14} />
+              </button>
+            </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-900 p-5 text-white shadow-[0_8px_24px_rgba(79,70,229,.18)]">
                 <div className="text-[10px] font-bold uppercase tracking-wide text-brand-200">Team average · {year}</div>
@@ -542,8 +614,136 @@ export default function TeamTarget({ currentUser }) {
               </div>
             </div>
 
+            {/* Search + department filter */}
+            <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
+              <div className="relative min-w-[220px] flex-1">
+                <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={rosterSearch}
+                  onChange={(e) => setRosterSearch(e.target.value)}
+                  placeholder="Search by name, email, id or department"
+                  className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-9 text-xs font-medium text-slate-700 outline-none focus:border-brand-400 focus:bg-white"
+                />
+                {rosterSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setRosterSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setDeptOpen((o) => !o)}
+                  className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-bold ${
+                    deptFilter.length ? "border-brand-300 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  <Filter size={13} />
+                  Department{deptFilter.length ? ` · ${deptFilter.length}` : ""}
+                </button>
+
+                {deptOpen && (
+                  <>
+                    <button
+                      type="button"
+                      aria-label="Close"
+                      onClick={() => setDeptOpen(false)}
+                      className="fixed inset-0 z-[10] cursor-default"
+                    />
+                    <div className="absolute right-0 top-11 z-[20] max-h-64 w-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
+                      {departments.length === 0 ? (
+                        <div className="px-3 py-4 text-center text-[11px] text-slate-400">
+                          No departments set on employees.
+                        </div>
+                      ) : (
+                        <>
+                          {departments.map((d) => {
+                            const on = deptFilter.includes(d);
+                            return (
+                              <button
+                                key={d}
+                                type="button"
+                                onClick={() => toggleDept(d)}
+                                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[12px] font-semibold ${
+                                  on ? "bg-brand-50 text-brand-700" : "text-slate-700 hover:bg-slate-50"
+                                }`}
+                              >
+                                {d}
+                                <span className={`flex h-4 w-4 items-center justify-center rounded border ${on ? "border-brand-600 bg-brand-600 text-white" : "border-slate-300"}`}>
+                                  {on && <span className="text-[9px] font-black">✓</span>}
+                                </span>
+                              </button>
+                            );
+                          })}
+                          {deptFilter.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setDeptFilter([])}
+                              className="mt-1 w-full rounded-lg px-3 py-2 text-left text-[11px] font-bold text-rose-600 hover:bg-rose-50"
+                            >
+                              Clear filter
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setRoleOpen((o) => !o)}
+                  className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-bold ${
+                    roleFilter.length ? "border-brand-300 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  <Filter size={13} />
+                  Role{roleFilter.length ? ` · ${roleFilter.length}` : ""}
+                </button>
+                {roleOpen && (
+                  <>
+                    <button type="button" aria-label="Close" onClick={() => setRoleOpen(false)} className="fixed inset-0 z-[10] cursor-default" />
+                    <div className="absolute right-0 top-11 z-[20] w-48 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
+                      {roles.length === 0 ? (
+                        <div className="px-3 py-4 text-center text-[11px] text-slate-400">No roles found.</div>
+                      ) : (
+                        <>
+                          {roles.map((x) => {
+                            const on = roleFilter.includes(x);
+                            return (
+                              <button key={x} type="button" onClick={() => toggleRole(x)}
+                                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[12px] font-semibold ${on ? "bg-brand-50 text-brand-700" : "text-slate-700 hover:bg-slate-50"}`}>
+                                {ROLE_LABELS[x] || x}
+                                <span className={`flex h-4 w-4 items-center justify-center rounded border ${on ? "border-brand-600 bg-brand-600 text-white" : "border-slate-300"}`}>
+                                  {on && <span className="text-[9px] font-black">✓</span>}
+                                </span>
+                              </button>
+                            );
+                          })}
+                          {roleFilter.length > 0 && (
+                            <button type="button" onClick={() => setRoleFilter([])} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-[11px] font-bold text-rose-600 hover:bg-rose-50">Clear filter</button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <span className="ml-auto text-[11px] font-semibold text-slate-400">
+                {filteredRoster.length} of {roster.length}
+              </span>
+            </div>
+
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-              {roster.map((r) => (
+              {filteredRoster.map((r) => (
                 <button
                   key={r.id}
                   type="button"
@@ -571,8 +771,8 @@ export default function TeamTarget({ currentUser }) {
                   <ChevronRight size={16} className="text-slate-300" />
                 </button>
               ))}
-              {roster.length === 0 && (
-                <div className="px-4 py-8 text-center text-xs text-slate-500">No employees found.</div>
+              {filteredRoster.length === 0 && (
+                <div className="px-4 py-8 text-center text-xs text-slate-500">No employees match.</div>
               )}
             </div>
           </>
