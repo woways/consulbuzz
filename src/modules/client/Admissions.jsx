@@ -444,6 +444,7 @@ function ModalShell({
 
 function StreamModal({
   editing,
+  market = "DOMESTIC",
   onClose,
   onSaved,
 }) {
@@ -521,6 +522,7 @@ function StreamModal({
               name,
               description,
               color,
+              market,
             }),
         }
       );
@@ -1041,6 +1043,7 @@ function BranchModal({
 
 function AdmissionModal({
   partner,
+  market = "DOMESTIC",
   branch,
   admission,
   onClose,
@@ -1233,6 +1236,7 @@ function AdmissionModal({
           body:
             JSON.stringify({
               ...form,
+              market,
               partnerId:
                 partner.id,
               branchId:
@@ -1671,6 +1675,16 @@ function ImportModal({
         onSubmit={submit}
         className="space-y-4 p-5"
       >
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Admission Type</div>
+            <div className="mt-0.5 text-[13px] font-semibold text-slate-900">
+              {market === "INTERNATIONAL" ? "International" : "Domestic"}
+            </div>
+          </div>
+          <div className="text-[11px] text-slate-500">Selected from Admissions sidebar</div>
+        </div>
+
         {error ? (
           <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-700">
             {error}
@@ -1750,9 +1764,14 @@ function ImportModal({
 }
 
 
-export default function Admissions({
+function AdmissionsManager({
   selectedYear = "all",
+  market = "ALL",
 }) {
+  // Admissions Done is always opened in a concrete market from the sidebar.
+  // Keeping the market tied directly to the route avoids Domestic/International
+  // data carrying over when the user switches between the two sections.
+  const activeMarket = market === "INTERNATIONAL" ? "INTERNATIONAL" : "DOMESTIC";
   const [streams, setStreams] = useState([]);
   const [partners, setPartners] = useState([]);
   const [branches, setBranches] = useState([]);
@@ -1797,6 +1816,18 @@ export default function Admissions({
   const [branchModal, setBranchModal] = useState(null);
   const [admissionModal, setAdmissionModal] = useState(null);
   const [showImport, setShowImport] = useState(false);
+
+  useEffect(() => {
+    // When moving between Domestic and International Admissions Done, always
+    // start from the full Stream -> College -> Branch overview for that market.
+    setSelectedStream(null);
+    setSelectedPartner(null);
+    setSelectedBranch(null);
+    setShowAllAdmissions(false);
+    setSearch("");
+    setAllSearch("");
+    setDateFilter("all");
+  }, [activeMarket]);
 
   const STREAM_GRADIENTS = {
     blue: {
@@ -1868,7 +1899,7 @@ export default function Admissions({
 
     try {
       const data = await apiRequest(
-        `/api/client/admissions/streams?year=${encodeURIComponent(selectedYear)}`
+        `/api/client/admissions/streams?year=${encodeURIComponent(selectedYear)}${activeMarket !== "ALL" ? `&market=${activeMarket}` : ""}`
       );
 
       const rows = data.streams || [];
@@ -1902,7 +1933,7 @@ export default function Admissions({
       const data = await apiRequest(
         `/api/client/admissions/partners?streamId=${encodeURIComponent(
           streamId
-        )}&year=${encodeURIComponent(selectedYear)}`
+        )}&year=${encodeURIComponent(selectedYear)}${activeMarket !== "ALL" ? `&market=${activeMarket}` : ""}`
       );
 
       const rows = data.partners || [];
@@ -1936,7 +1967,7 @@ export default function Admissions({
       const data = await apiRequest(
         `/api/client/admissions/branches?partnerId=${encodeURIComponent(
           partnerId
-        )}&year=${encodeURIComponent(selectedYear)}`
+        )}&year=${encodeURIComponent(selectedYear)}${activeMarket !== "ALL" ? `&market=${activeMarket}` : ""}`
       );
 
       const rows = data.branches || [];
@@ -1970,7 +2001,7 @@ export default function Admissions({
       const data = await apiRequest(
         `/api/client/admissions?branchId=${encodeURIComponent(
           branchId
-        )}&year=${encodeURIComponent(selectedYear)}`
+        )}&year=${encodeURIComponent(selectedYear)}${activeMarket !== "ALL" ? `&market=${activeMarket}` : ""}`
       );
 
       setAdmissions(data.admissions || []);
@@ -2001,7 +2032,7 @@ export default function Admissions({
       const data = await apiRequest(
         `/api/client/admissions?year=${encodeURIComponent(
           selectedYear
-        )}`
+        )}${activeMarket !== "ALL" ? `&market=${activeMarket}` : ""}`
       );
 
       setAllAdmissions(data.admissions || []);
@@ -2026,7 +2057,7 @@ export default function Admissions({
 
   useEffect(() => {
     loadStreams();
-  }, [selectedYear]);
+  }, [selectedYear, activeMarket]);
 
   useEffect(() => {
     if (selectedStream?.id) {
@@ -2050,7 +2081,7 @@ export default function Admissions({
     if (showAllAdmissions) {
       loadAllAdmissions();
     }
-  }, [showAllAdmissions, selectedYear]);
+  }, [showAllAdmissions, selectedYear, activeMarket]);
 
   const overall = useMemo(() => {
     return streams.reduce(
@@ -2869,7 +2900,7 @@ export default function Admissions({
             </div>
 
             <h1 className="mt-2 text-[30px] font-bold tracking-[-0.04em] text-slate-950">
-              Admissions Done
+              {activeMarket === "INTERNATIONAL" ? "International" : "Domestic"} Admissions Done
             </h1>
 
             <p className="mt-1 text-[15px] text-slate-500">
@@ -2969,6 +3000,7 @@ export default function Admissions({
 
         {streamModal ? (
           <StreamModal
+            market={activeMarket === "ALL" ? "DOMESTIC" : activeMarket}
             editing={
               streamModal.mode === "edit"
                 ? streamModal.stream
@@ -3581,6 +3613,7 @@ export default function Admissions({
 
       {admissionModal ? (
         <AdmissionModal
+          market={activeMarket === "ALL" ? "DOMESTIC" : activeMarket}
           partner={{
             ...selectedPartner,
             stream: selectedStream,
@@ -3628,4 +3661,114 @@ export default function Admissions({
       ) : null}
     </div>
   );
+}
+
+
+function AdmissionsOverall({ selectedYear = "all" }) {
+  const [filter, setFilter] = useState("ALL");
+  const [data, setData] = useState({ all: [], domestic: [], international: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setError("");
+      try {
+        const year = encodeURIComponent(selectedYear);
+        const [allResult, domesticResult, internationalResult] = await Promise.all([
+          apiRequest(`/api/client/admissions?year=${year}`),
+          apiRequest(`/api/client/admissions?year=${year}&market=DOMESTIC`),
+          apiRequest(`/api/client/admissions?year=${year}&market=INTERNATIONAL`),
+        ]);
+        if (!cancelled) {
+          setData({
+            all: allResult.admissions || [],
+            domestic: domesticResult.admissions || [],
+            international: internationalResult.admissions || [],
+          });
+        }
+      } catch (e) {
+        if (!cancelled) setError(e?.data?.message || "Unable to load admissions overview");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [selectedYear]);
+
+  const rows = filter === "DOMESTIC" ? data.domestic : filter === "INTERNATIONAL" ? data.international : data.all;
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Admissions</div>
+          <h1 className="mt-2 text-[30px] font-bold tracking-[-0.04em] text-slate-950">Overall Admissions</h1>
+          <p className="mt-1 text-[15px] text-slate-500">View all completed admissions across Domestic and International.</p>
+        </div>
+        <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+          {[['ALL','All'],['DOMESTIC','Domestic'],['INTERNATIONAL','International']].map(([value,label]) => (
+            <button key={value} type="button" onClick={() => setFilter(value)} className={`h-9 rounded-lg px-4 text-[13px] font-semibold transition ${filter === value ? 'bg-slate-950 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>{label}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[
+          ["Overall Admissions", data.all.length],
+          ["Domestic Admissions", data.domestic.length],
+          ["International Admissions", data.international.length],
+        ].map(([label,value]) => (
+          <div key={label} className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
+            <div className="text-[13px] font-semibold text-slate-500">{label}</div>
+            <div className="mt-2 text-3xl font-bold tracking-tight text-slate-950">{value}</div>
+          </div>
+        ))}
+      </div>
+
+      {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">{error}</div> : null}
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div>
+            <h2 className="text-[16px] font-bold text-slate-950">All Admissions</h2>
+            <p className="mt-0.5 text-[12px] text-slate-500">{rows.length} admission{rows.length === 1 ? '' : 's'} shown</p>
+          </div>
+        </div>
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-16 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" />Loading admissions...</div>
+        ) : rows.length === 0 ? (
+          <div className="py-16 text-center text-sm text-slate-500">No admissions found.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left">
+              <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500">
+                <tr><th className="px-5 py-3">Student</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Stream</th><th className="px-5 py-3">College</th><th className="px-5 py-3">Branch</th><th className="px-5 py-3">Admission Date</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {rows.map((admission) => (
+                  <tr key={admission.id} className="text-[13px] text-slate-700 hover:bg-slate-50/60">
+                    <td className="px-5 py-3"><div className="font-semibold text-slate-900">{admission.name || '—'}</div><div className="mt-0.5 text-xs text-slate-500">{admission.phone || '—'}</div></td>
+                    <td className="px-5 py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">{admission.market === 'INTERNATIONAL' ? 'International' : 'Domestic'}</span></td>
+                    <td className="px-5 py-3">{admission.partner?.stream?.name || '—'}</td>
+                    <td className="px-5 py-3">{admission.college || admission.partner?.name || '—'}</td>
+                    <td className="px-5 py-3">{admission.branch?.name || admission.course || '—'}</td>
+                    <td className="px-5 py-3 text-slate-500">{formatDate(admission.admissionDate)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function Admissions(props) {
+  if (props.overviewOnly) return <AdmissionsOverall selectedYear={props.selectedYear} />;
+  return <AdmissionsManager {...props} />;
 }

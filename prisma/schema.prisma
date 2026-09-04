@@ -199,9 +199,9 @@ model Company {
   calendarEvents          CalendarEvent[]
   workspaceYears          CompanyWorkspaceYear[]
   clientSessions          ClientSession[]
-  conversations Conversation[]
-  targetTasks TargetTask[]
-  monthlyTargets MonthlyTarget[]
+  conversations           Conversation[]
+  targetTasks             TargetTask[]
+  monthlyTargets          MonthlyTarget[]
 }
 
 model User {
@@ -218,7 +218,7 @@ model User {
   department String?
 
   sidebarOrder String[] @default([])
-  
+
   canManageUsers      Boolean @default(false)
   canManageSettings   Boolean @default(false)
   canManageBilling    Boolean @default(false)
@@ -227,7 +227,7 @@ model User {
   canManageRevenue    Boolean @default(false)
   canManageLeads      Boolean @default(false)
   canManageSupport    Boolean @default(false)
-  canViewTeamTargets Boolean @default(false)
+  canViewTeamTargets  Boolean @default(false)
 
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -244,11 +244,11 @@ model User {
   calendarEventsCreated  CalendarEvent[]             @relation("CalendarEventCreator")
   calendarEventsAssigned CalendarEvent[]             @relation("CalendarEventAssignee")
   clientSessions         ClientSession[]
-  chatMemberships ConversationMember[] @relation("ChatMember")
-  chatMessages    ChatMessage[]        @relation("ChatSender")
-  targetTasksOwned    TargetTask[] @relation("TargetOwner")
-  targetTasksAssigned TargetTask[] @relation("TargetAssigner")
-  monthlyTargets MonthlyTarget[] @relation("MonthlyTargetOwner")
+  chatMemberships        ConversationMember[]        @relation("ChatMember")
+  chatMessages           ChatMessage[]               @relation("ChatSender")
+  targetTasksOwned       TargetTask[]                @relation("TargetOwner")
+  targetTasksAssigned    TargetTask[]                @relation("TargetAssigner")
+  monthlyTargets         MonthlyTarget[]             @relation("MonthlyTargetOwner")
 
   @@index([companyId])
   @@index([companyId, role])
@@ -559,11 +559,18 @@ model Lead {
   @@index([companyId, leadDatasetId])
 }
 
+enum AdmissionMarket {
+  DOMESTIC
+  INTERNATIONAL
+}
+
 model Admission {
   id String @id @default(cuid())
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  market AdmissionMarket @default(DOMESTIC)
 
   leadId String? @unique
   lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
@@ -617,6 +624,8 @@ model AdmissionStream {
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  market AdmissionMarket @default(DOMESTIC)
+
   name String
   slug String
 
@@ -640,6 +649,8 @@ model AdmissionPartner {
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  market AdmissionMarket @default(DOMESTIC)
 
   streamId String?
   stream   AdmissionStream? @relation(fields: [streamId], references: [id], onDelete: SetNull)
@@ -670,6 +681,8 @@ model AdmissionBranch {
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  market AdmissionMarket @default(DOMESTIC)
+
   partnerId String
   partner   AdmissionPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
@@ -695,6 +708,8 @@ model WalkIn {
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  market AdmissionMarket @default(DOMESTIC)
 
   visitorName String
   phone       String
@@ -727,6 +742,8 @@ model CounsellingSession {
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  market AdmissionMarket @default(DOMESTIC)
 
   leadId String?
 
@@ -1110,7 +1127,7 @@ model CalendarEvent {
 
   allDay Boolean @default(false)
 
-  location String?
+  location    String?
   meetingRoom String?
 
   createdByUserId String?
@@ -1130,15 +1147,15 @@ model CalendarEvent {
 }
 
 model Conversation {
-  id        String   @id @default(cuid())
-  isGroup   Boolean  @default(false)
-  name      String?  // group name; null for 1-to-1
+  id        String  @id @default(cuid())
+  isGroup   Boolean @default(false)
+  name      String? // group name; null for 1-to-1
   companyId String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   createdByUserId String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   members  ConversationMember[]
   messages ChatMessage[]
@@ -1154,7 +1171,7 @@ model ConversationMember {
   user           User         @relation("ChatMember", fields: [userId], references: [id], onDelete: Cascade)
 
   lastReadAt DateTime?
-  joinedAt   DateTime @default(now())
+  joinedAt   DateTime  @default(now())
   isFavorite Boolean   @default(false)
   isMuted    Boolean   @default(false)
 
@@ -1171,14 +1188,15 @@ model ChatMessage {
 
   body      String
   createdAt DateTime @default(now())
-  pinned Boolean @default(false)
+  pinned    Boolean  @default(false)
 
   @@index([conversationId, createdAt])
 }
+
 model TargetTask {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   companyId String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   ownerId String
   owner   User   @relation("TargetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
@@ -1192,7 +1210,7 @@ model TargetTask {
   date DateTime // the day this task is for (date-only, time ignored)
 
   type         TargetType   @default(CHECKLIST)
-  targetValue  Int?         // for NUMERIC
+  targetValue  Int? // for NUMERIC
   currentValue Int          @default(0)
   status       TargetStatus @default(NOT_STARTED)
 
@@ -1218,10 +1236,11 @@ enum TargetStatus {
   IN_PROGRESS
   DONE
 }
+
 model MonthlyTarget {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   companyId String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   ownerId String
   owner   User   @relation("MonthlyTargetOwner", fields: [ownerId], references: [id], onDelete: Cascade)

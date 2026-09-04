@@ -16,6 +16,12 @@ function parseYear(value) {
   return Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : null;
 }
 
+function parseMarket(value, fallback = null) {
+  const market = String(value || "").trim().toUpperCase();
+  if (market === "DOMESTIC" || market === "INTERNATIONAL") return market;
+  return fallback;
+}
+
 function yearRange(year) {
   if (!year) return null;
   return {
@@ -137,6 +143,7 @@ function formatAdmission(admission) {
 
   return {
     id: admission.id,
+    market: admission.market,
     leadId: admission.leadId,
     partnerId: admission.partnerId,
     partner: admission.partner
@@ -222,17 +229,22 @@ async function getStream(companyId, streamId) {
   });
 }
 
-async function ensureDefaultStream(companyId) {
+async function ensureDefaultStream(companyId, market = "DOMESTIC") {
+  const resolvedMarket = parseMarket(market, "DOMESTIC");
+  const defaultName = resolvedMarket === "INTERNATIONAL" ? "General International" : "General";
+  const defaultSlug = resolvedMarket === "INTERNATIONAL" ? "general-international" : "general";
+
   let stream = await prisma.admissionStream.findFirst({
     where: {
       companyId,
-      slug: "general",
+      market: resolvedMarket,
+      slug: defaultSlug,
     },
   });
 
   if (!stream) {
     const existingFirst = await prisma.admissionStream.findFirst({
-      where: { companyId, active: true },
+      where: { companyId, market: resolvedMarket, active: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
 
@@ -241,9 +253,13 @@ async function ensureDefaultStream(companyId) {
       (await prisma.admissionStream.create({
         data: {
           companyId,
-          name: "General",
-          slug: await uniqueStreamSlug(companyId, "General"),
-          description: "Existing colleges and uncategorized admission partners",
+          market: resolvedMarket,
+          name: defaultName,
+          slug: await uniqueStreamSlug(companyId, defaultName),
+          description:
+            resolvedMarket === "INTERNATIONAL"
+              ? "Uncategorized international admission colleges"
+              : "Existing colleges and uncategorized admission partners",
         },
       }));
   }
@@ -251,6 +267,7 @@ async function ensureDefaultStream(companyId) {
   await prisma.admissionPartner.updateMany({
     where: {
       companyId,
+      market: resolvedMarket,
       streamId: null,
     },
     data: {
@@ -270,6 +287,7 @@ function streamMetrics(stream) {
 
   return {
     id: stream.id,
+    market: stream.market || "DOMESTIC",
     name: stream.name,
     slug: stream.slug,
     description: stream.description,
@@ -321,7 +339,7 @@ async function uniquePartnerSlug(companyId, name, excludeId = null) {
 }
 
 async function syncLegacyPartners(companyId) {
-  const defaultStream = await ensureDefaultStream(companyId);
+  const defaultStream = await ensureDefaultStream(companyId, "DOMESTIC");
 
   const legacy = await prisma.admission.findMany({
     where: {
@@ -346,6 +364,7 @@ async function syncLegacyPartners(companyId) {
       partner = await prisma.admissionPartner.create({
         data: {
           companyId,
+          market: "DOMESTIC",
           streamId: defaultStream.id,
           name,
           slug,
@@ -393,6 +412,7 @@ function partnerMetrics(partner) {
 
   return {
     id: partner.id,
+    market: partner.market || "DOMESTIC",
     name: partner.name,
     slug: partner.slug,
     description: partner.description,
@@ -434,11 +454,13 @@ router.get("/streams", async (req, res) => {
     await syncLegacyPartners(companyId);
 
     const selectedYear = parseYear(req.query.year);
+    const market = parseMarket(req.query.market);
 
     const streams = await prisma.admissionStream.findMany({
       where: {
         companyId,
         active: true,
+        ...(market ? { market } : {}),
       },
       include: {
         partners: {
@@ -487,6 +509,7 @@ router.post("/streams", async (req, res) => {
     const companyId = req.clientUser.companyId;
     const name = String(req.body?.name || "").trim();
     const description = cleanOptional(req.body?.description);
+    const market = parseMarket(req.body?.market, "DOMESTIC");
     const requestedColor = cleanOptional(req.body?.color);
     const color = String(
       requestedColor || inferStreamColor(name)
@@ -521,6 +544,7 @@ router.post("/streams", async (req, res) => {
     const stream = await prisma.admissionStream.create({
       data: {
         companyId,
+        market,
         name,
         slug,
         description,
@@ -688,11 +712,13 @@ router.get("/partners", async (req, res) => {
     await syncLegacyPartners(companyId);
 
     const streamId = cleanOptional(req.query.streamId);
+    const market = parseMarket(req.query.market);
 
     const partners = await prisma.admissionPartner.findMany({
       where: {
         companyId,
         active: true,
+        ...(market ? { market } : {}),
         ...(streamId ? { streamId } : {}),
       },
       include: {
@@ -753,14 +779,26 @@ router.post("/partners", async (req, res) => {
       });
     }
 
+    const requestedMarket = parseMarket(req.body?.market, "DOMESTIC");
+
     if (!stream) {
-      stream = await ensureDefaultStream(companyId);
+      stream = await ensureDefaultStream(companyId, requestedMarket);
     }
+
+    if (stream.market !== requestedMarket) {
+      return res.status(400).json({
+        success: false,
+        message: "Selected stream belongs to a different admissions category",
+      });
+    }
+
+    const market = requestedMarket;
 
     const slug = await uniquePartnerSlug(companyId, name);
     const partner = await prisma.admissionPartner.create({
       data: {
         companyId,
+        market,
         streamId: stream.id,
         name,
         slug,
@@ -820,6 +858,7 @@ router.patch("/partners/:id", async (req, res) => {
       }
 
       data.streamId = stream.id;
+      data.market = stream.market;
     }
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -835,6 +874,17 @@ router.patch("/partners/:id", async (req, res) => {
         await tx.admission.updateMany({
           where: { companyId, partnerId: existing.id },
           data: { college: data.name },
+        });
+      }
+
+      if (data.market && data.market !== existing.market) {
+        await tx.admissionBranch.updateMany({
+          where: { companyId, partnerId: existing.id },
+          data: { market: data.market },
+        });
+        await tx.admission.updateMany({
+          where: { companyId, partnerId: existing.id },
+          data: { market: data.market },
         });
       }
 
@@ -954,6 +1004,7 @@ function branchMetrics(branch) {
 
   return {
     id: branch.id,
+    market: branch.market || "DOMESTIC",
     partnerId: branch.partnerId,
     name: branch.name,
     slug: branch.slug,
@@ -1025,6 +1076,12 @@ router.get(
         });
       }
 
+      const requestedMarket = parseMarket(req.query.market);
+
+      if (requestedMarket && partner.market !== requestedMarket) {
+        return res.json({ success: true, branches: [] });
+      }
+
       const selectedYear =
         parseYear(
           req.query.year
@@ -1036,6 +1093,7 @@ router.get(
             companyId,
             partnerId:
               partner.id,
+            market: partner.market,
             active: true,
           },
           include: {
@@ -1155,6 +1213,7 @@ router.post(
         await prisma.admissionBranch.create({
           data: {
             companyId,
+            market: partner.market,
             partnerId:
               partner.id,
             name,
@@ -1725,6 +1784,7 @@ router.post(
           valid.map(
             (row) => ({
               companyId,
+              market: partner.market || "DOMESTIC",
               partnerId:
                 partner.id,
               branchId:
@@ -1829,9 +1889,11 @@ router.get("/", async (req, res) => {
     const streamId = cleanOptional(req.query.streamId);
     const branchId = cleanOptional(req.query.branchId);
     const selectedYear = parseYear(req.query.year);
+    const market = parseMarket(req.query.market);
 
     const where = {
       companyId,
+      ...(market ? { market } : {}),
       ...(selectedYear ? { admissionDate: yearRange(selectedYear) } : {}),
     };
 
@@ -1925,6 +1987,8 @@ router.post("/", async (req, res) => {
       notes,
     } = req.body || {};
 
+    const requestedMarket = parseMarket(req.body?.market, "DOMESTIC");
+
     const partner = await getPartner(companyId, partnerId);
     if (partnerId && !partner) {
       return res.status(404).json({ success: false, message: "Admission college not found" });
@@ -1947,6 +2011,20 @@ router.post("/", async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Selected branch does not belong to this college",
+      });
+    }
+
+    if (partner && partner.market !== requestedMarket) {
+      return res.status(400).json({
+        success: false,
+        message: `Selected college is not part of ${requestedMarket === "INTERNATIONAL" ? "International" : "Domestic"} admissions`,
+      });
+    }
+
+    if (branch && branch.market !== requestedMarket) {
+      return res.status(400).json({
+        success: false,
+        message: `Selected branch is not part of ${requestedMarket === "INTERNATIONAL" ? "International" : "Domestic"} admissions`,
       });
     }
 
@@ -2030,11 +2108,12 @@ router.post("/", async (req, res) => {
       });
 
       if (!resolvedPartner) {
-        const defaultStream = await ensureDefaultStream(companyId);
+        const defaultStream = await ensureDefaultStream(companyId, requestedMarket);
 
         resolvedPartner = await prisma.admissionPartner.create({
           data: {
             companyId,
+            market: requestedMarket,
             streamId: defaultStream.id,
             name: cleanCollege,
             slug: await uniquePartnerSlug(companyId, cleanCollege),
@@ -2048,6 +2127,7 @@ router.post("/", async (req, res) => {
       const created = await tx.admission.create({
         data: {
           companyId,
+          market: requestedMarket,
           partnerId: resolvedPartner.id,
           branchId: branch?.id || null,
           leadId: selectedLead?.id || null,

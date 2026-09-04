@@ -14,6 +14,12 @@ function parseYear(value) {
   return Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : null;
 }
 
+function parseMarket(value, fallback = null) {
+  const market = String(value || "").trim().toUpperCase();
+  if (market === "DOMESTIC" || market === "INTERNATIONAL") return market;
+  return fallback;
+}
+
 function yearRange(year) {
   if (!year) return null;
   return {
@@ -95,6 +101,7 @@ function formatSession(session) {
     converted: session.converted,
     createdAt: session.createdAt,
     updatedAt: session.updatedAt,
+    market: session.market,
   };
 }
 
@@ -137,8 +144,10 @@ router.get("/", async (req, res) => {
     const search = String(req.query.search || "").trim();
     const status = String(req.query.status || "").trim().toUpperCase();
     const selectedYear = parseYear(req.query.year);
+    const market = parseMarket(req.query.market);
     const where = {
       companyId,
+      ...(market ? { market } : {}),
       ...(selectedYear ? { scheduledAt: yearRange(selectedYear) } : {}),
     };
 
@@ -161,7 +170,7 @@ router.get("/", async (req, res) => {
         orderBy: { scheduledAt: "desc" },
       }),
       prisma.counsellingSession.findMany({
-        where: { companyId },
+        where: { companyId, ...(market ? { market } : {}) },
         select: {
           status: true,
           scheduledAt: true,
@@ -218,6 +227,7 @@ router.post("/", async (req, res) => {
   try {
     const companyId = req.clientUser.companyId;
     const leadId = cleanOptional(req.body?.leadId);
+    const market = parseMarket(req.body?.market, "DOMESTIC");
     let selectedLead = null;
 
     if (leadId) {
@@ -264,6 +274,7 @@ router.post("/", async (req, res) => {
       const created = await tx.counsellingSession.create({
         data: {
           companyId,
+          market,
           leadId: selectedLead?.id || null,
           studentName,
           studentPhone: cleanOptional(req.body?.studentPhone) || selectedLead?.phone || null,
@@ -320,6 +331,11 @@ router.patch("/:id", async (req, res) => {
     }
 
     const data = {};
+    if (req.body?.market !== undefined) {
+      const market = parseMarket(req.body.market);
+      if (!market) return res.status(400).json({ success: false, message: "Invalid admissions market" });
+      data.market = market;
+    }
 
     if (req.body?.leadId !== undefined) {
       if (!req.body.leadId) {

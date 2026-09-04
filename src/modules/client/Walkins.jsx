@@ -113,7 +113,7 @@ function Field({ label, required, full, children }) {
   );
 }
 
-export default function Walkins({ selectedYear = "all" }) {
+export default function Walkins({ selectedYear = "all", market = "DOMESTIC" }) {
   const [walkIns, setWalkIns] = useState([]);
   const [summary, setSummary] = useState({
     total: 0,
@@ -141,6 +141,7 @@ export default function Walkins({ selectedYear = "all" }) {
       if (search.trim()) params.set("search", search.trim());
       if (statusFilter) params.set("status", statusFilter);
       if (selectedYear !== "all") params.set("year", selectedYear);
+      if (market && market !== "ALL") params.set("market", market);
       const query = params.toString();
 
       const data = await apiRequest(
@@ -166,7 +167,7 @@ export default function Walkins({ selectedYear = "all" }) {
   useEffect(() => {
     const timer = window.setTimeout(loadData, 250);
     return () => window.clearTimeout(timer);
-  }, [search, statusFilter, selectedYear]);
+  }, [search, statusFilter, selectedYear, market]);
 
   function updateForm(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -208,6 +209,7 @@ export default function Walkins({ selectedYear = "all" }) {
     try {
       const payload = {
         ...form,
+        market,
         arrivedAt: form.arrivedAt
           ? new Date(form.arrivedAt).toISOString()
           : new Date().toISOString(),
@@ -272,7 +274,7 @@ export default function Walkins({ selectedYear = "all" }) {
             Leads / Offline engagement
           </div>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-            Walk-ins
+            {market === "INTERNATIONAL" ? "International Walk-ins" : "Domestic Walk-ins"}
           </h1>
           <p className="mt-1 text-[15px] text-slate-500">
             Track office visitors, counsellor interactions and conversion outcomes.

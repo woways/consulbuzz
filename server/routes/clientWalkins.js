@@ -14,6 +14,12 @@ function parseYear(value) {
   return Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : null;
 }
 
+function parseMarket(value, fallback = null) {
+  const market = String(value || "").trim().toUpperCase();
+  if (market === "DOMESTIC" || market === "INTERNATIONAL") return market;
+  return fallback;
+}
+
 function yearRange(year) {
   if (!year) return null;
   return {
@@ -68,6 +74,7 @@ function formatWalkIn(walkIn) {
     statusKey: walkIn.status,
     arrivedAt: walkIn.arrivedAt,
     convertedLeadId: walkIn.convertedLeadId,
+    market: walkIn.market,
     createdAt: walkIn.createdAt,
     updatedAt: walkIn.updatedAt,
   };
@@ -94,8 +101,10 @@ router.get("/", async (req, res) => {
     const search = String(req.query.search || "").trim();
     const status = String(req.query.status || "").trim().toUpperCase();
     const selectedYear = parseYear(req.query.year);
+    const market = parseMarket(req.query.market);
     const where = {
       companyId,
+      ...(market ? { market } : {}),
       ...(selectedYear ? { arrivedAt: yearRange(selectedYear) } : {}),
     };
 
@@ -115,7 +124,7 @@ router.get("/", async (req, res) => {
     const [rows, allRows] = await Promise.all([
       prisma.walkIn.findMany({ where, orderBy: { arrivedAt: "desc" } }),
       prisma.walkIn.findMany({
-        where: { companyId },
+        where: { companyId, ...(market ? { market } : {}) },
         select: { status: true, arrivedAt: true },
       }),
     ]);
@@ -139,6 +148,7 @@ router.post("/", async (req, res) => {
     const purpose = String(req.body?.purpose || "").trim();
     const status = String(req.body?.status || "NEW").trim().toUpperCase();
     const arrivedAt = parseDate(req.body?.arrivedAt, new Date());
+    const market = parseMarket(req.body?.market, "DOMESTIC");
 
     if (!visitorName) return res.status(400).json({ success: false, message: "Visitor name is required" });
     if (!phone) return res.status(400).json({ success: false, message: "Phone number is required" });
@@ -149,6 +159,7 @@ router.post("/", async (req, res) => {
     const walkIn = await prisma.walkIn.create({
       data: {
         companyId,
+        market,
         visitorName,
         phone,
         email: cleanOptional(req.body?.email)?.toLowerCase() || null,
@@ -177,6 +188,11 @@ router.patch("/:id", async (req, res) => {
     if (!existing) return res.status(404).json({ success: false, message: "Walk-in not found" });
 
     const data = {};
+    if (req.body?.market !== undefined) {
+      const market = parseMarket(req.body.market);
+      if (!market) return res.status(400).json({ success: false, message: "Invalid admissions market" });
+      data.market = market;
+    }
 
     if (req.body?.visitorName !== undefined || req.body?.name !== undefined) {
       const visitorName = String(req.body?.visitorName ?? req.body?.name ?? "").trim();

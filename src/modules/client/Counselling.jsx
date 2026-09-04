@@ -146,7 +146,7 @@ function Field({ label, required, full, children }) {
   );
 }
 
-export default function Counselling({ selectedYear = "all" }) {
+export default function Counselling({ selectedYear = "all", market = "DOMESTIC" }) {
   const [sessions, setSessions] = useState([]);
   const [summary, setSummary] = useState({
     sessionsToday: 0,
@@ -176,6 +176,7 @@ export default function Counselling({ selectedYear = "all" }) {
       if (search.trim()) params.set("search", search.trim());
       if (statusFilter) params.set("status", statusFilter);
       if (selectedYear !== "all") params.set("year", selectedYear);
+      if (market && market !== "ALL") params.set("market", market);
       const query = params.toString();
 
       const data = await apiRequest(
@@ -210,7 +211,7 @@ export default function Counselling({ selectedYear = "all" }) {
   useEffect(() => {
     const timer = window.setTimeout(loadData, 250);
     return () => window.clearTimeout(timer);
-  }, [search, statusFilter, selectedYear]);
+  }, [search, statusFilter, selectedYear, market]);
 
   useEffect(() => {
     loadLeads();
@@ -273,6 +274,7 @@ export default function Counselling({ selectedYear = "all" }) {
     try {
       const payload = {
         ...form,
+        market,
         scheduledAt: form.scheduledAt
           ? new Date(form.scheduledAt).toISOString()
           : null,
@@ -335,7 +337,7 @@ export default function Counselling({ selectedYear = "all" }) {
             Engagement / Counselling
           </div>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
-            Counselling
+            {market === "INTERNATIONAL" ? "International Counselling" : "Domestic Counselling"}
           </h1>
           <p className="mt-1 text-[15px] text-slate-500">
             Manage sessions, meeting links, remarks and follow-up activity.

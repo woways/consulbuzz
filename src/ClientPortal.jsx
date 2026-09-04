@@ -211,11 +211,7 @@ const NAV_GROUPS = [
     key: "admissions",
     label: "Admissions",
     icon: (props) => <SidebarIcon type="admissions" {...props} />,
-    items: [
-      "admissions",
-      "walkins",
-      "counselling",
-    ],
+    items: ["admissions"],
   },
 
   {
@@ -272,10 +268,13 @@ const PAGE_META = {
   "team-target": { label: "Team Target" },
   "utm-leads": { label: "UTM Leads" },
   "lead-store": { label: "Lead Store" },
-  admissions: {
-    group: "Admissions",
-    label: "Admissions Done",
-  },
+  admissions: { group: "Admissions", label: "Overall" },
+  "domestic-walkins": { group: "Admissions / Domestic", label: "Walk-ins" },
+  "domestic-counselling": { group: "Admissions / Domestic", label: "Counselling" },
+  "domestic-admissions": { group: "Admissions / Domestic", label: "Admissions Done" },
+  "international-walkins": { group: "Admissions / International", label: "Walk-ins" },
+  "international-counselling": { group: "Admissions / International", label: "Counselling" },
+  "international-admissions": { group: "Admissions / International", label: "Admissions Done" },
   walkins: {
     group: "Admissions",
     label: "Walk-ins",
@@ -304,8 +303,13 @@ const MODULE_PERMISSION_MAP = {
     "canManageLeads",
   "lead-store":
     "canManageLeads",
-  admissions:
-    "canManageAdmissions",
+  admissions: "canManageAdmissions",
+  "domestic-walkins": "canManageAdmissions",
+  "domestic-counselling": "canManageAdmissions",
+  "domestic-admissions": "canManageAdmissions",
+  "international-walkins": "canManageAdmissions",
+  "international-counselling": "canManageAdmissions",
+  "international-admissions": "canManageAdmissions",
   walkins:
     "canManageAdmissions",
   counselling:
@@ -2810,15 +2814,24 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       );
     }
 
+    const featureKeyForModule =
+      module.includes("walkins")
+        ? "walkins"
+        : module.includes("counselling")
+          ? "counselling"
+          : module.includes("admissions")
+            ? "admissions"
+            : module;
+
     if (
       !enabledFeatures.includes(
-        module
+        featureKeyForModule
       )
     ) {
       return (
         <UpgradeGate
           module={
-            module
+            featureKeyForModule
           }
           currentPlan={
             plan
@@ -2854,9 +2867,20 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
         );
 
       case "admissions":
-        return (
-          <Admissions selectedYear={selectedYear} />
-        );
+        return <Admissions selectedYear={selectedYear} market="ALL" overviewOnly />;
+
+      case "domestic-walkins":
+        return <Walkins selectedYear={selectedYear} market="DOMESTIC" />;
+      case "domestic-counselling":
+        return <Counselling selectedYear={selectedYear} market="DOMESTIC" />;
+      case "domestic-admissions":
+        return <Admissions selectedYear={selectedYear} market="DOMESTIC" />;
+      case "international-walkins":
+        return <Walkins selectedYear={selectedYear} market="INTERNATIONAL" />;
+      case "international-counselling":
+        return <Counselling selectedYear={selectedYear} market="INTERNATIONAL" />;
+      case "international-admissions":
+        return <Admissions selectedYear={selectedYear} market="INTERNATIONAL" />;
 
       case "revenue":
         return (
@@ -3643,7 +3667,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                               const ChildIcon = meta.icon;
                               const active = module === key;
                               const locked =
-                                !enabledFeatures.includes(key) ||
+                                !enabledFeatures.includes(key.includes("walkins") ? "walkins" : key.includes("counselling") ? "counselling" : key.includes("admissions") ? "admissions" : key) ||
                                 !hasModulePermission(key);
 
                               return (
@@ -3663,7 +3687,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                   )}
                                   <ChildIcon size={15} strokeWidth={1.9} />
 
-                                  {(key === "walkins" || key === "counselling") && (
+                                  {(key.includes("walkins") || key.includes("counselling")) && (
                                     <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-400" />
                                   )}
 
@@ -3747,7 +3771,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                 const ChildIcon = meta.icon;
                                 const active = module === key;
                                 const locked =
-                                  !enabledFeatures.includes(key) ||
+                                  !enabledFeatures.includes(key.includes("walkins") ? "walkins" : key.includes("counselling") ? "counselling" : key.includes("admissions") ? "admissions" : key) ||
                                   !hasModulePermission(key);
 
                                 return (
@@ -3775,10 +3799,12 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                     />
 
                                     <span className="flex-1 text-[12px] font-semibold">
-                                      {meta.label}
+                                      {key === "domestic-walkins" ? <span className="mb-1 block text-[10px] uppercase tracking-[0.12em] text-slate-500">Domestic</span> : null}
+                                      {key === "international-walkins" ? <span className="mb-1 block text-[10px] uppercase tracking-[0.12em] text-slate-500">International</span> : null}
+                                      {key === "admissions" ? "Overall" : meta.label}
                                     </span>
 
-                                    {(key === "walkins" || key === "counselling") && (
+                                    {(key.includes("walkins") || key.includes("counselling")) && (
                                       <Crown
                                         size={12}
                                         className="text-amber-500"
@@ -3795,6 +3821,64 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                   </button>
                                 );
                               })}
+
+                              {group.key === "admissions" ? (
+                                <>
+                                  {[
+                                    { key: "domestic", label: "Domestic", items: ["domestic-walkins", "domestic-counselling", "domestic-admissions"] },
+                                    { key: "international", label: "International", items: ["international-walkins", "international-counselling", "international-admissions"] },
+                                  ].map((section) => {
+                                    const sectionOpen = Boolean(openGroups[section.key]);
+                                    const sectionActive = section.items.includes(module);
+                                    return (
+                                      <div key={section.key} className="mt-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleGroup(section.key)}
+                                          className={`w-full min-h-9 rounded-lg px-2.5 py-2 flex items-center gap-2.5 text-left transition-colors ${sectionActive ? "text-white" : "text-slate-400 hover:text-white"}`}
+                                        >
+                                          <ChevronDown size={13} className={`transition-transform ${sectionOpen ? "rotate-180" : ""}`} />
+                                          <span className="flex-1 text-[12px] font-semibold">{section.label}</span>
+                                        </button>
+                                        {sectionOpen ? (
+                                          <div className="ml-4 border-l border-white/10 pl-2 space-y-0.5">
+                                            {section.items.map((key) => {
+                                              const meta = MODULE_META[key];
+                                              if (!meta) return null;
+                                              const ChildIcon = meta.icon;
+                                              const active = module === key;
+                                              const isAdmissionsDone = key.endsWith("-admissions");
+                                              const featureKey = key.includes("walkins")
+                                                ? "walkins"
+                                                : key.includes("counselling")
+                                                  ? "counselling"
+                                                  : "admissions";
+                                              // Admissions Done is a standard Admissions feature, not a Pro/Premium item.
+                                              // Walk-ins and Counselling keep their existing plan restrictions.
+                                              const locked = isAdmissionsDone
+                                                ? !hasModulePermission(key)
+                                                : !enabledFeatures.includes(featureKey) || !hasModulePermission(key);
+                                              return (
+                                                <button
+                                                  key={key}
+                                                  type="button"
+                                                  onClick={() => { setModule(key); setMobileSidebarOpen(false); }}
+                                                  className={`w-full min-h-9 rounded-lg px-2.5 py-2 flex items-center gap-2.5 text-left transition-colors ${active ? "text-white bg-white/[0.05]" : "text-slate-400 hover:text-white"}`}
+                                                >
+                                                  <ChildIcon size={14} strokeWidth={1.8} className={active ? "text-white" : "text-slate-500"} />
+                                                  <span className="flex-1 text-[12px] font-semibold">{meta.label}</span>
+                                                  {(key.includes("walkins") || key.includes("counselling")) && <Crown size={12} className="text-amber-500" title="Premium module" />}
+                                                  {locked ? <Lock size={10} className="text-slate-400" /> : null}
+                                                </button>
+                                              );
+                                            })}
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    );
+                                  })}
+                                </>
+                              ) : null}
                             </div>
                           </div>
                         </div>

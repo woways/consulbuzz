@@ -190,6 +190,13 @@ export const MODULE_META = {
     icon: UserCheck,
   },
 
+  "domestic-walkins": { label: "Walk-ins", icon: UserPlus, plan: "pro" },
+  "domestic-counselling": { label: "Counselling", icon: Video, plan: "pro" },
+  "domestic-admissions": { label: "Admissions Done", icon: UserCheck },
+  "international-walkins": { label: "Walk-ins", icon: UserPlus, plan: "pro" },
+  "international-counselling": { label: "Counselling", icon: Video, plan: "pro" },
+  "international-admissions": { label: "Admissions Done", icon: UserCheck },
+
   revenue: {
     label: "Revenue",
     icon: DollarSign,
