@@ -378,6 +378,32 @@ export default function TeamTarget({ currentUser }) {
                   </td>
                 </tr>
               ))}
+              {/* Total year — auto, read-only */}
+              {(() => {
+                const totalMonthly = monthRows.reduce((s, m) => s + (m.monthlyTarget || 0), 0);
+                const totalAchieved = monthRows.reduce((s, m) => s + (m.totalAchieved || 0), 0);
+                const totalPct = totalMonthly > 0 ? Math.round((totalAchieved / totalMonthly) * 100) : 0;
+                return (
+                  <tr className="border-t-2 border-slate-200 bg-slate-50/70">
+                    <td className="px-4 py-4 text-left text-[13px] font-black uppercase tracking-wide text-slate-700">
+                      Total year
+                    </td>
+                    <td className="px-3 py-4 text-[15px] font-black text-slate-900">{totalMonthly}</td>
+                    {weekIdx.map((w) => (
+                      <Fragment key={`tf${w}`}>
+                        <td className="border-l border-slate-100 bg-slate-50/70" />
+                        <td className="bg-slate-50/70" />
+                        <td className="bg-slate-50/70" />
+                      </Fragment>
+                    ))}
+                    <td className="border-l border-slate-100 bg-brand-100/50 px-3 py-4">
+                      <span className={`text-[16px] font-black ${totalPct >= 100 ? "text-emerald-600" : "text-brand-700"}`}>
+                        {totalPct}%
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })()}
             </tbody>
           </table>
         </div>
