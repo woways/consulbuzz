@@ -201,6 +201,7 @@ model Company {
   clientSessions          ClientSession[]
   conversations Conversation[]
   targetTasks TargetTask[]
+  monthlyTargets MonthlyTarget[]
 }
 
 model User {
@@ -247,6 +248,7 @@ model User {
   chatMessages    ChatMessage[]        @relation("ChatSender")
   targetTasksOwned    TargetTask[] @relation("TargetOwner")
   targetTasksAssigned TargetTask[] @relation("TargetAssigner")
+  monthlyTargets MonthlyTarget[] @relation("MonthlyTargetOwner")
 
   @@index([companyId])
   @@index([companyId, role])
@@ -1215,4 +1217,26 @@ enum TargetStatus {
   NOT_STARTED
   IN_PROGRESS
   DONE
+}
+model MonthlyTarget {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  ownerId String
+  owner   User   @relation("MonthlyTargetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  year  Int
+  month Int // 1-12
+
+  monthlyTarget Int   @default(0) // admin-set monthly target (Overall % divides by this)
+  weekTarget    Int[] @default([]) // per-week target, admin-set
+  weekAchieved  Int[] @default([]) // per-week achieved, employee-set
+
+  setByUserId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, ownerId, year, month])
+  @@index([companyId, year, month])
 }

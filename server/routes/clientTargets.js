@@ -11,70 +11,67 @@ router.use(requireClientUser);
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-const VALID_STATUSES = ["NOT_STARTED", "IN_PROGRESS", "DONE"];
-const VALID_TYPES = ["CHECKLIST", "NUMERIC"];
+const LAUNCH_YEAR = 2026;
+const LAUNCH_MONTH = 9; // September
 
-function startOfDay(d) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-function startOfWeekMon(d) {
-  const x = startOfDay(d);
-  const day = (x.getDay() + 6) % 7; // Monday = 0
-  x.setDate(x.getDate() - day);
-  return x;
-}
-function startOfMonth(d) {
-  const x = startOfDay(d);
-  x.setDate(1);
-  return x;
-}
-function endOfMonth(d) {
-  const x = startOfMonth(d);
-  x.setMonth(x.getMonth() + 1);
-  return x;
-}
-function addDays(d, n) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + n);
-  return x;
+function startMonthFor(year) {
+  return year === LAUNCH_YEAR ? LAUNCH_MONTH : 1;
 }
 
-// Score for one task: only completed work counts (in-progress = 0).
-function taskScore(task) {
-  if (task.type === "NUMERIC") {
-    const target = Number(task.targetValue || 0);
-    if (target <= 0) return task.status === "DONE" ? 1 : 0;
-    return Math.min(1, Number(task.currentValue || 0) / target);
+// Business weeks: ceil(daysInMonth / 7) → always 4 or 5.
+function weeksInMonth(year, month /* 1-12 */) {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  return Math.ceil(daysInMonth / 7);
+}
+
+function pctOf(a, t) {
+  if (!t || t <= 0) return 0;
+  return Math.round((a / t) * 100);
+}
+
+function normalize(arr, len) {
+  const out = [];
+  for (let i = 0; i < len; i += 1) out.push(Math.max(0, Number(arr?.[i] || 0)));
+  return out;
+}
+
+// Build the full computed row.
+function computeRow(row, year, month) {
+  const totalWeeks = weeksInMonth(year, month);
+  const wt = normalize(row?.weekTarget || [], totalWeeks);
+  const wa = normalize(row?.weekAchieved || [], totalWeeks);
+
+  const weeks = [];
+  for (let i = 0; i < totalWeeks; i += 1) {
+    weeks.push({
+      week: i + 1,
+      target: wt[i],
+      achieved: wa[i],
+      percent: pctOf(wa[i], wt[i]), // week % = achieved / that week's target
+    });
   }
-  // CHECKLIST
-  return task.status === "DONE" ? 1 : 0;
+
+  const monthlyTarget = Number(row?.monthlyTarget || 0); // admin-set directly
+  const totalAchieved = wa.reduce((s, x) => s + x, 0);
+  // Overall % = total achieved / typed monthly target (paper rule → 110%, 75%).
+  const overallPercent = pctOf(totalAchieved, monthlyTarget);
+
+  return { totalWeeks, weeks, monthlyTarget, totalAchieved, overallPercent };
 }
 
-// Average % (0-100) across a list of tasks.
-function percentOf(tasks) {
-  if (!tasks.length) return 0;
-  const sum = tasks.reduce((acc, t) => acc + taskScore(t), 0);
-  return Math.round((sum / tasks.length) * 100);
-}
-
-function formatTask(t) {
+function formatRow(row, year, month) {
+  const c = computeRow(row, year, month);
   return {
-    id: t.id,
-    title: t.title,
-    source: t.source,
-    assignedByUserId: t.assignedByUserId,
-    ownerId: t.ownerId,
-    date: t.date,
-    type: t.type,
-    targetValue: t.targetValue,
-    currentValue: t.currentValue,
-    status: t.status,
+    id: row?.id || null,
+    year,
+    month,
+    monthlyTarget: c.monthlyTarget,
+    totalAchieved: c.totalAchieved,
+    weeks: c.weeks,
+    overallPercent: c.overallPercent,
   };
 }
 
-// Can the current user see everyone's targets?
 async function canViewTeam(req) {
   if (req.clientUser.role === "CLIENT_ADMIN") return true;
   const actor = await prisma.user.findUnique({
@@ -89,67 +86,26 @@ async function canViewTeam(req) {
   );
 }
 
-// Build weekly + monthly analytics for a set of the owner's tasks in a month.
-function buildAnalytics(tasks, monthStart) {
-  const monthPct = percentOf(tasks);
-
-  // Weekly buckets: weeks that overlap the month (Mon-based).
-  const weeks = [];
-  let cursor = startOfWeekMon(monthStart);
-  const monthEnd = endOfMonth(monthStart);
-  let wIndex = 1;
-  while (cursor < monthEnd) {
-    const wStart = cursor;
-    const wEnd = addDays(cursor, 7);
-    const wTasks = tasks.filter(
-      (t) => new Date(t.date) >= wStart && new Date(t.date) < wEnd
-    );
-    weeks.push({
-      week: wIndex,
-      percent: percentOf(wTasks),
-      taskCount: wTasks.length,
-    });
-    cursor = wEnd;
-    wIndex += 1;
-  }
-
-  const doneCount = tasks.filter((t) => taskScore(t) >= 1).length;
-
-  return {
-    monthPercent: monthPct,
-    notAchievedPercent: 100 - monthPct,
-    weeks,
-    totalTasks: tasks.length,
-    doneTasks: doneCount,
-  };
-}
-
 /* ------------------------------------------------------------------ */
-/* GET /me — my tasks + analytics for a given month                    */
-/* Query: ?month=YYYY-MM (defaults to current month)                   */
+/* GET /me?year=YYYY                                                    */
 /* ------------------------------------------------------------------ */
 
 router.get("/me", async (req, res) => {
   try {
-    const monthStr = String(req.query.month || "");
-    const base = monthStr ? new Date(`${monthStr}-01T00:00:00`) : new Date();
-    const monthStart = startOfMonth(base);
-    const monthEnd = endOfMonth(base);
-
-    const tasks = await prisma.targetTask.findMany({
+    const year = Number(req.query.year) || new Date().getFullYear();
+    const rows = await prisma.monthlyTarget.findMany({
       where: {
         companyId: req.clientUser.companyId,
-        ownerId: req.clientUser.userId, // SELF ONLY — cannot be overridden
-        date: { gte: monthStart, lt: monthEnd },
+        ownerId: req.clientUser.userId,
+        year,
       },
-      orderBy: { date: "asc" },
     });
-
-    return res.json({
-      success: true,
-      tasks: tasks.map(formatTask),
-      analytics: buildAnalytics(tasks, monthStart),
-    });
+    const byMonth = new Map(rows.map((r) => [r.month, r]));
+    const months = [];
+    for (let m = startMonthFor(year); m <= 12; m += 1) {
+      months.push(formatRow(byMonth.get(m) || null, year, m));
+    }
+    return res.json({ success: true, year, months });
   } catch (error) {
     console.error("Failed to load my targets:", error);
     return res
@@ -159,193 +115,179 @@ router.get("/me", async (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
-/* POST / — create a task                                              */
-/* Employees create SELF tasks for themselves.                         */
-/* Admins/permitted users can assign to another user (ASSIGNED).       */
+/* PATCH /me/achieved — employee updates one week's achieved            */
+/* Body: { year, month, week, value }                                  */
 /* ------------------------------------------------------------------ */
 
-router.post("/", async (req, res) => {
+router.patch("/me/achieved", async (req, res) => {
   try {
-    const title = String(req.body?.title || "").trim();
-    if (!title) {
+    const year = Number(req.body?.year);
+    const month = Number(req.body?.month);
+    const week = Number(req.body?.week);
+    const value = Math.max(0, Number(req.body?.value) || 0);
+
+    if (
+      !Number.isInteger(year) ||
+      !Number.isInteger(month) ||
+      month < 1 ||
+      month > 12 ||
+      !Number.isInteger(week) ||
+      week < 1
+    ) {
+      return res.status(400).json({ success: false, message: "Invalid input" });
+    }
+
+    const totalWeeks = weeksInMonth(year, month);
+    if (week > totalWeeks) {
       return res
         .status(400)
-        .json({ success: false, message: "Title is required" });
+        .json({ success: false, message: "Invalid week for this month" });
     }
 
-    const type = VALID_TYPES.includes(req.body?.type)
-      ? req.body.type
-      : "CHECKLIST";
-    const targetValue =
-      type === "NUMERIC" ? Number(req.body?.targetValue || 0) : null;
-    const dateStr = String(req.body?.date || "");
-    const date = dateStr ? startOfDay(new Date(dateStr)) : startOfDay(new Date());
-
-    // Determine owner. If an ownerId is provided and differs from me,
-    // this is an assignment — requires team permission.
-    const requestedOwner = String(req.body?.ownerId || "").trim();
-    let ownerId = req.clientUser.userId;
-    let source = "SELF";
-    let assignedByUserId = null;
-
-    if (requestedOwner && requestedOwner !== req.clientUser.userId) {
-      const allowed = await canViewTeam(req);
-      if (!allowed) {
-        return res.status(403).json({
-          success: false,
-          message: "You cannot assign tasks to other users",
-        });
-      }
-      // Ensure the target owner is in the same company.
-      const target = await prisma.user.findFirst({
-        where: {
-          id: requestedOwner,
-          companyId: req.clientUser.companyId,
-          active: true,
-        },
-        select: { id: true },
-      });
-      if (!target) {
-        return res
-          .status(404)
-          .json({ success: false, message: "User not found" });
-      }
-      ownerId = requestedOwner;
-      source = "ASSIGNED";
-      assignedByUserId = req.clientUser.userId;
-    }
-
-    const task = await prisma.targetTask.create({
-      data: {
+    const key = {
+      companyId_ownerId_year_month: {
         companyId: req.clientUser.companyId,
-        ownerId,
-        title,
-        source,
-        assignedByUserId,
-        date,
-        type,
-        targetValue,
-        currentValue: 0,
-        status: "NOT_STARTED",
+        ownerId: req.clientUser.userId,
+        year,
+        month,
+      },
+    };
+
+    const existing = await prisma.monthlyTarget.findUnique({ where: key });
+    const wa = normalize(existing?.weekAchieved || [], totalWeeks);
+    wa[week - 1] = value;
+
+    const row = await prisma.monthlyTarget.upsert({
+      where: key,
+      update: { weekAchieved: wa },
+      create: {
+        companyId: req.clientUser.companyId,
+        ownerId: req.clientUser.userId,
+        year,
+        month,
+        monthlyTarget: Number(existing?.monthlyTarget || 0),
+        weekTarget: normalize(existing?.weekTarget || [], totalWeeks),
+        weekAchieved: wa,
       },
     });
 
-    return res.json({ success: true, task: formatTask(task) });
+    return res.json({ success: true, target: formatRow(row, year, month) });
   } catch (error) {
-    console.error("Failed to create target:", error);
+    console.error("Failed to update achieved:", error);
     return res
       .status(500)
-      .json({ success: false, message: "Unable to create task" });
+      .json({ success: false, message: "Unable to update achieved" });
   }
 });
 
 /* ------------------------------------------------------------------ */
-/* PATCH /:id — update status / currentValue                           */
-/* Owner can update their own tasks. Assigner can update tasks they    */
-/* assigned. Nobody else.                                              */
+/* PATCH /target — admin sets one week's target                        */
+/* Body: { ownerId, year, month, week, value }                         */
 /* ------------------------------------------------------------------ */
 
-router.patch("/:id", async (req, res) => {
+router.patch("/target", async (req, res) => {
   try {
-    const task = await prisma.targetTask.findUnique({
-      where: { id: req.params.id },
-    });
-    if (!task || task.companyId !== req.clientUser.companyId) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Task not found" });
-    }
-
-    const isOwner = task.ownerId === req.clientUser.userId;
-    const isAssigner = task.assignedByUserId === req.clientUser.userId;
-    if (!isOwner && !isAssigner) {
-      return res
-        .status(403)
-        .json({ success: false, message: "Not allowed" });
-    }
-
-    const data = {};
-    if (VALID_STATUSES.includes(req.body?.status)) {
-      data.status = req.body.status;
-    }
-    if (req.body?.currentValue !== undefined && task.type === "NUMERIC") {
-      data.currentValue = Math.max(0, Number(req.body.currentValue) || 0);
-      // Auto-complete a numeric task when it reaches its target.
-      if (
-        task.targetValue &&
-        data.currentValue >= task.targetValue &&
-        !req.body?.status
-      ) {
-        data.status = "DONE";
-      }
-    }
-    // Only the owner may rename their own SELF task.
-    if (
-      req.body?.title !== undefined &&
-      isOwner &&
-      task.source === "SELF"
-    ) {
-      const t = String(req.body.title).trim();
-      if (t) data.title = t;
-    }
-
-    const updated = await prisma.targetTask.update({
-      where: { id: task.id },
-      data,
-    });
-
-    return res.json({ success: true, task: formatTask(updated) });
-  } catch (error) {
-    console.error("Failed to update target:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Unable to update task" });
-  }
-});
-
-/* ------------------------------------------------------------------ */
-/* DELETE /:id — delete a task                                         */
-/* Owner can delete their own SELF tasks.                              */
-/* Assigner (admin) can delete tasks they assigned.                    */
-/* An employee CANNOT delete an ASSIGNED task.                         */
-/* ------------------------------------------------------------------ */
-
-router.delete("/:id", async (req, res) => {
-  try {
-    const task = await prisma.targetTask.findUnique({
-      where: { id: req.params.id },
-    });
-    if (!task || task.companyId !== req.clientUser.companyId) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Task not found" });
-    }
-
-    const canDelete =
-      (task.source === "SELF" && task.ownerId === req.clientUser.userId) ||
-      (task.source === "ASSIGNED" &&
-        task.assignedByUserId === req.clientUser.userId);
-
-    if (!canDelete) {
+    const allowed = await canViewTeam(req);
+    if (!allowed) {
       return res.status(403).json({
         success: false,
-        message: "You cannot delete this task",
+        message: "You do not have permission to set targets",
       });
     }
 
-    await prisma.targetTask.delete({ where: { id: task.id } });
-    return res.json({ success: true });
+    const ownerId = String(req.body?.ownerId || "");
+    const year = Number(req.body?.year);
+    const month = Number(req.body?.month);
+    const value = Math.max(0, Number(req.body?.value) || 0);
+    // Either a week target (scope="week", needs week) or the monthly target
+    // (scope="monthly").
+    const scope = req.body?.scope === "monthly" ? "monthly" : "week";
+    const week = Number(req.body?.week);
+
+    if (
+      !ownerId ||
+      !Number.isInteger(year) ||
+      !Number.isInteger(month) ||
+      month < 1 ||
+      month > 12
+    ) {
+      return res.status(400).json({ success: false, message: "Invalid input" });
+    }
+
+    const totalWeeks = weeksInMonth(year, month);
+
+    if (scope === "week") {
+      if (!Number.isInteger(week) || week < 1 || week > totalWeeks) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid week for this month" });
+      }
+    }
+
+    const owner = await prisma.user.findFirst({
+      where: {
+        id: ownerId,
+        companyId: req.clientUser.companyId,
+        active: true,
+      },
+      select: { id: true },
+    });
+    if (!owner) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const key = {
+      companyId_ownerId_year_month: {
+        companyId: req.clientUser.companyId,
+        ownerId,
+        year,
+        month,
+      },
+    };
+
+    const existing = await prisma.monthlyTarget.findUnique({ where: key });
+    const wt = normalize(existing?.weekTarget || [], totalWeeks);
+    const wa = normalize(existing?.weekAchieved || [], totalWeeks);
+    let monthlyTarget = Number(existing?.monthlyTarget || 0);
+
+    if (scope === "week") {
+      wt[week - 1] = value;
+    } else {
+      monthlyTarget = value;
+    }
+
+    const row = await prisma.monthlyTarget.upsert({
+      where: key,
+      update: {
+        weekTarget: wt,
+        monthlyTarget,
+        setByUserId: req.clientUser.userId,
+      },
+      create: {
+        companyId: req.clientUser.companyId,
+        ownerId,
+        year,
+        month,
+        monthlyTarget,
+        weekTarget: wt,
+        weekAchieved: wa,
+        setByUserId: req.clientUser.userId,
+      },
+    });
+
+    return res.json({ success: true, target: formatRow(row, year, month) });
   } catch (error) {
-    console.error("Failed to delete target:", error);
+    console.error("Failed to set target:", error);
     return res
       .status(500)
-      .json({ success: false, message: "Unable to delete task" });
+      .json({ success: false, message: "Unable to set target" });
   }
 });
 
 /* ------------------------------------------------------------------ */
-/* GET /team — admin/permitted: roster of all employees + their %      */
-/* Query: ?month=YYYY-MM                                               */
+/* GET /team?year=YYYY                                                  */
 /* ------------------------------------------------------------------ */
 
 router.get("/team", async (req, res) => {
@@ -358,10 +300,7 @@ router.get("/team", async (req, res) => {
       });
     }
 
-    const monthStr = String(req.query.month || "");
-    const base = monthStr ? new Date(`${monthStr}-01T00:00:00`) : new Date();
-    const monthStart = startOfMonth(base);
-    const monthEnd = endOfMonth(base);
+    const year = Number(req.query.year) || new Date().getFullYear();
 
     const users = await prisma.user.findMany({
       where: { companyId: req.clientUser.companyId, active: true },
@@ -369,43 +308,47 @@ router.get("/team", async (req, res) => {
       orderBy: { name: "asc" },
     });
 
-    const tasks = await prisma.targetTask.findMany({
-      where: {
-        companyId: req.clientUser.companyId,
-        date: { gte: monthStart, lt: monthEnd },
-      },
+    const rows = await prisma.monthlyTarget.findMany({
+      where: { companyId: req.clientUser.companyId, year },
     });
 
     const byOwner = new Map();
-    tasks.forEach((t) => {
-      if (!byOwner.has(t.ownerId)) byOwner.set(t.ownerId, []);
-      byOwner.get(t.ownerId).push(t);
+    rows.forEach((r) => {
+      if (!byOwner.has(r.ownerId)) byOwner.set(r.ownerId, []);
+      byOwner.get(r.ownerId).push(r);
     });
 
     const roster = users.map((u) => {
       const owned = byOwner.get(u.id) || [];
+      const monthOveralls = owned
+        .map((r) => computeRow(r, year, r.month))
+        .filter((c) => c.monthlyTarget > 0)
+        .map((c) => c.overallPercent);
+      const avg =
+        monthOveralls.length > 0
+          ? Math.round(
+              monthOveralls.reduce((a, b) => a + b, 0) / monthOveralls.length
+            )
+          : 0;
       return {
         id: u.id,
         name: u.name,
         email: u.email,
         jobTitle: u.jobTitle,
-        percent: percentOf(owned),
-        taskCount: owned.length,
+        yearAveragePercent: avg,
+        monthsWithData: monthOveralls.length,
       };
     });
 
-    const avg =
+    const teamAverage =
       roster.length > 0
         ? Math.round(
-            roster.reduce((a, r) => a + r.percent, 0) / roster.length
+            roster.reduce((a, r) => a + r.yearAveragePercent, 0) /
+              roster.length
           )
         : 0;
 
-    return res.json({
-      success: true,
-      teamAverage: avg,
-      roster,
-    });
+    return res.json({ success: true, year, teamAverage, roster });
   } catch (error) {
     console.error("Failed to load team targets:", error);
     return res
@@ -415,8 +358,7 @@ router.get("/team", async (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
-/* GET /user/:userId — admin/permitted: one employee's full page       */
-/* Query: ?month=YYYY-MM                                               */
+/* GET /user/:userId?year=YYYY                                          */
 /* ------------------------------------------------------------------ */
 
 router.get("/user/:userId", async (req, res) => {
@@ -442,26 +384,22 @@ router.get("/user/:userId", async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
-    const monthStr = String(req.query.month || "");
-    const base = monthStr ? new Date(`${monthStr}-01T00:00:00`) : new Date();
-    const monthStart = startOfMonth(base);
-    const monthEnd = endOfMonth(base);
-
-    const tasks = await prisma.targetTask.findMany({
+    const year = Number(req.query.year) || new Date().getFullYear();
+    const rows = await prisma.monthlyTarget.findMany({
       where: {
         companyId: req.clientUser.companyId,
         ownerId: owner.id,
-        date: { gte: monthStart, lt: monthEnd },
+        year,
       },
-      orderBy: { date: "asc" },
     });
 
-    return res.json({
-      success: true,
-      owner,
-      tasks: tasks.map(formatTask),
-      analytics: buildAnalytics(tasks, monthStart),
-    });
+    const byMonth = new Map(rows.map((r) => [r.month, r]));
+    const months = [];
+    for (let m = startMonthFor(year); m <= 12; m += 1) {
+      months.push(formatRow(byMonth.get(m) || null, year, m));
+    }
+
+    return res.json({ success: true, owner, year, months });
   } catch (error) {
     console.error("Failed to load user targets:", error);
     return res
