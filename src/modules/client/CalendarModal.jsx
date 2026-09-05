@@ -161,12 +161,15 @@ function formatTimeLabel(date) {
 export default function CalendarModal({ open, onClose, currentUser }) {
   const [anchorDate, setAnchorDate] = useState(() => new Date());
   const [viewMode, setViewMode] = useState("week"); // "day" | "workweek" | "week"
-  const [viewMenuOpen, setViewMenuOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()));
   const [events, setEvents] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [typeFilters, setTypeFilters] = useState(() =>
+    EVENT_TYPES.reduce((acc, type) => ({ ...acc, [type]: true }), {})
+  );
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
@@ -370,15 +373,20 @@ export default function CalendarModal({ open, onClose, currentUser }) {
 
   const today = startOfDay(new Date());
 
+  const visibleEvents = useMemo(
+    () => events.filter((event) => typeFilters[event.type] !== false),
+    [events, typeFilters]
+  );
+
   const eventsByDay = useMemo(() => {
     const map = new Map();
-    events.forEach((event) => {
+    visibleEvents.forEach((event) => {
       const key = toDateInput(new Date(event.startAt));
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(event);
     });
     return map;
-  }, [events]);
+  }, [visibleEvents]);
 
   function eventsForDay(day) {
     return (eventsByDay.get(toDateInput(day)) || []).slice().sort(
@@ -400,17 +408,17 @@ export default function CalendarModal({ open, onClose, currentUser }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[130] bg-slate-950/60 backdrop-blur-[2px] p-0 sm:p-4 flex items-stretch sm:items-center justify-center">
-      <div className="flex w-full max-w-6xl h-full sm:h-[90vh] flex-col overflow-hidden bg-white sm:rounded-2xl border border-slate-200 shadow-2xl">
+    <div className="fixed inset-0 z-[130] flex items-stretch justify-center bg-slate-950/35 p-0 backdrop-blur-[1px] sm:items-center sm:p-3">
+      <div className="flex h-full w-full max-w-[1500px] flex-col overflow-hidden border border-slate-200 bg-white shadow-[0_28px_80px_rgba(15,23,42,.22)] sm:h-[95vh] sm:rounded-[26px]">
         {/* HEADER */}
-        <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-5">
+        <div className="flex min-h-[74px] items-center justify-between gap-3 border-b border-slate-200 px-5 py-3 sm:px-7">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-950 text-white">
-              <CalendarDays size={17} />
+            <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-slate-950 text-white shadow-sm">
+              <CalendarDays size={19} />
             </span>
             <div>
-              <div className="text-sm font-black text-slate-950">Calendar</div>
-              <div className="text-[11px] text-slate-500">
+              <div className="text-[19px] font-extrabold tracking-[-0.025em] text-slate-950">Calendar</div>
+              <div className="mt-0.5 text-[12px] font-medium text-slate-500">
                 Plan meetings, follow-ups and reminders.
               </div>
             </div>
@@ -420,7 +428,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
             <button
               type="button"
               onClick={() => openCreate(selectedDate, 9)}
-              className="inline-flex h-9 items-center gap-2 rounded-xl bg-brand-600 px-3 text-xs font-bold text-white hover:bg-brand-700"
+              className="inline-flex h-10 items-center gap-2 rounded-[13px] bg-brand-600 px-4 text-[12px] font-bold text-white shadow-sm transition hover:bg-brand-700"
             >
               <Plus size={14} />
               New event
@@ -446,11 +454,11 @@ export default function CalendarModal({ open, onClose, currentUser }) {
         {/* BODY: left mini-month + agenda, right week grid */}
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           {/* LEFT PANEL */}
-          <div className="flex w-full flex-shrink-0 flex-col border-b border-slate-200 lg:w-[280px] lg:border-b-0 lg:border-r">
+          <div className="flex w-full flex-shrink-0 flex-col overflow-y-auto border-b border-slate-200 bg-white lg:w-[340px] lg:border-b-0 lg:border-r">
             {/* Mini-month */}
-            <div className="p-4">
+            <div className="p-5">
               <div className="mb-2 flex items-center justify-between">
-                <div className="text-xs font-black text-slate-900">
+                <div className="text-[16px] font-extrabold tracking-[-0.015em] text-slate-900">
                   {formatMonthYear(anchorDate)}
                 </div>
                 <div className="flex items-center gap-1">
@@ -477,7 +485,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                 {WEEKDAYS_MINI.map((d, i) => (
                   <div
                     key={i}
-                    className="py-1 text-[9px] font-bold uppercase text-slate-400"
+                    className="py-1.5 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400"
                   >
                     {d}
                   </div>
@@ -497,7 +505,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                         setSelectedDate(startOfDay(day));
                         setAnchorDate(new Date(day));
                       }}
-                      className={`relative flex h-8 items-center justify-center rounded-lg text-[11px] font-semibold transition-colors ${
+                      className={`relative flex h-10 items-center justify-center rounded-xl text-[12px] font-bold transition-colors ${
                         isSelected
                           ? "bg-brand-600 text-white"
                           : isToday
@@ -523,15 +531,58 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                   setAnchorDate(now);
                   setSelectedDate(startOfDay(now));
                 }}
-                className="mt-3 w-full rounded-lg border border-slate-200 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50"
+                className="mt-4 w-full rounded-xl border border-slate-200 bg-white py-2.5 text-[12px] font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
               >
                 Today
               </button>
             </div>
 
-            {/* Agenda for selected day */}
-            <div className="min-h-0 flex-1 overflow-y-auto border-t border-slate-100 p-4">
-              <div className="mb-2 text-[11px] font-black uppercase tracking-wide text-slate-400">
+            {/* FILTERS */}
+            <div className="border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => setFiltersOpen((open) => !open)}
+                className="flex w-full items-center justify-between px-5 py-4 text-left"
+              >
+                <span className="text-[14px] font-extrabold text-slate-900">Filters</span>
+                <ChevronDown
+                  size={15}
+                  className={`text-slate-500 transition-transform ${filtersOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {filtersOpen && (
+                <div className="max-h-[230px] overflow-y-auto px-5 pb-4 pr-3">
+                  <div className="space-y-2">
+                    {EVENT_TYPES.map((type) => (
+                      <label
+                        key={type}
+                        className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-[12px] font-semibold ${
+                          TYPE_STYLES[type] || TYPE_STYLES.OTHER
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={typeFilters[type] !== false}
+                          onChange={(e) =>
+                            setTypeFilters((current) => ({
+                              ...current,
+                              [type]: e.target.checked,
+                            }))
+                          }
+                          className="h-4 w-4 rounded border-white/80 accent-indigo-600"
+                        />
+                        <span>{TYPE_LABELS[type]}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* AGENDA FOR SELECTED DAY */}
+            <div className="border-t border-slate-200 px-5 py-4">
+              <div className="mb-3 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400">
                 {selectedDate.toLocaleDateString("en-IN", {
                   weekday: "long",
                   day: "numeric",
@@ -540,28 +591,26 @@ export default function CalendarModal({ open, onClose, currentUser }) {
               </div>
 
               {selectedDayEvents.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-3 py-6 text-center text-[11px] text-slate-500">
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-7 text-center text-[11px] font-medium leading-5 text-slate-500">
                   No events. Click a time slot to add one.
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {selectedDayEvents.map((event) => (
                     <button
                       key={event.id}
                       type="button"
                       onClick={() => openEdit(event)}
-                      className={`block w-full rounded-lg border px-3 py-2 text-left transition-colors hover:shadow-sm ${
+                      className={`block w-full rounded-2xl border px-3.5 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                         eventStyle(event)
                       }`}
                     >
-                      <div className="truncate text-xs font-bold">
+                      <div className="text-[12px] font-extrabold leading-snug">
                         {event.title}
                       </div>
-                      <div className="mt-1 flex items-center gap-1 text-[10px] font-semibold opacity-80">
-                        <Clock size={10} />
-                        {event.allDay
-                          ? "All day"
-                          : formatTimeLabel(event.startAt)}
+                      <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-semibold opacity-80">
+                        <Clock size={11} />
+                        {event.allDay ? "All day" : formatTimeLabel(event.startAt)}
                       </div>
                       {event.meetingRoom && (
                         <button
@@ -571,7 +620,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                             setMeetingRoom(event.meetingRoom);
                             setMeetingOpen(true);
                           }}
-                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-emerald-700"
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-emerald-700"
                         >
                           <Video size={11} />
                           Join meeting
@@ -587,8 +636,8 @@ export default function CalendarModal({ open, onClose, currentUser }) {
           {/* RIGHT: WEEK GRID */}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             {/* View toolbar */}
-            <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2.5">
-              <div className="text-xs font-black text-slate-900">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 py-3.5">
+              <div className="text-[16px] font-extrabold tracking-[-0.015em] text-slate-900">
                 {weekDays[0].toLocaleDateString("en-IN", {
                   day: "numeric",
                   month: "short",
@@ -625,61 +674,32 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                   <ChevronRight size={15} />
                 </button>
 
-                {/* View mode dropdown */}
-                <div className="relative ml-1">
-                  <button
-                    type="button"
-                    onClick={() => setViewMenuOpen((o) => !o)}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-bold text-slate-700 hover:bg-slate-50"
-                  >
-                    {viewMode === "day"
-                      ? "Day"
-                      : viewMode === "workweek"
-                      ? "Work week"
-                      : "Week"}
-                    <ChevronDown size={13} />
-                  </button>
-
-                  {viewMenuOpen && (
-                    <>
-                      <button
-                        type="button"
-                        aria-label="Close view menu"
-                        onClick={() => setViewMenuOpen(false)}
-                        className="fixed inset-0 z-[10] cursor-default"
-                      />
-                      <div className="absolute right-0 top-9 z-[20] w-36 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
-                        {[
-                          ["day", "Day"],
-                          ["workweek", "Work week"],
-                          ["week", "Week"],
-                        ].map(([value, label]) => (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() => {
-                              setViewMode(value);
-                              setViewMenuOpen(false);
-                            }}
-                            className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[11px] font-semibold ${
-                              viewMode === value
-                                ? "bg-brand-50 text-brand-700"
-                                : "text-slate-700 hover:bg-slate-50"
-                            }`}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
+                <div className="ml-2 flex items-center rounded-[14px] bg-slate-100 p-1">
+                  {[
+                    ["day", "Day"],
+                    ["workweek", "Work week"],
+                    ["week", "Week"],
+                  ].map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setViewMode(value)}
+                      className={`rounded-[10px] px-3.5 py-2 text-[10px] font-bold transition ${
+                        viewMode === value
+                          ? "bg-white text-slate-950 shadow-sm"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
 
             {/* Day headers */}
             <div
-              className="grid flex-shrink-0 border-b border-slate-100"
+              className="grid flex-shrink-0 border-b border-slate-200 bg-white"
               style={{ gridTemplateColumns: `48px repeat(${dayCount}, 1fr)` }}
             >
               <div />
@@ -691,15 +711,15 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                     key={day.toISOString()}
                     type="button"
                     onClick={() => setSelectedDate(startOfDay(day))}
-                    className={`flex flex-col items-center gap-0.5 py-2 text-center transition-colors ${
+                    className={`flex min-h-[82px] flex-col items-center justify-center gap-1 py-2 text-center transition-colors ${
                       isSelected ? "bg-brand-50" : "hover:bg-slate-50"
                     }`}
                   >
-                    <span className="text-[9px] font-bold uppercase text-slate-400">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.07em] text-slate-400">
                       {WEEKDAYS[(day.getDay() + 6) % 7]}
                     </span>
                     <span
-                      className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                      className={`flex h-10 w-10 items-center justify-center rounded-full text-[15px] font-extrabold ${
                         isToday
                           ? "bg-brand-600 text-white"
                           : "text-slate-800"
@@ -1033,7 +1053,7 @@ function FragmentRow({
   return (
     <>
       {/* Hour label */}
-      <div className="h-14 border-b border-r border-slate-100 pr-1 text-right text-[9px] font-bold text-slate-400">
+      <div className="h-[76px] border-b border-r border-slate-100 pr-2 text-right text-[10px] font-semibold text-slate-400">
         <span className="relative -top-1.5">
           {hour === 0
             ? ""
@@ -1052,7 +1072,7 @@ function FragmentRow({
           <div
             key={`${day.toISOString()}-${hour}`}
             onClick={() => onSlotClick(day, hour)}
-            className="relative h-14 cursor-pointer border-b border-r border-slate-100 px-0.5 hover:bg-slate-50/70"
+            className="relative h-[76px] cursor-pointer border-b border-r border-slate-100 px-2 py-1.5 transition hover:bg-slate-50/70"
           >
             {dayEvents.map((event) => (
               <button
@@ -1062,13 +1082,16 @@ function FragmentRow({
                   e.stopPropagation();
                   onEventClick(event);
                 }}
-                className={`mb-0.5 block w-full truncate rounded-md border px-1.5 py-1 text-left text-[10px] font-bold leading-tight ${
+                className={`mx-auto mb-1 block min-h-[56px] w-[90%] rounded-[12px] border px-3 py-2.5 text-left text-[11px] font-bold leading-[1.28] shadow-[0_2px_8px_rgba(15,23,42,.05)] ${
                   eventStyle(event)
                 }`}
                 title={event.title}
               >
-                {event.allDay ? "" : formatTimeLabel(event.startAt) + " · "}
-                {event.title}
+                <span className="block line-clamp-2 text-[11px] font-bold">{event.title}</span>
+                <span className="mt-1.5 flex items-center gap-1.5 text-[9px] font-semibold opacity-75">
+                  <Clock size={10} />
+                  {event.allDay ? "All day" : formatTimeLabel(event.startAt)}
+                </span>
               </button>
             ))}
           </div>

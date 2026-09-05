@@ -52,6 +52,7 @@ function formatConversation(conversation, currentUserId, unreadCount = 0) {
     unreadCount,
     isFavorite: Boolean(myMembership?.isFavorite),
     isMuted: Boolean(myMembership?.isMuted),
+    isArchived: Boolean(myMembership?.isArchived),
     updatedAt: conversation.updatedAt,
   };
 }
@@ -402,6 +403,50 @@ router.patch("/:id/mute", async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Unable to update mute" });
+  }
+});
+
+
+/* ------------------------------------------------------------------ */
+/* PATCH /:id/archive — archive/unarchive for the current user         */
+/* ------------------------------------------------------------------ */
+
+router.patch("/:id/archive", async (req, res) => {
+  try {
+    const conversationId = req.params.id;
+    const isArchived = Boolean(req.body?.isArchived);
+
+    const member = await prisma.conversationMember.findUnique({
+      where: {
+        conversationId_userId: {
+          conversationId,
+          userId: req.clientUser.userId,
+        },
+      },
+    });
+
+    if (!member) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Conversation not found" });
+    }
+
+    await prisma.conversationMember.update({
+      where: {
+        conversationId_userId: {
+          conversationId,
+          userId: req.clientUser.userId,
+        },
+      },
+      data: { isArchived },
+    });
+
+    return res.json({ success: true, isArchived });
+  } catch (error) {
+    console.error("Toggle archive failed:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Unable to update archive" });
   }
 });
 

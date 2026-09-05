@@ -1174,6 +1174,7 @@ model ConversationMember {
   joinedAt   DateTime  @default(now())
   isFavorite Boolean   @default(false)
   isMuted    Boolean   @default(false)
+  isArchived Boolean   @default(false)
 
   @@unique([conversationId, userId])
   @@index([userId])
