@@ -52,6 +52,7 @@ import razorpayWebhook from "./routes/razorpayWebhook.js";
 import http from "http";
 import { attachSocketServer } from "./socket.js";
 import clientTargetsRoutes from "./routes/clientTargets.js";
+import clientReferralsRoutes from "./routes/clientReferrals.js";
 
 const config = loadServerConfig();
 
@@ -173,6 +174,7 @@ app.use("/api/client/calendar", clientCalendarRoutes);
 app.use("/api/client/years", clientYearsRoutes);
 app.use("/api/client/chat", clientChatRoutes);
 app.use("/api/client/targets", clientTargetsRoutes);
+app.use("/api/client/referrals", clientReferralsRoutes);
 
 app.use((req, res) =>
   res.status(404).json({

@@ -202,6 +202,7 @@ model Company {
   conversations           Conversation[]
   targetTasks             TargetTask[]
   monthlyTargets          MonthlyTarget[]
+  referrals               Referral[]
 }
 
 model User {
@@ -216,6 +217,7 @@ model User {
   phone      String?
   jobTitle   String?
   department String?
+  referralCode String? @unique
 
   sidebarOrder String[] @default([])
 
@@ -249,6 +251,7 @@ model User {
   targetTasksOwned       TargetTask[]                @relation("TargetOwner")
   targetTasksAssigned    TargetTask[]                @relation("TargetAssigner")
   monthlyTargets         MonthlyTarget[]             @relation("MonthlyTargetOwner")
+  referrals              Referral[]                  @relation("ReferralReferrer")
 
   @@index([companyId])
   @@index([companyId, role])
@@ -543,6 +546,8 @@ model Lead {
 
   admission         Admission?
   customFieldValues CustomFieldValue[]
+  
+  referral Referral?
 
   leadDatasetId String?
   leadDataset   LeadDataset? @relation(fields: [leadDatasetId], references: [id], onDelete: SetNull)
@@ -1259,4 +1264,21 @@ model MonthlyTarget {
 
   @@unique([companyId, ownerId, year, month])
   @@index([companyId, year, month])
+}
+model Referral {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  referrerId String
+  referrer   User   @relation("ReferralReferrer", fields: [referrerId], references: [id], onDelete: Cascade)
+
+  leadId String @unique
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([referrerId])
 }

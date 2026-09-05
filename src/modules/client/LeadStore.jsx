@@ -2313,6 +2313,24 @@ export default function LeadStore({ selectedYear = "all" }) {
                         <button
                           type="button"
                           onClick={async () => {
+                            try {
+                              await apiRequest("/api/client/referrals/tag", {
+                                method: "POST",
+                                body: JSON.stringify({ leadId: lead.id }),
+                              });
+                              setSuccessMessage(`${lead.name} tagged as your referral.`);
+                            } catch (error) {
+                              setError(error?.data?.message || "Unable to tag referral");
+                            }
+                          }}
+                          title="Tag as my referral"
+                          className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-brand-600 hover:bg-brand-50 transition-colors"
+                        >
+                          <Gift size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
                             if (!window.confirm(`Delete ${lead.name}? This cannot be undone.`)) return;
                             try {
                               await apiRequest(`/api/client/lead-store/manual/${lead.id}`, { method: "DELETE" });
