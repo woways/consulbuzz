@@ -187,9 +187,9 @@ export default function ClientLogin() {
 
               <div>
                 <div className="text-[24px] font-bold tracking-[-0.035em]">
-                  Consul
+                  Bis
                   <span className="text-blue-500">
-                    Buzz
+                    pun
                   </span>
                 </div>
 
@@ -267,7 +267,7 @@ export default function ClientLogin() {
             </div>
 
             <div className="text-[10px] text-slate-600">
-              ConsulBuzz Client Workspace
+              Bispun Client Workspace
             </div>
           </div>
         </section>
@@ -288,9 +288,9 @@ export default function ClientLogin() {
               </div>
 
               <div className="text-[19px] font-bold tracking-[-0.03em] text-slate-950">
-                Consul
+                Bis
                 <span className="text-blue-600">
-                  Buzz
+                  pun
                 </span>
               </div>
             </div>
@@ -309,7 +309,7 @@ export default function ClientLogin() {
               </h2>
 
               <p className="mt-2 text-[15px] text-slate-500">
-                Sign in to your ConsulBuzz workspace
+                Sign in to your Bispun workspace
               </p>
             </div>
 
@@ -517,7 +517,7 @@ export default function ClientLogin() {
       </h3>
 
       <p className="mt-2 text-[13px] leading-6 text-slate-500">
-        Contact the ConsulBuzz support team if you're having trouble
+        Contact the Bispun support team if you're having trouble
         accessing your workspace.
       </p>
 

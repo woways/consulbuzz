@@ -4750,7 +4750,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
                           <div>
                             <div className="text-[16px] font-black tracking-[-0.03em] text-slate-950">
-                              ConsulBuzz
+                              Bispun
                             </div>
                             <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] font-semibold text-slate-400">
                               CRM Subscription
@@ -4944,7 +4944,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                       <div>
                         <div className="text-sm font-bold text-slate-900">
-                          Thank you for choosing ConsulBuzz.
+                          Thank you for choosing Bispun.
                         </div>
                         <div className="mt-1 text-[11px] text-slate-500">
                           This receipt confirms successful payment for your CRM subscription.

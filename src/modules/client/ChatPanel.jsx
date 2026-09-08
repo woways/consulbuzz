@@ -117,8 +117,6 @@ export default function ChatPanel({ currentUser }) {
   const [meetingRoom, setMeetingRoom] = useState("");
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState("");
-  const [listFilter, setListFilter] = useState("all"); // all | unread
-  const [section, setSection] = useState("chats"); // groups | chats | starred | archived
 
   const [newOpen, setNewOpen] = useState(false);
   const [users, setUsers] = useState([]);
@@ -414,34 +412,17 @@ export default function ChatPanel({ currentUser }) {
     [conversations, activeId]
   );
 
-  const sectionCounts = useMemo(() => ({
-    groups: conversations.filter((c) => c.isGroup && !c.isArchived).length,
-    chats: conversations.filter((c) => !c.isGroup && !c.isArchived).length,
-    starred: conversations.filter((c) => c.isFavorite && !c.isArchived).length,
-    archived: conversations.filter((c) => c.isArchived).length,
-  }), [conversations]);
-
   const filteredConversations = useMemo(() => {
-    let list = conversations;
-
-    if (section === "groups") list = list.filter((c) => c.isGroup && !c.isArchived);
-    if (section === "chats") list = list.filter((c) => !c.isGroup && !c.isArchived);
-    if (section === "starred") list = list.filter((c) => c.isFavorite && !c.isArchived);
-    if (section === "archived") list = list.filter((c) => c.isArchived);
-
-    if (listFilter === "unread") {
-      list = list.filter((c) => (c.unreadCount || 0) > 0);
-    }
-
     const q = search.trim().toLowerCase();
+    let list = conversations.filter((c) => !c.isArchived);
     if (q) {
-      list = list.filter((c) => String(c.title).toLowerCase().includes(q));
+      list = list.filter((c) =>
+        String(c.title || "").toLowerCase().includes(q) ||
+        String(c.lastMessage?.body || "").toLowerCase().includes(q)
+      );
     }
-
-    const favs = list.filter((c) => c.isFavorite);
-    const rest = list.filter((c) => !c.isFavorite);
-    return [...favs, ...rest];
-  }, [conversations, search, listFilter, section]);
+    return list;
+  }, [conversations, search]);
 
   const filteredUsers = useMemo(() => {
     const q = userSearch.trim().toLowerCase();
@@ -467,15 +448,9 @@ export default function ChatPanel({ currentUser }) {
     return groups;
   }, [messages]);
 
-  const navItems = [
-    { key: "groups", label: "Groups", icon: Users },
-    { key: "chats", label: "Chats", icon: MessageSquare },
-    { key: "starred", label: "Starred", icon: Star },
-    { key: "archived", label: "Archived", icon: Archive },
-  ];
 
   return (
-    <div className="flex h-[calc(100vh-104px)] w-full flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.05)]">
+    <div className="flex h-[calc(100vh-104px)] w-full flex-col overflow-hidden bg-[#f5f5f4]">
       <style>{`
         .cb-bubble { transition: transform .15s ease, box-shadow .15s ease; }
         .cb-bubble:hover { transform: translateY(-1px); }
@@ -483,15 +458,11 @@ export default function ChatPanel({ currentUser }) {
         .cb-send:hover:not(:disabled) { transform: translateY(-1px) scale(1.03); box-shadow: 0 8px 20px rgba(79,70,229,.28); }
       `}</style>
 
-      <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3.5 sm:px-5">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-white shadow-sm">
-            <MessageSquare size={18} />
-          </span>
-          <div>
-            <div className="text-[15px] font-extrabold tracking-[-0.02em] text-slate-950">Chats</div>
-            <div className="text-[11px] text-slate-500">Message your team in real time.</div>
-          </div>
+      <div className="bg-[#f5f5f4] px-5 pb-4 pt-1 sm:px-7">
+        <div className="text-[24px] font-bold leading-none tracking-[-0.035em] text-neutral-950">Chat</div>
+        <div className="mt-2 flex items-center gap-2 text-[12px] font-medium text-neutral-500">
+          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          Direct messages & group chats · meeting links · shareable invites
         </div>
       </div>
 
@@ -502,64 +473,30 @@ export default function ChatPanel({ currentUser }) {
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1">
+      <div className="mx-5 mb-5 flex min-h-0 flex-1 overflow-hidden rounded-[16px] border border-neutral-200 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.05)] sm:mx-7">
         {/* LEFT NAV + CHAT LIST */}
-        <div className={`w-full flex-shrink-0 border-r border-slate-200 bg-white lg:flex lg:w-[310px] lg:flex-col ${activeId ? "hidden" : "flex flex-col"}`}>
-          <div className="border-b border-slate-100 p-3.5">
+        <div className={`w-full flex-shrink-0 border-r border-slate-200 bg-white lg:flex lg:w-[350px] lg:flex-col ${activeId ? "hidden" : "flex flex-col"}`}>
+          <div className="flex h-[66px] items-center justify-between border-b border-neutral-200 px-4">
+            <div className="text-[15px] font-bold text-neutral-950">Chats</div>
             <button
               type="button"
               onClick={openNewChat}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-xs font-bold text-white shadow-sm transition hover:shadow-md"
+              className="inline-flex h-9 items-center gap-2 rounded-[9px] border border-neutral-300 bg-white px-3.5 text-[12px] font-semibold text-neutral-800 shadow-sm hover:bg-neutral-50"
             >
-              <Plus size={15} />
-              New Chat
+              <Plus size={14} />
+              New
             </button>
-
-            <div className="mt-3 space-y-1.5">
-              {navItems.map(({ key, label, icon: Icon }) => {
-                const selected = section === key;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setSection(key)}
-                    className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
-                      selected
-                        ? "border-indigo-100 bg-indigo-50/90 text-indigo-700 shadow-sm"
-                        : "border-transparent bg-slate-50/70 text-slate-700 hover:border-slate-200 hover:bg-white"
-                    }`}
-                  >
-                    <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${selected ? "bg-white text-indigo-600" : "bg-white text-slate-500"}`}>
-                      <Icon size={15} className={key === "starred" && selected ? "fill-amber-400 text-amber-400" : ""} />
-                    </span>
-                    <span className="flex-1 text-[12px] font-bold">{label}</span>
-                    <span className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[9px] font-extrabold ${selected ? "bg-indigo-600 text-white" : "bg-white text-slate-500"}`}>
-                      {sectionCounts[key]}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
-          <div className="border-b border-slate-100 p-3">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search chats..."
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs font-medium text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setListFilter((v) => (v === "all" ? "unread" : "all"))}
-                className={`h-10 rounded-xl border px-3 text-[10px] font-bold transition ${listFilter === "unread" ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-500"}`}
-              >
-                {listFilter === "unread" ? "Unread" : "All"}
-              </button>
+          <div className="px-3 pb-2 pt-3">
+            <div className="relative">
+              <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search chats, people and messages..."
+                className="h-10 w-full rounded-[9px] border border-neutral-400 bg-white pl-9 pr-3 text-[12px] font-medium text-neutral-800 outline-none placeholder:text-neutral-500 focus:border-neutral-700"
+              />
             </div>
           </div>
 
@@ -570,7 +507,7 @@ export default function ChatPanel({ currentUser }) {
               </div>
             ) : filteredConversations.length === 0 ? (
               <div className="px-5 py-12 text-center text-xs leading-5 text-slate-400">
-                No {section} found.
+                No chats found.
               </div>
             ) : (
               filteredConversations.map((c) => {
@@ -580,9 +517,9 @@ export default function ChatPanel({ currentUser }) {
                     key={c.id}
                     type="button"
                     onClick={() => setActiveId(c.id)}
-                    className={`flex w-full items-center gap-3 border-b border-slate-50 px-3.5 py-3 text-left transition ${active ? "bg-indigo-50" : "hover:bg-slate-50"}`}
+                    className={`mx-2 flex w-[calc(100%-16px)] items-center gap-3 rounded-[11px] border px-3 py-2.5 text-left transition ${active ? "border-emerald-200 bg-emerald-50" : "border-transparent hover:bg-neutral-50"}`}
                   >
-                    <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${c.isGroup ? "bg-gradient-to-br from-violet-500 to-purple-600" : `bg-gradient-to-br ${avatarGradient(c.title)}`}`}>
+                    <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold shadow-sm ${c.isGroup ? "bg-neutral-100 text-neutral-600" : "bg-indigo-100 text-indigo-600"}`}>
                       {c.isGroup ? <Users size={16} /> : initialsOf(c.title)}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -616,7 +553,7 @@ export default function ChatPanel({ currentUser }) {
         <div className={`min-h-0 min-w-0 flex-1 flex-col ${activeId ? "flex" : "hidden lg:flex"}`}>
           {activeConversation ? (
             <>
-              <div className="flex items-center gap-3 border-b border-slate-100 bg-white px-4 py-3">
+              <div className="flex h-[66px] flex-shrink-0 items-center gap-3 border-b border-neutral-200 bg-white px-4">
                 <button type="button" onClick={() => setActiveId(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden" aria-label="Back">
                   <ChevronLeft size={17} />
                 </button>
@@ -649,7 +586,7 @@ export default function ChatPanel({ currentUser }) {
                 </div>
               )}
 
-              <div className="min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.055),_transparent_38%),linear-gradient(to_bottom,#fbfcff,#ffffff)] px-4 py-5 sm:px-5">
+              <div className="min-h-0 flex-1 overflow-y-auto bg-white px-4 py-5 sm:px-5">
                 {loadingThread ? (
                   <div className="flex items-center justify-center gap-2 py-10 text-xs text-slate-500"><Loader2 size={14} className="animate-spin" /> Loading messages...</div>
                 ) : messages.length === 0 ? (
@@ -675,7 +612,7 @@ export default function ChatPanel({ currentUser }) {
                           {!mine && (
                             <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[9px] font-bold text-white ${avatarGradient(m.sender?.name)}`}>{initialsOf(m.sender?.name)}</span>
                           )}
-                          <div className={`cb-bubble relative max-w-[76%] px-4 py-2.5 text-[12px] leading-relaxed sm:max-w-[70%] ${mine ? "rounded-[18px] rounded-br-[6px] bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm" : "rounded-[18px] rounded-bl-[6px] border border-slate-100 bg-white text-slate-800 shadow-sm"} ${m.pinned ? "ring-1 ring-amber-300" : ""}`}>
+                          <div className={`cb-bubble relative max-w-[76%] px-4 py-2.5 text-[12px] leading-relaxed sm:max-w-[70%] ${mine ? "rounded-[16px] rounded-br-[5px] bg-emerald-50 text-neutral-900" : "rounded-[16px] rounded-bl-[5px] bg-neutral-100 text-neutral-900"} ${m.pinned ? "ring-1 ring-amber-300" : ""}`}>
                             {!mine && activeConversation.isGroup && <div className="mb-0.5 text-[9px] font-bold text-indigo-600">{m.sender?.name}</div>}
                             {room ? (
                               <div className="flex flex-wrap items-center gap-2">
@@ -684,7 +621,7 @@ export default function ChatPanel({ currentUser }) {
                                 <button type="button" onClick={() => joinMeeting(room)} className={`rounded-lg px-2.5 py-1 text-[10px] font-bold ${mine ? "bg-white/20 text-white hover:bg-white/30" : "bg-indigo-600 text-white hover:bg-indigo-700"}`}>Join</button>
                               </div>
                             ) : <div className="whitespace-pre-wrap break-words">{m.body}</div>}
-                            <div className={`mt-1 text-right text-[8px] ${mine ? "text-white/65" : "text-slate-400"}`}>{formatTime(m.createdAt)}</div>
+                            <div className={`mt-1 text-right text-[8px] "text-neutral-400"`}>{formatTime(m.createdAt)}</div>
                           </div>
                           <button type="button" onClick={() => togglePin(m)} title={m.pinned ? "Unpin" : "Pin"} className="mb-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md text-slate-400 opacity-0 hover:bg-slate-100 group-hover:opacity-100">
                             {m.pinned ? <PinOff size={11} /> : <Pin size={11} />}
@@ -697,8 +634,8 @@ export default function ChatPanel({ currentUser }) {
                 )}
               </div>
 
-              <div className="border-t border-slate-100 bg-white p-3">
-                <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 transition focus-within:border-indigo-300 focus-within:bg-white">
+              <div className="border-t border-neutral-200 bg-white p-3">
+                <div className="flex min-h-[46px] items-end gap-1 rounded-[9px] border border-neutral-400 bg-white p-1.5 transition focus-within:border-neutral-700">
                   <div className="relative">
                     <button type="button" onClick={() => setEmojiOpen((o) => !o)} className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-indigo-50 hover:text-indigo-600" aria-label="Emoji"><Smile size={17} /></button>
                     {emojiOpen && (
@@ -718,7 +655,7 @@ export default function ChatPanel({ currentUser }) {
                     placeholder="Type a message..."
                     className="max-h-28 min-h-[36px] flex-1 resize-none bg-transparent px-2 py-2 text-sm text-slate-800 outline-none"
                   />
-                  <button type="button" onClick={sendMessage} disabled={sending || !draft.trim()} className="cb-send flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm disabled:opacity-40" aria-label="Send">
+                  <button type="button" onClick={sendMessage} disabled={sending || !draft.trim()} className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 disabled:opacity-40" aria-label="Send">
                     {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
                   </button>
                 </div>
@@ -732,62 +669,7 @@ export default function ChatPanel({ currentUser }) {
           )}
         </div>
 
-        {/* RIGHT DETAILS */}
-        {activeConversation && (
-          <aside className="hidden w-[275px] flex-shrink-0 flex-col border-l border-slate-200 bg-white xl:flex">
-            <div className="border-b border-slate-100 px-5 py-6 text-center">
-              <span className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br text-lg font-bold text-white shadow-sm ${activeConversation.isGroup ? "from-violet-500 to-purple-600" : avatarGradient(activeConversation.title)}`}>
-                {activeConversation.isGroup ? <Users size={23} /> : initialsOf(activeConversation.title)}
-              </span>
-              <div className="mt-3 text-[14px] font-extrabold text-slate-900">{activeConversation.title}</div>
-              <div className="mt-1 text-[10px] text-slate-500">{activeConversation.isGroup ? `${activeConversation.members.length} members` : "Team member"}</div>
-              {!activeConversation.isGroup && activeConversation.otherMembers[0]?.email && (
-                <div className="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-slate-500"><Mail size={11} /> {activeConversation.otherMembers[0].email}</div>
-              )}
-            </div>
 
-            {activeConversation.isGroup && (
-              <div className="border-b border-slate-100 px-4 py-4">
-                <div className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400">Members</div>
-                <div className="space-y-2">
-                  {activeConversation.members.slice(0, 5).map((m) => (
-                    <div key={m.id} className="flex items-center gap-2.5">
-                      <span className={`flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br text-[8px] font-bold text-white ${avatarGradient(m.name)}`}>{initialsOf(m.name)}</span>
-                      <div className="min-w-0"><div className="truncate text-[11px] font-bold text-slate-700">{m.name}</div><div className="truncate text-[9px] text-slate-400">{m.email}</div></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="border-b border-slate-100 px-4 py-4">
-              <div className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400">Pinned</div>
-              {pinnedMessages.length === 0 ? (
-                <div className="rounded-xl bg-slate-50 px-3 py-3 text-[10px] text-slate-400">No pinned messages yet.</div>
-              ) : (
-                <div className="space-y-2">{pinnedMessages.slice(0, 3).map((m) => <button key={m.id} type="button" onClick={() => togglePin(m)} className="w-full rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2 text-left text-[10px] text-amber-900"><div className="truncate font-semibold">{m.sender?.name}</div><div className="mt-0.5 truncate">{m.body}</div></button>)}</div>
-              )}
-            </div>
-
-            <div className="px-4 py-4">
-              <div className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400">Chat settings</div>
-              <button type="button" onClick={() => toggleMute(activeConversation)} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left hover:bg-slate-50">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">{activeConversation.isMuted ? <BellOff size={14} /> : <Bell size={14} />}</span>
-                <span className="flex-1 text-[11px] font-semibold text-slate-700">Mute notifications</span>
-                <span className={`relative h-5 w-9 rounded-full transition ${activeConversation.isMuted ? "bg-indigo-600" : "bg-slate-200"}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${activeConversation.isMuted ? "left-[18px]" : "left-0.5"}`} /></span>
-              </button>
-              <button type="button" onClick={(e) => toggleFavorite(activeConversation, e)} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left hover:bg-slate-50">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-500"><Star size={14} className={activeConversation.isFavorite ? "fill-amber-400" : ""} /></span>
-                <span className="flex-1 text-[11px] font-semibold text-slate-700">Add to favourites</span>
-                <span className={`relative h-5 w-9 rounded-full transition ${activeConversation.isFavorite ? "bg-indigo-600" : "bg-slate-200"}`}><span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${activeConversation.isFavorite ? "left-[18px]" : "left-0.5"}`} /></span>
-              </button>
-              <button type="button" onClick={() => toggleArchive(activeConversation)} className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left hover:bg-slate-50">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500"><Archive size={14} /></span>
-                <span className="flex-1 text-[11px] font-semibold text-slate-700">{activeConversation.isArchived ? "Unarchive chat" : "Archive chat"}</span>
-              </button>
-            </div>
-          </aside>
-        )}
       </div>
 
 

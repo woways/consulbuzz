@@ -481,7 +481,7 @@ export default function SuperAdmin() {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <div className="text-[15px] font-bold text-slate-950">
-                  ConsulBuzz
+                  Bispun
                 </div>
 
                 <Badge tone="rose">

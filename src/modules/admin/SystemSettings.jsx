@@ -300,7 +300,7 @@ export default function SystemSettings() {
           </div>
 
           <p className="text-sm text-slate-500 mt-1">
-            Global ConsulBuzz
+            Global Bispun
             platform defaults and
             operational controls.
           </p>
