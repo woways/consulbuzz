@@ -459,8 +459,8 @@ export default function ChatPanel({ currentUser }) {
       `}</style>
 
       <div className="bg-[#f5f5f4] px-5 pb-4 pt-1 sm:px-7">
-        <div className="text-[24px] font-bold leading-none tracking-[-0.035em] text-neutral-950">Chat</div>
-        <div className="mt-2 flex items-center gap-2 text-[12px] font-medium text-neutral-500">
+        <h1 className="cb-page-title text-neutral-950">Chat</h1>
+        <div className="cb-page-subtitle mt-2 flex items-center gap-2 text-neutral-500">
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
           Direct messages & group chats · meeting links · shareable invites
         </div>

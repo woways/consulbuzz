@@ -2517,7 +2517,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                               <div
                                 className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${
                                   session.current
-                                    ? "bg-indigo-600 text-white"
+                                    ? "bg-[#5148E5] text-white"
                                     : "bg-slate-100 text-slate-700"
                                 }`}
                               >
@@ -2872,7 +2872,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             tenant={tenant}
             user={user}
             selectedYear={selectedYear}
-            uiPreferences={uiPreferences}
+            uiPreferences={{ ...uiPreferences, showCalendar: false }}
           />
         );
 
@@ -3243,6 +3243,18 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       className="cb-client-portal min-h-screen bg-[#f6f7fa] text-slate-900 overflow-x-hidden"
     >
       <style>{`
+        /* Mandatory portal-wide classic typography */
+        .cb-client-portal,
+        .cb-client-portal button,
+        .cb-client-portal input,
+        .cb-client-portal textarea,
+        .cb-client-portal select {
+          font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+        }
+        .cb-client-portal h1 { font-size:24px !important; line-height:1.25 !important; font-weight:700 !important; letter-spacing:-0.02em !important; }
+        .cb-client-portal h2 { font-size:17px !important; line-height:1.35 !important; font-weight:700 !important; }
+        .cb-client-portal h3 { font-size:15px !important; line-height:1.4 !important; font-weight:700 !important; }
+
         html,
         body,
         #root {
@@ -3368,7 +3380,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             setMobileSidebarOpen(true);
             setAccountActionsOpen(true);
           }}
-          className="relative w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shadow-sm"
+          className="relative w-9 h-9 rounded-full bg-[#5148E5] text-white flex items-center justify-center text-[10px] font-bold shadow-sm"
           aria-label="Open account"
         >
           {initials}
@@ -3392,7 +3404,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
         <aside
           onMouseEnter={openSidebarHover}
           onMouseLeave={closeSidebarHover}
-          className={`fixed inset-y-0 left-0 z-[70] overflow-visible border-r border-white/[0.06] bg-[#07111d] transition-[width,transform,box-shadow] duration-200 ease-out ${
+          className={`fixed inset-y-0 left-0 z-[70] overflow-visible border-r border-white/[0.07] bg-[#151A3A] transition-[width,transform,box-shadow] duration-200 ease-out ${
             mobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           } ${
             sidebarCompact
@@ -3451,130 +3463,6 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               </div>
             )}
 
-            {/* SIDEBAR SEARCH */}
-            <div
-              className={`${
-                sidebarCompact
-                  ? "px-2 pb-2"
-                  : "px-3 pb-3"
-              }`}
-            >
-              {sidebarCompact ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSidebarHoverExpanded(true);
-                    window.setTimeout(() => {
-                      document
-                        .getElementById("client-sidebar-search")
-                        ?.focus();
-                    }, 180);
-                  }}
-                  title="Search modules"
-                  aria-label="Search modules"
-                  className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.05] text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
-                >
-                  <Search size={16} />
-                </button>
-              ) : (
-                <div className="relative">
-                  <Search
-                    size={15}
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
-                  />
-
-                  <input
-                    id="client-sidebar-search"
-                    value={workspaceSearch}
-                    onChange={(event) =>
-                      setWorkspaceSearch(
-                        event.target.value
-                      )
-                    }
-                    placeholder="Search modules..."
-                    className="h-10 w-full rounded-lg border border-white/10 bg-white/[0.055] pl-9 pr-9 text-[12px] font-medium text-white outline-none transition-all placeholder:text-slate-500 focus:border-indigo-400/50 focus:bg-white/[0.08]"
-                  />
-
-                  {workspaceSearch && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setWorkspaceSearch("")
-                      }
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
-                      aria-label="Clear search"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-
-                  {workspaceSearch.trim() && (
-                    <div className="absolute left-0 right-0 top-[46px] z-[95] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_45px_rgba(15,23,42,0.24)]">
-                      {NAV_GROUPS.filter((group) => group.key !== "chats" && group.key !== "team-target" && group.key !== "my-referrals").flatMap(
-                        (group) =>
-                          group.items.map((key) => ({
-                            key,
-                            groupLabel:
-                              group.label,
-                            label:
-                              key === "dashboard"
-                                ? "Dashboard"
-                                : key === "settings"
-                                ? "Settings"
-                                : MODULE_META[key]
-                                    ?.label ||
-                                  key,
-                          }))
-                      )
-                        .filter((item) => {
-                          const query =
-                            workspaceSearch
-                              .trim()
-                              .toLowerCase();
-
-                          return (
-                            item.label
-                              .toLowerCase()
-                              .includes(query) ||
-                            item.groupLabel
-                              .toLowerCase()
-                              .includes(query)
-                          );
-                        })
-                        .slice(0, 8)
-                        .map((item) => (
-                          <button
-                            key={item.key}
-                            type="button"
-                            onClick={() => {
-                              setModule(item.key);
-                              setWorkspaceSearch("");
-                              setMobileSidebarOpen(false);
-                            }}
-                            className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left hover:bg-slate-50"
-                          >
-                            <div className="min-w-0">
-                              <div className="truncate text-[12px] font-semibold text-slate-900">
-                                {item.label}
-                              </div>
-                              <div className="mt-0.5 text-[10px] text-slate-500">
-                                {item.groupLabel}
-                              </div>
-                            </div>
-
-                            <ChevronRight
-                              size={13}
-                              className="flex-shrink-0 text-slate-400"
-                            />
-                          </button>
-                        ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* MENU — integrated dark navigation */}
             <nav
               className={`relative mx-2 mb-3 flex-1 min-h-0 overflow-hidden ${
                 sidebarCompact
@@ -3735,7 +3623,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         }
                         className={`relative h-11 w-full rounded-lg px-3 flex items-center gap-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                           groupActive
-                            ? "bg-white/[0.08] text-white"
+                            ? "bg-[#5148E5] text-white"
                             : open
                             ? "bg-white/[0.04] text-white"
                             : "text-slate-300 hover:bg-white/[0.05] hover:text-white"
@@ -3977,26 +3865,45 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             <div className="h-full px-4 sm:px-6 lg:px-7 flex items-center gap-4">
               
 
-              <div className="flex min-w-0 flex-1 items-center gap-2 text-[13px] font-medium tracking-[-0.01em]">
-                {currentPage.group ? (
-                  <>
-                    <span className="truncate text-slate-400">
-                      {currentPage.group}
-                    </span>
-
-                    <ChevronRight
-                      size={14}
-                      className="flex-shrink-0 text-slate-300"
-                    />
-
-                    <span className="truncate font-semibold text-slate-700">
-                      {currentPage.label}
-                    </span>
-                  </>
-                ) : (
-                  <span className="truncate font-semibold text-slate-700">
-                    {currentPage.label}
-                  </span>
+              <div className="relative min-w-0 flex-1 max-w-[520px]">
+                <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  id="client-global-search"
+                  value={workspaceSearch}
+                  onChange={(event) => setWorkspaceSearch(event.target.value)}
+                  placeholder="Search portal..."
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-9 text-[12px] font-medium text-slate-800 shadow-sm outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+                />
+                {workspaceSearch && (
+                  <button type="button" onClick={() => setWorkspaceSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700" aria-label="Clear portal search">
+                    <X size={14} />
+                  </button>
+                )}
+                {workspaceSearch.trim() && (
+                  <div className="absolute left-0 right-0 top-[46px] z-[95] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_45px_rgba(15,23,42,0.18)]">
+                    {NAV_GROUPS.flatMap((group) =>
+                      group.items.map((key) => ({
+                        key,
+                        groupLabel: group.label,
+                        label: key === "dashboard" ? "Dashboard" : key === "settings" ? "Settings" : MODULE_META[key]?.label || group.label || key,
+                      }))
+                    )
+                      .filter((item, index, all) => all.findIndex((candidate) => candidate.key === item.key) === index)
+                      .filter((item) => {
+                        const query = workspaceSearch.trim().toLowerCase();
+                        return item.label.toLowerCase().includes(query) || item.groupLabel.toLowerCase().includes(query) || item.key.toLowerCase().includes(query);
+                      })
+                      .slice(0, 10)
+                      .map((item) => (
+                        <button key={item.key} type="button" onClick={() => { setModule(item.key); setWorkspaceSearch(""); setMobileSidebarOpen(false); }} className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left hover:bg-slate-50">
+                          <div className="min-w-0">
+                            <div className="truncate text-[12px] font-semibold text-slate-900">{item.label}</div>
+                            <div className="mt-0.5 text-[10px] text-slate-500">{item.groupLabel}</div>
+                          </div>
+                          <ChevronRight size={14} className="text-slate-300" />
+                        </button>
+                      ))}
+                  </div>
                 )}
               </div>
 
@@ -4055,7 +3962,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     <Bell size={18} />
 
                     {unreadNotificationCount > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-indigo-600 text-white text-[9px] font-bold leading-[17px] text-center">
+                      <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-[#5148E5] text-white text-[9px] font-bold leading-[17px] text-center">
                         {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
                       </span>
                     )}
@@ -4130,7 +4037,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     }}
                     className="h-10 pl-1 pr-2 sm:pr-3 rounded-lg hover:bg-slate-100 flex items-center gap-2.5 transition-colors"
                   >
-                    <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold ring-2 ring-white/10">
+                    <div className="w-9 h-9 rounded-full bg-[#5148E5] text-white flex items-center justify-center text-xs font-bold ring-2 ring-white/10">
                       {initials}
                     </div>
 

@@ -887,7 +887,7 @@ export default function Dashboard({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         {uiPreferences?.showGreeting !== false ? (
           <div>
-            <h1 className="text-[34px] font-normal leading-[1.08] tracking-[-0.045em] text-slate-950 sm:text-[40px]">
+            <h1 className="text-[24px] font-bold leading-[1.25] tracking-[-0.02em] text-slate-950">
               {(() => {
                 const hour = new Date().getHours();
                 if (hour < 12) return "Good Morning";
@@ -895,11 +895,11 @@ export default function Dashboard({
                 return "Good Evening";
               })()}
               ,{" "}
-              <span className="font-normal text-slate-950">
+              <span className="font-bold text-slate-950">
                 {(user?.name || tenant?.ownerName || "Admin").split(" ")[0]}
               </span>
             </h1>
-            <p className="mt-2 text-[14px] font-normal tracking-[-0.01em] text-slate-500">
+            <p className="mt-1 text-[13px] font-normal tracking-normal text-slate-500">
               It&apos;s {formatUiDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
             </p>
           </div>

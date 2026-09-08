@@ -248,6 +248,7 @@ model User {
   clientSessions         ClientSession[]
   chatMemberships        ConversationMember[]        @relation("ChatMember")
   chatMessages           ChatMessage[]               @relation("ChatSender")
+  chatReactions          ChatReaction[]              @relation("ChatReactionUser")
   targetTasksOwned       TargetTask[]                @relation("TargetOwner")
   targetTasksAssigned    TargetTask[]                @relation("TargetAssigner")
   monthlyTargets         MonthlyTarget[]             @relation("MonthlyTargetOwner")
@@ -1196,7 +1197,27 @@ model ChatMessage {
   createdAt DateTime @default(now())
   pinned    Boolean  @default(false)
 
+  replyToId String?
+  replyTo   ChatMessage?  @relation("ChatMessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   ChatMessage[] @relation("ChatMessageReplies")
+  reactions ChatReaction[]
+
   @@index([conversationId, createdAt])
+  @@index([replyToId])
+}
+
+model ChatReaction {
+  id        String      @id @default(cuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation("ChatReactionUser", fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String
+  createdAt DateTime    @default(now())
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
 }
 
 model TargetTask {
