@@ -214,9 +214,9 @@ model User {
 
   active Boolean @default(true)
 
-  phone      String?
-  jobTitle   String?
-  department String?
+  phone        String?
+  jobTitle     String?
+  department   String?
   referralCode String? @unique
 
   sidebarOrder String[] @default([])
@@ -547,7 +547,7 @@ model Lead {
 
   admission         Admission?
   customFieldValues CustomFieldValue[]
-  
+
   referral Referral?
 
   leadDatasetId String?
@@ -1197,13 +1197,33 @@ model ChatMessage {
   createdAt DateTime @default(now())
   pinned    Boolean  @default(false)
 
-  replyToId String?
-  replyTo   ChatMessage?  @relation("ChatMessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
-  replies   ChatMessage[] @relation("ChatMessageReplies")
-  reactions ChatReaction[]
+  replyToId   String?
+  replyTo     ChatMessage?     @relation("ChatMessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies     ChatMessage[]    @relation("ChatMessageReplies")
+  reactions   ChatReaction[]
+  attachments ChatAttachment[]
 
   @@index([conversationId, createdAt])
   @@index([replyToId])
+}
+
+model ChatAttachment {
+  id        String      @id @default(cuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  url          String
+  publicId     String
+  resourceType String
+  fileName     String
+  mimeType     String
+  size         Int    @default(0)
+  width        Int?
+  height       Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
 }
 
 model ChatReaction {
@@ -1286,10 +1306,11 @@ model MonthlyTarget {
   @@unique([companyId, ownerId, year, month])
   @@index([companyId, year, month])
 }
+
 model Referral {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   companyId String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   referrerId String
   referrer   User   @relation("ReferralReferrer", fields: [referrerId], references: [id], onDelete: Cascade)

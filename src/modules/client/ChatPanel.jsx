@@ -27,6 +27,7 @@ import {
   Check,
   Archive,
   Mail,
+  Reply,
 } from "lucide-react";
 
 import MeetingRoom from "./MeetingRoom";
@@ -117,6 +118,8 @@ export default function ChatPanel({ currentUser }) {
   const [meetingRoom, setMeetingRoom] = useState("");
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState("");
+  const [replyTo, setReplyTo] = useState(null);
+  const [reactionOpenId, setReactionOpenId] = useState(null);
 
   const [newOpen, setNewOpen] = useState(false);
   const [users, setUsers] = useState([]);
@@ -170,6 +173,16 @@ export default function ChatPanel({ currentUser }) {
         next.splice(idx, 1);
         return [updated, ...next];
       });
+    });
+
+    socket.on("message:reaction", ({ messageId, reactions }) => {
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === messageId
+            ? { ...message, reactions: Array.isArray(reactions) ? reactions : [] }
+            : message
+        )
+      );
     });
 
     return () => {
@@ -350,17 +363,43 @@ export default function ChatPanel({ currentUser }) {
     if (!socket) return;
 
     setSending(true);
-    socket.emit("message:send", { conversationId: activeId, body }, (resp) => {
-      setSending(false);
-      if (resp?.ok) {
-        setDraft("");
-        setMessages((current) => {
-          if (current.some((m) => m.id === resp.message.id)) return current;
-          return [...current, resp.message];
-        });
-      } else {
-        setError(resp?.error || "Message failed to send");
+    socket.emit(
+      "message:send",
+      { conversationId: activeId, body, replyToId: replyTo?.id || null },
+      (resp) => {
+        setSending(false);
+        if (resp?.ok) {
+          setDraft("");
+          setReplyTo(null);
+          setMessages((current) => {
+            if (current.some((m) => m.id === resp.message.id)) return current;
+            return [...current, resp.message];
+          });
+        } else {
+          setError(resp?.error || "Message failed to send");
+        }
       }
+    );
+  }
+
+  function reactToMessage(messageId, emoji) {
+    const socket = socketRef.current;
+    if (!socket || !messageId) return;
+
+    socket.emit("message:react", { messageId, emoji }, (resp) => {
+      if (!resp?.ok) {
+        setError(resp?.error || "Unable to react to message");
+        return;
+      }
+
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === messageId
+            ? { ...message, reactions: Array.isArray(resp.reactions) ? resp.reactions : [] }
+            : message
+        )
+      );
+      setReactionOpenId(null);
     });
   }
 
@@ -458,14 +497,6 @@ export default function ChatPanel({ currentUser }) {
         .cb-send:hover:not(:disabled) { transform: translateY(-1px) scale(1.03); box-shadow: 0 8px 20px rgba(79,70,229,.28); }
       `}</style>
 
-      <div className="bg-[#f5f5f4] px-5 pb-4 pt-1 sm:px-7">
-        <h1 className="cb-page-title text-neutral-950">Chat</h1>
-        <div className="cb-page-subtitle mt-2 flex items-center gap-2 text-neutral-500">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" />
-          Direct messages & group chats · meeting links · shareable invites
-        </div>
-      </div>
-
       {error && (
         <div className="flex items-start gap-2 border-b border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-semibold text-rose-700">
           <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
@@ -517,7 +548,7 @@ export default function ChatPanel({ currentUser }) {
                     key={c.id}
                     type="button"
                     onClick={() => setActiveId(c.id)}
-                    className={`mx-2 flex w-[calc(100%-16px)] items-center gap-3 rounded-[11px] border px-3 py-2.5 text-left transition ${active ? "border-emerald-200 bg-emerald-50" : "border-transparent hover:bg-neutral-50"}`}
+                    className={`mx-2 flex w-[calc(100%-16px)] items-center gap-3 rounded-[11px] border px-3 py-2.5 text-left transition ${active ? "border-indigo-200 bg-indigo-50/90 shadow-[inset_3px_0_0_#4f46e5]" : "border-transparent hover:bg-neutral-50"}`}
                   >
                     <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold shadow-sm ${c.isGroup ? "bg-neutral-100 text-neutral-600" : "bg-indigo-100 text-indigo-600"}`}>
                       {c.isGroup ? <Users size={16} /> : initialsOf(c.title)}
@@ -610,22 +641,93 @@ export default function ChatPanel({ currentUser }) {
                       return (
                         <div key={item.key} className={`group flex items-end gap-2 ${mine ? "justify-end" : "justify-start"}`}>
                           {!mine && (
-                            <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[9px] font-bold text-white ${avatarGradient(m.sender?.name)}`}>{initialsOf(m.sender?.name)}</span>
+                            <span className={`mb-7 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[9px] font-bold text-white ${avatarGradient(m.sender?.name)}`}>{initialsOf(m.sender?.name)}</span>
                           )}
-                          <div className={`cb-bubble relative max-w-[76%] px-4 py-2.5 text-[12px] leading-relaxed sm:max-w-[70%] ${mine ? "rounded-[16px] rounded-br-[5px] bg-emerald-50 text-neutral-900" : "rounded-[16px] rounded-bl-[5px] bg-neutral-100 text-neutral-900"} ${m.pinned ? "ring-1 ring-amber-300" : ""}`}>
-                            {!mine && activeConversation.isGroup && <div className="mb-0.5 text-[9px] font-bold text-indigo-600">{m.sender?.name}</div>}
-                            {room ? (
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className={`flex h-7 w-7 items-center justify-center rounded-lg ${mine ? "bg-white/15" : "bg-indigo-50 text-indigo-600"}`}><Video size={13} /></span>
-                                <span className="font-semibold">Meeting started</span>
-                                <button type="button" onClick={() => joinMeeting(room)} className={`rounded-lg px-2.5 py-1 text-[10px] font-bold ${mine ? "bg-white/20 text-white hover:bg-white/30" : "bg-indigo-600 text-white hover:bg-indigo-700"}`}>Join</button>
+
+                          <div className={`flex max-w-[76%] flex-col sm:max-w-[70%] ${mine ? "items-end" : "items-start"}`}>
+                            <div className={`cb-bubble relative px-4 py-2.5 text-[12px] leading-relaxed ${mine ? "rounded-[16px] rounded-br-[5px] bg-indigo-50 text-neutral-900" : "rounded-[16px] rounded-bl-[5px] bg-neutral-100 text-neutral-900"} ${m.pinned ? "ring-1 ring-amber-300" : ""}`}>
+                              {!mine && activeConversation.isGroup && <div className="mb-0.5 text-[9px] font-bold text-indigo-600">{m.sender?.name}</div>}
+
+                              {m.replyTo && (
+                                <div className="mb-2 rounded-lg border-l-[3px] border-indigo-400 bg-white/70 px-2.5 py-2">
+                                  <div className="text-[9px] font-bold text-indigo-700">
+                                    {m.replyTo.sender?.name || "Message"}
+                                  </div>
+                                  <div className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-slate-500">
+                                    {m.replyTo.body}
+                                  </div>
+                                </div>
+                              )}
+
+                              {room ? (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-indigo-600">
+                                    <Video size={13} />
+                                  </span>
+                                  <span className="font-semibold">Meeting started</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => joinMeeting(room)}
+                                    className="rounded-lg bg-indigo-600 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-indigo-700"
+                                  >
+                                    Join
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="whitespace-pre-wrap break-words">{m.body}</div>
+                              )}
+
+                              <div className="mt-1 text-right text-[8px] text-neutral-400">
+                                {formatTime(m.createdAt)}
                               </div>
-                            ) : <div className="whitespace-pre-wrap break-words">{m.body}</div>}
-                            <div className={`mt-1 text-right text-[8px] "text-neutral-400"`}>{formatTime(m.createdAt)}</div>
+                            </div>
+
+                            <div className={`relative mt-1 flex items-center gap-1 ${mine ? "justify-end" : "justify-start"}`}>
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => setReactionOpenId((current) => current === m.id ? null : m.id)}
+                                  title="React"
+                                  className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
+                                >
+                                  <Smile size={13} />
+                                </button>
+
+                                {reactionOpenId === m.id && (
+                                  <div className={`absolute bottom-9 z-30 flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1.5 shadow-xl ${mine ? "right-0" : "left-0"}`}>
+                                    {["👍","❤️","😂","😮","😢","🙏"].map((emoji) => (
+                                      <button
+                                        key={emoji}
+                                        type="button"
+                                        onClick={() => reactToMessage(m.id, emoji)}
+                                        className="flex h-8 w-8 items-center justify-center rounded-full text-base hover:bg-slate-100"
+                                      >
+                                        {emoji}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => setReplyTo(m)}
+                                title="Reply"
+                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
+                              >
+                                <Reply size={13} />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => togglePin(m)}
+                                title={m.pinned ? "Unpin" : "Pin"}
+                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
+                              >
+                                {m.pinned ? <PinOff size={13} /> : <Pin size={13} />}
+                              </button>
+                            </div>
                           </div>
-                          <button type="button" onClick={() => togglePin(m)} title={m.pinned ? "Unpin" : "Pin"} className="mb-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md text-slate-400 opacity-0 hover:bg-slate-100 group-hover:opacity-100">
-                            {m.pinned ? <PinOff size={11} /> : <Pin size={11} />}
-                          </button>
                         </div>
                       );
                     })}
@@ -635,7 +737,26 @@ export default function ChatPanel({ currentUser }) {
               </div>
 
               <div className="border-t border-neutral-200 bg-white p-3">
-                <div className="flex min-h-[46px] items-end gap-1 rounded-[9px] border border-neutral-400 bg-white p-1.5 transition focus-within:border-neutral-700">
+                {replyTo && (
+                  <div className="mb-2 flex items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2">
+                    <Reply size={13} className="mt-0.5 flex-shrink-0 text-indigo-600" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[10px] font-bold text-indigo-700">
+                        Replying to {replyTo.sender?.name || "message"}
+                      </div>
+                      <div className="mt-0.5 truncate text-[10px] text-slate-500">{replyTo.body}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReplyTo(null)}
+                      className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-white hover:text-slate-700"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex min-h-[46px] items-end gap-1 rounded-[9px] border border-neutral-400 bg-white p-1.5 transition focus-within:border-indigo-400">
                   <div className="relative">
                     <button type="button" onClick={() => setEmojiOpen((o) => !o)} className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-indigo-50 hover:text-indigo-600" aria-label="Emoji"><Smile size={17} /></button>
                     {emojiOpen && (
@@ -647,13 +768,24 @@ export default function ChatPanel({ currentUser }) {
                       </>
                     )}
                   </div>
+                  <button
+                    type="button"
+                    onClick={startMeeting}
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"
+                    aria-label="Start meeting"
+                    title="Start meeting"
+                  >
+                    <Video size={16} />
+                  </button>
+                  <div className="mx-1 h-6 w-px self-center bg-slate-200" />
+
                   <textarea
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                     rows={1}
                     placeholder="Type a message..."
-                    className="max-h-28 min-h-[36px] flex-1 resize-none bg-transparent px-2 py-2 text-sm text-slate-800 outline-none"
+                    className="max-h-28 min-h-[36px] flex-1 resize-none bg-transparent px-2 py-2 text-[12px] font-medium text-slate-800 outline-none placeholder:text-slate-400"
                   />
                   <button type="button" onClick={sendMessage} disabled={sending || !draft.trim()} className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 disabled:opacity-40" aria-label="Send">
                     {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}

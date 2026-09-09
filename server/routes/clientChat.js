@@ -1,4 +1,5 @@
 import { Router } from "express";
+import crypto from "crypto";
 
 import prisma from "../lib/prisma.js";
 import { requireClientUser } from "../middleware/clientAuth.js";
@@ -178,6 +179,18 @@ router.get("/:id/messages", async (req, res) => {
       },
       include: {
         sender: { select: { id: true, name: true, email: true } },
+        replyTo: {
+          include: {
+            sender: { select: { id: true, name: true, email: true } },
+          },
+        },
+        reactions: {
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+          },
+          orderBy: { createdAt: "asc" },
+        },
+        attachments: true,
       },
       orderBy: { createdAt: "desc" },
       take: limit,
@@ -191,6 +204,25 @@ router.get("/:id/messages", async (req, res) => {
       pinned: m.pinned,
       createdAt: m.createdAt,
       sender: userMini(m.sender),
+      replyTo: m.replyTo
+        ? { id: m.replyTo.id, body: m.replyTo.body, sender: userMini(m.replyTo.sender) }
+        : null,
+      reactions: (m.reactions || []).map((r) => ({
+        id: r.id,
+        emoji: r.emoji,
+        user: userMini(r.user),
+      })),
+      attachments: (m.attachments || []).map((a) => ({
+        id: a.id,
+        url: a.url,
+        publicId: a.publicId,
+        resourceType: a.resourceType,
+        fileName: a.fileName,
+        mimeType: a.mimeType,
+        size: a.size,
+        width: a.width,
+        height: a.height,
+      })),
     }));
 
     // Mark as read up to now.
@@ -501,5 +533,104 @@ router.patch("/messages/:messageId/pin", async (req, res) => {
       .json({ success: false, message: "Unable to update pin" });
   }
 });
+
+
+/* ------------------------------------------------------------------ */
+/* POST /upload-signature — signed direct upload to Cloudinary         */
+/* ------------------------------------------------------------------ */
+
+router.post("/upload-signature", async (req, res) => {
+  try {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      return res.status(500).json({ success: false, message: "Cloudinary is not configured" });
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const folder = `consulbuzz/chat/${req.clientUser.companyId}`;
+    const toSign = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
+    const signature = crypto.createHash("sha1").update(toSign).digest("hex");
+
+    return res.json({
+      success: true,
+      cloudName,
+      apiKey,
+      timestamp,
+      folder,
+      signature,
+    });
+  } catch (error) {
+    console.error("Cloudinary signature failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to prepare upload" });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* DELETE /messages/:messageId — sender can delete own message         */
+/* ------------------------------------------------------------------ */
+
+router.delete("/messages/:messageId", async (req, res) => {
+  try {
+    const messageId = req.params.messageId;
+    const me = req.clientUser.userId;
+
+    const message = await prisma.chatMessage.findUnique({
+      where: { id: messageId },
+      include: { conversation: true, attachments: true },
+    });
+
+    if (!message || message.conversation.companyId !== req.clientUser.companyId) {
+      return res.status(404).json({ success: false, message: "Message not found" });
+    }
+    if (message.senderId !== me) {
+      return res.status(403).json({ success: false, message: "You can delete only your own messages" });
+    }
+
+    await prisma.chatMessage.delete({ where: { id: messageId } });
+    return res.json({ success: true, messageId, conversationId: message.conversationId });
+  } catch (error) {
+    console.error("Delete message failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to delete message" });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* DELETE /:id — delete direct chat or creator-owned group             */
+/* ------------------------------------------------------------------ */
+
+router.delete("/:id", async (req, res) => {
+  try {
+    const conversationId = req.params.id;
+    const me = req.clientUser.userId;
+
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      include: { members: true },
+    });
+
+    if (!conversation || conversation.companyId !== req.clientUser.companyId) {
+      return res.status(404).json({ success: false, message: "Conversation not found" });
+    }
+
+    const isMember = conversation.members.some((m) => m.userId === me);
+    if (!isMember) {
+      return res.status(403).json({ success: false, message: "Not a member" });
+    }
+
+    if (conversation.isGroup && conversation.createdByUserId !== me) {
+      return res.status(403).json({ success: false, message: "Only the group creator can delete this group" });
+    }
+
+    await prisma.conversation.delete({ where: { id: conversationId } });
+    return res.json({ success: true, conversationId });
+  } catch (error) {
+    console.error("Delete conversation failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to delete conversation" });
+  }
+});
+
 
 export default router;
