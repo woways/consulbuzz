@@ -4027,7 +4027,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   )}
                 </div>
 
-                {/* PROFILE — TOP RIGHT ONLY */}
+                {/* PROFILE — ICON ONLY IN TOP BAR */}
                 <div ref={profileMenuRef} className="relative">
                   <button
                     type="button"
@@ -4035,85 +4035,77 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       setProfileMenuOpen((current) => !current);
                       setNotificationsOpen(false);
                     }}
-                    className="h-10 pl-1 pr-2 sm:pr-3 rounded-lg hover:bg-slate-100 flex items-center gap-2.5 transition-colors"
+                    className="relative flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-slate-100"
+                    aria-label="Open account menu"
+                    title={user.name || tenant.name}
                   >
-                    <div className="w-9 h-9 rounded-full bg-[#5148E5] text-white flex items-center justify-center text-xs font-bold ring-2 ring-white/10">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#5148E5] text-xs font-bold text-white ring-2 ring-white/10">
                       {initials}
                     </div>
 
-                    <div className="hidden sm:block text-left min-w-0">
-                      <div className="text-[13px] font-bold text-slate-900 truncate max-w-[130px]">
-                        {user.name || tenant.name}
-                      </div>
-
-                      <div className="text-[10px] text-slate-400">
-                        {formatRole(user.role)}
-                      </div>
-                    </div>
-
-                    <ChevronDown
-                      size={14}
-                      className={`hidden sm:block text-slate-400 transition-transform ${
-                        profileMenuOpen ? "rotate-180" : ""
-                      }`}
-                    />
                   </button>
 
                   {profileMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-[240px] rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_60px_rgba(15,23,42,0.16)]">
-                      <div className="px-3 py-2.5 border-b border-slate-100">
-                        <div className="text-xs font-bold text-slate-900">
-                          {user.name}
+                    <div className="absolute right-0 mt-3 w-[300px] overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.16)]">
+                      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                        <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
+                          Account
                         </div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
-                          {user.email}
-                        </div>
-                      </div>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProfileMenuOpen(false);
-                          setProfileTab("profile");
-                          setModule("profile");
-                        }}
-                        className="mt-1 w-full h-10 px-3 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
-                      >
-                        <UserRound size={14} />
-                        My Profile
-                      </button>
-
-
-                      {(user.role === "CLIENT_ADMIN" ||
-                        permissions.canManageSettings === true) && (
                         <button
                           type="button"
-                          onClick={() => {
-                            setProfileMenuOpen(false);
-                            setModule("settings");
-                          }}
-                          className="w-full h-10 px-3 rounded-xl text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
+                          onClick={signOut}
+                          disabled={signingOut}
+                          className="text-[12px] font-semibold text-slate-700 hover:text-slate-950 disabled:opacity-50"
                         >
-                          <Settings size={14} />
-                          Company Settings
+                          {signingOut ? "Signing out..." : "Sign out"}
                         </button>
-                      )}
+                      </div>
 
-                      <div className="my-1 border-t border-slate-100" />
+                      <div className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-[#168A42] text-[17px] font-bold text-white">
+                            {initials}
+                          </div>
 
-                      <button
-                        type="button"
-                        onClick={signOut}
-                        disabled={signingOut}
-                        className="w-full h-10 px-3 rounded-xl text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 disabled:opacity-50"
-                      >
-                        {signingOut ? (
-                          <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                          <LogOut size={14} />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-[15px] font-bold text-slate-950">
+                              {user.name || tenant.name}
+                            </div>
+                            <div className="mt-0.5 truncate text-[12px] text-slate-500">
+                              {user.email}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProfileMenuOpen(false);
+                                setProfileTab("profile");
+                                setModule("profile");
+                              }}
+                              className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-slate-700 hover:text-slate-950"
+                            >
+                              Manage account
+                              <ChevronRight size={14} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {(user.role === "CLIENT_ADMIN" ||
+                          permissions.canManageSettings === true) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setProfileMenuOpen(false);
+                              setModule("settings");
+                            }}
+                            className="mt-4 flex h-10 w-full items-center gap-2.5 rounded-xl px-3 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            <Settings size={14} />
+                            Company Settings
+                          </button>
                         )}
-                        Sign out
-                      </button>
+                      </div>
                     </div>
                   )}
                 </div>
