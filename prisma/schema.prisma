@@ -203,6 +203,7 @@ model Company {
   targetTasks             TargetTask[]
   monthlyTargets          MonthlyTarget[]
   referrals               Referral[]
+  storeAssets             StoreAsset[]
 }
 
 model User {
@@ -1323,4 +1324,21 @@ model Referral {
 
   @@index([companyId])
   @@index([referrerId])
+}
+
+model StoreAsset {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  occasion        String
+  type            String  @default("IMAGE")
+  prompt          String?
+  imageUrl        String?
+  createdByUserId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([companyId, createdAt])
+  @@index([companyId, type, createdAt])
 }

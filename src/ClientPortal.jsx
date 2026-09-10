@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Target,
   Gift,
+  Store,
   CalendarDays,
   LogOut,
   Lock,
@@ -76,6 +77,7 @@ import CalendarModal from "./modules/client/CalendarModal";
 import ChatPanel from "./modules/client/ChatPanel";
 import TeamTarget from "./modules/client/TeamTarget";
 import Referrals from "./modules/client/Referrals";
+import MyStore from "./modules/client/MyStore";
 
 
 function SidebarIcon({
@@ -270,6 +272,14 @@ const NAV_GROUPS = [
     direct: true,
   },
 
+  {
+    key: "my-store",
+    label: "My Store",
+    icon: Store,
+    items: ["my-store"],
+    direct: true,
+  },
+
 ];
 
 const PAGE_META = {
@@ -277,6 +287,7 @@ const PAGE_META = {
   chats: { label: "Chats" },
   "team-target": { label: "Team Target" },
   "my-referrals": { label: "My Referrals" },
+  "my-store": { label: "My Store" },
   "utm-leads": { label: "UTM Leads" },
   "lead-store": { label: "Lead Store" },
   admissions: { group: "Admissions", label: "Overall" },
@@ -2795,6 +2806,10 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       return <Referrals currentUser={user} />;
     }
 
+    if (module === "my-store") {
+      return <MyStore currentUser={user} />;
+    }
+
     if (
       !hasModulePermission(
         module
@@ -3481,7 +3496,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     const key = group.items[0];
                     const active = module === key;
                     const locked =
-                      group.key === "chats" || group.key === "team-target" || group.key === "my-referrals"
+                      group.key === "chats" || group.key === "team-target" || group.key === "my-referrals" || group.key === "my-store"
                         ? false
                         : !enabledFeatures.includes(key) ||
                           !hasModulePermission(key);
