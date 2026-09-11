@@ -262,6 +262,7 @@ function SupportMetric({
 function NewTicketModal({
   defaultType,
   plan,
+  departments = [],
   onClose,
   onCreated,
 }) {
@@ -315,6 +316,8 @@ function NewTicketModal({
       "TECHNICAL_ISSUE",
     priority:
       "MEDIUM",
+    department:
+      departments[0]?.name || "Admin",
   });
 
   function update(
@@ -470,6 +473,31 @@ function NewTicketModal({
                   )
                 )}
               </select>
+            </div>
+
+            {/* DEPARTMENT */}
+
+            <div>
+              <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                Department
+                <span className="text-rose-500 ml-0.5">*</span>
+              </label>
+
+              <select
+                required
+                value={form.department}
+                onChange={(event) => update("department", event.target.value)}
+                className="w-full h-10 px-3 border border-slate-200 rounded-lg bg-white text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+              >
+                {departments.map((department) => (
+                  <option key={department.id || department.name} value={department.name}>
+                    {department.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[11px] text-slate-400">
+                Departments are managed by Client Admin in Settings → Users & Roles.
+              </p>
             </div>
 
             {/* TITLE */}
@@ -708,6 +736,11 @@ function TicketDetailsModal({
             />
 
             <DetailItem
+              label="Department"
+              value={ticket.department || "—"}
+            />
+
+            <DetailItem
               label="Created"
               value={
                 formatDate(
@@ -796,6 +829,11 @@ export default function Help({
     setTickets,
   ] = useState([]);
 
+  const [departments, setDepartments] = useState([
+    { id: "admin", name: "Admin", code: "ADM" },
+    { id: "sales", name: "Sales", code: "SAL" },
+  ]);
+
   const [
     loading,
     setLoading,
@@ -858,6 +896,17 @@ export default function Help({
     plan ===
     "advanced";
 
+  async function loadOrganization() {
+    try {
+      const data = await apiRequest("/api/client/users/organization");
+      if (Array.isArray(data.departments) && data.departments.length) {
+        setDepartments(data.departments);
+      }
+    } catch (error) {
+      console.error("Unable to load support departments:", error);
+    }
+  }
+
   async function loadTickets() {
     setLoading(
       true
@@ -891,6 +940,7 @@ export default function Help({
 
   useEffect(() => {
     loadTickets();
+    loadOrganization();
   }, []);
 
   function createTicket(
@@ -978,6 +1028,7 @@ export default function Help({
                 ticket.statusLabel,
                 ticket.submittedByName,
                 ticket.submittedByEmail,
+                ticket.department,
                 ticket.adminRemarks,
               ]
                 .filter(
@@ -1413,6 +1464,7 @@ export default function Help({
               "Ticket",
               "Title",
               "Type",
+              "Department",
               "Priority",
               "Status",
               "Created",
@@ -1522,6 +1574,7 @@ export default function Help({
           plan={
             plan
           }
+          departments={departments}
           onClose={() => {
             setShowTicketModal(
               false

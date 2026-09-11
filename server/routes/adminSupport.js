@@ -118,6 +118,8 @@ function formatTicket(ticket) {
       ticket.submittedByName,
     submittedByEmail:
       ticket.submittedByEmail,
+    department:
+      ticket.department,
     adminRemarks:
       ticket.adminRemarks,
     createdAt:

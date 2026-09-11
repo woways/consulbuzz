@@ -3132,6 +3132,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             primaryColor={
               company?.primaryColor
             }
+            currentUser={user}
             onWorkspaceUpdated={
               handleWorkspaceUpdated
             }

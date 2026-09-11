@@ -215,10 +215,13 @@ model User {
 
   active Boolean @default(true)
 
-  phone        String?
-  jobTitle     String?
-  department   String?
-  referralCode String? @unique
+  phone          String?
+  jobTitle       String?
+  department     String?
+  referralCode   String? @unique
+  employeeId     String?
+  customRoleId   String?
+  customRoleName String?
 
   sidebarOrder String[] @default([])
 
@@ -255,6 +258,7 @@ model User {
   monthlyTargets         MonthlyTarget[]             @relation("MonthlyTargetOwner")
   referrals              Referral[]                  @relation("ReferralReferrer")
 
+  @@unique([companyId, employeeId])
   @@index([companyId])
   @@index([companyId, role])
   @@index([companyId, active])
@@ -452,13 +456,14 @@ model CompanySettings {
   companyId String  @unique
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  portalName     String?
-  logoUrl        String?
-  primaryColor   String?
-  secondaryColor String?
-  timezone       String  @default("Asia/Kolkata")
-  currency       String  @default("INR")
-  dateFormat     String  @default("DD/MM/YYYY")
+  portalName         String?
+  logoUrl            String?
+  primaryColor       String?
+  secondaryColor     String?
+  timezone           String  @default("Asia/Kolkata")
+  currency           String  @default("INR")
+  dateFormat         String  @default("DD/MM/YYYY")
+  organizationConfig Json?
 
   emailNotifications Boolean @default(true)
   smsNotifications   Boolean @default(false)
@@ -909,6 +914,7 @@ model SupportTicket {
 
   submittedByName  String?
   submittedByEmail String?
+  department       String?
 
   adminRemarks String?
 

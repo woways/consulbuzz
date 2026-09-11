@@ -199,6 +199,7 @@ function PlaceholderPanel({
 export default function SettingsView({
   tenant,
   primaryColor,
+  currentUser,
   onWorkspaceUpdated,
 }) {
   const [
@@ -322,6 +323,22 @@ export default function SettingsView({
     setUsersError,
   ] = useState("");
 
+  const [organization, setOrganization] = useState({ departments: [], roles: [] });
+  const [organizationLoading, setOrganizationLoading] = useState(false);
+  const [organizationModal, setOrganizationModal] = useState(null);
+  const [organizationSaving, setOrganizationSaving] = useState(false);
+  const emptyOrganizationForm = {
+    name: "",
+    code: "",
+    baseRole: "EMPLOYEE",
+    permissions: {
+      canManageUsers: false, canManageSettings: false, canManageBilling: false,
+      canViewAnalytics: false, canManageAdmissions: false, canManageRevenue: false,
+      canManageLeads: false, canManageSupport: false, canViewTeamTargets: false,
+    },
+  };
+  const [organizationForm, setOrganizationForm] = useState(emptyOrganizationForm);
+
   const [
     userSearch,
     setUserSearch,
@@ -362,6 +379,8 @@ export default function SettingsView({
     email: "",
     password: "",
     role: "EMPLOYEE",
+    customRoleId: "",
+    employeeId: "",
     phone: "",
     jobTitle: "",
     department: "",
@@ -740,6 +759,67 @@ export default function SettingsView({
     setLogoPreview("");
   }
 
+  async function loadOrganization() {
+    setOrganizationLoading(true);
+    try {
+      const data = await apiRequest("/api/client/users/organization");
+      setOrganization({
+        departments: Array.isArray(data.departments) ? data.departments : [],
+        roles: Array.isArray(data.roles) ? data.roles : [],
+      });
+    } catch (error) {
+      setUsersError(error?.data?.message || "Unable to load departments and roles");
+    } finally {
+      setOrganizationLoading(false);
+    }
+  }
+
+  function openOrganizationModal(type) {
+    setOrganizationModal(type);
+    setOrganizationForm(emptyOrganizationForm);
+    setUsersError("");
+  }
+
+  async function saveOrganizationItem() {
+    setOrganizationSaving(true);
+    setUsersError("");
+    try {
+      const endpoint = organizationModal === "department" ? "departments" : "roles";
+      const payload = {
+        name: organizationForm.name,
+        code: organizationForm.code,
+        permissions: organizationForm.permissions,
+        ...(organizationModal === "role" ? { baseRole: organizationForm.baseRole } : {}),
+      };
+      const data = await apiRequest(`/api/client/users/${endpoint}`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      setOrganization({
+        departments: data.departments || [],
+        roles: data.roles || [],
+      });
+      setOrganizationModal(null);
+      setOrganizationForm(emptyOrganizationForm);
+    } catch (error) {
+      setUsersError(error?.data?.message || "Unable to save organization item");
+    } finally {
+      setOrganizationSaving(false);
+    }
+  }
+
+  async function deleteOrganizationItem(type, id) {
+    if (!window.confirm(`Delete this ${type}?`)) return;
+    setUsersError("");
+    try {
+      const endpoint = type === "department" ? "departments" : "roles";
+      const data = await apiRequest(`/api/client/users/${endpoint}/${id}`, { method: "DELETE" });
+      setOrganization({ departments: data.departments || [], roles: data.roles || [] });
+    } catch (error) {
+      setUsersError(error?.data?.message || `Unable to delete ${type}`);
+    }
+  }
+
   async function loadUsers() {
     setUsersLoading(true);
     setUsersError("");
@@ -766,6 +846,7 @@ export default function SettingsView({
   useEffect(() => {
     if (tab === "users") {
       loadUsers();
+      loadOrganization();
     }
   }, [tab]);
 
@@ -828,6 +909,8 @@ export default function SettingsView({
       email: user.email || "",
       password: "",
       role: user.role || "EMPLOYEE",
+      customRoleId: user.customRoleId || "",
+      employeeId: user.employeeId || "",
       phone: user.phone || "",
       jobTitle: user.jobTitle || "",
       department:
@@ -843,15 +926,44 @@ export default function SettingsView({
     setUserModalOpen(true);
   }
 
-  function setRole(role) {
-    setUserForm(
-      (current) => ({
-        ...current,
-        role,
-        permissions:
-          roleDefaults(role),
-      })
-    );
+  function setRole(selection) {
+    const customRole = selection.startsWith("CUSTOM:")
+      ? organization.roles.find((item) => `CUSTOM:${item.id}` === selection)
+      : null;
+
+    const role = customRole?.baseRole || selection;
+    const rolePermissions = customRole?.permissions || roleDefaults(role);
+    const department = organization.departments.find((item) => item.name === userForm.department);
+
+    setUserForm((current) => ({
+      ...current,
+      role,
+      customRoleId: customRole?.id || "",
+      permissions: Object.fromEntries(
+        Object.keys(current.permissions).map((key) => [
+          key,
+          rolePermissions?.[key] === true || department?.permissions?.[key] === true,
+        ])
+      ),
+    }));
+  }
+
+  function setUserDepartment(name) {
+    const department = organization.departments.find((item) => item.name === name);
+    const customRole = userForm.customRoleId
+      ? organization.roles.find((item) => item.id === userForm.customRoleId)
+      : null;
+    const rolePermissions = customRole?.permissions || roleDefaults(userForm.role);
+    setUserForm((current) => ({
+      ...current,
+      department: name,
+      permissions: Object.fromEntries(
+        Object.keys(current.permissions).map((key) => [
+          key,
+          rolePermissions?.[key] === true || department?.permissions?.[key] === true,
+        ])
+      ),
+    }));
   }
 
   async function saveUser() {
@@ -863,6 +975,7 @@ export default function SettingsView({
         name: userForm.name,
         email: userForm.email,
         role: userForm.role,
+        customRoleId: userForm.customRoleId || null,
         phone: userForm.phone,
         jobTitle:
           userForm.jobTitle,
@@ -1624,6 +1737,8 @@ export default function SettingsView({
       return [
         user.name,
         user.email,
+        user.employeeId,
+        user.customRoleName,
         user.role,
         user.department,
         user.jobTitle,
@@ -2111,16 +2226,50 @@ export default function SettingsView({
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={
-                    openCreateUser
-                  }
-                  className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
-                >
-                  <Plus size={14} />
-                  Add User
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  {currentUser?.role === "CLIENT_ADMIN" && (<>
+                    <button type="button" onClick={() => openOrganizationModal("department")} className="h-9 px-3 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[12px] font-semibold rounded-lg inline-flex items-center gap-2">
+                      <Plus size={13} /> Department
+                    </button>
+                    <button type="button" onClick={() => openOrganizationModal("role")} className="h-9 px-3 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[12px] font-semibold rounded-lg inline-flex items-center gap-2">
+                      <Plus size={13} /> Role
+                    </button>
+                  </>)}
+                  <button
+                    type="button"
+                    onClick={openCreateUser}
+                    className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    <Plus size={14} />
+                    Add User
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                  <div className="flex items-center justify-between"><div><div className="text-[13px] font-bold text-slate-900">Departments</div><div className="mt-0.5 text-[11px] text-slate-500">Default Admin and Sales, plus your custom departments.</div></div></div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {organization.departments.map((department) => (
+                      <span key={department.id} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700">
+                        {department.name} <span className="text-slate-400">{department.code}</span>
+                        {!department.system && currentUser?.role === "CLIENT_ADMIN" && <button type="button" onClick={() => deleteOrganizationItem("department", department.id)} className="ml-1 text-slate-400 hover:text-rose-600"><X size={11}/></button>}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                  <div className="text-[13px] font-bold text-slate-900">Custom Roles</div>
+                  <div className="mt-0.5 text-[11px] text-slate-500">Create reusable role permission templates.</div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {organization.roles.length ? organization.roles.map((role) => (
+                      <span key={role.id} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700">
+                        {role.name} <span className="text-slate-400">{role.code}</span>
+                        {currentUser?.role === "CLIENT_ADMIN" && <button type="button" onClick={() => deleteOrganizationItem("role", role.id)} className="ml-1 text-slate-400 hover:text-rose-600"><X size={11}/></button>}
+                      </span>
+                    )) : <span className="text-[11px] text-slate-400">No custom roles yet.</span>}
+                  </div>
+                </div>
               </div>
 
               {usersError && (
@@ -2165,6 +2314,7 @@ export default function SettingsView({
                     <table className="w-full text-[15px]">
                       <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
+                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">Employee ID</th>
                           <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
                             User
                           </th>
@@ -2192,6 +2342,9 @@ export default function SettingsView({
                               }
                               className="hover:bg-slate-50/70"
                             >
+                              <td className="px-4 py-3 font-mono text-[12px] font-semibold text-indigo-700 whitespace-nowrap">
+                                {user.employeeId || "—"}
+                              </td>
                               <td className="px-4 py-3">
                                 <div className="font-semibold text-slate-900">
                                   {user.name}
@@ -2210,7 +2363,7 @@ export default function SettingsView({
 
                               <td className="px-4 py-3">
                                 <span className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[11px] font-semibold">
-                                  {user.role.replaceAll(
+                                  {(user.customRoleName || user.role).replaceAll(
                                     "_",
                                     " "
                                   )}
@@ -2285,7 +2438,7 @@ export default function SettingsView({
                         {!filteredUsers.length && (
                           <tr>
                             <td
-                              colSpan={5}
+                              colSpan={6}
                               className="py-12 text-center text-[15px] text-slate-500"
                             >
                               No users found.
@@ -3229,6 +3382,30 @@ export default function SettingsView({
         </section>
       </div>
 
+      {organizationModal && (
+        <div className="fixed inset-0 z-[105] bg-slate-950/55 backdrop-blur-[2px] flex items-center justify-center p-4">
+          <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <div><div className="text-[17px] font-bold text-slate-950">Add {organizationModal === "department" ? "Department" : "Role"}</div><div className="mt-1 text-[12px] text-slate-500">Set a short ID code and default permissions.</div></div>
+              <button type="button" onClick={() => setOrganizationModal(null)} className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500"><X size={16}/></button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div><label className="block text-[12px] font-semibold text-slate-600 mb-1.5">Name *</label><input value={organizationForm.name} onChange={(e)=>setOrganizationForm(c=>({...c,name:e.target.value}))} className="w-full h-10 px-3 rounded-lg border border-slate-200" placeholder={organizationModal === "department" ? "Technology" : "Team Lead"}/></div>
+                <div><label className="block text-[12px] font-semibold text-slate-600 mb-1.5">Code *</label><input value={organizationForm.code} onChange={(e)=>setOrganizationForm(c=>({...c,code:e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0,4)}))} className="w-full h-10 px-3 rounded-lg border border-slate-200 font-mono" placeholder={organizationModal === "department" ? "TEC" : "TLD"}/></div>
+              </div>
+              {organizationModal === "role" && <div><label className="block text-[12px] font-semibold text-slate-600 mb-1.5">Base access level</label><select value={organizationForm.baseRole} onChange={(e)=>setOrganizationForm(c=>({...c,baseRole:e.target.value}))} className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white"><option value="EMPLOYEE">Employee</option><option value="MANAGER">Manager</option></select></div>}
+              <div><div className="text-[12px] font-bold text-slate-700">Default permissions</div><div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  ["canManageUsers","Manage Users"],["canManageSettings","Manage Settings"],["canManageBilling","Manage Billing"],["canViewAnalytics","View Analytics"],["canManageAdmissions","Manage Admissions"],["canManageRevenue","Manage Revenue"],["canManageLeads","Manage Leads"],["canManageSupport","Manage Support"],["canViewTeamTargets","View Team Targets"],
+                ].map(([key,label])=><label key={key} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2"><span className="text-[12px] text-slate-700">{label}</span><input type="checkbox" checked={organizationForm.permissions[key]} onChange={(e)=>setOrganizationForm(c=>({...c,permissions:{...c.permissions,[key]:e.target.checked}}))}/></label>)}
+              </div></div>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50/60 px-5 py-4"><button type="button" onClick={()=>setOrganizationModal(null)} className="h-9 px-4 rounded-lg border border-slate-200 bg-white text-[12px] font-semibold">Cancel</button><button type="button" disabled={organizationSaving || !organizationForm.name.trim() || !organizationForm.code.trim()} onClick={saveOrganizationItem} className="h-9 px-4 rounded-lg bg-indigo-600 text-white text-[12px] font-semibold disabled:opacity-50">{organizationSaving ? "Saving..." : "Create"}</button></div>
+          </div>
+        </div>
+      )}
+
       {userModalOpen && (
         <div className="fixed inset-0 z-[100] bg-slate-950/55 backdrop-blur-[2px] flex items-center justify-center p-4">
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-slate-200 rounded-2xl shadow-2xl">
@@ -3263,7 +3440,6 @@ export default function SettingsView({
                   ["email", "Email", "email"],
                   ["phone", "Phone", "text"],
                   ["jobTitle", "Job Title", "text"],
-                  ["department", "Department", "text"],
                 ].map(
                   ([
                     key,
@@ -3302,6 +3478,19 @@ export default function SettingsView({
                   )
                 )}
 
+                <div>
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Employee ID</label>
+                  <input readOnly value={editingUser ? (userForm.employeeId || "") : "Generated automatically after creation"} className="w-full h-10 px-3 border border-slate-200 rounded-lg bg-slate-50 text-[13px] font-mono text-slate-600" />
+                </div>
+
+                <div>
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Department <span className="text-rose-500">*</span></label>
+                  <select required value={userForm.department} onChange={(event) => setUserDepartment(event.target.value)} className="w-full h-10 px-3 border border-slate-200 rounded-lg bg-white text-[15px]">
+                    <option value="">Select department</option>
+                    {organization.departments.map((department) => <option key={department.id} value={department.name}>{department.name} ({department.code})</option>)}
+                  </select>
+                </div>
+
                 {!editingUser && (
                   <div>
                     <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
@@ -3339,7 +3528,7 @@ export default function SettingsView({
 
                   <select
                     value={
-                      userForm.role
+                      userForm.customRoleId ? `CUSTOM:${userForm.customRoleId}` : userForm.role
                     }
                     onChange={(
                       event
@@ -3359,6 +3548,15 @@ export default function SettingsView({
                     <option value="EMPLOYEE">
                       Employee
                     </option>
+                    {organization.roles.length > 0 && (
+                      <optgroup label="Custom Roles">
+                        {organization.roles.map((role) => (
+                          <option key={role.id} value={`CUSTOM:${role.id}`}>
+                            {role.name} ({role.code})
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                 </div>
               </div>

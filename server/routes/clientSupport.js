@@ -147,6 +147,9 @@ function formatTicket(
     submittedByEmail:
       ticket.submittedByEmail,
 
+    department:
+      ticket.department,
+
     adminRemarks:
       ticket.adminRemarks,
 
@@ -398,6 +401,7 @@ router.post(
         description,
         type,
         priority,
+        department,
       } =
         req.body ||
         {};
@@ -429,6 +433,15 @@ router.post(
         )
           .trim()
           .toUpperCase();
+
+      const cleanDepartment = String(department || "").trim();
+
+      if (!cleanDepartment) {
+        return res.status(400).json({
+          success: false,
+          message: "Department is required",
+        });
+      }
 
       if (!cleanTitle) {
         return res
@@ -537,6 +550,9 @@ router.post(
 
           submittedByEmail:
             user.email,
+
+          department:
+            cleanDepartment,
         });
 
       await createSupportTicketCreatedNotification({

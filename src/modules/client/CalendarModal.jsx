@@ -9,7 +9,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   Plus,
   Loader2,
   Trash2,
@@ -166,10 +165,6 @@ export default function CalendarModal({ open, onClose, currentUser }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [filtersOpen, setFiltersOpen] = useState(true);
-  const [typeFilters, setTypeFilters] = useState(() =>
-    EVENT_TYPES.reduce((acc, type) => ({ ...acc, [type]: true }), {})
-  );
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
@@ -373,10 +368,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
 
   const today = startOfDay(new Date());
 
-  const visibleEvents = useMemo(
-    () => events.filter((event) => typeFilters[event.type] !== false),
-    [events, typeFilters]
-  );
+  const visibleEvents = events;
 
   const eventsByDay = useMemo(() => {
     const map = new Map();
@@ -535,49 +527,6 @@ export default function CalendarModal({ open, onClose, currentUser }) {
               >
                 Today
               </button>
-            </div>
-
-            {/* FILTERS */}
-            <div className="border-t border-slate-200">
-              <button
-                type="button"
-                onClick={() => setFiltersOpen((open) => !open)}
-                className="flex w-full items-center justify-between px-5 py-4 text-left"
-              >
-                <span className="text-[14px] font-extrabold text-slate-900">Filters</span>
-                <ChevronDown
-                  size={15}
-                  className={`text-slate-500 transition-transform ${filtersOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              {filtersOpen && (
-                <div className="max-h-[230px] overflow-y-auto px-5 pb-4 pr-3">
-                  <div className="space-y-2">
-                    {EVENT_TYPES.map((type) => (
-                      <label
-                        key={type}
-                        className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-[12px] font-semibold ${
-                          TYPE_STYLES[type] || TYPE_STYLES.OTHER
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={typeFilters[type] !== false}
-                          onChange={(e) =>
-                            setTypeFilters((current) => ({
-                              ...current,
-                              [type]: e.target.checked,
-                            }))
-                          }
-                          className="h-4 w-4 rounded border-white/80 accent-indigo-600"
-                        />
-                        <span>{TYPE_LABELS[type]}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* AGENDA FOR SELECTED DAY */}
