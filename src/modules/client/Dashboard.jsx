@@ -126,8 +126,8 @@ function MetricCard({
   };
 
   return (
-    <div className="min-w-0 px-4 py-4 sm:px-5">
-      <div className="flex items-center gap-3">
+    <div className="min-w-0 rounded-[14px] border border-slate-200 bg-white px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition duration-200 hover:-translate-y-[1px] hover:border-slate-300 hover:shadow-[0_8px_22px_rgba(15,23,42,0.06)] sm:px-5">
+      <div className="flex items-start gap-3">
         <div
           className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${
             tones[accent] ||
@@ -137,8 +137,8 @@ function MetricCard({
           <Icon size={17} />
         </div>
 
-        <div className="min-w-0">
-          <div className="text-[13px] font-semibold leading-5 text-slate-600 break-words">
+        <div className="min-w-0 flex-1">
+          <div className="text-[12px] font-semibold leading-5 text-slate-600 break-words">
             {label}
           </div>
 
@@ -149,7 +149,7 @@ function MetricCard({
       </div>
 
       {detail ? (
-        <div className="mt-2 pl-12 text-[11px] leading-4 text-slate-500 break-words">
+        <div className="mt-2 pl-12 text-[10px] leading-4 text-slate-500 break-words">
           {detail}
         </div>
       ) : null}
@@ -879,6 +879,30 @@ export default function Dashboard({
           ? "emerald"
           : "rose",
     },
+    {
+      label: "New Leads",
+      value: summary.newLeads || 0,
+      icon: Clock,
+      detail:
+        selectedYear === "all"
+          ? "New CRM leads"
+          : `New leads in ${selectedYear}`,
+      accent: "slate",
+    },
+    {
+      label: "Received Revenue",
+      value: money(summary.receivedAmount),
+      icon: DollarSign,
+      detail: "Revenue received",
+      accent: "emerald",
+    },
+    {
+      label: "Pending Revenue",
+      value: money(summary.pendingAmount),
+      icon: Clock,
+      detail: "Revenue pending collection",
+      accent: "amber",
+    },
   ];
 
   return (
@@ -966,54 +990,13 @@ export default function Dashboard({
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-                  <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-3 2xl:grid-cols-5">
-                    {pulseMetrics.map((metric) => (
-                      <MetricCard
-                        key={metric.label}
-                        {...metric}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Existing metrics remain visible; no functionality/data is removed. */}
-                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5">
-                    <div>
-                      <div className="text-[12px] font-bold uppercase tracking-[0.07em] text-slate-500">
-                        New Leads
-                      </div>
-                      <div className="mt-0.5 text-[15px] font-bold text-slate-950">
-                        {summary.newLeads || 0}
-                      </div>
-                    </div>
-                    <Clock size={15} className="text-slate-400" />
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5">
-                    <div>
-                      <div className="text-[12px] font-bold uppercase tracking-[0.07em] text-slate-500">
-                        Received Revenue
-                      </div>
-                      <div className="mt-0.5 text-[15px] font-bold text-slate-950">
-                        {money(summary.receivedAmount)}
-                      </div>
-                    </div>
-                    <DollarSign size={15} className="text-emerald-500" />
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5">
-                    <div>
-                      <div className="text-[12px] font-bold uppercase tracking-[0.07em] text-slate-500">
-                        Pending Revenue
-                      </div>
-                      <div className="mt-0.5 text-[15px] font-bold text-slate-950">
-                        {money(summary.pendingAmount)}
-                      </div>
-                    </div>
-                    <Clock size={15} className="text-amber-500" />
-                  </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {pulseMetrics.map((metric) => (
+                    <MetricCard
+                      key={metric.label}
+                      {...metric}
+                    />
+                  ))}
                 </div>
               </section>
 

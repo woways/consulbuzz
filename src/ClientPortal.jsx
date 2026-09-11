@@ -2789,6 +2789,121 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     );
   }
 
+  function renderAdmissionsMarketWorkspace({
+    market,
+    activeModule,
+    children,
+  }) {
+    const isInternational = market === "INTERNATIONAL";
+    const prefix = isInternational ? "international" : "domestic";
+    const marketLabel = isInternational ? "International" : "Domestic";
+
+    const tabs = [
+      {
+        key: `${prefix}-walkins`,
+        label: "Walk-ins",
+        icon: UserRound,
+        premium: true,
+      },
+      {
+        key: `${prefix}-counselling`,
+        label: "Counselling",
+        icon: CalendarClock,
+        premium: true,
+      },
+      {
+        key: `${prefix}-admissions`,
+        label: "Admissions Done",
+        icon: GraduationCap,
+        premium: false,
+      },
+    ];
+
+    return (
+      <div className="space-y-5">
+        <section className="border-b border-slate-200 bg-white/70 px-1 pt-1">
+          <div className="px-1 pb-4">
+            <div className="text-[13px] font-semibold text-slate-500">
+              Admissions
+            </div>
+
+            <h1 className="mt-1 text-[28px] font-bold tracking-[-0.04em] text-slate-950">
+              {marketLabel}
+            </h1>
+
+            <p className="mt-1 text-[13px] text-slate-500">
+              {isInternational
+                ? "Manage international walk-ins, counselling and completed admissions."
+                : "Manage domestic walk-ins, counselling and completed admissions."}
+            </p>
+          </div>
+
+          <div className="flex min-w-0 gap-7 overflow-x-auto px-1">
+            {tabs.map((tab) => {
+              const active = activeModule === tab.key;
+              const featureKey = tab.key.includes("walkins")
+                ? "walkins"
+                : tab.key.includes("counselling")
+                  ? "counselling"
+                  : "admissions";
+
+              const locked = tab.premium
+                ? !enabledFeatures.includes(featureKey) ||
+                  !hasModulePermission(tab.key)
+                : !hasModulePermission(tab.key);
+
+              const TabIcon = tab.icon;
+
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setModule(tab.key)}
+                  className={`relative flex h-12 flex-shrink-0 items-center gap-2 px-1 text-[13px] font-semibold transition-colors ${
+                    active
+                      ? "text-slate-950"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  <TabIcon
+                    size={15}
+                    strokeWidth={1.9}
+                    className={active ? "text-indigo-600" : "text-slate-400"}
+                  />
+
+                  <span>{tab.label}</span>
+
+                  {tab.premium ? (
+                    <Crown
+                      size={12}
+                      className="text-amber-500"
+                      title="Premium module"
+                    />
+                  ) : null}
+
+                  {locked ? (
+                    <Lock
+                      size={10}
+                      className="text-slate-400"
+                    />
+                  ) : null}
+
+                  <span
+                    className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-full transition ${
+                      active ? "bg-slate-950" : "bg-transparent"
+                    }`}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <div>{children}</div>
+      </div>
+    );
+  }
+
   function renderModule() {
     if (module === "profile") {
       return renderProfile();
@@ -2900,17 +3015,76 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
         return <Admissions selectedYear={selectedYear} market="ALL" overviewOnly />;
 
       case "domestic-walkins":
-        return <Walkins selectedYear={selectedYear} market="DOMESTIC" />;
+        return renderAdmissionsMarketWorkspace({
+          market: "DOMESTIC",
+          activeModule: module,
+          children: (
+            <Walkins
+              selectedYear={selectedYear}
+              market="DOMESTIC"
+            />
+          ),
+        });
+
       case "domestic-counselling":
-        return <Counselling selectedYear={selectedYear} market="DOMESTIC" />;
+        return renderAdmissionsMarketWorkspace({
+          market: "DOMESTIC",
+          activeModule: module,
+          children: (
+            <Counselling
+              selectedYear={selectedYear}
+              market="DOMESTIC"
+            />
+          ),
+        });
+
       case "domestic-admissions":
-        return <Admissions selectedYear={selectedYear} market="DOMESTIC" />;
+        return renderAdmissionsMarketWorkspace({
+          market: "DOMESTIC",
+          activeModule: module,
+          children: (
+            <Admissions
+              selectedYear={selectedYear}
+              market="DOMESTIC"
+            />
+          ),
+        });
+
       case "international-walkins":
-        return <Walkins selectedYear={selectedYear} market="INTERNATIONAL" />;
+        return renderAdmissionsMarketWorkspace({
+          market: "INTERNATIONAL",
+          activeModule: module,
+          children: (
+            <Walkins
+              selectedYear={selectedYear}
+              market="INTERNATIONAL"
+            />
+          ),
+        });
+
       case "international-counselling":
-        return <Counselling selectedYear={selectedYear} market="INTERNATIONAL" />;
+        return renderAdmissionsMarketWorkspace({
+          market: "INTERNATIONAL",
+          activeModule: module,
+          children: (
+            <Counselling
+              selectedYear={selectedYear}
+              market="INTERNATIONAL"
+            />
+          ),
+        });
+
       case "international-admissions":
-        return <Admissions selectedYear={selectedYear} market="INTERNATIONAL" />;
+        return renderAdmissionsMarketWorkspace({
+          market: "INTERNATIONAL",
+          activeModule: module,
+          children: (
+            <Admissions
+              selectedYear={selectedYear}
+              market="INTERNATIONAL"
+            />
+          ),
+        });
 
       case "revenue":
         return (
@@ -3488,7 +3662,11 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               <div className="sidebar-scroll h-full overflow-y-auto overflow-x-hidden pr-0.5">
                 {navGroups.map((group, navIndex) => {
                   const Icon = group.icon;
-                  const groupActive = group.items.includes(module);
+                  const groupActive =
+                    group.items.includes(module) ||
+                    (group.key === "admissions" &&
+                      (module.startsWith("domestic-") ||
+                        module.startsWith("international-")));
                   const draggable = !sidebarCompact;
                   const isDragOver = dragOverKey === group.key;
 
@@ -3743,56 +3921,49 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                               {group.key === "admissions" ? (
                                 <>
                                   {[
-                                    { key: "domestic", label: "Domestic", items: ["domestic-walkins", "domestic-counselling", "domestic-admissions"] },
-                                    { key: "international", label: "International", items: ["international-walkins", "international-counselling", "international-admissions"] },
+                                    {
+                                      key: "domestic",
+                                      label: "Domestic",
+                                      defaultModule: "domestic-admissions",
+                                      matchPrefix: "domestic-",
+                                    },
+                                    {
+                                      key: "international",
+                                      label: "International",
+                                      defaultModule: "international-admissions",
+                                      matchPrefix: "international-",
+                                    },
                                   ].map((section) => {
-                                    const sectionOpen = Boolean(openGroups[section.key]);
-                                    const sectionActive = section.items.includes(module);
+                                    const sectionActive =
+                                      module.startsWith(section.matchPrefix);
+
                                     return (
-                                      <div key={section.key} className="mt-1">
-                                        <button
-                                          type="button"
-                                          onClick={() => toggleGroup(section.key)}
-                                          className={`w-full min-h-9 rounded-lg px-2.5 py-2 flex items-center gap-2.5 text-left transition-colors ${sectionActive ? "text-white" : "text-slate-400 hover:text-white"}`}
-                                        >
-                                          <ChevronDown size={13} className={`transition-transform ${sectionOpen ? "rotate-180" : ""}`} />
-                                          <span className="flex-1 text-[12px] font-semibold">{section.label}</span>
-                                        </button>
-                                        {sectionOpen ? (
-                                          <div className="ml-4 border-l border-white/10 pl-2 space-y-0.5">
-                                            {section.items.map((key) => {
-                                              const meta = MODULE_META[key];
-                                              if (!meta) return null;
-                                              const ChildIcon = meta.icon;
-                                              const active = module === key;
-                                              const isAdmissionsDone = key.endsWith("-admissions");
-                                              const featureKey = key.includes("walkins")
-                                                ? "walkins"
-                                                : key.includes("counselling")
-                                                  ? "counselling"
-                                                  : "admissions";
-                                              // Admissions Done is a standard Admissions feature, not a Pro/Premium item.
-                                              // Walk-ins and Counselling keep their existing plan restrictions.
-                                              const locked = isAdmissionsDone
-                                                ? !hasModulePermission(key)
-                                                : !enabledFeatures.includes(featureKey) || !hasModulePermission(key);
-                                              return (
-                                                <button
-                                                  key={key}
-                                                  type="button"
-                                                  onClick={() => { setModule(key); setMobileSidebarOpen(false); }}
-                                                  className={`w-full min-h-9 rounded-lg px-2.5 py-2 flex items-center gap-2.5 text-left transition-colors ${active ? "text-white bg-white/[0.05]" : "text-slate-400 hover:text-white"}`}
-                                                >
-                                                  <ChildIcon size={14} strokeWidth={1.8} className={active ? "text-white" : "text-slate-500"} />
-                                                  <span className="flex-1 text-[12px] font-semibold">{meta.label}</span>
-                                                  {(key.includes("walkins") || key.includes("counselling")) && <Crown size={12} className="text-amber-500" title="Premium module" />}
-                                                  {locked ? <Lock size={10} className="text-slate-400" /> : null}
-                                                </button>
-                                              );
-                                            })}
-                                          </div>
-                                        ) : null}
-                                      </div>
+                                      <button
+                                        key={section.key}
+                                        type="button"
+                                        onClick={() => {
+                                          setModule(section.defaultModule);
+                                          setMobileSidebarOpen(false);
+                                        }}
+                                        className={`relative mt-1 w-full min-h-9 rounded-lg px-2.5 py-2 flex items-center gap-2.5 text-left transition-colors ${
+                                          sectionActive
+                                            ? "bg-white/[0.05] text-white"
+                                            : "text-slate-400 hover:text-white"
+                                        }`}
+                                      >
+                                        <ChevronRight
+                                          size={13}
+                                          className={
+                                            sectionActive
+                                              ? "text-indigo-300"
+                                              : "text-slate-500"
+                                          }
+                                        />
+
+                                        <span className="flex-1 text-[12px] font-semibold">
+                                          {section.label}
+                                        </span>
+                                      </button>
                                     );
                                   })}
                                 </>
