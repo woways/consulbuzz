@@ -45,9 +45,16 @@ import {
   Mail,
   Phone,
   Building2,
+  Globe2,
   KeyRound,
   Smartphone,
   Save,
+  Home,
+  GitFork,
+  ShoppingBag,
+  CircleDollarSign,
+  BarChart3,
+  CircleHelp,
 } from "lucide-react";
 
 import {
@@ -82,8 +89,9 @@ import MyStore from "./modules/client/MyStore";
 
 function SidebarIcon({
   type,
-  size = 18,
+  size = 22,
   className = "",
+  strokeWidth = 2,
 }) {
   const common = {
     width: size,
@@ -91,7 +99,7 @@ function SidebarIcon({
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
-    strokeWidth: 1.9,
+    strokeWidth,
     strokeLinecap: "round",
     strokeLinejoin: "round",
     className,
@@ -190,7 +198,7 @@ const NAV_GROUPS = [
   {
     key: "dashboard",
     label: "Dashboard",
-    icon: (props) => <SidebarIcon type="home" {...props} />,
+    icon: Home,
     items: ["dashboard"],
     direct: true,
   },
@@ -198,7 +206,7 @@ const NAV_GROUPS = [
   {
     key: "utm-leads",
     label: "UTM Leads",
-    icon: (props) => <SidebarIcon type="utm" {...props} />,
+    icon: GitFork,
     items: ["utm-leads"],
     direct: true,
   },
@@ -206,7 +214,7 @@ const NAV_GROUPS = [
   {
     key: "lead-store",
     label: "Lead Store",
-    icon: (props) => <SidebarIcon type="store" {...props} />,
+    icon: ShoppingBag,
     items: ["lead-store"],
     direct: true,
   },
@@ -214,28 +222,28 @@ const NAV_GROUPS = [
   {
     key: "admissions",
     label: "Admissions",
-    icon: (props) => <SidebarIcon type="admissions" {...props} />,
+    icon: GraduationCap,
     items: ["admissions"],
   },
 
   {
     key: "finance",
     label: "Finance",
-    icon: (props) => <SidebarIcon type="finance" {...props} />,
+    icon: CircleDollarSign,
     items: ["revenue"],
   },
 
   {
     key: "insights",
     label: "Insights",
-    icon: (props) => <SidebarIcon type="insights" {...props} />,
+    icon: BarChart3,
     items: ["analytics"],
   },
 
   {
     key: "help",
     label: "Help & Support",
-    icon: (props) => <SidebarIcon type="help" {...props} />,
+    icon: CircleHelp,
     items: ["help"],
     direct: true,
   },
@@ -243,7 +251,7 @@ const NAV_GROUPS = [
   {
     key: "settings",
     label: "Settings",
-    icon: (props) => <SidebarIcon type="settings" {...props} />,
+    icon: Settings,
     items: ["settings"],
     direct: true,
   },
@@ -417,37 +425,6 @@ export default function ClientPortal({
     sidebarCollapsed,
     setSidebarCollapsed,
   ] = useState(false);
-
-  const [
-    sidebarHoverExpanded,
-    setSidebarHoverExpanded,
-  ] = useState(false);
-
-  const sidebarHoverTimerRef = useRef(null);
-
-  const openSidebarHover = () => {
-    if (!sidebarCollapsed || mobileSidebarOpen) return;
-
-    if (sidebarHoverTimerRef.current) {
-      window.clearTimeout(sidebarHoverTimerRef.current);
-      sidebarHoverTimerRef.current = null;
-    }
-
-    setSidebarHoverExpanded(true);
-  };
-
-  const closeSidebarHover = () => {
-    if (!sidebarCollapsed || mobileSidebarOpen) return;
-
-    if (sidebarHoverTimerRef.current) {
-      window.clearTimeout(sidebarHoverTimerRef.current);
-    }
-
-    sidebarHoverTimerRef.current = window.setTimeout(() => {
-      setSidebarHoverExpanded(false);
-      sidebarHoverTimerRef.current = null;
-    }, 90);
-  };
 
   const [
     mobileSidebarOpen,
@@ -1570,14 +1547,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             }
 
             body {
-              font-family:
-                Inter,
-                ui-sans-serif,
-                system-ui,
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                sans-serif;
+              font-family: "Inter", sans-serif;
             }
 
             #consulbuzz-payment-receipt {
@@ -1940,7 +1910,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   <h2 className="truncate text-[25px] font-black tracking-[-0.04em]">
                     {displayName}
                   </h2>
-                  <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-bold text-slate-200">
+                  <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[12px] font-bold text-slate-200">
                     {formatRole(user.role)}
                   </span>
                 </div>
@@ -1977,7 +1947,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   key={tab.key}
                   type="button"
                   onClick={() => setProfileTab(tab.key)}
-                  className={`relative flex min-h-[76px] flex-col items-center justify-center gap-1.5 px-1 text-[10px] font-bold transition-colors sm:text-xs ${
+                  className={`relative flex min-h-[76px] flex-col items-center justify-center gap-1.5 px-1 text-[12px] font-bold transition-colors sm:text-xs ${
                     active
                       ? "text-slate-950"
                       : "text-slate-400 hover:text-slate-700"
@@ -2011,14 +1981,14 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   <h3 className="text-sm font-black text-slate-950">
                     Personal Information
                   </h3>
-                  <p className="mt-1 text-[11px] text-slate-500">
+                  <p className="mt-1 text-[13px] text-slate-500">
                     Keep your account details accurate and up to date.
                   </p>
                 </div>
 
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
                   <label className="block">
-                    <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    <span className="mb-1.5 block text-[13px] font-bold text-slate-600">
                       Full Name
                     </span>
                     <input
@@ -2034,7 +2004,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   </label>
 
                   <label className="block">
-                    <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    <span className="mb-1.5 block text-[13px] font-bold text-slate-600">
                       Email Address
                     </span>
                     <input
@@ -2051,7 +2021,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   </label>
 
                   <label className="block">
-                    <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    <span className="mb-1.5 block text-[13px] font-bold text-slate-600">
                       Phone Number
                     </span>
                     <input
@@ -2067,7 +2037,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   </label>
 
                   <label className="block">
-                    <span className="mb-1.5 block text-[11px] font-bold text-slate-600">
+                    <span className="mb-1.5 block text-[13px] font-bold text-slate-600">
                       Role
                     </span>
                     <input
@@ -2079,7 +2049,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 </div>
 
                 <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
-                  <div className="text-[11px] font-medium text-slate-500">
+                  <div className="text-[13px] font-medium text-slate-500">
                     {profileSaved
                       ? "Profile changes saved locally."
                       : "Review your details before saving."}
@@ -2111,7 +2081,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-                  <div className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
+                  <div className="text-[12px] font-black uppercase tracking-[0.12em] text-slate-400">
                     Profile Preview
                   </div>
                   <div className="mt-3 flex items-center gap-3">
@@ -2130,7 +2100,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       <div className="truncate text-sm font-black text-slate-950">
                         {displayName}
                       </div>
-                      <div className="truncate text-[11px] text-slate-500">
+                      <div className="truncate text-[13px] text-slate-500">
                         {displayEmail}
                       </div>
                     </div>
@@ -2151,7 +2121,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     <h3 className="text-sm font-black text-slate-950">
                       Security Overview
                     </h3>
-                    <p className="mt-0.5 text-[11px] text-slate-500">
+                    <p className="mt-0.5 text-[13px] text-slate-500">
                       Manage password and account protection.
                     </p>
                   </div>
@@ -2193,7 +2163,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 <h3 className="text-sm font-black text-slate-950">
                   UI Preferences
                 </h3>
-                <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                <p className="mt-1 text-[13px] leading-5 text-slate-500">
                   Personalize how ConsulBuzz looks and feels for your account.
                 </p>
               </div>
@@ -2210,7 +2180,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       <div className="text-xs font-black text-slate-950">
                         Appearance
                       </div>
-                      <div className="mt-1 text-[10px] leading-4 text-slate-500">
+                      <div className="mt-1 text-[12px] leading-4 text-slate-500">
                         Choose the visual theme you prefer.
                       </div>
                     </div>
@@ -2228,7 +2198,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         onClick={() =>
                           updateUiPreference("appearance", value)
                         }
-                        className={`h-9 rounded-xl border text-[11px] font-bold transition-all ${
+                        className={`h-9 rounded-xl border text-[13px] font-bold transition-all ${
                           uiPreferences.appearance === value
                             ? value === "dark"
                               ? "border-[#17375e] bg-[#0b223d] text-white"
@@ -2253,7 +2223,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       <div className="text-xs font-black text-slate-950">
                         Dashboard View
                       </div>
-                      <div className="mt-1 text-[10px] leading-4 text-slate-500">
+                      <div className="mt-1 text-[12px] leading-4 text-slate-500">
                         Control the spacing and information density.
                       </div>
                     </div>
@@ -2270,7 +2240,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         onClick={() =>
                           updateUiPreference("density", value)
                         }
-                        className={`h-9 rounded-xl border text-[11px] font-bold transition-all ${
+                        className={`h-9 rounded-xl border text-[13px] font-bold transition-all ${
                           uiPreferences.density === value
                             ? "border-slate-950 bg-slate-950 text-white"
                             : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
@@ -2293,7 +2263,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       <div className="text-xs font-black text-slate-950">
                         Dashboard Elements
                       </div>
-                      <div className="mt-1 text-[10px] leading-4 text-slate-500">
+                      <div className="mt-1 text-[12px] leading-4 text-slate-500">
                         Choose which optional elements should be visible.
                       </div>
                     </div>
@@ -2309,10 +2279,10 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
                       >
                         <div>
-                          <div className="text-[11px] font-bold text-slate-800">
+                          <div className="text-[13px] font-bold text-slate-800">
                             {label}
                           </div>
-                          <div className="mt-0.5 text-[9px] text-slate-400">
+                          <div className="mt-0.5 text-[13px] text-slate-400">
                             {description}
                           </div>
                         </div>
@@ -2357,7 +2327,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       <div className="text-xs font-black text-slate-950">
                         Date & Time
                       </div>
-                      <div className="mt-1 text-[10px] leading-4 text-slate-500">
+                      <div className="mt-1 text-[12px] leading-4 text-slate-500">
                         Set how dates and time are displayed.
                       </div>
                     </div>
@@ -2365,7 +2335,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <label className="block">
-                      <span className="mb-1.5 block text-[10px] font-bold text-slate-500">
+                      <span className="mb-1.5 block text-[12px] font-bold text-slate-500">
                         Date Format
                       </span>
                       <select
@@ -2376,7 +2346,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                             event.target.value
                           )
                         }
-                        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 outline-none focus:border-slate-400"
+                        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-700 outline-none focus:border-slate-400"
                       >
                         <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                         <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -2385,7 +2355,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     </label>
 
                     <label className="block">
-                      <span className="mb-1.5 block text-[10px] font-bold text-slate-500">
+                      <span className="mb-1.5 block text-[12px] font-bold text-slate-500">
                         Time Format
                       </span>
                       <select
@@ -2396,7 +2366,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                             event.target.value
                           )
                         }
-                        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 outline-none focus:border-slate-400"
+                        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-700 outline-none focus:border-slate-400"
                       >
                         <option value="12H">12 Hour (AM/PM)</option>
                         <option value="24H">24 Hour</option>
@@ -2408,10 +2378,10 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3.5">
                 <div>
-                  <div className="text-[11px] font-bold text-slate-800">
+                  <div className="text-[13px] font-bold text-slate-800">
                     Personal UI preferences
                   </div>
-                  <div className="mt-0.5 text-[9px] text-slate-400">
+                  <div className="mt-0.5 text-[13px] text-slate-400">
                     These choices are stored for this browser.
                   </div>
                 </div>
@@ -2441,7 +2411,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   <h3 className="text-sm font-black text-slate-950">
                     Active Sessions
                   </h3>
-                  <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                  <p className="mt-1 text-[13px] leading-5 text-slate-500">
                     See every device currently signed in to this ConsulBuzz account.
                   </p>
                 </div>
@@ -2546,18 +2516,18 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                   </div>
 
                                   {session.current && (
-                                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[13px] font-black uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-200">
                                       This device
                                     </span>
                                   )}
                                 </div>
 
-                                <div className="mt-1 text-[11px] font-medium text-slate-500">
+                                <div className="mt-1 text-[13px] font-medium text-slate-500">
                                   {session.browser || "Unknown browser"} ·{" "}
                                   {session.os || "Unknown OS"}
                                 </div>
 
-                                <div className="mt-3 grid gap-2 text-[10px] text-slate-500 sm:grid-cols-2 lg:grid-cols-4">
+                                <div className="mt-3 grid gap-2 text-[12px] text-slate-500 sm:grid-cols-2 lg:grid-cols-4">
                                   <div>
                                     <div className="font-bold uppercase tracking-wide text-slate-400">
                                       Last active
@@ -2606,7 +2576,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                 type="button"
                                 onClick={() => revokeProfileSession(session)}
                                 disabled={Boolean(profileSessionAction)}
-                                className={`inline-flex h-9 flex-shrink-0 items-center justify-center gap-2 rounded-xl px-3 text-[11px] font-bold disabled:opacity-50 ${
+                                className={`inline-flex h-9 flex-shrink-0 items-center justify-center gap-2 rounded-xl px-3 text-[13px] font-bold disabled:opacity-50 ${
                                   session.current
                                     ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                                     : "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
@@ -2644,7 +2614,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         <h3 className="text-sm font-black text-slate-950">
                           Session History
                         </h3>
-                        <p className="mt-1 text-[11px] text-slate-500">
+                        <p className="mt-1 text-[13px] text-slate-500">
                           Previous sessions remain visible after logout, remote sign-out, password change or expiry. History older than 90 days is removed automatically.
                         </p>
                       </div>
@@ -2654,7 +2624,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           type="button"
                           onClick={clearProfileSessionHistory}
                           disabled={profileHistoryClearing}
-                          className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                          className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
                         >
                           {profileHistoryClearing ? (
                             <Loader2
@@ -2738,13 +2708,13 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                     </span>
                                   </div>
 
-                                  <div className="mt-1 text-[10px] text-slate-500">
+                                  <div className="mt-1 text-[12px] text-slate-500">
                                     {session.browser || "Unknown browser"} ·{" "}
                                     {session.os || "Unknown OS"}
                                     {location ? ` · ${location}` : ""}
                                   </div>
 
-                                  <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[9px] text-slate-400">
+                                  <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-slate-400">
                                     <span>
                                       Last active:{" "}
                                       <strong className="font-semibold text-slate-600">
@@ -2771,7 +2741,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         })}
                       </div>
                     ) : (
-                      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-5 py-8 text-center text-[11px] text-slate-500">
+                      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-5 py-8 text-center text-[13px] text-slate-500">
                         Session history will appear here after a device signs out or a session expires.
                       </div>
                     )}
@@ -2779,7 +2749,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 </>
               )}
 
-              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[10px] leading-5 text-amber-800">
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] leading-5 text-amber-800">
                 Multiple devices can share the same public IP when they use the same Wi-Fi or office network. ConsulBuzz identifies sessions by a unique secure session ID, not by IP address.
               </div>
             </div>
@@ -3194,16 +3164,17 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           <span className="absolute left-1.5 top-2 bottom-2 w-[2px] rounded-full bg-indigo-400" />
         )}
 
-        <Icon
-          size={
-            17
-          }
-          className={
-            active
-              ? "text-indigo-300"
-              : "text-slate-400"
-          }
-        />
+        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center">
+          <Icon
+            size={24}
+            strokeWidth={2}
+            className={
+              active
+                ? "text-indigo-300"
+                : "text-slate-400"
+            }
+          />
+        </span>
 
         {!sidebarCollapsed && (
           <>
@@ -3416,7 +3387,6 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
   const sidebarCompact =
     sidebarCollapsed &&
-    !sidebarHoverExpanded &&
     !mobileSidebarOpen;
 
   const currentPage =
@@ -3433,14 +3403,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       className="cb-client-portal min-h-screen bg-[#f6f7fa] text-slate-900 overflow-x-hidden"
     >
       <style>{`
-        /* Mandatory portal-wide classic typography */
-        .cb-client-portal,
-        .cb-client-portal button,
-        .cb-client-portal input,
-        .cb-client-portal textarea,
-        .cb-client-portal select {
-          font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
-        }
+        /* Portal typography is globally standardized to Inter in index.css. */
         .cb-client-portal h1 { font-size:24px !important; line-height:1.25 !important; font-weight:700 !important; letter-spacing:-0.02em !important; }
         .cb-client-portal h2 { font-size:17px !important; line-height:1.35 !important; font-weight:700 !important; }
         .cb-client-portal h3 { font-size:15px !important; line-height:1.4 !important; font-weight:700 !important; }
@@ -3451,16 +3414,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           margin: 0;
           min-height: 100%;
           background: #f6f7fa;
-          font-family:
-            Inter,
-            "Helvetica Neue",
-            Arial,
-            ui-sans-serif,
-            system-ui,
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
-            sans-serif;
+          font-family: "Inter", sans-serif;
         }
 
         .sidebar-scroll {
@@ -3570,7 +3524,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             setMobileSidebarOpen(true);
             setAccountActionsOpen(true);
           }}
-          className="relative w-9 h-9 rounded-full bg-[#5148E5] text-white flex items-center justify-center text-[10px] font-bold shadow-sm"
+          className="relative w-9 h-9 rounded-full bg-[#5148E5] text-white flex items-center justify-center text-[12px] font-bold shadow-sm"
           aria-label="Open account"
         >
           {initials}
@@ -3592,22 +3546,17 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       <div className="flex">
         {/* FIXED LIGHT SIDEBAR */}
         <aside
-          onMouseEnter={openSidebarHover}
-          onMouseLeave={closeSidebarHover}
           className={`fixed inset-y-0 left-0 z-[70] overflow-visible border-r border-white/[0.07] bg-[#151A3A] transition-[width,transform,box-shadow] duration-200 ease-out ${
             mobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           } ${
             sidebarCompact
               ? "w-[72px] shadow-[5px_0_18px_rgba(2,8,23,0.08)]"
-              : sidebarCollapsed
-              ? "w-[252px] shadow-[16px_0_40px_rgba(2,8,23,0.28)]"
               : "w-[252px] shadow-[8px_0_28px_rgba(2,8,23,0.10)]"
           }`}
         >
           <button
             type="button"
             onClick={() => {
-              setSidebarHoverExpanded(false);
               setSidebarCollapsed((current) => !current);
             }}
             title={sidebarCollapsed ? "Expand menu" : "Collapse menu"}
@@ -3626,7 +3575,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             {!sidebarCompact ? (
               <div className="px-5 pt-4 pb-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-[#3b82f6] via-[#4f46e5] to-[#7c3aed] text-[11px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.28)]">
+                  <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-[#3b82f6] via-[#4f46e5] to-[#7c3aed] text-[13px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.28)]">
                     <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.35),transparent_42%)]" />
                     <span className="relative">CB</span>
                   </div>
@@ -3644,7 +3593,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             ) : (
               <div className="pt-4 pb-2 flex justify-center">
                 <div
-                  className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-[#3b82f6] via-[#4f46e5] to-[#7c3aed] text-[11px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.24)]"
+                  className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-[#3b82f6] via-[#4f46e5] to-[#7c3aed] text-[13px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.24)]"
                   title="ConsulBuzz"
                 >
                   <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.35),transparent_42%)]" />
@@ -3697,7 +3646,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         className={`relative mb-1 w-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isDragOver ? "opacity-60 " : ""}${
                           sidebarCompact
                             ? "h-11 rounded-lg flex items-center justify-center"
-                            : "h-11 rounded-lg px-3 flex items-center gap-3"
+                            : "h-11 rounded-lg px-2 flex items-center gap-2"
                         } ${
                           active
                             ? "bg-brand-600 text-white shadow-brand-sm"
@@ -3708,11 +3657,13 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-400" />
                         )}
 
-                        <Icon
-                          size={sidebarCompact ? 20 : 18}
-                          strokeWidth={2}
-                          className={active ? "text-white" : "text-slate-400"}
-                        />
+                        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center">
+                          <Icon
+                            size={24}
+                            strokeWidth={2}
+                            className={active ? "text-white" : "text-slate-400"}
+                          />
+                        </span>
 
                         {!sidebarCompact && (
                           <>
@@ -3752,7 +3703,9 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           {groupActive && (
                             <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-400" />
                           )}
-                          <Icon size={20} strokeWidth={2} />
+                          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center">
+                            <Icon size={24} strokeWidth={2} />
+                          </span>
                         </button>
 
                         {open && (
@@ -3782,7 +3735,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                   {active && (
                                     <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-indigo-400" />
                                   )}
-                                  <ChildIcon size={15} strokeWidth={1.9} />
+                                  <ChildIcon size={18} strokeWidth={2} />
 
                                   {(key.includes("walkins") || key.includes("counselling")) && (
                                     <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-400" />
@@ -3815,7 +3768,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         onClick={() =>
                           toggleGroup(group.key)
                         }
-                        className={`relative h-11 w-full rounded-lg px-3 flex items-center gap-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                        className={`relative h-11 w-full rounded-lg px-2 flex items-center gap-2 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                           groupActive
                             ? "bg-[#5148E5] text-white"
                             : open
@@ -3827,15 +3780,17 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-400" />
                         )}
 
-                        <Icon
-                          size={18}
-                          strokeWidth={2}
-                          className={
-                            groupActive
-                              ? "text-white"
-                              : "text-slate-400"
-                          }
-                        />
+                        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center">
+                          <Icon
+                            size={24}
+                            strokeWidth={2}
+                            className={
+                              groupActive
+                                ? "text-white"
+                                : "text-slate-400"
+                            }
+                          />
+                        </span>
 
                         <span className="flex-1 text-left text-[13px] font-semibold">
                           {group.label}
@@ -3885,19 +3840,21 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                         : "text-slate-400 hover:text-white"
                                     }`}
                                   >
-                                    <ChildIcon
-                                      size={14}
-                                      strokeWidth={1.8}
-                                      className={
-                                        active
-                                          ? "text-white"
-                                          : "text-slate-500"
-                                      }
-                                    />
+                                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                                      <ChildIcon
+                                        size={18}
+                                        strokeWidth={2}
+                                        className={
+                                          active
+                                            ? "text-white"
+                                            : "text-slate-500"
+                                        }
+                                      />
+                                    </span>
 
                                     <span className="flex-1 text-[12px] font-semibold">
-                                      {key === "domestic-walkins" ? <span className="mb-1 block text-[10px] uppercase tracking-[0.12em] text-slate-500">Domestic</span> : null}
-                                      {key === "international-walkins" ? <span className="mb-1 block text-[10px] uppercase tracking-[0.12em] text-slate-500">International</span> : null}
+                                      {key === "domestic-walkins" ? <span className="mb-1 block text-[12px] uppercase tracking-[0.12em] text-slate-500">Domestic</span> : null}
+                                      {key === "international-walkins" ? <span className="mb-1 block text-[12px] uppercase tracking-[0.12em] text-slate-500">International</span> : null}
                                       {key === "admissions" ? "Overall" : meta.label}
                                     </span>
 
@@ -3925,18 +3882,21 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                     {
                                       key: "domestic",
                                       label: "Domestic",
+                                      icon: Building2,
                                       defaultModule: "domestic-admissions",
                                       matchPrefix: "domestic-",
                                     },
                                     {
                                       key: "international",
                                       label: "International",
+                                      icon: Globe2,
                                       defaultModule: "international-admissions",
                                       matchPrefix: "international-",
                                     },
                                   ].map((section) => {
                                     const sectionActive =
                                       module.startsWith(section.matchPrefix);
+                                    const SectionIcon = section.icon;
 
                                     return (
                                       <button
@@ -3952,14 +3912,17 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                             : "text-slate-400 hover:text-white"
                                         }`}
                                       >
-                                        <ChevronRight
-                                          size={13}
-                                          className={
-                                            sectionActive
-                                              ? "text-indigo-300"
-                                              : "text-slate-500"
-                                          }
-                                        />
+                                        <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                                          <SectionIcon
+                                            size={18}
+                                            strokeWidth={2}
+                                            className={
+                                              sectionActive
+                                                ? "text-indigo-300"
+                                                : "text-slate-500"
+                                            }
+                                          />
+                                        </span>
 
                                         <span className="flex-1 text-[12px] font-semibold">
                                           {section.label}
@@ -3990,7 +3953,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               {!sidebarCompact ? (
                 <div className="rounded-[12px] border border-white/10 bg-white/[0.045] px-4 py-4">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-[11px] font-medium text-slate-300">
+                    <div className="text-[13px] font-medium text-slate-300">
                       Current Plan
                     </div>
 
@@ -4005,7 +3968,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     {planLabel}
                   </div>
 
-                  <div className="mt-2 text-[11px] text-slate-300">
+                  <div className="mt-2 text-[13px] text-slate-300">
                     {sidebarRenewalLabel
                       ? `Valid till ${sidebarRenewalLabel}`
                       : "Active subscription"}
@@ -4014,7 +3977,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   <button
                     type="button"
                     onClick={openBilling}
-                    className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#7c3aed] px-3 text-[11px] font-bold text-white shadow-[0_8px_22px_rgba(79,70,229,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(79,70,229,0.30)]"
+                    className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#7c3aed] px-3 text-[13px] font-bold text-white shadow-[0_8px_22px_rgba(79,70,229,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(79,70,229,0.30)]"
                   >
                     <Rocket size={14} strokeWidth={2.2} />
                     Upgrade your plan
@@ -4085,7 +4048,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         <button key={item.key} type="button" onClick={() => { setModule(item.key); setWorkspaceSearch(""); setMobileSidebarOpen(false); }} className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left hover:bg-slate-50">
                           <div className="min-w-0">
                             <div className="truncate text-[12px] font-semibold text-slate-900">{item.label}</div>
-                            <div className="mt-0.5 text-[10px] text-slate-500">{item.groupLabel}</div>
+                            <div className="mt-0.5 text-[12px] text-slate-500">{item.groupLabel}</div>
                           </div>
                           <ChevronRight size={14} className="text-slate-300" />
                         </button>
@@ -4097,7 +4060,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               <div className="ml-auto flex items-center gap-2 sm:gap-3">
                 {/* GLOBAL PERIOD */}
                 <div className="hidden md:flex h-9 items-center rounded-xl border border-slate-200/80 bg-white/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
-                  <div className="px-3 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 border-r border-slate-200">
+                  <div className="px-3 text-[12px] font-bold uppercase tracking-[0.1em] text-slate-400 border-r border-slate-200">
                     Period
                   </div>
 
@@ -4149,7 +4112,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     <Bell size={18} />
 
                     {unreadNotificationCount > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-[#5148E5] text-white text-[9px] font-bold leading-[17px] text-center">
+                      <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-[#5148E5] text-white text-[13px] font-bold leading-[17px] text-center">
                         {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
                       </span>
                     )}
@@ -4166,7 +4129,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           <button
                             type="button"
                             onClick={markAllNotificationsRead}
-                            className="text-[11px] font-semibold text-indigo-600"
+                            className="text-[13px] font-semibold text-indigo-600"
                           >
                             Mark all read
                           </button>
@@ -4203,7 +4166,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                 {notification.title}
                               </div>
 
-                              <div className="mt-1 text-[11px] leading-5 text-slate-500">
+                              <div className="mt-1 text-[13px] leading-5 text-slate-500">
                                 {notification.message}
                               </div>
                             </button>
@@ -4235,7 +4198,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   {profileMenuOpen && (
                     <div className="absolute right-0 mt-3 w-[300px] overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.16)]">
                       <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                        <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
+                        <div className="text-[13px] font-bold uppercase tracking-[0.08em] text-slate-500">
                           Account
                         </div>
 
@@ -4357,7 +4320,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 <>
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
                     <div>
-                      <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
+                      <div className="text-[12px] uppercase tracking-wider font-semibold text-slate-400">
                         Current Subscription
                       </div>
 
@@ -4401,7 +4364,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   <div>
                     <div className="rounded-2xl border border-slate-200 bg-[#f8f9fb] px-4 py-5 sm:px-6 sm:py-6">
                     <div className="mx-auto max-w-2xl text-center">
-                      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-500">
+                      <div className="text-[12px] font-bold uppercase tracking-[0.14em] text-indigo-500">
                         Pricing Plans
                       </div>
 
@@ -4529,7 +4492,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                             }`}
                           >
                             {isPopular && (
-                              <div className="absolute right-4 top-4 rounded-full bg-indigo-500/20 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-indigo-200 ring-1 ring-inset ring-indigo-400/30">
+                              <div className="absolute right-4 top-4 rounded-full bg-indigo-500/20 px-2.5 py-1 text-[13px] font-black uppercase tracking-[0.08em] text-indigo-200 ring-1 ring-inset ring-indigo-400/30">
                                 Most Popular
                               </div>
                             )}
@@ -4538,7 +4501,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                               <div className="flex items-start justify-between gap-3">
                                 <div>
                                   <div
-                                    className={`text-[10px] font-black uppercase tracking-[0.12em] ${
+                                    className={`text-[12px] font-black uppercase tracking-[0.12em] ${
                                       isPopular
                                         ? "text-indigo-300"
                                         : "text-slate-400"
@@ -4560,7 +4523,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
                                 {isCurrent && (
                                   <span
-                                    className={`rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide ${
+                                    className={`rounded-full px-2.5 py-1 text-[13px] font-bold uppercase tracking-wide ${
                                       isPopular
                                         ? "bg-white/10 text-white ring-1 ring-inset ring-white/15"
                                         : "bg-slate-100 text-slate-600"
@@ -4584,7 +4547,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                   </div>
 
                                   <div
-                                    className={`pb-1.5 text-[11px] font-medium ${
+                                    className={`pb-1.5 text-[13px] font-medium ${
                                       isPopular
                                         ? "text-slate-400"
                                         : "text-slate-400"
@@ -4599,7 +4562,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                 {billingCycleView === "YEARLY" &&
                                   yearlyAvailable && (
                                     <div
-                                      className={`mt-1 text-[10px] font-medium ${
+                                      className={`mt-1 text-[12px] font-medium ${
                                         isPopular
                                           ? "text-emerald-300"
                                           : "text-emerald-700"
@@ -4695,7 +4658,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       })}
                     </div>
 
-                    <div className="mx-auto mt-5 max-w-2xl text-center text-[10px] leading-5 text-slate-500">
+                    <div className="mx-auto mt-5 max-w-2xl text-center text-[12px] leading-5 text-slate-500">
                       Your existing CRM records remain unchanged when you upgrade. New plan capabilities become available after successful payment verification.
                     </div>
                   </div>
@@ -4723,7 +4686,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                 <div className="text-xs font-semibold text-slate-800">
                                   {payment.plan.name} · {payment.billingCycle}
                                 </div>
-                                <div className="text-[10px] text-slate-500 mt-0.5">
+                                <div className="text-[12px] text-slate-500 mt-0.5">
                                   {new Date(
                                     payment.paidAt ||
                                       payment.createdAt
@@ -4740,7 +4703,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                   ).toLocaleString("en-IN")}
                                 </div>
                                 <div
-                                  className={`text-[10px] font-semibold mt-0.5 ${
+                                  className={`text-[12px] font-semibold mt-0.5 ${
                                     payment.status ===
                                     "CAPTURED"
                                       ? "text-indigo-600"
@@ -4761,7 +4724,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                         payment.id
                                       )
                                     }
-                                    className="mt-1.5 text-[10px] font-semibold text-indigo-600 hover:text-indigo-700"
+                                    className="mt-1.5 text-[12px] font-semibold text-indigo-600 hover:text-indigo-700"
                                   >
                                     View Receipt
                                   </button>
@@ -4817,7 +4780,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
             <div
               id="consulbuzz-payment-receipt"
-              className="bg-white rounded-[24px] shadow-2xl overflow-hidden print:shadow-none print:rounded-none print:text-[11px]"
+              className="bg-white rounded-[24px] shadow-2xl overflow-hidden print:shadow-none print:rounded-none print:text-[13px]"
             >
               {receiptLoading ? (
                 <div className="py-24 flex items-center justify-center gap-2 text-sm text-slate-500">
@@ -4830,7 +4793,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     <div className="flex items-start justify-between gap-6">
                       <div>
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-2xl bg-[#071321] text-white flex items-center justify-center text-[11px] font-black">
+                          <div className="w-11 h-11 rounded-2xl bg-[#071321] text-white flex items-center justify-center text-[13px] font-black">
                             CB
                           </div>
 
@@ -4838,13 +4801,13 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                             <div className="text-[16px] font-black tracking-[-0.03em] text-slate-950">
                               Bispun
                             </div>
-                            <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] font-semibold text-slate-400">
+                            <div className="mt-0.5 text-[12px] uppercase tracking-[0.12em] font-semibold text-slate-400">
                               CRM Subscription
                             </div>
                           </div>
                         </div>
 
-                        <div className="mt-5 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                        <div className="mt-5 text-[13px] font-bold uppercase tracking-[0.14em] text-slate-400">
                           Payment Receipt
                         </div>
 
@@ -4860,19 +4823,19 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       </div>
 
                       <div className="text-right">
-                        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700">
+                        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[12px] font-bold uppercase tracking-[0.08em] text-emerald-700">
                           <CheckCircle2 size={12} />
                           Paid
                         </div>
 
-                        <div className="mt-3 text-[9px] text-slate-400">
+                        <div className="mt-3 text-[13px] text-slate-400">
                           Receipt No.
                         </div>
                         <div className="mt-1 text-xs font-bold text-slate-800 break-all max-w-[220px]">
                           {receiptData.receiptNumber || receiptData.id}
                         </div>
 
-                        <div className="mt-2 text-[9px] text-slate-400">
+                        <div className="mt-2 text-[13px] text-slate-400">
                           Payment Date
                         </div>
                         <div className="mt-1 text-xs font-semibold text-slate-700">
@@ -4892,7 +4855,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   <div className="px-6 sm:px-8 py-5">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
-                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                        <div className="text-[12px] font-bold uppercase tracking-[0.12em] text-slate-400">
                           Billed To
                         </div>
 
@@ -4915,7 +4878,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       </div>
 
                       <div>
-                        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                        <div className="text-[12px] font-bold uppercase tracking-[0.12em] text-slate-400">
                           Subscription
                         </div>
 
@@ -4941,7 +4904,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     </div>
 
                     <div className="mt-5 rounded-xl border border-slate-200 overflow-hidden">
-                      <div className="grid grid-cols-[1fr_auto] bg-slate-50 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                      <div className="grid grid-cols-[1fr_auto] bg-slate-50 px-4 py-2.5 text-[12px] font-bold uppercase tracking-[0.08em] text-slate-400">
                         <div>Description</div>
                         <div>Amount</div>
                       </div>
@@ -4951,7 +4914,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           <div className="text-sm font-semibold text-slate-900">
                             ConsulBuzz {receiptData.plan?.name} Plan
                           </div>
-                          <div className="mt-1 text-[11px] text-slate-500">
+                          <div className="mt-1 text-[13px] text-slate-500">
                             {receiptData.billingCycle === "YEARLY"
                               ? "Annual CRM subscription"
                               : "Monthly CRM subscription"}
@@ -4996,7 +4959,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     </div>
 
                     <div className="mt-5">
-                      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                      <div className="text-[12px] font-bold uppercase tracking-[0.12em] text-slate-400">
                         Payment Details
                       </div>
 
@@ -5016,7 +4979,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                             key={label}
                             className="border-b border-slate-100 pb-2"
                           >
-                            <div className="text-[10px] text-slate-400">
+                            <div className="text-[12px] text-slate-400">
                               {label}
                             </div>
                             <div className="mt-1 text-xs font-semibold text-slate-800 break-all">
@@ -5032,12 +4995,12 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         <div className="text-sm font-bold text-slate-900">
                           Thank you for choosing Bispun.
                         </div>
-                        <div className="mt-1 text-[11px] text-slate-500">
+                        <div className="mt-1 text-[13px] text-slate-500">
                           This receipt confirms successful payment for your CRM subscription.
                         </div>
                       </div>
 
-                      <div className="text-[10px] text-slate-400 sm:text-right">
+                      <div className="text-[12px] text-slate-400 sm:text-right">
                         ConsulBuzz CRM
                         <br />
                         Subscription Receipt
@@ -5061,14 +5024,14 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
           <form onSubmit={createYearWorkspace} className="w-full max-w-lg overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-2xl">
             <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
-              <div><div className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-500">CRM Year Workspace</div><h2 className="mt-1 text-xl font-bold text-slate-950">Add Year</h2><p className="mt-1 text-xs leading-5 text-slate-500">Create a fresh historical workspace. Existing {selectedYear} data stays untouched.</p></div>
+              <div><div className="text-[12px] font-bold uppercase tracking-[0.14em] text-indigo-500">CRM Year Workspace</div><h2 className="mt-1 text-xl font-bold text-slate-950">Add Year</h2><p className="mt-1 text-xs leading-5 text-slate-500">Create a fresh historical workspace. Existing {selectedYear} data stays untouched.</p></div>
               <button type="button" onClick={() => setAddYearOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100"><X size={17}/></button>
             </div>
             <div className="space-y-5 px-6 py-5">
               <div><label className="mb-1.5 block text-xs font-bold text-slate-700">Year</label><input type="number" min="2000" max="2100" value={newWorkspaceYear} onChange={(e)=>setNewWorkspaceYear(e.target.value)} placeholder="Example: 2025" className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm font-semibold outline-none focus:border-indigo-400" autoFocus/></div>
               <div><div className="mb-2 text-xs font-bold text-slate-700">How should this year start?</div><div className="grid gap-3 sm:grid-cols-2">
-                <button type="button" onClick={()=>setYearMode("EMPTY")} className={`rounded-2xl border p-4 text-left ${yearMode === "EMPTY" ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100" : "border-slate-200"}`}><div className="text-sm font-bold">Start Empty</div><div className="mt-1 text-[11px] leading-5 text-slate-500">Yearly leads, admissions, revenue and activity start empty.</div></button>
-                <button type="button" onClick={()=>setYearMode("COPY_STRUCTURE")} className={`rounded-2xl border p-4 text-left ${yearMode === "COPY_STRUCTURE" ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100" : "border-slate-200"}`}><div className="text-sm font-bold">Use Current Setup</div><div className="mt-1 text-[11px] leading-5 text-slate-500">Keep company setup and admission structure, but no yearly records.</div></button>
+                <button type="button" onClick={()=>setYearMode("EMPTY")} className={`rounded-2xl border p-4 text-left ${yearMode === "EMPTY" ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100" : "border-slate-200"}`}><div className="text-sm font-bold">Start Empty</div><div className="mt-1 text-[13px] leading-5 text-slate-500">Yearly leads, admissions, revenue and activity start empty.</div></button>
+                <button type="button" onClick={()=>setYearMode("COPY_STRUCTURE")} className={`rounded-2xl border p-4 text-left ${yearMode === "COPY_STRUCTURE" ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100" : "border-slate-200"}`}><div className="text-sm font-bold">Use Current Setup</div><div className="mt-1 text-[13px] leading-5 text-slate-500">Keep company setup and admission structure, but no yearly records.</div></button>
               </div></div>
               {yearError && <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-semibold text-rose-700">{yearError}</div>}
             </div>
@@ -5198,7 +5161,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 )
               )}
 
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-[11px] text-slate-500 leading-5">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-[13px] text-slate-500 leading-5">
                 Password must be at least 8 characters and include uppercase, lowercase and a number.
               </div>
 

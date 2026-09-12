@@ -135,7 +135,7 @@ export default function MeetingRoom({
           <div className="truncate text-sm font-bold text-white">
             {subject || "Meeting"}
           </div>
-          <div className="truncate text-[11px] text-slate-400">
+          <div className="truncate text-[13px] text-slate-400">
             Room: {roomName}
           </div>
         </div>

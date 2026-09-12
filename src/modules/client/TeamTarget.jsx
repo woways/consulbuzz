@@ -216,10 +216,10 @@ export default function TeamTarget({ currentUser }) {
       p >= 100
         ? "bg-emerald-50 text-emerald-600"
         : p > 0
-        ? "bg-amber-50 text-amber-600"
+        ? "bg-indigo-50 text-indigo-600"
         : "bg-slate-100 text-slate-400";
     return (
-      <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${cls}`}>
+      <span className={`rounded-full px-2.5 py-1 text-[13px] font-bold ${cls}`}>
         {p}%
       </span>
     );
@@ -235,49 +235,49 @@ export default function TeamTarget({ currentUser }) {
     const offset = circ - (circ * shown) / 100;
 
     return (
-      <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 p-6 text-white shadow-[0_2px_4px_rgba(16,24,40,.04),0_16px_40px_rgba(79,70,229,.20)]">
+      <div className="overflow-hidden rounded-3xl border border-indigo-200 bg-white p-6 text-slate-900 shadow-[0_2px_4px_rgba(16,24,40,.04),0_10px_28px_rgba(79,70,229,.08)]">
         <div className="flex items-center justify-between">
-          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-200">
+          <div className="text-[13px] font-bold uppercase tracking-[0.16em] text-indigo-600">
             {name ? `${name} · ` : ""}{year} year average
           </div>
-          <div className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-brand-100">
+          <div className="rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-[13px] font-semibold text-indigo-700">
             {year === LAUNCH_YEAR ? "Sept–Dec active" : "Full year"}
           </div>
         </div>
         <div className="mt-5 flex flex-col items-center gap-8 sm:flex-row sm:justify-between">
           <div className="relative h-44 w-44 flex-shrink-0">
             <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="14" />
+              <circle cx="60" cy="60" r="52" fill="none" stroke="#e0e7ff" strokeWidth="14" />
               <circle
-                cx="60" cy="60" r="52" fill="none" stroke="#fde047" strokeWidth="14"
+                cx="60" cy="60" r="52" fill="none" stroke="#4f46e5" strokeWidth="14"
                 strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-                style={{ transition: "stroke-dashoffset 1s ease", filter: "drop-shadow(0 2px 6px rgba(253,224,71,.4))" }}
+                style={{ transition: "stroke-dashoffset 1s ease", filter: "drop-shadow(0 2px 6px rgba(79,70,229,.35))" }}
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="text-[38px] font-black leading-none tracking-tight">{avg}%</div>
-              <div className="text-[11px] font-semibold text-brand-200">year avg</div>
+              <div className="text-[38px] font-extrabold leading-none tracking-tight">{avg}%</div>
+              <div className="text-[13px] font-semibold text-slate-500">year avg</div>
             </div>
           </div>
           <div className="grid w-full grid-cols-2 gap-3 sm:max-w-[360px]">
-            <div className="rounded-2xl bg-white/[0.08] p-4">
-              <div className="text-[9px] font-bold uppercase tracking-wide text-brand-200">Months tracked</div>
-              <div className="mt-1 text-[22px] font-black">{tracked}</div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-[13px] font-bold uppercase tracking-wide text-slate-500">Months tracked</div>
+              <div className="mt-1 text-[22px] font-bold">{tracked}</div>
             </div>
-            <div className="rounded-2xl bg-white/[0.08] p-4">
-              <div className="text-[9px] font-bold uppercase tracking-wide text-brand-200">Best month</div>
-              <div className="mt-1 text-[16px] font-black">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-[13px] font-bold uppercase tracking-wide text-slate-500">Best month</div>
+              <div className="mt-1 text-[16px] font-bold">
                 {best ? `${MONTH_ABBR[best.month - 1]} · ${best.overallPercent}%` : "—"}
               </div>
             </div>
-            <div className="col-span-2 rounded-2xl bg-white/[0.08] p-4">
-              <div className="mb-1.5 flex items-center justify-between text-[10px] font-semibold text-brand-200">
+            <div className="col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-1.5 flex items-center justify-between text-[12px] font-semibold text-slate-500">
                 <span>Progress</span>
-                <span className="font-black">{avg}%</span>
+                <span className="font-bold">{avg}%</span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-indigo-100">
                 <div
-                  className="h-2 rounded-full bg-gradient-to-r from-yellow-300 to-yellow-400"
+                  className="h-2 rounded-full bg-indigo-500"
                   style={{ width: `${Math.min(100, avg)}%` }}
                 />
               </div>
@@ -299,22 +299,22 @@ export default function TeamTarget({ currentUser }) {
           <table className="w-full border-collapse text-center text-[12px]">
             <thead>
               <tr className="text-slate-500">
-                <th className="bg-slate-50/80 px-4 py-3.5 text-left text-[10px] font-bold uppercase tracking-wider" rowSpan={2}>
+                <th className="bg-slate-50/80 px-4 py-3.5 text-left text-[13px] font-semibold uppercase tracking-wider" rowSpan={2}>
                   Month
                 </th>
-                <th className="bg-slate-50/80 px-3 py-3.5 text-[10px] font-bold uppercase tracking-wider" rowSpan={2}>
+                <th className="bg-slate-50/80 px-3 py-3.5 text-[13px] font-semibold uppercase tracking-wider" rowSpan={2}>
                   Monthly<br />Target
                 </th>
                 {weekIdx.map((w) => (
-                  <th key={`w${w}`} className="border-l border-slate-100 bg-slate-50/80 px-2 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-600" colSpan={3}>
+                  <th key={`w${w}`} className="border-l border-slate-100 bg-slate-50/80 px-2 py-3 text-[13px] font-semibold uppercase tracking-wider text-slate-600" colSpan={3}>
                     Week {w}
                   </th>
                 ))}
-                <th className="border-l border-slate-100 bg-brand-50/70 px-3 py-3.5 text-[10px] font-bold uppercase tracking-wider text-brand-600" rowSpan={2}>
+                <th className="border-l border-slate-100 bg-brand-50/70 px-3 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-brand-600" rowSpan={2}>
                   Overall<br />Conv%
                 </th>
               </tr>
-              <tr className="text-[9px] uppercase tracking-wide text-slate-400">
+              <tr className="text-[13px] uppercase tracking-wide text-slate-400">
                 {weekIdx.map((w) => (
                   <Fragment key={`h${w}`}>
                     <th className="border-l border-slate-100 bg-slate-50/50 px-2 py-2 font-semibold">Target</th>
@@ -330,12 +330,12 @@ export default function TeamTarget({ currentUser }) {
                   {/* Month */}
                   <td className="px-4 py-4 text-left">
                     <div className="flex items-center gap-2.5">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-[11px] font-black text-brand-600">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-[13px] font-bold text-brand-600">
                         {MONTH_ABBR[m.month - 1]}
                       </span>
                       <div>
-                        <div className="font-black text-slate-800">{MONTH_NAMES[m.month - 1]}</div>
-                        <div className="text-[10px] font-medium text-slate-400">{year}</div>
+                        <div className="font-bold text-slate-800">{MONTH_NAMES[m.month - 1]}</div>
+                        <div className="text-[12px] font-medium text-slate-400">{year}</div>
                       </div>
                     </div>
                   </td>
@@ -353,10 +353,10 @@ export default function TeamTarget({ currentUser }) {
                         onBlur={(e) =>
                           setTargetValue(ownerId, m.month, "monthly", null, e.target.value)
                         }
-                        className="w-16 rounded-lg border border-slate-200 bg-white px-2 py-1 text-center text-[14px] font-black text-slate-800 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                        className="w-16 rounded-lg border border-slate-200 bg-white px-2 py-1 text-center text-[14px] font-bold text-slate-800 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
                       />
                     ) : (
-                      <span className="text-[15px] font-black text-slate-800">{m.monthlyTarget}</span>
+                      <span className="text-[15px] font-bold text-slate-800">{m.monthlyTarget}</span>
                     )}
                   </td>
 
@@ -385,7 +385,7 @@ export default function TeamTarget({ currentUser }) {
                                 e.target.value = e.target.value.replace(/[^0-9]/g, "");
                               }}
                               onBlur={(e) => setTargetValue(ownerId, m.month, "week", wnum, e.target.value)}
-                              className="w-14 rounded-lg border border-slate-200 bg-white px-2 py-1 text-center text-[13px] font-black text-slate-800 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                              className="w-14 rounded-lg border border-slate-200 bg-white px-2 py-1 text-center text-[13px] font-bold text-slate-800 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
                             />
                           ) : (
                             <span className="font-semibold text-slate-500">{w.target}</span>
@@ -402,7 +402,7 @@ export default function TeamTarget({ currentUser }) {
                               >
                                 <Minus size={12} />
                               </button>
-                              <span className="w-7 text-center text-[14px] font-black text-slate-900">
+                              <span className="w-7 text-center text-[14px] font-bold text-slate-900">
                                 {w.achieved}
                               </span>
                               <button
@@ -414,7 +414,7 @@ export default function TeamTarget({ currentUser }) {
                               </button>
                             </div>
                           ) : (
-                            <span className="text-[14px] font-black text-slate-900">{w.achieved}</span>
+                            <span className="text-[14px] font-bold text-slate-900">{w.achieved}</span>
                           )}
                         </td>
                         {/* Conv% */}
@@ -426,7 +426,7 @@ export default function TeamTarget({ currentUser }) {
                   {/* Overall */}
                   <td className="border-l border-slate-50 bg-brand-50/40 px-3 py-4">
                     <span
-                      className={`text-[15px] font-black ${
+                      className={`text-[15px] font-bold ${
                         m.overallPercent >= 100 ? "text-emerald-600" : "text-brand-700"
                       }`}
                     >
@@ -442,10 +442,10 @@ export default function TeamTarget({ currentUser }) {
                 const totalPct = totalMonthly > 0 ? Math.round((totalAchieved / totalMonthly) * 100) : 0;
                 return (
                   <tr className="border-t-2 border-slate-200 bg-slate-50/70">
-                    <td className="px-4 py-4 text-left text-[13px] font-black uppercase tracking-wide text-slate-700">
+                    <td className="px-4 py-4 text-left text-[13px] font-bold uppercase tracking-wide text-slate-700">
                       Total year
                     </td>
-                    <td className="px-3 py-4 text-[15px] font-black text-slate-900">{totalMonthly}</td>
+                    <td className="px-3 py-4 text-[15px] font-bold text-slate-900">{totalMonthly}</td>
                     {weekIdx.map((w) => (
                       <Fragment key={`tf${w}`}>
                         <td className="border-l border-slate-100 bg-slate-50/70" />
@@ -454,7 +454,7 @@ export default function TeamTarget({ currentUser }) {
                       </Fragment>
                     ))}
                     <td className="border-l border-slate-100 bg-brand-100/50 px-3 py-4">
-                      <span className={`text-[16px] font-black ${totalPct >= 100 ? "text-emerald-600" : "text-brand-700"}`}>
+                      <span className={`text-[16px] font-bold ${totalPct >= 100 ? "text-emerald-600" : "text-brand-700"}`}>
                         {totalPct}%
                       </span>
                     </td>
@@ -479,10 +479,10 @@ export default function TeamTarget({ currentUser }) {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand-500">
+          <div className="text-[13px] font-semibold uppercase tracking-[0.16em] text-brand-500">
             Performance
           </div>
-          <h1 className="flex items-center gap-2 text-[24px] font-black tracking-[-0.03em] text-slate-900">
+          <h1 className="flex items-center gap-2 text-[24px] font-semibold tracking-[-0.02em] text-slate-900">
             <TargetIcon size={20} className="text-brand-600" />
             Team Target
           </h1>
@@ -494,8 +494,8 @@ export default function TeamTarget({ currentUser }) {
               <button
                 type="button"
                 onClick={() => setView("me")}
-                className={`rounded-lg px-4 py-2 text-xs font-bold ${
-                  view === "me" ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
+                className={`rounded-lg px-4 py-2 text-[13px] font-semibold ${
+                  view === "me" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
                 }`}
               >
                 My Page
@@ -503,8 +503,8 @@ export default function TeamTarget({ currentUser }) {
               <button
                 type="button"
                 onClick={() => setView("team")}
-                className={`rounded-lg px-4 py-2 text-xs font-bold ${
-                  view === "team" ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
+                className={`rounded-lg px-4 py-2 text-[13px] font-semibold ${
+                  view === "team" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
                 }`}
               >
                 Team View
@@ -512,7 +512,7 @@ export default function TeamTarget({ currentUser }) {
             </div>
           )}
           <div className="flex h-10 items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <span className="border-r border-slate-100 px-3 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+            <span className="border-r border-slate-100 px-3 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
               Year
             </span>
             <select
@@ -559,21 +559,21 @@ export default function TeamTarget({ currentUser }) {
             <button
               type="button"
               onClick={() => setDrill(null)}
-              className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-700"
+              className="inline-flex items-center gap-1 text-[13px] font-semibold text-brand-600 hover:text-brand-700"
             >
               <ChevronLeft size={14} /> Back to team
             </button>
             <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-xs font-black text-white">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-[13px] font-semibold text-white">
                 {initialsOf(drill.owner?.name)}
               </span>
               <div>
-                <div className="text-sm font-black text-slate-900">{drill.owner?.name}</div>
-                <div className="text-[11px] text-slate-500">{drill.owner?.jobTitle || drill.owner?.email}</div>
+                <div className="text-sm font-bold text-slate-900">{drill.owner?.name}</div>
+                <div className="text-[13px] text-slate-500">{drill.owner?.jobTitle || drill.owner?.email}</div>
               </div>
             </div>
             {AnalysisCard(drill.months, drill.owner?.name)}
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-[12px] font-semibold text-amber-700">
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-[12px] font-semibold text-indigo-700">
               Type each <b>Week Target</b> (numbers only). Monthly Target = sum of week targets. Achieved is entered by the employee.
             </div>
             {TargetTable(drill.months, "target", drill.owner?.id)}
@@ -585,11 +585,11 @@ export default function TeamTarget({ currentUser }) {
         ) : (
           <>
             <div className="flex items-center justify-between">
-              <div className="text-[12px] font-semibold text-slate-500">Company-wide performance overview</div>
+              <div className="text-[13px] font-medium text-slate-500">Company-wide performance overview</div>
               <button
                 type="button"
                 onClick={() => setShowAll(true)}
-                className="inline-flex h-9 items-center gap-2 rounded-xl bg-slate-900 px-4 text-xs font-bold text-white hover:bg-slate-800"
+                className="inline-flex h-9 items-center gap-2 rounded-xl bg-slate-900 px-4 text-[13px] font-semibold text-white hover:bg-slate-800"
               >
                 View all
                 <ChevronRight size={14} />
@@ -597,16 +597,16 @@ export default function TeamTarget({ currentUser }) {
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-900 p-5 text-white shadow-[0_8px_24px_rgba(79,70,229,.18)]">
-                <div className="text-[10px] font-bold uppercase tracking-wide text-brand-200">Team average · {year}</div>
-                <div className="mt-1 text-[30px] font-black">{teamAverage}%</div>
+                <div className="text-[13px] font-semibold uppercase tracking-wide text-brand-200">Team average · {year}</div>
+                <div className="mt-1 text-[30px] font-bold">{teamAverage}%</div>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Members</div>
-                <div className="mt-1 text-[30px] font-black text-slate-900">{roster.length}</div>
+                <div className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">Members</div>
+                <div className="mt-1 text-[30px] font-bold text-slate-900">{roster.length}</div>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Top performer</div>
-                <div className="mt-1 text-sm font-black text-emerald-600">
+                <div className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">Top performer</div>
+                <div className="mt-1 text-sm font-bold text-emerald-600">
                   {roster.length
                     ? `${[...roster].sort((a,b)=>b.yearAveragePercent-a.yearAveragePercent)[0].name} — ${[...roster].sort((a,b)=>b.yearAveragePercent-a.yearAveragePercent)[0].yearAveragePercent}%`
                     : "—"}
@@ -639,7 +639,7 @@ export default function TeamTarget({ currentUser }) {
                 <button
                   type="button"
                   onClick={() => setDeptOpen((o) => !o)}
-                  className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-bold ${
+                  className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-[13px] font-semibold ${
                     deptFilter.length ? "border-brand-300 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -657,7 +657,7 @@ export default function TeamTarget({ currentUser }) {
                     />
                     <div className="absolute right-0 top-11 z-[20] max-h-64 w-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
                       {departments.length === 0 ? (
-                        <div className="px-3 py-4 text-center text-[11px] text-slate-400">
+                        <div className="px-3 py-4 text-center text-[13px] text-slate-400">
                           No departments set on employees.
                         </div>
                       ) : (
@@ -675,7 +675,7 @@ export default function TeamTarget({ currentUser }) {
                               >
                                 {d}
                                 <span className={`flex h-4 w-4 items-center justify-center rounded border ${on ? "border-brand-600 bg-brand-600 text-white" : "border-slate-300"}`}>
-                                  {on && <span className="text-[9px] font-black">✓</span>}
+                                  {on && <span className="text-[13px] font-bold">✓</span>}
                                 </span>
                               </button>
                             );
@@ -684,7 +684,7 @@ export default function TeamTarget({ currentUser }) {
                             <button
                               type="button"
                               onClick={() => setDeptFilter([])}
-                              className="mt-1 w-full rounded-lg px-3 py-2 text-left text-[11px] font-bold text-rose-600 hover:bg-rose-50"
+                              className="mt-1 w-full rounded-lg px-3 py-2 text-left text-[13px] font-bold text-rose-600 hover:bg-rose-50"
                             >
                               Clear filter
                             </button>
@@ -700,7 +700,7 @@ export default function TeamTarget({ currentUser }) {
                 <button
                   type="button"
                   onClick={() => setRoleOpen((o) => !o)}
-                  className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-bold ${
+                  className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-[13px] font-semibold ${
                     roleFilter.length ? "border-brand-300 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -712,7 +712,7 @@ export default function TeamTarget({ currentUser }) {
                     <button type="button" aria-label="Close" onClick={() => setRoleOpen(false)} className="fixed inset-0 z-[10] cursor-default" />
                     <div className="absolute right-0 top-11 z-[20] w-48 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
                       {roles.length === 0 ? (
-                        <div className="px-3 py-4 text-center text-[11px] text-slate-400">No roles found.</div>
+                        <div className="px-3 py-4 text-center text-[13px] text-slate-400">No roles found.</div>
                       ) : (
                         <>
                           {roles.map((x) => {
@@ -722,13 +722,13 @@ export default function TeamTarget({ currentUser }) {
                                 className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[12px] font-semibold ${on ? "bg-brand-50 text-brand-700" : "text-slate-700 hover:bg-slate-50"}`}>
                                 {ROLE_LABELS[x] || x}
                                 <span className={`flex h-4 w-4 items-center justify-center rounded border ${on ? "border-brand-600 bg-brand-600 text-white" : "border-slate-300"}`}>
-                                  {on && <span className="text-[9px] font-black">✓</span>}
+                                  {on && <span className="text-[13px] font-bold">✓</span>}
                                 </span>
                               </button>
                             );
                           })}
                           {roleFilter.length > 0 && (
-                            <button type="button" onClick={() => setRoleFilter([])} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-[11px] font-bold text-rose-600 hover:bg-rose-50">Clear filter</button>
+                            <button type="button" onClick={() => setRoleFilter([])} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-[13px] font-bold text-rose-600 hover:bg-rose-50">Clear filter</button>
                           )}
                         </>
                       )}
@@ -737,7 +737,7 @@ export default function TeamTarget({ currentUser }) {
                 )}
               </div>
 
-              <span className="ml-auto text-[11px] font-semibold text-slate-400">
+              <span className="ml-auto text-[13px] font-semibold text-slate-400">
                 {filteredRoster.length} of {roster.length}
               </span>
             </div>
@@ -750,12 +750,12 @@ export default function TeamTarget({ currentUser }) {
                   onClick={() => loadDrill(r.id)}
                   className="flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-left transition-colors hover:bg-slate-50"
                 >
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-xs font-black text-white">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-[13px] font-semibold text-white">
                     {initialsOf(r.name)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-black text-slate-900">{r.name}</div>
-                    <div className="text-[11px] text-slate-500">{r.jobTitle || r.email}</div>
+                    <div className="text-sm font-bold text-slate-900">{r.name}</div>
+                    <div className="text-[13px] text-slate-500">{r.jobTitle || r.email}</div>
                   </div>
                   <div className="hidden w-40 sm:block">
                     <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
@@ -765,7 +765,7 @@ export default function TeamTarget({ currentUser }) {
                       />
                     </div>
                   </div>
-                  <span className="w-14 text-right text-sm font-black text-brand-600">
+                  <span className="w-14 text-right text-sm font-bold text-brand-600">
                     {r.yearAveragePercent}%
                   </span>
                   <ChevronRight size={16} className="text-slate-300" />

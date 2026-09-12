@@ -508,11 +508,11 @@ export default function ChatPanel({ currentUser }) {
         {/* LEFT NAV + CHAT LIST */}
         <div className={`w-full flex-shrink-0 border-r border-slate-200 bg-white lg:flex lg:w-[350px] lg:flex-col ${activeId ? "hidden" : "flex flex-col"}`}>
           <div className="flex h-[66px] items-center justify-between border-b border-neutral-200 px-4">
-            <div className="text-[15px] font-bold text-neutral-950">Chats</div>
+            <div className="text-[20px] font-bold tracking-[-0.02em] text-neutral-950">Chats</div>
             <button
               type="button"
               onClick={openNewChat}
-              className="inline-flex h-9 items-center gap-2 rounded-[9px] border border-neutral-300 bg-white px-3.5 text-[12px] font-semibold text-neutral-800 shadow-sm hover:bg-neutral-50"
+              className="inline-flex h-9 items-center gap-2 rounded-[9px] border border-neutral-300 bg-white px-3.5 text-[14px] font-semibold text-neutral-800 shadow-sm hover:bg-neutral-50"
             >
               <Plus size={14} />
               New
@@ -526,7 +526,7 @@ export default function ChatPanel({ currentUser }) {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search chats, people and messages..."
-                className="h-10 w-full rounded-[9px] border border-neutral-400 bg-white pl-9 pr-3 text-[12px] font-medium text-neutral-800 outline-none placeholder:text-neutral-500 focus:border-neutral-700"
+                className="h-10 w-full rounded-[9px] border border-neutral-400 bg-white pl-9 pr-3 text-[15px] font-medium text-neutral-800 outline-none placeholder:text-neutral-500 focus:border-neutral-700"
               />
             </div>
           </div>
@@ -555,19 +555,19 @@ export default function ChatPanel({ currentUser }) {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <div className="truncate text-[13px] font-bold tracking-[-0.01em] text-slate-900">{c.title}</div>
+                        <div className="truncate text-[17px] font-bold tracking-[-0.015em] text-slate-900">{c.title}</div>
                         {c.isMuted && <BellOff size={11} className="flex-shrink-0 text-slate-400" />}
                       </div>
-                      <div className="mt-0.5 truncate text-[11px] text-slate-500">
+                      <div className="mt-1 truncate text-[15px] leading-6 font-medium text-slate-500">
                         {c.lastMessage ? c.lastMessage.body : c.isGroup ? `${c.members.length} members` : "No messages yet"}
                       </div>
                     </div>
                     <div className="flex flex-shrink-0 flex-col items-end gap-1">
-                      {c.lastMessage && <span className="text-[9px] font-semibold text-slate-400">{formatTime(c.lastMessage.createdAt)}</span>}
+                      {c.lastMessage && <span className="text-[14px] font-semibold text-slate-400">{formatTime(c.lastMessage.createdAt)}</span>}
                       <div className="flex items-center gap-1.5">
                         {c.isFavorite && <Star size={12} className="fill-amber-400 text-amber-400" />}
                         {(c.unreadCount || 0) > 0 && !c.isMuted && (
-                          <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-indigo-600 px-1 text-[9px] font-bold text-white">
+                          <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-indigo-600 px-1 text-[13px] font-bold text-white">
                             {c.unreadCount > 9 ? "9+" : c.unreadCount}
                           </span>
                         )}
@@ -592,15 +592,15 @@ export default function ChatPanel({ currentUser }) {
                   {activeConversation.isGroup ? <Users size={16} /> : initialsOf(activeConversation.title)}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[14px] font-bold tracking-[-0.01em] text-slate-900">{activeConversation.title}</div>
-                  <div className="truncate text-[10px] text-slate-500">
+                  <div className="truncate text-[18px] font-bold tracking-[-0.015em] text-slate-900">{activeConversation.title}</div>
+                  <div className="truncate text-[14px] text-slate-500">
                     {activeConversation.isGroup ? `${activeConversation.members.length} members` : activeConversation.otherMembers[0]?.email || "Team member"}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={startMeeting}
-                  className="inline-flex h-9 items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-3 text-[11px] font-bold text-indigo-700 transition hover:bg-indigo-100"
+                  className="inline-flex h-9 items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-3 text-[13px] font-bold text-indigo-700 transition hover:bg-indigo-100"
                   title="Start meeting"
                 >
                   <Video size={14} />
@@ -610,7 +610,7 @@ export default function ChatPanel({ currentUser }) {
 
               {pinnedMessages.length > 0 && (
                 <div className="border-b border-amber-200 bg-amber-50/80 px-4 py-2">
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-amber-700">
+                  <div className="flex items-center gap-2 text-[12px] font-bold text-amber-700">
                     <Pin size={11} /> {pinnedMessages.length} pinned message{pinnedMessages.length > 1 ? "s" : ""}
                     <span className="min-w-0 flex-1 truncate font-medium text-amber-900">{pinnedMessages[0]?.body}</span>
                   </div>
@@ -623,7 +623,7 @@ export default function ChatPanel({ currentUser }) {
                 ) : messages.length === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-slate-400">
                     <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm"><MessageSquare size={21} strokeWidth={1.6} /></span>
-                    <div><div className="text-sm font-bold text-slate-600">Start the conversation</div><div className="mt-1 text-[11px]">Send a message or start a meeting.</div></div>
+                    <div><div className="text-sm font-bold text-slate-600">Start the conversation</div><div className="mt-1 text-[13px]">Send a message or start a meeting.</div></div>
                   </div>
                 ) : (
                   <div className="space-y-1.5">
@@ -631,7 +631,7 @@ export default function ChatPanel({ currentUser }) {
                       if (item.type === "day") {
                         return (
                           <div key={item.key} className="my-4 flex items-center justify-center">
-                            <span className="rounded-full bg-slate-100 px-3 py-1 text-[9px] font-bold text-slate-500">{item.day}</span>
+                            <span className="rounded-full bg-slate-100 px-3 py-1 text-[13px] font-bold text-slate-500">{item.day}</span>
                           </div>
                         );
                       }
@@ -641,19 +641,19 @@ export default function ChatPanel({ currentUser }) {
                       return (
                         <div key={item.key} className={`group flex items-end gap-2 ${mine ? "justify-end" : "justify-start"}`}>
                           {!mine && (
-                            <span className={`mb-7 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[9px] font-bold text-white ${avatarGradient(m.sender?.name)}`}>{initialsOf(m.sender?.name)}</span>
+                            <span className={`mb-7 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[13px] font-bold text-white ${avatarGradient(m.sender?.name)}`}>{initialsOf(m.sender?.name)}</span>
                           )}
 
                           <div className={`flex max-w-[76%] flex-col sm:max-w-[70%] ${mine ? "items-end" : "items-start"}`}>
-                            <div className={`cb-bubble relative px-4 py-2.5 text-[12px] leading-relaxed ${mine ? "rounded-[16px] rounded-br-[5px] bg-indigo-50 text-neutral-900" : "rounded-[16px] rounded-bl-[5px] bg-neutral-100 text-neutral-900"} ${m.pinned ? "ring-1 ring-amber-300" : ""}`}>
-                              {!mine && activeConversation.isGroup && <div className="mb-0.5 text-[9px] font-bold text-indigo-600">{m.sender?.name}</div>}
+                            <div className={`cb-bubble relative px-4 py-2.5 text-[15px] leading-6 ${mine ? "rounded-[16px] rounded-br-[5px] bg-indigo-50 text-neutral-900" : "rounded-[16px] rounded-bl-[5px] bg-neutral-100 text-neutral-900"} ${m.pinned ? "ring-1 ring-amber-300" : ""}`}>
+                              {!mine && activeConversation.isGroup && <div className="mb-1 text-[14px] font-bold text-indigo-600">{m.sender?.name}</div>}
 
                               {m.replyTo && (
                                 <div className="mb-2 rounded-lg border-l-[3px] border-indigo-400 bg-white/70 px-2.5 py-2">
-                                  <div className="text-[9px] font-bold text-indigo-700">
+                                  <div className="text-[13px] font-bold text-indigo-700">
                                     {m.replyTo.sender?.name || "Message"}
                                   </div>
-                                  <div className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-slate-500">
+                                  <div className="mt-0.5 line-clamp-2 text-[12px] leading-4 text-slate-500">
                                     {m.replyTo.body}
                                   </div>
                                 </div>
@@ -664,11 +664,11 @@ export default function ChatPanel({ currentUser }) {
                                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-indigo-600">
                                     <Video size={13} />
                                   </span>
-                                  <span className="font-semibold">Meeting started</span>
+                                  <span className="text-[15px] font-semibold">Meeting started</span>
                                   <button
                                     type="button"
                                     onClick={() => joinMeeting(room)}
-                                    className="rounded-lg bg-indigo-600 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-indigo-700"
+                                    className="rounded-lg bg-indigo-600 px-3 py-1.5 text-[13px] font-bold text-white hover:bg-indigo-700"
                                   >
                                     Join
                                   </button>
@@ -677,7 +677,7 @@ export default function ChatPanel({ currentUser }) {
                                 <div className="whitespace-pre-wrap break-words">{m.body}</div>
                               )}
 
-                              <div className="mt-1 text-right text-[8px] text-neutral-400">
+                              <div className="mt-1.5 text-right text-[11px] text-neutral-400">
                                 {formatTime(m.createdAt)}
                               </div>
                             </div>
@@ -741,10 +741,10 @@ export default function ChatPanel({ currentUser }) {
                   <div className="mb-2 flex items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2">
                     <Reply size={13} className="mt-0.5 flex-shrink-0 text-indigo-600" />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[10px] font-bold text-indigo-700">
+                      <div className="text-[12px] font-bold text-indigo-700">
                         Replying to {replyTo.sender?.name || "message"}
                       </div>
-                      <div className="mt-0.5 truncate text-[10px] text-slate-500">{replyTo.body}</div>
+                      <div className="mt-0.5 truncate text-[12px] text-slate-500">{replyTo.body}</div>
                     </div>
                     <button
                       type="button"
@@ -785,7 +785,7 @@ export default function ChatPanel({ currentUser }) {
                     onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                     rows={1}
                     placeholder="Type a message..."
-                    className="max-h-28 min-h-[36px] flex-1 resize-none bg-transparent px-2 py-2 text-[12px] font-medium text-slate-800 outline-none placeholder:text-slate-400"
+                    className="max-h-28 min-h-[36px] flex-1 resize-none bg-transparent px-2 py-2 text-[15px] font-medium text-slate-800 outline-none placeholder:text-slate-400"
                   />
                   <button type="button" onClick={sendMessage} disabled={sending || !draft.trim()} className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 disabled:opacity-40" aria-label="Send">
                     {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
@@ -796,7 +796,7 @@ export default function ChatPanel({ currentUser }) {
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 bg-[radial-gradient(circle_at_center,_rgba(99,102,241,0.055),_transparent_30%)] text-slate-400">
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm"><MessageSquare size={25} strokeWidth={1.5} /></span>
-              <div className="text-center"><div className="text-sm font-bold text-slate-600">Select a conversation</div><div className="mt-1 text-[11px]">Choose a chat from the left to start messaging.</div></div>
+              <div className="text-center"><div className="text-sm font-bold text-slate-600">Select a conversation</div><div className="mt-1 text-[13px]">Choose a chat from the left to start messaging.</div></div>
             </div>
           )}
         </div>
@@ -824,15 +824,15 @@ export default function ChatPanel({ currentUser }) {
                 const selected = selectedIds.includes(u.id);
                 return (
                   <button key={u.id} type="button" onClick={() => toggleUser(u.id)} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${selected ? "bg-indigo-50" : "hover:bg-slate-50"}`}>
-                    <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[10px] font-black text-white ${avatarGradient(u.name)}`}>{initialsOf(u.name)}</span>
-                    <div className="min-w-0 flex-1"><div className="truncate text-[13px] font-bold text-slate-900">{u.name}</div><div className="truncate text-[11px] text-slate-500">{u.email}</div></div>
+                    <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-[12px] font-black text-white ${avatarGradient(u.name)}`}>{initialsOf(u.name)}</span>
+                    <div className="min-w-0 flex-1"><div className="truncate text-[13px] font-bold text-slate-900">{u.name}</div><div className="truncate text-[13px] text-slate-500">{u.email}</div></div>
                     <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border ${selected ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-300"}`}>{selected && <Check size={12} />}</span>
                   </button>
                 );
               })}
             </div>
             <div className="flex items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/70 px-5 py-3.5">
-              <span className="text-[11px] font-semibold text-slate-500">{selectedIds.length === 0 ? "Select people" : selectedIds.length === 1 ? "1-to-1 chat" : `Group of ${selectedIds.length}`}</span>
+              <span className="text-[13px] font-semibold text-slate-500">{selectedIds.length === 0 ? "Select people" : selectedIds.length === 1 ? "1-to-1 chat" : `Group of ${selectedIds.length}`}</span>
               <button type="button" onClick={createConversation} disabled={selectedIds.length === 0 || creating} className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-50">{creating && <Loader2 size={14} className="animate-spin" />} Start chat</button>
             </div>
           </div>

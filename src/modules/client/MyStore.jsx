@@ -230,11 +230,11 @@ export default function MyStore() {
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wide text-brand-500">
+              <span className="text-[12px] font-black uppercase tracking-wide text-brand-500">
                 Today's spotlight
               </span>
               {spotlight.live && (
-                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-600">
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[13px] font-bold text-emerald-600">
                   Live today
                 </span>
               )}
@@ -275,7 +275,7 @@ export default function MyStore() {
       <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-fuchsia-600 to-orange-500 p-7 text-white shadow-brand-lg">
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div className="max-w-lg">
-            <div className="inline-flex rounded-full bg-white/20 px-3 py-1 text-[11px] font-black">
+            <div className="inline-flex rounded-full bg-white/20 px-3 py-1 text-[13px] font-black">
               {spotEmoji} {spotLabel}
             </div>
             <div className="mt-3 text-[32px] font-extrabold leading-tight">
@@ -358,7 +358,7 @@ export default function MyStore() {
         />
       </div>
 
-      <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-400">
+      <p className="flex items-center justify-center gap-1.5 text-center text-[13px] text-slate-400">
         <ImageIcon size={12} /> Templates are free to use. Live image generation activates once
         set up.
       </p>

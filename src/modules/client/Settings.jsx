@@ -1855,7 +1855,7 @@ export default function SettingsView({
 
         <div className="flex items-center gap-5 text-[13px] text-slate-500">
           <div>
-            <div className="text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-400">
+            <div className="text-[13px] uppercase tracking-[0.08em] font-semibold text-slate-400">
               Business
             </div>
 
@@ -1869,7 +1869,7 @@ export default function SettingsView({
           </div>
 
           <div>
-            <div className="text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-400">
+            <div className="text-[13px] uppercase tracking-[0.08em] font-semibold text-slate-400">
               City
             </div>
 
@@ -1892,7 +1892,7 @@ export default function SettingsView({
 
         <aside className="bg-white border border-slate-200 rounded-xl p-2 shadow-[0_1px_2px_rgba(15,23,42,0.03)] h-fit">
           <div className="px-3 pt-2 pb-3">
-            <div className="text-[11px] uppercase tracking-[0.12em] font-semibold text-slate-400">
+            <div className="text-[13px] uppercase tracking-[0.12em] font-semibold text-slate-400">
               Configuration
             </div>
           </div>
@@ -1922,8 +1922,8 @@ export default function SettingsView({
                     }
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] transition-colors ${
                       active
-                        ? "bg-slate-950 text-white font-semibold"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                        ? "bg-indigo-600 text-white font-semibold shadow-sm"
+                        : "text-slate-600 hover:text-indigo-700 hover:bg-indigo-50"
                     }`}
                   >
                     <Icon
@@ -1932,7 +1932,7 @@ export default function SettingsView({
                       }
                       className={
                         active
-                          ? "text-indigo-300"
+                          ? "text-white"
                           : "text-slate-400"
                       }
                     />
@@ -2112,8 +2112,8 @@ export default function SettingsView({
                           }
                           className={`relative w-10 h-10 rounded-xl ${color.className} ring-offset-2 transition-all ${
                             selected
-                              ? "ring-2 ring-slate-900"
-                              : "ring-2 ring-transparent hover:ring-slate-300"
+                              ? "ring-2 ring-indigo-600"
+                              : "ring-2 ring-transparent hover:ring-indigo-200"
                           }`}
                         >
                           {selected && (
@@ -2189,7 +2189,7 @@ export default function SettingsView({
                   </div>
 
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-[11px] text-slate-400">
+                    <div className="text-[13px] text-slate-400">
                       PNG, JPG, WEBP or SVG. Maximum 500 KB for local storage.
                     </div>
 
@@ -2248,10 +2248,10 @@ export default function SettingsView({
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-                  <div className="flex items-center justify-between"><div><div className="text-[13px] font-bold text-slate-900">Departments</div><div className="mt-0.5 text-[11px] text-slate-500">Default Admin and Sales, plus your custom departments.</div></div></div>
+                  <div className="flex items-center justify-between"><div><div className="text-[13px] font-bold text-slate-900">Departments</div><div className="mt-0.5 text-[13px] text-slate-500">Default Admin and Sales, plus your custom departments.</div></div></div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {organization.departments.map((department) => (
-                      <span key={department.id} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700">
+                      <span key={department.id} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[13px] font-semibold text-slate-700">
                         {department.name} <span className="text-slate-400">{department.code}</span>
                         {!department.system && currentUser?.role === "CLIENT_ADMIN" && <button type="button" onClick={() => deleteOrganizationItem("department", department.id)} className="ml-1 text-slate-400 hover:text-rose-600"><X size={11}/></button>}
                       </span>
@@ -2260,14 +2260,14 @@ export default function SettingsView({
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
                   <div className="text-[13px] font-bold text-slate-900">Custom Roles</div>
-                  <div className="mt-0.5 text-[11px] text-slate-500">Create reusable role permission templates.</div>
+                  <div className="mt-0.5 text-[13px] text-slate-500">Create reusable role permission templates.</div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {organization.roles.length ? organization.roles.map((role) => (
-                      <span key={role.id} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700">
+                      <span key={role.id} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[13px] font-semibold text-slate-700">
                         {role.name} <span className="text-slate-400">{role.code}</span>
                         {currentUser?.role === "CLIENT_ADMIN" && <button type="button" onClick={() => deleteOrganizationItem("role", role.id)} className="ml-1 text-slate-400 hover:text-rose-600"><X size={11}/></button>}
                       </span>
-                    )) : <span className="text-[11px] text-slate-400">No custom roles yet.</span>}
+                    )) : <span className="text-[13px] text-slate-400">No custom roles yet.</span>}
                   </div>
                 </div>
               </div>
@@ -2355,14 +2355,14 @@ export default function SettingsView({
                                 </div>
 
                                 {user.jobTitle && (
-                                  <div className="text-[11px] text-slate-400 mt-1">
+                                  <div className="text-[13px] text-slate-400 mt-1">
                                     {user.jobTitle}
                                   </div>
                                 )}
                               </td>
 
                               <td className="px-4 py-3">
-                                <span className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[11px] font-semibold">
+                                <span className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[13px] font-semibold">
                                   {(user.customRoleName || user.role).replaceAll(
                                     "_",
                                     " "
@@ -2383,7 +2383,7 @@ export default function SettingsView({
                                       user
                                     )
                                   }
-                                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-[13px] font-semibold ${
                                     user.active
                                       ? "bg-emerald-50 text-emerald-700"
                                       : "bg-slate-100 text-slate-600"
@@ -2552,7 +2552,7 @@ export default function SettingsView({
                                 </div>
 
                                 {source.system && (
-                                  <span className="inline-flex mt-1.5 rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                                  <span className="inline-flex mt-1.5 rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-[12px] font-semibold uppercase tracking-wide">
                                     Default
                                   </span>
                                 )}
@@ -2759,11 +2759,11 @@ export default function SettingsView({
                                 </div>
 
                                 <div className="mt-1 flex items-center gap-2">
-                                  <code className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5">
+                                  <code className="text-[13px] text-slate-500 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5">
                                     {field.key}
                                   </code>
 
-                                  <span className="text-[11px] text-slate-400">
+                                  <span className="text-[13px] text-slate-400">
                                     Order {field.sortOrder}
                                   </span>
                                 </div>
@@ -2776,7 +2776,7 @@ export default function SettingsView({
                               </td>
 
                               <td className="px-4 py-3">
-                                <span className="inline-flex rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[11px] font-semibold">
+                                <span className="inline-flex rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[13px] font-semibold">
                                   {field.fieldType.replaceAll(
                                     "_",
                                     " "
@@ -3034,7 +3034,7 @@ export default function SettingsView({
                                     {item.description}
                                   </div>
 
-                                  <div className="text-[11px] text-slate-400 mt-1.5">
+                                  <div className="text-[13px] text-slate-400 mt-1.5">
                                     {item.defaultText}
                                   </div>
                                 </div>
@@ -3323,7 +3323,7 @@ export default function SettingsView({
                                     "System"}
                                 </div>
 
-                                <div className="text-[11px] text-slate-400 mt-0.5">
+                                <div className="text-[13px] text-slate-400 mt-0.5">
                                   {log.actorEmail ||
                                     log.actorRole ||
                                     "—"}
@@ -3331,13 +3331,13 @@ export default function SettingsView({
                               </td>
 
                               <td className="px-4 py-3">
-                                <span className="inline-flex rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[11px] font-semibold">
+                                <span className="inline-flex rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[13px] font-semibold">
                                   {auditActionLabel(
                                     log.action
                                   )}
                                 </span>
 
-                                <div className="text-[11px] text-slate-400 mt-1">
+                                <div className="text-[13px] text-slate-400 mt-1">
                                   {log.entityType}
                                 </div>
                               </td>
@@ -3348,7 +3348,7 @@ export default function SettingsView({
                                 </div>
 
                                 {log.ipAddress && (
-                                  <div className="text-[11px] text-slate-400 mt-1.5">
+                                  <div className="text-[13px] text-slate-400 mt-1.5">
                                     IP: {log.ipAddress}
                                   </div>
                                 )}
@@ -4232,7 +4232,7 @@ export default function SettingsView({
                     className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-[15px] resize-none focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
                   />
 
-                  <div className="text-[11px] text-slate-400 mt-1">
+                  <div className="text-[13px] text-slate-400 mt-1">
                     Enter one option per line.
                   </div>
                 </div>

@@ -340,7 +340,7 @@ function Stat({
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-      <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">
+      <div className="text-[13px] font-bold uppercase tracking-[0.08em] text-slate-400">
         {label}
       </div>
 
@@ -348,7 +348,7 @@ function Stat({
         {value}
       </div>
 
-      <div className="mt-1 text-xs text-slate-500">
+      <div className="mt-1 text-[13px] leading-5 text-slate-500">
         {detail}
       </div>
     </div>
@@ -1297,7 +1297,7 @@ function AdmissionModal({
           ) : null}
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">
+            <div className="text-[13px] font-bold uppercase tracking-[0.1em] text-slate-400">
               Admission Path
             </div>
 
@@ -1677,12 +1677,12 @@ function ImportModal({
       >
         <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Admission Type</div>
+            <div className="text-[13px] font-semibold uppercase tracking-[0.12em] text-slate-500">Admission Type</div>
             <div className="mt-0.5 text-[13px] font-semibold text-slate-900">
               {market === "INTERNATIONAL" ? "International" : "Domestic"}
             </div>
           </div>
-          <div className="text-[11px] text-slate-500">Selected from Admissions sidebar</div>
+          <div className="text-[13px] text-slate-500">Selected from Admissions sidebar</div>
         </div>
 
         {error ? (
@@ -2974,7 +2974,7 @@ function AdmissionsManager({
                   extra={
                     <div className="grid grid-cols-2 gap-2">
                       <div className="rounded-xl bg-white/12 px-3 py-2.5">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
+                        <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-white/70">
                           Colleges
                         </div>
                         <div className="mt-1 text-xl font-bold">
@@ -2983,7 +2983,7 @@ function AdmissionsManager({
                       </div>
 
                       <div className="rounded-xl bg-white/12 px-3 py-2.5">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
+                        <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-white/70">
                           Branches
                         </div>
                         <div className="mt-1 text-xl font-bold">
@@ -3121,7 +3121,7 @@ function AdmissionsManager({
               extra={
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-xl bg-white/12 px-3 py-2.5">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
+                    <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-white/70">
                       Branches
                     </div>
                     <div className="mt-1 text-xl font-bold">
@@ -3130,7 +3130,7 @@ function AdmissionsManager({
                   </div>
 
                   <div className="rounded-xl bg-white/12 px-3 py-2.5">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
+                    <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-white/70">
                       Received
                     </div>
                     <div className="mt-1 text-[15px] font-bold">
@@ -3290,7 +3290,7 @@ function AdmissionsManager({
               extra={
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-xl bg-white/12 px-3 py-2.5">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
+                    <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-white/70">
                       Received
                     </div>
                     <div className="mt-1 text-[15px] font-bold">
@@ -3299,7 +3299,7 @@ function AdmissionsManager({
                   </div>
 
                   <div className="rounded-xl bg-white/12 px-3 py-2.5">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/65">
+                    <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-white/70">
                       Pending
                     </div>
                     <div className="mt-1 text-[15px] font-bold">
@@ -3711,20 +3711,44 @@ function AdmissionsOverall({ selectedYear = "all" }) {
         </div>
         <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
           {[['ALL','All'],['DOMESTIC','Domestic'],['INTERNATIONAL','International']].map(([value,label]) => (
-            <button key={value} type="button" onClick={() => setFilter(value)} className={`h-9 rounded-lg px-4 text-[13px] font-semibold transition ${filter === value ? 'bg-slate-950 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>{label}</button>
+            <button key={value} type="button" onClick={() => setFilter(value)} className={`h-9 rounded-lg px-4 text-[13px] font-semibold transition ${filter === value ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-700'}`}>{label}</button>
           ))}
         </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         {[
-          ["Overall Admissions", data.all.length],
-          ["Domestic Admissions", data.domestic.length],
-          ["International Admissions", data.international.length],
-        ].map(([label,value]) => (
-          <div key={label} className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
-            <div className="text-[13px] font-semibold text-slate-500">{label}</div>
-            <div className="mt-2 text-3xl font-bold tracking-tight text-slate-950">{value}</div>
+          {
+            label: "Overall Admissions",
+            value: data.all.length,
+            detail: "Across Domestic & International",
+          },
+          {
+            label: "Domestic Admissions",
+            value: data.domestic.length,
+            detail: "Completed Domestic admissions",
+          },
+          {
+            label: "International Admissions",
+            value: data.international.length,
+            detail: "Completed International admissions",
+          },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
+          >
+            <div className="text-[13px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+              {item.label}
+            </div>
+
+            <div className="mt-2 text-[22px] font-bold leading-none tracking-tight text-slate-950">
+              {item.value}
+            </div>
+
+            <div className="mt-3 border-t border-slate-100 pt-3 text-[13px] leading-5 text-slate-500">
+              {item.detail}
+            </div>
           </div>
         ))}
       </div>
@@ -3745,14 +3769,14 @@ function AdmissionsOverall({ selectedYear = "all" }) {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-left">
-              <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500">
+              <thead className="bg-slate-50 text-[13px] font-semibold uppercase tracking-[0.06em] text-slate-500">
                 <tr><th className="px-5 py-3">Student</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Stream</th><th className="px-5 py-3">College</th><th className="px-5 py-3">Branch</th><th className="px-5 py-3">Admission Date</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {rows.map((admission) => (
                   <tr key={admission.id} className="text-[13px] text-slate-700 hover:bg-slate-50/60">
                     <td className="px-5 py-3"><div className="font-semibold text-slate-900">{admission.name || '—'}</div><div className="mt-0.5 text-xs text-slate-500">{admission.phone || '—'}</div></td>
-                    <td className="px-5 py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">{admission.market === 'INTERNATIONAL' ? 'International' : 'Domestic'}</span></td>
+                    <td className="px-5 py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-[13px] font-semibold text-slate-700">{admission.market === 'INTERNATIONAL' ? 'International' : 'Domestic'}</span></td>
                     <td className="px-5 py-3">{admission.partner?.stream?.name || '—'}</td>
                     <td className="px-5 py-3">{admission.college || admission.partner?.name || '—'}</td>
                     <td className="px-5 py-3">{admission.branch?.name || admission.course || '—'}</td>

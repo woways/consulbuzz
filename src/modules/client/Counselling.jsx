@@ -103,7 +103,7 @@ function CounsellingMetric({
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+          <div className="text-[13px] font-semibold uppercase tracking-[0.09em] text-slate-400">
             {label}
           </div>
           <div className="mt-2 text-[22px] leading-none font-bold tracking-tight text-slate-950">
@@ -114,7 +114,7 @@ function CounsellingMetric({
           <Icon size={17} />
         </div>
       </div>
-      <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
+      <div className="mt-3 pt-3 border-t border-slate-100 text-[13px] leading-5 text-slate-500">
         {detail}
       </div>
     </div>
@@ -124,7 +124,7 @@ function CounsellingMetric({
 function Info({ label, value }) {
   return (
     <div>
-      <div className="text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-400">
+      <div className="text-[13px] uppercase tracking-[0.08em] font-semibold text-slate-400">
         {label}
       </div>
       <div className="text-[15px] font-semibold text-slate-800 mt-1">

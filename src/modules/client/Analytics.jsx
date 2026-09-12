@@ -80,7 +80,7 @@ function AnalyticsMetric({
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+          <div className="text-[13px] font-semibold uppercase tracking-[0.09em] text-slate-400">
             {label}
           </div>
 
@@ -103,7 +103,7 @@ function AnalyticsMetric({
         </div>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
+      <div className="mt-3 pt-3 border-t border-slate-100 text-[13px] leading-5 text-slate-500">
         {detail}
       </div>
     </div>
@@ -274,20 +274,20 @@ export default function Analytics({ selectedYear = "all" }) {
 
     return (
       <div className="bg-white border border-slate-200 rounded-xl p-4">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+        <div className="text-[13px] font-semibold uppercase tracking-[0.09em] text-slate-400">
           {label}
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
-            <div className="text-[11px] text-slate-400">{primaryYear}</div>
+            <div className="text-[13px] text-slate-400">{primaryYear}</div>
             <div className="mt-1 text-xl font-bold text-slate-950">
               {formatValue(current)}
             </div>
           </div>
 
           <div>
-            <div className="text-[11px] text-slate-400">{comparisonYear}</div>
+            <div className="text-[13px] text-slate-400">{comparisonYear}</div>
             <div className="mt-1 text-xl font-bold text-slate-600">
               {formatValue(previous)}
             </div>
@@ -392,8 +392,8 @@ export default function Analytics({ selectedYear = "all" }) {
           onClick={() => setAnalyticsTab("overview")}
           className={`h-8 px-4 rounded-lg text-[13px] font-semibold transition-colors ${
             analyticsTab === "overview"
-              ? "bg-slate-950 text-white"
-              : "text-slate-600 hover:bg-slate-50"
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
           }`}
         >
           Overview
@@ -404,8 +404,8 @@ export default function Analytics({ selectedYear = "all" }) {
           onClick={() => setAnalyticsTab("comparison")}
           className={`h-8 px-4 rounded-lg text-[13px] font-semibold transition-colors ${
             analyticsTab === "comparison"
-              ? "bg-slate-950 text-white"
-              : "text-slate-600 hover:bg-slate-50"
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
           }`}
         >
           Year Comparison
@@ -1255,19 +1255,19 @@ export default function Analytics({ selectedYear = "all" }) {
               <table className="w-full text-[15px]">
                 <thead className="bg-slate-50/80">
                   <tr>
-                    <th className="px-5 py-3 text-left text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-500">
+                    <th className="px-5 py-3 text-left text-[13px] uppercase tracking-[0.08em] font-semibold text-slate-500">
                       Campaign
                     </th>
 
-                    <th className="px-5 py-3 text-left text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-500">
+                    <th className="px-5 py-3 text-left text-[13px] uppercase tracking-[0.08em] font-semibold text-slate-500">
                       Leads
                     </th>
 
-                    <th className="px-5 py-3 text-left text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-500">
+                    <th className="px-5 py-3 text-left text-[13px] uppercase tracking-[0.08em] font-semibold text-slate-500">
                       Admissions
                     </th>
 
-                    <th className="px-5 py-3 text-left text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-500">
+                    <th className="px-5 py-3 text-left text-[13px] uppercase tracking-[0.08em] font-semibold text-slate-500">
                       Conversion
                     </th>
                   </tr>

@@ -327,7 +327,7 @@ function ExpenseModal({
       <div className="bg-white rounded-2xl shadow-2xl border border-white/70 w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-500">
+            <div className="text-[13px] font-bold uppercase tracking-[0.12em] text-indigo-500">
               Finance / Expense Claim
             </div>
 
@@ -583,7 +583,7 @@ function ExpenseModal({
                         {proofName || "Expense proof document"}
                       </div>
 
-                      <div className="mt-0.5 text-[11px] text-emerald-600 font-semibold">
+                      <div className="mt-0.5 text-[13px] text-emerald-600 font-semibold">
                         Upload complete
                       </div>
                     </div>
@@ -673,7 +673,7 @@ function ExpenseDetails({
       <div className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white shadow-2xl border-l border-slate-200 flex flex-col">
         <div className="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-4">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-400">
+            <div className="text-[13px] font-bold uppercase tracking-[0.1em] text-slate-400">
               Expense Details
             </div>
 
@@ -699,7 +699,7 @@ function ExpenseDetails({
 
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           <div className="rounded-2xl bg-slate-950 text-white p-5">
-            <div className="text-[11px] uppercase tracking-[0.1em] text-slate-400 font-semibold">
+            <div className="text-[13px] uppercase tracking-[0.1em] text-slate-400 font-semibold">
               Expense Amount
             </div>
 
@@ -714,7 +714,7 @@ function ExpenseDetails({
                 key={label}
                 className="rounded-xl border border-slate-200 bg-slate-50/60 p-3"
               >
-                <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                <div className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate-400">
                   {label}
                 </div>
 
@@ -1024,15 +1024,15 @@ function RevenueMetric({
     <div
       className={`border rounded-xl p-4 transition-all ${
         featured
-          ? "bg-slate-950 border-slate-950 shadow-[0_10px_30px_rgba(15,23,42,0.12)]"
+          ? "bg-indigo-600 border-indigo-600 shadow-[0_10px_30px_rgba(79,70,229,0.16)]"
           : "bg-white border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)]"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
           <div
-            className={`text-[11px] font-semibold uppercase tracking-[0.09em] ${
-              featured ? "text-slate-400" : "text-slate-400"
+            className={`text-[13px] font-semibold uppercase tracking-[0.09em] ${
+              featured ? "text-indigo-100" : "text-slate-400"
             }`}
           >
             {label}
@@ -1050,7 +1050,7 @@ function RevenueMetric({
         <div
           className={`w-9 h-9 rounded-lg border flex items-center justify-center ${
             featured
-              ? "bg-white/10 border-white/10 text-white"
+              ? "bg-white/15 border-white/20 text-white"
               : tones[tone] || tones.indigo
           }`}
         >
@@ -1059,9 +1059,9 @@ function RevenueMetric({
       </div>
 
       <div
-        className={`mt-3 pt-3 border-t text-xs ${
+        className={`mt-3 pt-3 border-t text-[13px] leading-5 ${
           featured
-            ? "border-white/10 text-slate-400"
+            ? "border-white/20 text-indigo-100"
             : "border-slate-100 text-slate-500"
         }`}
       >
@@ -1541,8 +1541,8 @@ export default function Revenue({ selectedYear = "all" }) {
                 onClick={() => setTab(item)}
                 className={`h-8 px-3 rounded-lg text-[13px] font-semibold transition-colors ${
                   tab === item
-                    ? "bg-slate-950 text-white shadow-sm"
-                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-600 hover:text-indigo-700 hover:bg-indigo-50"
                 }`}
               >
                 {label}
@@ -1821,28 +1821,28 @@ export default function Revenue({ selectedYear = "all" }) {
                   <table className="w-full text-[15px]">
                     <thead className="bg-slate-50/80">
                       <tr>
-                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Expense
                         </th>
-                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Category
                         </th>
-                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Vendor
                         </th>
-                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Amount
                         </th>
-                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Date
                         </th>
-                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Proof
                         </th>
-                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Status
                         </th>
-                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           Actions
                         </th>
                       </tr>
@@ -2029,22 +2029,22 @@ export default function Revenue({ selectedYear = "all" }) {
                 <table className="w-full text-[15px]">
                   <thead className="bg-slate-50/80">
                     <tr>
-                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Employee
                       </th>
-                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Title
                       </th>
-                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Amount
                       </th>
-                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Date
                       </th>
-                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="px-4 py-3 text-left text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Actions
                       </th>
                     </tr>

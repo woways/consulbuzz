@@ -229,7 +229,7 @@ function SupportMetric({
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+          <div className="text-[13px] font-semibold uppercase tracking-[0.09em] text-slate-400">
             {label}
           </div>
 
@@ -252,7 +252,7 @@ function SupportMetric({
         </div>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
+      <div className="mt-3 pt-3 border-t border-slate-100 text-[13px] leading-5 text-slate-500">
         {detail}
       </div>
     </div>
@@ -495,7 +495,7 @@ function NewTicketModal({
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-[11px] text-slate-400">
+              <p className="mt-1 text-[13px] text-slate-400">
                 Departments are managed by Client Admin in Settings → Users & Roles.
               </p>
             </div>
@@ -771,7 +771,7 @@ function TicketDetailsModal({
           </div>
 
           <div>
-            <div className="text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-400">
+            <div className="text-[13px] uppercase tracking-[0.08em] font-semibold text-slate-400">
               Description
             </div>
 
@@ -781,7 +781,7 @@ function TicketDetailsModal({
           </div>
 
           <div>
-            <div className="text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-400 inline-flex items-center gap-1.5">
+            <div className="text-[13px] uppercase tracking-[0.08em] font-semibold text-slate-400 inline-flex items-center gap-1.5">
               <MessageSquareText
                 size={12}
               />
@@ -810,7 +810,7 @@ function DetailItem({
 }) {
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-3">
-      <div className="text-[11px] uppercase tracking-[0.08em] font-semibold text-slate-400">
+      <div className="text-[13px] uppercase tracking-[0.08em] font-semibold text-slate-400">
         {label}
       </div>
 
@@ -1229,7 +1229,7 @@ export default function Help({
                 }`}
               >
                 {locked && (
-                  <div className="absolute right-4 top-4 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-1">
+                  <div className="absolute right-4 top-4 inline-flex items-center gap-1 text-[13px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-1">
                     <Lock
                       size={10}
                     />
@@ -1260,7 +1260,7 @@ export default function Help({
 
                 {type.advancedOnly &&
                   isAdvanced && (
-                    <div className="inline-flex items-center gap-1.5 mt-3 text-[11px] text-amber-700 font-semibold">
+                    <div className="inline-flex items-center gap-1.5 mt-3 text-[13px] text-amber-700 font-semibold">
                       <Crown
                         size={10}
                       />

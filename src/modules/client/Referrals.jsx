@@ -37,8 +37,8 @@ export default function Referrals({ currentUser }) {
       {/* Header + tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand-500">Rewards</div>
-          <h1 className="text-[24px] font-black tracking-[-0.02em] text-slate-900">Referrals</h1>
+          <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-600">Rewards</div>
+          <h1 className="text-[26px] font-bold tracking-[-0.02em] text-slate-900">Referrals</h1>
         </div>
         <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
           {TABS.map((t) => (
@@ -46,8 +46,10 @@ export default function Referrals({ currentUser }) {
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
-              className={`rounded-lg px-4 py-2 text-xs font-bold transition ${
-                tab === t.key ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
+              className={`rounded-lg px-4 py-2 text-[13px] font-semibold transition ${
+                tab === t.key
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
               }`}
             >
               {t.label}
@@ -69,7 +71,7 @@ export default function Referrals({ currentUser }) {
 
       {tab === "earnings" && (
         <div className="rounded-3xl border border-dashed border-slate-300 bg-white py-20 text-center shadow-sm">
-          <div className="text-[16px] font-black text-slate-700">Earnings coming soon</div>
+          <div className="text-[16px] font-semibold text-slate-700">Earnings coming soon</div>
           <p className="mx-auto mt-2 max-w-md text-[13px] text-slate-500">
             Reward tracking, redeemable balance, and withdrawals will appear here once the rewards
             system is enabled for your company.

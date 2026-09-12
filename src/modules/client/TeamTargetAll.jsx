@@ -141,9 +141,9 @@ export default function TeamTargetAll({ onBack }) {
   function pctPill(p) {
     const cls =
       p >= 100 ? "bg-emerald-50 text-emerald-600"
-      : p > 0 ? "bg-amber-50 text-amber-600"
+      : p > 0 ? "bg-indigo-50 text-indigo-600"
       : "bg-slate-100 text-slate-400";
-    return <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${cls}`}>{p}%</span>;
+    return <span className={`rounded-full px-2 py-0.5 text-[12px] font-bold ${cls}`}>{p}%</span>;
   }
 
   // A small dropdown component.
@@ -154,7 +154,7 @@ export default function TeamTargetAll({ onBack }) {
         <button
           type="button"
           onClick={() => setOpen(isOpen ? "" : id)}
-          className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-xs font-bold ${
+          className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-[13px] font-semibold ${
             selected.length ? "border-brand-300 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
           }`}
         >
@@ -166,7 +166,7 @@ export default function TeamTargetAll({ onBack }) {
             <button type="button" aria-label="Close" onClick={() => setOpen("")} className="fixed inset-0 z-[10] cursor-default" />
             <div className="absolute left-0 top-11 z-[20] max-h-64 w-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
               {items.length === 0 ? (
-                <div className="px-3 py-4 text-center text-[11px] text-slate-400">None.</div>
+                <div className="px-3 py-4 text-center text-[13px] text-slate-400">None.</div>
               ) : (
                 <>
                   {items.map((it) => {
@@ -177,13 +177,13 @@ export default function TeamTargetAll({ onBack }) {
                         className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[12px] font-semibold ${on ? "bg-brand-50 text-brand-700" : "text-slate-700 hover:bg-slate-50"}`}>
                         {render.label(it)}
                         <span className={`flex h-4 w-4 items-center justify-center rounded border ${on ? "border-brand-600 bg-brand-600 text-white" : "border-slate-300"}`}>
-                          {on && <span className="text-[9px] font-black">✓</span>}
+                          {on && <span className="text-[13px] font-bold">✓</span>}
                         </span>
                       </button>
                     );
                   })}
                   {selected.length > 0 && (
-                    <button type="button" onClick={onClear} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-[11px] font-bold text-rose-600 hover:bg-rose-50">Clear</button>
+                    <button type="button" onClick={onClear} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-[13px] font-bold text-rose-600 hover:bg-rose-50">Clear</button>
                   )}
                 </>
               )}
@@ -203,10 +203,10 @@ export default function TeamTargetAll({ onBack }) {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <button type="button" onClick={onBack} className="mb-1 inline-flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-700">
+          <button type="button" onClick={onBack} className="mb-1 inline-flex items-center gap-1 text-[13px] font-semibold text-brand-600 hover:text-brand-700">
             <ChevronLeft size={14} /> Back to Team View
           </button>
-          <h1 className="text-[22px] font-black tracking-[-0.03em] text-slate-900">All employees · full year</h1>
+          <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-slate-900">All employees · full year</h1>
         </div>
       </div>
 
@@ -242,7 +242,7 @@ export default function TeamTargetAll({ onBack }) {
           onToggle={(v) => toggle(setMonthFilter, monthFilter, v)} onClear={() => setMonthFilter([])}
           render={{ value: (m) => m, label: (m) => MONTH_NAMES[m-1] }} />
 
-        <span className="ml-auto text-[11px] font-semibold text-slate-400">{filtered.length} employees</span>
+        <span className="ml-auto text-[13px] font-semibold text-slate-400">{filtered.length} employees</span>
       </div>
 
       {error && (
@@ -259,19 +259,19 @@ export default function TeamTargetAll({ onBack }) {
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="border-collapse text-center text-[11px]" style={{ minWidth: "max-content" }}>
+            <table className="border-collapse text-center text-[13px]" style={{ minWidth: "max-content" }}>
               <thead>
                 <tr className="text-slate-500">
-                  <th className="sticky left-0 z-20 bg-slate-50 px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wide" style={{ width: NAME_W, minWidth: NAME_W }} rowSpan={2}>Employee</th>
-                  <th className="sticky z-20 bg-slate-50 px-3 py-3 text-left text-[10px] font-bold uppercase tracking-wide" style={{ left: NAME_W, width: MONTH_W, minWidth: MONTH_W }} rowSpan={2}>Month</th>
-                  <th className="bg-slate-50 px-2 py-3 text-[10px] font-bold uppercase tracking-wide" rowSpan={2}>Target</th>
+                  <th className="sticky left-0 z-20 bg-slate-50 px-3 py-3 text-left text-[13px] font-semibold uppercase tracking-wide" style={{ width: NAME_W, minWidth: NAME_W }} rowSpan={2}>Employee</th>
+                  <th className="sticky z-20 bg-slate-50 px-3 py-3 text-left text-[13px] font-semibold uppercase tracking-wide" style={{ left: NAME_W, width: MONTH_W, minWidth: MONTH_W }} rowSpan={2}>Month</th>
+                  <th className="bg-slate-50 px-2 py-3 text-[13px] font-semibold uppercase tracking-wide" rowSpan={2}>Target</th>
                   {weekIdx.map((w) => (
-                    <th key={`w${w}`} className="border-l border-slate-200 bg-slate-50 px-2 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-600" colSpan={3}>Week {w}</th>
+                    <th key={`w${w}`} className="border-l border-slate-200 bg-slate-50 px-2 py-2 text-[13px] font-semibold uppercase tracking-wide text-slate-600" colSpan={3}>Week {w}</th>
                   ))}
-                  <th className="border-l border-slate-200 bg-slate-50 px-2 py-3 text-[10px] font-bold uppercase tracking-wide" rowSpan={2}>Overall<br/>Achieved</th>
-                  <th className="border-l border-slate-200 bg-brand-50/70 px-2 py-3 text-[10px] font-bold uppercase tracking-wide text-brand-600" rowSpan={2}>Overall<br/>%</th>
+                  <th className="border-l border-slate-200 bg-slate-50 px-2 py-3 text-[13px] font-semibold uppercase tracking-wide" rowSpan={2}>Overall<br/>Achieved</th>
+                  <th className="border-l border-slate-200 bg-brand-50/70 px-2 py-3 text-[13px] font-semibold uppercase tracking-wide text-brand-600" rowSpan={2}>Overall<br/>%</th>
                 </tr>
-                <tr className="text-[9px] uppercase tracking-wide text-slate-400">
+                <tr className="text-[13px] uppercase tracking-wide text-slate-400">
                   {weekIdx.map((w) => (
                     <Fragment key={`h${w}`}>
                       <th className="border-l border-slate-100 bg-slate-50/60 px-2 py-1.5 font-semibold">Tgt</th>
@@ -289,10 +289,10 @@ export default function TeamTargetAll({ onBack }) {
                       {mi === 0 ? (
                         <td rowSpan={emp.months.length} className="sticky left-0 z-10 border-r border-slate-100 bg-white px-3 py-3 text-left align-top" style={{ width: NAME_W, minWidth: NAME_W }}>
                           <div className="flex items-center gap-2">
-                            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-600 text-[10px] font-black text-white">{initialsOf(emp.name)}</span>
+                            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-600 text-[12px] font-bold text-white">{initialsOf(emp.name)}</span>
                             <div className="min-w-0">
-                              <div className="truncate text-[12px] font-black text-slate-900">{emp.name}</div>
-                              <div className="truncate text-[9px] text-slate-400">{emp.department || ROLE_LABELS[emp.role] || ""}</div>
+                              <div className="truncate text-[12px] font-bold text-slate-900">{emp.name}</div>
+                              <div className="truncate text-[13px] text-slate-400">{emp.department || ROLE_LABELS[emp.role] || ""}</div>
                             </div>
                           </div>
                         </td>
@@ -300,10 +300,10 @@ export default function TeamTargetAll({ onBack }) {
                       {/* Month — sticky */}
                       <td className="sticky z-10 border-r border-slate-100 bg-white px-3 py-3 text-left" style={{ left: NAME_W, width: MONTH_W, minWidth: MONTH_W }}>
                         <div className="font-bold text-slate-700">{MONTH_ABBR[m.month - 1]}</div>
-                        <div className="text-[9px] text-slate-400">{m.year}</div>
+                        <div className="text-[13px] text-slate-400">{m.year}</div>
                       </td>
                       {/* Monthly target */}
-                      <td className="px-2 py-3 font-black text-slate-800">{m.monthlyTarget || "—"}</td>
+                      <td className="px-2 py-3 font-bold text-slate-800">{m.monthlyTarget || "—"}</td>
                       {/* Weeks */}
                       {weekIdx.map((wnum) => {
                         const w = m.weeks.find((x) => x.week === wnum);
@@ -315,16 +315,16 @@ export default function TeamTargetAll({ onBack }) {
                         return (
                           <Fragment key={`c${wnum}`}>
                             <td className="border-l border-slate-50 px-2 py-3 font-semibold text-slate-500">{w.target}</td>
-                            <td className="px-2 py-3 font-black text-slate-900">{w.achieved}</td>
+                            <td className="px-2 py-3 font-bold text-slate-900">{w.achieved}</td>
                             <td className="px-2 py-3">{pctPill(w.percent)}</td>
                           </Fragment>
                         );
                       })}
                       {/* Overall achieved */}
-                      <td className="border-l border-slate-50 px-2 py-3 font-black text-slate-800">{m.totalAchieved}</td>
+                      <td className="border-l border-slate-50 px-2 py-3 font-bold text-slate-800">{m.totalAchieved}</td>
                       {/* Overall % */}
                       <td className="border-l border-slate-50 bg-brand-50/40 px-2 py-3">
-                        <span className={`text-[13px] font-black ${m.overallPercent >= 100 ? "text-emerald-600" : "text-brand-700"}`}>{m.overallPercent}%</span>
+                        <span className={`text-[13px] font-bold ${m.overallPercent >= 100 ? "text-emerald-600" : "text-brand-700"}`}>{m.overallPercent}%</span>
                       </td>
                     </tr>
                   ))
@@ -336,9 +336,9 @@ export default function TeamTargetAll({ onBack }) {
               {/* Grand totals */}
               {filtered.length > 0 && (
                 <tfoot>
-                  <tr className="border-t-2 border-slate-200 bg-slate-50/80 font-black">
+                  <tr className="border-t-2 border-slate-200 bg-slate-50/80 font-bold">
                     <td className="sticky left-0 z-10 bg-slate-100 px-3 py-3.5 text-left text-[12px] uppercase tracking-wide text-slate-700" style={{ width: NAME_W }}>All ({totals.empCount})</td>
-                    <td className="sticky z-10 bg-slate-100 px-3 py-3.5 text-left text-[11px] text-slate-500" style={{ left: NAME_W, width: MONTH_W }}>All months</td>
+                    <td className="sticky z-10 bg-slate-100 px-3 py-3.5 text-left text-[13px] text-slate-500" style={{ left: NAME_W, width: MONTH_W }}>All months</td>
                     <td className="px-2 py-3.5 text-[13px] text-slate-900">{totals.totalTarget}</td>
                     {weekIdx.map((w) => (
                       <Fragment key={`tf${w}`}>

@@ -113,43 +113,37 @@ function MetricCard({
   accent = "indigo",
 }) {
   const tones = {
-    indigo:
-      "bg-indigo-50 text-indigo-600",
-    emerald:
-      "bg-emerald-50 text-emerald-600",
-    amber:
-      "bg-amber-50 text-amber-600",
-    rose:
-      "bg-rose-50 text-rose-600",
-    slate:
-      "bg-slate-100 text-slate-600",
+    indigo: "bg-indigo-50 text-indigo-600 border-indigo-100",
+    emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
+    amber: "bg-amber-50 text-amber-600 border-amber-100",
+    rose: "bg-rose-50 text-rose-600 border-rose-100",
+    slate: "bg-slate-50 text-slate-600 border-slate-200",
   };
 
   return (
-    <div className="min-w-0 rounded-[14px] border border-slate-200 bg-white px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition duration-200 hover:-translate-y-[1px] hover:border-slate-300 hover:shadow-[0_8px_22px_rgba(15,23,42,0.06)] sm:px-5">
-      <div className="flex items-start gap-3">
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[13px] font-semibold uppercase tracking-[0.09em] text-slate-400 break-words">
+            {label}
+          </div>
+
+          <div className="mt-2 text-[22px] leading-none font-bold tracking-tight text-slate-950 break-words">
+            {value}
+          </div>
+        </div>
+
         <div
-          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${
-            tones[accent] ||
-            tones.indigo
+          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border ${
+            tones[accent] || tones.indigo
           }`}
         >
           <Icon size={17} />
         </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="text-[12px] font-semibold leading-5 text-slate-600 break-words">
-            {label}
-          </div>
-
-          <div className="mt-1 text-[20px] sm:text-[21px] font-bold leading-tight tracking-[-0.035em] text-slate-950 break-words">
-            {value}
-          </div>
-        </div>
       </div>
 
       {detail ? (
-        <div className="mt-2 pl-12 text-[10px] leading-4 text-slate-500 break-words">
+        <div className="mt-3 border-t border-slate-100 pt-3 text-[13px] leading-5 text-slate-500 break-words">
           {detail}
         </div>
       ) : null}
@@ -911,7 +905,7 @@ export default function Dashboard({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         {uiPreferences?.showGreeting !== false ? (
           <div>
-            <h1 className="text-[24px] font-bold leading-[1.25] tracking-[-0.02em] text-slate-950">
+            <h1 className="text-[30px] font-bold leading-[1.25] tracking-[-0.02em] text-slate-950">
               {(() => {
                 const hour = new Date().getHours();
                 if (hour < 12) return "Good Morning";
@@ -923,14 +917,14 @@ export default function Dashboard({
                 {(user?.name || tenant?.ownerName || "Admin").split(" ")[0]}
               </span>
             </h1>
-            <p className="mt-1 text-[13px] font-normal tracking-normal text-slate-500">
+            <p className="mt-1.5 text-[15px] font-medium tracking-normal text-slate-500">
               It&apos;s {formatUiDate(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
             </p>
           </div>
         ) : (
           <div>
-            <h1 className="text-[24px] font-semibold tracking-[-0.03em] text-slate-950">Dashboard</h1>
-            <p className="mt-1 text-[12px] text-slate-500">{formatUiDate(new Date())}</p>
+            <h1 className="text-[30px] font-bold leading-[1.25] tracking-[-0.02em] text-slate-950">Dashboard</h1>
+            <p className="mt-1.5 text-[15px] font-medium text-slate-500">{formatUiDate(new Date())}</p>
           </div>
         )}
 
@@ -944,7 +938,7 @@ export default function Dashboard({
             loading ||
             calendarLoading
           }
-          className="inline-flex h-9 items-center justify-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-3.5 text-[11px] font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:opacity-50 lg:self-auto"
+          className="inline-flex h-9 items-center justify-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-3.5 text-[13px] font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:opacity-50 lg:self-auto"
         >
           <RefreshCw
             size={13}
@@ -1008,12 +1002,12 @@ export default function Dashboard({
                       <h2 className="text-[15px] font-bold text-slate-950">
                         Revenue Trend
                       </h2>
-                      <p className="mt-1 text-[11px] text-slate-500">
+                      <p className="mt-1 text-[13px] text-slate-500">
                         Potential vs received revenue
                       </p>
                     </div>
 
-                    <span className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[10px] font-semibold text-slate-500">
+                    <span className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[12px] font-semibold text-slate-500">
                       {selectedYear ===
                       "all"
                         ? "All Time"
@@ -1043,14 +1037,14 @@ export default function Dashboard({
 
                       <XAxis
                         dataKey="m"
-                        fontSize={10}
+                        fontSize={12}
                         tickLine={false}
                         axisLine={false}
                         stroke="#94a3b8"
                       />
 
                       <YAxis
-                        fontSize={10}
+                        fontSize={12}
                         tickLine={false}
                         axisLine={false}
                         stroke="#94a3b8"
@@ -1110,7 +1104,7 @@ export default function Dashboard({
                     <h2 className="text-[15px] font-bold text-slate-950">
                       Leads by Source
                     </h2>
-                    <p className="mt-1 text-[11px] text-slate-500">
+                    <p className="mt-1 text-[13px] text-slate-500">
                       Source mix for the selected period
                     </p>
                   </div>
@@ -1165,7 +1159,7 @@ export default function Dashboard({
                                 0
                               }
                             </div>
-                            <div className="text-[9px] text-slate-400">
+                            <div className="text-[13px] text-slate-400">
                               Leads
                             </div>
                           </div>
@@ -1184,7 +1178,7 @@ export default function Dashboard({
                                 key={
                                   source.name
                                 }
-                                className="flex items-center justify-between gap-3 text-[10px]"
+                                className="flex items-center justify-between gap-3 text-[12px]"
                               >
                                 <div className="flex min-w-0 items-center gap-2">
                                   <span
@@ -1230,7 +1224,7 @@ export default function Dashboard({
                       <h2 className="text-[15px] font-bold text-slate-950">
                         Recent Admissions
                       </h2>
-                      <p className="mt-0.5 text-[11px] text-slate-500">
+                      <p className="mt-0.5 text-[13px] text-slate-500">
                         Latest recorded admissions
                       </p>
                     </div>
@@ -1240,7 +1234,7 @@ export default function Dashboard({
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[620px] text-left">
                         <thead>
-                          <tr className="border-b border-slate-100 bg-slate-50/60 text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">
+                          <tr className="border-b border-slate-100 bg-slate-50/60 text-[12px] font-bold uppercase tracking-[0.06em] text-slate-500">
                             <th className="px-4 py-2.5">Student</th>
                             <th className="px-3 py-2.5">College</th>
                             <th className="px-3 py-2.5">Counsellor</th>
@@ -1253,7 +1247,7 @@ export default function Dashboard({
                           {recentAdmissionsData.slice(0, 5).map((item, index) => (
                             <tr
                               key={item.id || `${item.studentName || item.leadName || "admission"}-${index}`}
-                              className="border-b border-slate-50 text-[11px] text-slate-600 last:border-0"
+                              className="border-b border-slate-50 text-[13px] text-slate-600 last:border-0"
                             >
                               <td className="px-4 py-3 font-semibold text-slate-900">
                                 {item.studentName || item.leadName || item.name || "—"}
@@ -1290,7 +1284,7 @@ export default function Dashboard({
                       <div className="mt-2 text-[12px] font-semibold text-slate-700">
                         No recent admissions available
                       </div>
-                      <div className="mt-1 max-w-[260px] text-[10px] text-slate-500">
+                      <div className="mt-1 max-w-[260px] text-[12px] text-slate-500">
                         This section will use real admission records returned by the dashboard API.
                       </div>
                     </div>
@@ -1302,7 +1296,7 @@ export default function Dashboard({
                     <h2 className="text-[15px] font-bold text-slate-950">
                       Admissions by Month
                     </h2>
-                    <p className="mt-0.5 text-[11px] text-slate-500">
+                    <p className="mt-0.5 text-[13px] text-slate-500">
                       Monthly admission performance
                     </p>
                   </div>
@@ -1319,13 +1313,13 @@ export default function Dashboard({
                               ? "month"
                               : "name"
                           }
-                          fontSize={9}
+                          fontSize={11}
                           tickLine={false}
                           axisLine={false}
                           stroke="#94a3b8"
                         />
                         <YAxis
-                          fontSize={9}
+                          fontSize={11}
                           tickLine={false}
                           axisLine={false}
                           stroke="#94a3b8"
@@ -1356,7 +1350,7 @@ export default function Dashboard({
                       <div className="mt-2 text-[12px] font-semibold text-slate-700">
                         No monthly admission data available
                       </div>
-                      <div className="mt-1 max-w-[260px] text-[10px] text-slate-500">
+                      <div className="mt-1 max-w-[260px] text-[12px] text-slate-500">
                         No mock chart values are being inserted.
                       </div>
                     </div>
@@ -1381,7 +1375,7 @@ export default function Dashboard({
                         true
                       )
                     }
-                    className="text-[10px] font-semibold text-indigo-600"
+                    className="text-[12px] font-semibold text-indigo-600"
                   >
                     View full
                   </button>
@@ -1433,7 +1427,7 @@ export default function Dashboard({
                     (day) => (
                       <div
                         key={day}
-                        className="pb-2 text-[10px] font-bold tracking-[0.06em] text-slate-500"
+                        className="pb-2 text-[12px] font-bold tracking-[0.06em] text-slate-500"
                       >
                         {day}
                       </div>
@@ -1466,7 +1460,7 @@ export default function Dashboard({
                             );
                           }
                         }}
-                        className={`relative mx-auto my-0.5 flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-semibold ${
+                        className={`relative mx-auto my-0.5 flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-semibold ${
                           cell.isSelected
                             ? "bg-indigo-600 text-white shadow-[0_5px_12px_rgba(79,70,229,.25)]"
                             : cell.isToday
@@ -1502,7 +1496,7 @@ export default function Dashboard({
                       agendaDate
                     )
                   }
-                  className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-[11px] font-bold text-white hover:bg-indigo-700"
+                  className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-[13px] font-bold text-white hover:bg-indigo-700"
                 >
                   <Plus size={13} />
                   Add Event
@@ -1525,7 +1519,7 @@ export default function Dashboard({
                       {formatUiDate(agendaDate, { day: "numeric", month: "short", year: "numeric" })}
                     </div>
 
-                    <div className="mt-1 text-[10px] text-slate-500">
+                    <div className="mt-1 text-[12px] text-slate-500">
                       {agendaEvents.length}
                       {" "}
                       {agendaEvents.length ===
@@ -1553,14 +1547,14 @@ export default function Dashboard({
                         )
                       );
                     }}
-                    className="text-[9px] font-semibold text-indigo-600"
+                    className="text-[13px] font-semibold text-indigo-600"
                   >
                     Today
                   </button>
                 </div>
 
                 {calendarLoading ? (
-                  <div className="flex min-h-[220px] items-center justify-center gap-2 text-[10px] text-slate-400">
+                  <div className="flex min-h-[220px] items-center justify-center gap-2 text-[12px] text-slate-400">
                     <Loader2
                       size={13}
                       className="animate-spin"
@@ -1568,7 +1562,7 @@ export default function Dashboard({
                     Loading...
                   </div>
                 ) : calendarError ? (
-                  <div className="mt-3 rounded-lg border border-rose-100 bg-rose-50 p-3 text-[10px] text-rose-700">
+                  <div className="mt-3 rounded-lg border border-rose-100 bg-rose-50 p-3 text-[12px] text-rose-700">
                     {calendarError}
                   </div>
                 ) : agendaEvents.length ===
@@ -1588,7 +1582,7 @@ export default function Dashboard({
                           agendaDate
                         )
                       }
-                      className="mt-2 text-[10px] font-semibold text-indigo-600"
+                      className="mt-2 text-[12px] font-semibold text-indigo-600"
                     >
                       + Add event
                     </button>
@@ -1618,7 +1612,7 @@ export default function Dashboard({
                           >
                             <div className="flex items-start gap-3">
                               <div
-                                className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border text-[9px] font-bold ${style}`}
+                                className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border text-[13px] font-bold ${style}`}
                               >
                                 {item.type ===
                                 "PAYMENT"
@@ -1632,12 +1626,12 @@ export default function Dashboard({
 
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-2">
-                                  <div className="truncate text-[11px] font-bold text-slate-900">
+                                  <div className="truncate text-[13px] font-bold text-slate-900">
                                     {
                                       item.title
                                     }
                                   </div>
-                                  <div className="flex-shrink-0 text-[10px] font-semibold text-slate-500">
+                                  <div className="flex-shrink-0 text-[12px] font-semibold text-slate-500">
                                     {
                                       eventTime(
                                         item
@@ -1646,7 +1640,7 @@ export default function Dashboard({
                                   </div>
                                 </div>
 
-                                <div className="mt-1 text-[10px] text-slate-500">
+                                <div className="mt-1 text-[12px] text-slate-500">
                                   {typeLabel(
                                     item.type
                                   )}
@@ -1670,7 +1664,7 @@ export default function Dashboard({
                       true
                     )
                   }
-                  className="mt-4 inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600"
+                  className="mt-4 inline-flex items-center gap-1 text-[12px] font-semibold text-indigo-600"
                 >
                   View full agenda
                   <ChevronRight
@@ -1685,7 +1679,7 @@ export default function Dashboard({
                     <h3 className="text-[14px] font-bold text-slate-950">
                       Recent Activity
                     </h3>
-                    <p className="mt-0.5 text-[11px] text-slate-500">
+                    <p className="mt-0.5 text-[13px] text-slate-500">
                       Latest CRM activity
                     </p>
                   </div>
@@ -1707,10 +1701,10 @@ export default function Dashboard({
                             .toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <div className="text-[11px] font-semibold text-slate-800">
+                          <div className="text-[13px] font-semibold text-slate-800">
                             {item.title || item.action || item.description || "CRM activity"}
                           </div>
-                          <div className="mt-0.5 text-[10px] text-slate-500">
+                          <div className="mt-0.5 text-[12px] text-slate-500">
                             {item.createdAt
                               ? formatUiDateTime(item.createdAt)
                               : item.time || ""}
@@ -1722,7 +1716,7 @@ export default function Dashboard({
                 ) : (
                   <div className="py-7 text-center">
                     <Activity size={17} className="mx-auto text-slate-300" />
-                    <div className="mt-2 text-[11px] font-semibold text-slate-600">
+                    <div className="mt-2 text-[13px] font-semibold text-slate-600">
                       No recent activity available
                     </div>
                   </div>
@@ -1740,7 +1734,7 @@ export default function Dashboard({
                 Team Performance
               </h3>
 
-              <div className="text-[10px] font-semibold text-slate-400">
+              <div className="text-[12px] font-semibold text-slate-400">
                 {selectedYear ===
                 "all"
                   ? "All Time"
@@ -1826,7 +1820,7 @@ export default function Dashboard({
                 <div className="text-base font-bold text-slate-950">
                   ConsulBuzz Calendar
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5">
+                <div className="text-[13px] text-slate-500 mt-0.5">
                   Meetings, follow-ups, counselling, admissions and payment reminders.
                 </div>
               </div>
@@ -1857,7 +1851,7 @@ export default function Dashboard({
                     </h3>
                   </div>
 
-                  <p className="mt-1 text-[11px] text-slate-500">
+                  <p className="mt-1 text-[13px] text-slate-500">
                     Meetings, follow-ups,
                     counselling and
                     important CRM events.
@@ -1876,7 +1870,7 @@ export default function Dashboard({
                         )
                       )
                     }
-                    className="h-8 px-3 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
+                    className="h-8 px-3 rounded-lg border border-slate-200 text-[13px] font-semibold text-slate-600 hover:bg-slate-50"
                   >
                     Today
                   </button>
@@ -1888,7 +1882,7 @@ export default function Dashboard({
                         new Date()
                       )
                     }
-                    className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold inline-flex items-center gap-1.5"
+                    className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold inline-flex items-center gap-1.5"
                   >
                     <Plus size={13} />
 
@@ -1974,7 +1968,7 @@ export default function Dashboard({
                       ].map((day) => (
                         <div
                           key={day}
-                          className="bg-slate-50 border-r border-b border-slate-200 px-2 py-2.5 text-center text-[10px] font-bold uppercase tracking-wide text-slate-500"
+                          className="bg-slate-50 border-r border-b border-slate-200 px-2 py-2.5 text-center text-[12px] font-bold uppercase tracking-wide text-slate-500"
                         >
                           {day}
                         </div>
@@ -2070,7 +2064,7 @@ export default function Dashboard({
                                     date
                                   )
                                 }
-                                className={`inline-flex w-6 h-6 items-center justify-center rounded-full text-[11px] font-semibold ${
+                                className={`inline-flex w-6 h-6 items-center justify-center rounded-full text-[13px] font-semibold ${
                                   isToday
                                     ? "bg-indigo-600 text-white"
                                     : "text-slate-700 hover:bg-slate-100"
@@ -2094,7 +2088,7 @@ export default function Dashboard({
                                             item
                                           )
                                         }
-                                        className={`w-full truncate text-left rounded-md border px-1.5 py-1 text-[9px] font-semibold ${
+                                        className={`w-full truncate text-left rounded-md border px-1.5 py-1 text-[13px] font-semibold ${
                                           EVENT_TYPE_STYLES[
                                             item
                                               .type
@@ -2115,7 +2109,7 @@ export default function Dashboard({
 
                                 {dayEvents.length >
                                   3 && (
-                                  <div className="text-[9px] font-semibold text-slate-400 px-1">
+                                  <div className="text-[13px] font-semibold text-slate-400 px-1">
                                     +
                                     {dayEvents.length -
                                       3}{" "}
@@ -2133,7 +2127,7 @@ export default function Dashboard({
                   </div>
                 )}
 
-                <div className="mt-3 text-[10px] text-slate-400">
+                <div className="mt-3 text-[12px] text-slate-400">
                   Click a date to create
                   an event. Click an
                   existing event to edit
@@ -2146,7 +2140,7 @@ export default function Dashboard({
 
             <div className="bg-white border border-slate-200 rounded-xl shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
               <div className="px-4 py-4 border-b border-slate-100">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.10em] text-slate-400">
+                <div className="text-[12px] font-semibold uppercase tracking-[0.10em] text-slate-400">
                   Today
                 </div>
 
@@ -2175,7 +2169,7 @@ export default function Dashboard({
                           new Date()
                         )
                       }
-                      className="mt-3 text-[11px] font-semibold text-indigo-600 hover:text-indigo-700"
+                      className="mt-3 text-[13px] font-semibold text-indigo-600 hover:text-indigo-700"
                     >
                       + Add event
                     </button>
@@ -2195,7 +2189,7 @@ export default function Dashboard({
                           className="w-full text-left rounded-xl border border-slate-200 p-3 hover:border-indigo-200 hover:bg-indigo-50/20 transition-colors"
                         >
                           <div className="flex items-start gap-3">
-                            <div className="w-12 text-[10px] font-bold text-indigo-600 pt-0.5">
+                            <div className="w-12 text-[12px] font-bold text-indigo-600 pt-0.5">
                               {eventTime(
                                 item
                               )}
@@ -2208,7 +2202,7 @@ export default function Dashboard({
                                 }
                               </div>
 
-                              <div className="mt-1 text-[10px] text-slate-500">
+                              <div className="mt-1 text-[12px] text-slate-500">
                                 {typeLabel(
                                   item.type
                                 )}
@@ -2216,7 +2210,7 @@ export default function Dashboard({
 
                               {item.assignedTo
                                 ?.name && (
-                                <div className="mt-1 text-[10px] text-slate-400 truncate">
+                                <div className="mt-1 text-[12px] text-slate-400 truncate">
                                   {
                                     item
                                       .assignedTo
@@ -2232,7 +2226,7 @@ export default function Dashboard({
                   </div>
                 )}
 
-                <div className="mt-6 mb-2 text-[10px] font-semibold uppercase tracking-[0.10em] text-slate-400">
+                <div className="mt-6 mb-2 text-[12px] font-semibold uppercase tracking-[0.10em] text-slate-400">
                   Upcoming
                 </div>
 
@@ -2256,7 +2250,7 @@ export default function Dashboard({
                           className="w-full flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left hover:bg-slate-50 transition-colors"
                         >
                           <div className="w-10 text-center flex-shrink-0">
-                            <div className="text-[9px] font-bold text-indigo-600 uppercase">
+                            <div className="text-[13px] font-bold text-indigo-600 uppercase">
                               {formatUiDate(item.startAt, { month: "short" })}
                             </div>
 
@@ -2274,7 +2268,7 @@ export default function Dashboard({
                               }
                             </div>
 
-                            <div className="mt-0.5 text-[10px] text-slate-500 truncate">
+                            <div className="mt-0.5 text-[12px] text-slate-500 truncate">
                               {eventTime(
                                 item
                               )}{" "}
@@ -2323,7 +2317,7 @@ export default function Dashboard({
                     : "Add event"}
                 </div>
 
-                <div className="mt-0.5 text-[11px] text-slate-500">
+                <div className="mt-0.5 text-[13px] text-slate-500">
                   Add meetings,
                   follow-ups and
                   important CRM
@@ -2346,7 +2340,7 @@ export default function Dashboard({
 
             <div className="p-5 space-y-4">
               <label className="block">
-                <span className="text-[11px] font-semibold text-slate-600">
+                <span className="text-[13px] font-semibold text-slate-600">
                   Event title *
                 </span>
 
@@ -2372,7 +2366,7 @@ export default function Dashboard({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="text-[11px] font-semibold text-slate-600">
+                  <span className="text-[13px] font-semibold text-slate-600">
                     Starts *
                   </span>
 
@@ -2396,7 +2390,7 @@ export default function Dashboard({
                 </label>
 
                 <label className="block">
-                  <span className="text-[11px] font-semibold text-slate-600">
+                  <span className="text-[13px] font-semibold text-slate-600">
                     Ends
                   </span>
 
@@ -2446,7 +2440,7 @@ export default function Dashboard({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="text-[11px] font-semibold text-slate-600">
+                  <span className="text-[13px] font-semibold text-slate-600">
                     Type
                   </span>
 
@@ -2486,7 +2480,7 @@ export default function Dashboard({
                 </label>
 
                 <label className="block">
-                  <span className="text-[11px] font-semibold text-slate-600">
+                  <span className="text-[13px] font-semibold text-slate-600">
                     Status
                   </span>
 
@@ -2522,7 +2516,7 @@ export default function Dashboard({
               </div>
 
               <label className="block">
-                <span className="text-[11px] font-semibold text-slate-600 flex items-center gap-1.5">
+                <span className="text-[13px] font-semibold text-slate-600 flex items-center gap-1.5">
                   <UserRound
                     size={12}
                   />
@@ -2573,7 +2567,7 @@ export default function Dashboard({
               </label>
 
               <label className="block">
-                <span className="text-[11px] font-semibold text-slate-600 flex items-center gap-1.5">
+                <span className="text-[13px] font-semibold text-slate-600 flex items-center gap-1.5">
                   <MapPin size={12} />
 
                   Location
@@ -2599,7 +2593,7 @@ export default function Dashboard({
               </label>
 
               <label className="block">
-                <span className="text-[11px] font-semibold text-slate-600">
+                <span className="text-[13px] font-semibold text-slate-600">
                   Notes
                 </span>
 

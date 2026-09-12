@@ -1663,7 +1663,7 @@ function MiniPill({
 
   return (
     <div
-      className={`px-2 py-1 border rounded-md text-[11px] font-semibold ${
+      className={`px-2 py-1 border rounded-md text-[13px] font-semibold ${
         tones[
           tone
         ] ||
@@ -1700,7 +1700,7 @@ function StoreMetric({
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+          <div className="text-[13px] font-semibold uppercase tracking-[0.09em] text-slate-400">
             {label}
           </div>
 
@@ -1723,7 +1723,7 @@ function StoreMetric({
         </div>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
+      <div className="mt-3 pt-3 border-t border-slate-100 text-[13px] leading-5 text-slate-500">
         {detail}
       </div>
     </div>
@@ -2396,7 +2396,7 @@ export default function LeadStore({ selectedYear = "all" }) {
                       </div>
 
                       {dataset.sourceFileName && (
-                        <div className="text-[11px] text-slate-400 mt-0.5 inline-flex items-center gap-1">
+                        <div className="text-[13px] text-slate-400 mt-0.5 inline-flex items-center gap-1">
                           <FileSpreadsheet
                             size={10}
                           />

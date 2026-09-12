@@ -405,7 +405,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
         {/* HEADER */}
         <div className="flex min-h-[74px] items-center justify-between gap-3 border-b border-slate-200 px-5 py-3 sm:px-7">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-slate-950 text-white shadow-sm">
+            <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-indigo-600 text-white shadow-sm">
               <CalendarDays size={19} />
             </span>
             <div>
@@ -477,7 +477,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                 {WEEKDAYS_MINI.map((d, i) => (
                   <div
                     key={i}
-                    className="py-1.5 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400"
+                    className="py-1.5 text-[12px] font-extrabold uppercase tracking-[0.08em] text-slate-400"
                   >
                     {d}
                   </div>
@@ -531,7 +531,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
 
             {/* AGENDA FOR SELECTED DAY */}
             <div className="border-t border-slate-200 px-5 py-4">
-              <div className="mb-3 text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-400">
+              <div className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.08em] text-slate-400">
                 {selectedDate.toLocaleDateString("en-IN", {
                   weekday: "long",
                   day: "numeric",
@@ -540,7 +540,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
               </div>
 
               {selectedDayEvents.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-7 text-center text-[11px] font-medium leading-5 text-slate-500">
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-7 text-center text-[13px] font-medium leading-5 text-slate-500">
                   No events. Click a time slot to add one.
                 </div>
               ) : (
@@ -557,7 +557,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                       <div className="text-[12px] font-extrabold leading-snug">
                         {event.title}
                       </div>
-                      <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-semibold opacity-80">
+                      <div className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold opacity-80">
                         <Clock size={11} />
                         {event.allDay ? "All day" : formatTimeLabel(event.startAt)}
                       </div>
@@ -569,7 +569,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                             setMeetingRoom(event.meetingRoom);
                             setMeetingOpen(true);
                           }}
-                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-emerald-700"
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[12px] font-bold text-white hover:bg-emerald-700"
                         >
                           <Video size={11} />
                           Join meeting
@@ -633,7 +633,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                       key={value}
                       type="button"
                       onClick={() => setViewMode(value)}
-                      className={`rounded-[10px] px-3.5 py-2 text-[10px] font-bold transition ${
+                      className={`rounded-[10px] px-3.5 py-2 text-[12px] font-bold transition ${
                         viewMode === value
                           ? "bg-white text-slate-950 shadow-sm"
                           : "text-slate-500 hover:text-slate-800"
@@ -664,7 +664,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                       isSelected ? "bg-brand-50" : "hover:bg-slate-50"
                     }`}
                   >
-                    <span className="text-[10px] font-bold uppercase tracking-[0.07em] text-slate-400">
+                    <span className="text-[12px] font-bold uppercase tracking-[0.07em] text-slate-400">
                       {WEEKDAYS[(day.getDay() + 6) % 7]}
                     </span>
                     <span
@@ -727,7 +727,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
             <div className="max-h-[70vh] space-y-3.5 overflow-y-auto p-5">
               {/* Title */}
               <label className="block">
-                <span className="mb-1 block text-[11px] font-bold text-slate-600">
+                <span className="mb-1 block text-[13px] font-bold text-slate-600">
                   Title
                 </span>
                 <input
@@ -744,7 +744,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
               {/* Type + status */}
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="mb-1 block text-[11px] font-bold text-slate-600">
+                  <span className="mb-1 block text-[13px] font-bold text-slate-600">
                     Type
                   </span>
                   <select
@@ -763,7 +763,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                 </label>
 
                 <label className="block">
-                  <span className="mb-1 block text-[11px] font-bold text-slate-600">
+                  <span className="mb-1 block text-[13px] font-bold text-slate-600">
                     Status
                   </span>
                   <select
@@ -784,7 +784,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
 
               {/* Date */}
               <label className="block">
-                <span className="mb-1 block text-[11px] font-bold text-slate-600">
+                <span className="mb-1 block text-[13px] font-bold text-slate-600">
                   Date
                 </span>
                 <input
@@ -831,7 +831,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
               {!editingEvent.allDay && (
                 <div className="grid grid-cols-2 gap-3">
                   <label className="block">
-                    <span className="mb-1 block text-[11px] font-bold text-slate-600">
+                    <span className="mb-1 block text-[13px] font-bold text-slate-600">
                       Start
                     </span>
                     <input
@@ -848,7 +848,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                   </label>
 
                   <label className="block">
-                    <span className="mb-1 block text-[11px] font-bold text-slate-600">
+                    <span className="mb-1 block text-[13px] font-bold text-slate-600">
                       End
                     </span>
                     <input
@@ -868,7 +868,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
 
               {/* Assignee */}
               <label className="block">
-                <span className="mb-1 block text-[11px] font-bold text-slate-600">
+                <span className="mb-1 block text-[13px] font-bold text-slate-600">
                   <UserRound size={11} className="mr-1 inline" />
                   Assign to
                 </span>
@@ -893,7 +893,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
 
               {/* Location */}
               <label className="block">
-                <span className="mb-1 block text-[11px] font-bold text-slate-600">
+                <span className="mb-1 block text-[13px] font-bold text-slate-600">
                   <MapPin size={11} className="mr-1 inline" />
                   Location
                 </span>
@@ -909,7 +909,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
 
               {/* Description */}
               <label className="block">
-                <span className="mb-1 block text-[11px] font-bold text-slate-600">
+                <span className="mb-1 block text-[13px] font-bold text-slate-600">
                   Description
                 </span>
                 <textarea
@@ -1002,7 +1002,7 @@ function FragmentRow({
   return (
     <>
       {/* Hour label */}
-      <div className="h-[76px] border-b border-r border-slate-100 pr-2 text-right text-[10px] font-semibold text-slate-400">
+      <div className="h-[76px] border-b border-r border-slate-100 pr-2 text-right text-[12px] font-semibold text-slate-400">
         <span className="relative -top-1.5">
           {hour === 0
             ? ""
@@ -1031,13 +1031,13 @@ function FragmentRow({
                   e.stopPropagation();
                   onEventClick(event);
                 }}
-                className={`mx-auto mb-1 block min-h-[56px] w-[90%] rounded-[12px] border px-3 py-2.5 text-left text-[11px] font-bold leading-[1.28] shadow-[0_2px_8px_rgba(15,23,42,.05)] ${
+                className={`mx-auto mb-1 block min-h-[56px] w-[90%] rounded-[12px] border px-3 py-2.5 text-left text-[13px] font-bold leading-[1.28] shadow-[0_2px_8px_rgba(15,23,42,.05)] ${
                   eventStyle(event)
                 }`}
                 title={event.title}
               >
-                <span className="block line-clamp-2 text-[11px] font-bold">{event.title}</span>
-                <span className="mt-1.5 flex items-center gap-1.5 text-[9px] font-semibold opacity-75">
+                <span className="block line-clamp-2 text-[13px] font-bold">{event.title}</span>
+                <span className="mt-1.5 flex items-center gap-1.5 text-[13px] font-semibold opacity-75">
                   <Clock size={10} />
                   {event.allDay ? "All day" : formatTimeLabel(event.startAt)}
                 </span>

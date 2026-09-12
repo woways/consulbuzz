@@ -80,14 +80,14 @@ function HowItWorks() {
     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between bg-gradient-to-r from-brand-700 to-brand-900 px-6 py-5 text-white">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-200">
+          <div className="text-[13px] font-semibold uppercase tracking-[0.14em] text-brand-100">
             How referral works
           </div>
-          <div className="text-[20px] font-black tracking-tight">
+          <div className="text-[20px] font-semibold tracking-tight">
             From share to reward in 4 steps
           </div>
         </div>
-        <div className="hidden rounded-full bg-white/10 px-4 py-2 text-[12px] font-bold text-brand-100 sm:block">
+        <div className="hidden rounded-full bg-white/10 px-4 py-2 text-[12px] font-semibold text-brand-100 sm:block">
           Tap a step to learn more
         </div>
       </div>
@@ -122,7 +122,7 @@ function HowItWorks() {
                   >
                     <Icon size={18} />
                   </span>
-                  <span className={`text-[13px] font-black ${on ? "text-brand-700" : "text-slate-900"}`}>
+                  <span className={`text-[13px] font-semibold ${on ? "text-brand-700" : "text-slate-900"}`}>
                     {s.label}
                   </span>
                 </button>
@@ -131,7 +131,7 @@ function HowItWorks() {
           </div>
 
           <div className="mt-7 rounded-2xl border border-brand-100 bg-brand-50/60 p-5">
-            <div className="text-[15px] font-black text-brand-800">{Step.title}</div>
+            <div className="text-[15px] font-semibold text-brand-800">{Step.title}</div>
             <div className="mt-1 text-[13px] text-slate-600">{Step.body}</div>
           </div>
         </div>
@@ -249,7 +249,7 @@ export default function MyReferrals({ currentUser }) {
         <button
           type="button"
           onClick={openTag}
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-brand-600 px-4 text-[13px] font-bold text-white shadow-sm hover:bg-brand-700"
+          className="inline-flex h-10 items-center gap-2 rounded-xl bg-brand-600 px-4 text-[13px] font-semibold text-white shadow-sm hover:bg-brand-700"
         >
           <Plus size={15} />
           Tag a referral
@@ -266,16 +266,16 @@ export default function MyReferrals({ currentUser }) {
       {/* SHARE STRIP */}
       <div className="grid gap-4 lg:grid-cols-[1.5fr_auto]">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="text-[12px] font-bold uppercase tracking-wide text-slate-400">Share &amp; earn</div>
+          <div className="text-[12px] font-semibold uppercase tracking-wide text-slate-400">Share &amp; earn</div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-              <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Referral code</div>
+              <div className="text-[12px] font-semibold uppercase tracking-wide text-slate-400">Referral code</div>
               <div className="mt-1 flex items-center justify-between gap-2">
-                <span className="text-[16px] font-black tracking-wide text-slate-900">{code || "…"}</span>
+                <span className="text-[16px] font-bold tracking-wide text-slate-900">{code || "…"}</span>
                 <button
                   type="button"
                   onClick={() => copy(code, "code")}
-                  className="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1 text-[11px] font-bold text-white hover:bg-brand-700"
+                  className="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1 text-[13px] font-semibold text-white hover:bg-brand-700"
                 >
                   {copied === "code" ? <Check size={12} /> : <Copy size={12} />}
                   {copied === "code" ? "Copied" : "Copy"}
@@ -283,13 +283,13 @@ export default function MyReferrals({ currentUser }) {
               </div>
             </div>
             <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-              <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Referral link</div>
+              <div className="text-[12px] font-semibold uppercase tracking-wide text-slate-400">Referral link</div>
               <div className="mt-1 flex items-center justify-between gap-2">
                 <span className="truncate text-[13px] font-semibold text-slate-700">{link || "…"}</span>
                 <button
                   type="button"
                   onClick={() => copy(link, "link")}
-                  className="inline-flex flex-shrink-0 items-center gap-1 rounded-lg border border-slate-200 px-3 py-1 text-[11px] font-bold text-slate-600 hover:bg-slate-50"
+                  className="inline-flex flex-shrink-0 items-center gap-1 rounded-lg border border-slate-200 px-3 py-1 text-[13px] font-semibold text-slate-600 hover:bg-slate-50"
                 >
                   {copied === "link" ? <Check size={12} /> : <Copy size={12} />}
                   {copied === "link" ? "Copied" : "Copy"}
@@ -302,13 +302,13 @@ export default function MyReferrals({ currentUser }) {
               href={`https://wa.me/?text=${encodeURIComponent(`Check this out: ${link}`)}`}
               target="_blank"
               rel="noreferrer"
-              className="flex-1 rounded-xl bg-brand-600 py-2.5 text-center text-[12px] font-bold text-white hover:bg-brand-700"
+              className="flex-1 rounded-xl bg-brand-600 py-2.5 text-center text-[12px] font-semibold text-white hover:bg-brand-700"
             >
               Share on WhatsApp
             </a>
             <a
               href={`mailto:?subject=${encodeURIComponent("My referral link")}&body=${encodeURIComponent(link)}`}
-              className="flex-1 rounded-xl border border-slate-200 py-2.5 text-center text-[12px] font-bold text-slate-700 hover:bg-slate-50"
+              className="flex-1 rounded-xl border border-slate-200 py-2.5 text-center text-[12px] font-semibold text-slate-700 hover:bg-slate-50"
             >
               Share via Email
             </a>
@@ -317,7 +317,7 @@ export default function MyReferrals({ currentUser }) {
 
         {/* QR card */}
         <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Scan to refer</div>
+          <div className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">Scan to refer</div>
           <div className="mt-3 rounded-xl border border-slate-200 p-2">
             {link ? (
               <img src={qrUrl(link)} alt="Referral QR" width="132" height="132" className="rounded" />
@@ -331,7 +331,7 @@ export default function MyReferrals({ currentUser }) {
             href={link ? qrUrl(link) : "#"}
             target="_blank"
             rel="noreferrer"
-            className="mt-3 text-[11px] font-bold text-brand-600 hover:text-brand-700"
+            className="mt-3 text-[13px] font-semibold text-brand-600 hover:text-brand-700"
           >
             Open QR
           </a>
@@ -343,7 +343,7 @@ export default function MyReferrals({ currentUser }) {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[12px] font-bold uppercase tracking-wide text-slate-400">Referrals</div>
+              <div className="text-[12px] font-semibold uppercase tracking-wide text-slate-400">Referrals</div>
               <div className="mt-2 space-y-1 text-[13px]">
                 <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-brand-500" />Total <b className="ml-auto text-slate-900">{stats.total}</b></div>
                 <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500" />Admitted <b className="ml-auto text-slate-900">{stats.admitted}</b></div>
@@ -354,19 +354,19 @@ export default function MyReferrals({ currentUser }) {
                 <circle cx="18" cy="18" r="15.9" fill="none" stroke="#eef2ff" strokeWidth="4" />
                 <circle cx="18" cy="18" r="15.9" fill="none" stroke="#4f46e5" strokeWidth="4" strokeLinecap="round" strokeDasharray="100" strokeDashoffset={100 - convRate} />
               </svg>
-              <div className="absolute inset-0 flex items-center justify-center text-[14px] font-black text-slate-900">{convRate}%</div>
+              <div className="absolute inset-0 flex items-center justify-center text-[14px] font-bold text-slate-900">{convRate}%</div>
             </div>
           </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="text-[12px] font-bold uppercase tracking-wide text-slate-400">In progress</div>
-          <div className="mt-2 text-[34px] font-black leading-none text-brand-600">{stats.inProgress}</div>
-          <div className="mt-1 text-[12px] text-slate-400">moving through stages</div>
+          <div className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">In progress</div>
+          <div className="mt-2 text-[34px] font-bold leading-none text-brand-600">{stats.inProgress}</div>
+          <div className="mt-1 text-[14px] text-slate-400">Moving through stages</div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="text-[12px] font-bold uppercase tracking-wide text-slate-400">Admitted</div>
-          <div className="mt-2 text-[34px] font-black leading-none text-emerald-600">{stats.admitted}</div>
-          <div className="mt-1 text-[12px] text-slate-400">reached final stage</div>
+          <div className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">Admitted</div>
+          <div className="mt-2 text-[34px] font-bold leading-none text-emerald-600">{stats.admitted}</div>
+          <div className="mt-1 text-[14px] text-slate-400">Reached final stage</div>
         </div>
       </div>
 
@@ -375,14 +375,14 @@ export default function MyReferrals({ currentUser }) {
 
       {/* REFERRAL LIST with live stages */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="text-[15px] font-black text-slate-900">Your referrals</div>
+        <div className="text-[15px] font-semibold text-slate-900">Your referrals</div>
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
             <Loader2 size={16} className="animate-spin" /> Loading...
           </div>
         ) : referrals.length === 0 ? (
           <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-10 text-center">
-            <div className="text-[13px] font-black text-slate-700">No referrals yet</div>
+            <div className="text-[13px] font-semibold text-slate-700">No referrals yet</div>
             <div className="mt-1 text-[12px] text-slate-500">Share your link to see your referrals appear here.</div>
           </div>
         ) : (
@@ -390,15 +390,15 @@ export default function MyReferrals({ currentUser }) {
             {referrals.map((r) => (
               <div key={r.id} className="rounded-xl border border-slate-200 bg-white p-4 transition hover:shadow-md">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-[12px] font-black text-white">
+                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-[12px] font-semibold text-white">
                     {initialsOf(r.lead.name)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[14px] font-black text-slate-900">{r.lead.name}</div>
-                    <div className="text-[11px] text-slate-400">{r.lead.phone}{r.lead.course ? ` · ${r.lead.course}` : ""}</div>
+                    <div className="text-[14px] font-bold text-slate-900">{r.lead.name}</div>
+                    <div className="text-[13px] text-slate-400">{r.lead.phone}{r.lead.course ? ` · ${r.lead.course}` : ""}</div>
                   </div>
                   <span
-                    className={`rounded-full px-3 py-1 text-[12px] font-bold ${
+                    className={`rounded-full px-3 py-1 text-[12px] font-semibold ${
                       r.lead.stage === "ADMITTED"
                         ? "bg-emerald-50 text-emerald-600"
                         : r.lead.isLost
@@ -426,7 +426,7 @@ export default function MyReferrals({ currentUser }) {
                     />
                   ))}
                 </div>
-                <div className="mt-1.5 flex justify-between text-[9px] font-bold uppercase tracking-wide text-slate-400">
+                <div className="mt-1.5 flex justify-between text-[13px] font-semibold uppercase tracking-wide text-slate-400">
                   {STAGE_ORDER.map((st, i) => (
                     <span key={st} className={i === r.lead.stageIndex && !r.lead.isLost ? "text-brand-600" : ""}>
                       {STAGE_LABELS[st].slice(0, 8)}
@@ -444,7 +444,7 @@ export default function MyReferrals({ currentUser }) {
         <div className="fixed inset-0 z-[130] flex items-end justify-center bg-slate-950/50 p-0 sm:items-center sm:p-4">
           <div className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:rounded-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5">
-              <div className="text-sm font-black text-slate-950">Tag a lead as referred</div>
+              <div className="text-sm font-bold text-slate-950">Tag a lead as referred</div>
               <button type="button" onClick={() => setTagOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100">
                 <X size={16} />
               </button>
@@ -453,7 +453,7 @@ export default function MyReferrals({ currentUser }) {
             <div className="space-y-3 border-b border-slate-100 p-4">
               {isAdmin && (
                 <div>
-                  <label className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">Referred by</label>
+                  <label className="mb-1 block text-[13px] font-semibold uppercase tracking-wide text-slate-400">Referred by</label>
                   <select
                     value={referrerId}
                     onChange={(e) => setReferrerId(e.target.value)}
@@ -493,12 +493,12 @@ export default function MyReferrals({ currentUser }) {
                     disabled={tagging === l.id}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-slate-50 disabled:opacity-50"
                   >
-                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-200 text-[11px] font-black text-slate-700">
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-200 text-[13px] font-semibold text-slate-700">
                       {initialsOf(l.name)}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[13px] font-bold text-slate-900">{l.name}</div>
-                      <div className="truncate text-[11px] text-slate-400">{l.phone}{l.course ? ` · ${l.course}` : ""}</div>
+                      <div className="truncate text-[13px] font-semibold text-slate-900">{l.name}</div>
+                      <div className="truncate text-[13px] text-slate-400">{l.phone}{l.course ? ` · ${l.course}` : ""}</div>
                     </div>
                     {tagging === l.id ? <Loader2 size={14} className="animate-spin text-brand-600" /> : <Plus size={15} className="text-brand-600" />}
                   </button>

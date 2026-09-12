@@ -723,7 +723,7 @@ function LinkModal({
               "generate" &&
             generatedUrl ? (
               <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3">
-                <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-indigo-500">
+                <div className="text-[13px] font-bold uppercase tracking-[0.1em] text-indigo-500">
                   Generated URL
                 </div>
 
@@ -887,7 +887,7 @@ function MetricCard({
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">
+          <div className="text-[13px] font-bold uppercase tracking-[0.08em] text-slate-400">
             {label}
           </div>
 
@@ -901,7 +901,7 @@ function MetricCard({
         </div>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
+      <div className="mt-3 pt-3 border-t border-slate-100 text-[13px] leading-5 text-slate-500">
         {detail}
       </div>
     </div>
@@ -1670,7 +1670,7 @@ export default function UTMLeads({
       {/* 1. Generate UTM Link */}
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_4px_18px_rgba(15,23,42,0.04)]">
         <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-50 via-white to-white px-5 py-4">
-          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-600">
+          <div className="text-[13px] font-bold uppercase tracking-[0.12em] text-indigo-600">
             UTM Generator
           </div>
 
@@ -1744,7 +1744,7 @@ export default function UTMLeads({
           </div>
 
           <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
-            <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-indigo-600">
+            <div className="text-[13px] font-bold uppercase tracking-[0.1em] text-indigo-600">
               Generated Link
             </div>
 
@@ -1795,7 +1795,7 @@ export default function UTMLeads({
       {/* 2. Manually Add UTM Link */}
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_4px_18px_rgba(15,23,42,0.04)]">
         <div className="border-b border-slate-100 px-5 py-4">
-          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+          <div className="text-[13px] font-bold uppercase tracking-[0.12em] text-slate-500">
             Existing link
           </div>
 
@@ -1894,7 +1894,7 @@ export default function UTMLeads({
       >
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+            <div className="text-[13px] font-bold uppercase tracking-[0.12em] text-slate-400">
               Saved links
             </div>
 
@@ -2018,7 +2018,7 @@ export default function UTMLeads({
                   <div className="text-[15px] font-semibold text-slate-900">
                     {link.campaign}
                   </div>
-                  <div className="mt-0.5 text-[11px] text-slate-400">
+                  <div className="mt-0.5 text-[13px] text-slate-400">
                     {formatDate(link.createdAt)}
                   </div>
                 </td>
@@ -2120,7 +2120,7 @@ export default function UTMLeads({
       {/* Lead source views — restored from Student Mentor */}
       <section className="space-y-3">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+          <div className="text-[13px] font-bold uppercase tracking-[0.12em] text-slate-400">
             Lead Sources
           </div>
 
@@ -2159,7 +2159,7 @@ export default function UTMLeads({
               >
                 <Icon size={14} />
                 {item.label}
-                <span className={`rounded-full px-2 py-0.5 text-[11px] ${
+                <span className={`rounded-full px-2 py-0.5 text-[13px] ${
                   leadSourceView === item.key
                     ? "bg-white/15"
                     : "bg-slate-100"
@@ -2312,7 +2312,7 @@ export default function UTMLeads({
       <section className="space-y-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+            <div className="text-[13px] font-bold uppercase tracking-[0.12em] text-slate-400">
               Lead details
             </div>
 
@@ -2428,7 +2428,7 @@ export default function UTMLeads({
       {/* UTM Analysis */}
       <section className="space-y-4">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+          <div className="text-[13px] font-bold uppercase tracking-[0.12em] text-slate-400">
             Performance
           </div>
 
