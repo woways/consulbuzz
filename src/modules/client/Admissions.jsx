@@ -667,7 +667,7 @@ function StreamModal({
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-950 px-4 text-[13px] font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+            className="inline-flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-[13px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
           >
             {saving ? (
               <Loader2
@@ -2923,7 +2923,7 @@ function AdmissionsManager({
               onClick={() =>
                 setStreamModal({ mode: "create" })
               }
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-[13px] font-bold text-white"
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-[13px] font-bold text-white shadow-sm transition hover:bg-indigo-700"
             >
               <Plus size={14} />
               Add Stream
@@ -3738,15 +3738,15 @@ function AdmissionsOverall({ selectedYear = "all" }) {
             key={item.label}
             className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
           >
-            <div className="text-[13px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+            <div className="text-[12px] font-semibold uppercase tracking-[0.09em] text-slate-400">
               {item.label}
             </div>
 
-            <div className="mt-2 text-[22px] font-bold leading-none tracking-tight text-slate-950">
+            <div className="mt-2 text-[24px] font-bold leading-none tracking-tight text-slate-950">
               {item.value}
             </div>
 
-            <div className="mt-3 border-t border-slate-100 pt-3 text-[13px] leading-5 text-slate-500">
+            <div className="mt-3 border-t border-slate-100 pt-3 text-[13px] leading-5 font-medium text-slate-500">
               {item.detail}
             </div>
           </div>

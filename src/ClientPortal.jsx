@@ -2860,7 +2860,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
                   <span
                     className={`absolute bottom-0 left-0 right-0 h-[2px] rounded-full transition ${
-                      active ? "bg-slate-950" : "bg-transparent"
+                      active ? "bg-indigo-600" : "bg-transparent"
                     }`}
                   />
                 </button>

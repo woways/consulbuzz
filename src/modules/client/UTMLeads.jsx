@@ -1872,7 +1872,7 @@ export default function UTMLeads({
             type="button"
             onClick={saveManual}
             disabled={manualSaving}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-[13px] font-bold text-white disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50"
           >
             {manualSaving ? (
               <Loader2

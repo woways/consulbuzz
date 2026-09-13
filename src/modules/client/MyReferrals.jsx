@@ -77,7 +77,7 @@ function HowItWorks() {
   const Step = HOW_STEPS[active];
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)]">
       <div className="flex items-center justify-between bg-gradient-to-r from-brand-700 to-brand-900 px-6 py-5 text-white">
         <div>
           <div className="text-[13px] font-semibold uppercase tracking-[0.14em] text-brand-100">
@@ -265,8 +265,8 @@ export default function MyReferrals({ currentUser }) {
 
       {/* SHARE STRIP */}
       <div className="grid gap-4 lg:grid-cols-[1.5fr_auto]">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="text-[12px] font-semibold uppercase tracking-wide text-slate-400">Share &amp; earn</div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)]">
+          <div className="text-[20px] font-semibold tracking-[-0.015em] text-slate-950">Share &amp; earn</div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
               <div className="text-[12px] font-semibold uppercase tracking-wide text-slate-400">Referral code</div>
@@ -316,7 +316,7 @@ export default function MyReferrals({ currentUser }) {
         </div>
 
         {/* QR card */}
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)]">
           <div className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">Scan to refer</div>
           <div className="mt-3 rounded-xl border border-slate-200 p-2">
             {link ? (
@@ -340,7 +340,7 @@ export default function MyReferrals({ currentUser }) {
 
       {/* STATS */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)]">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[12px] font-semibold uppercase tracking-wide text-slate-400">Referrals</div>
@@ -358,12 +358,12 @@ export default function MyReferrals({ currentUser }) {
             </div>
           </div>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)]">
           <div className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">In progress</div>
           <div className="mt-2 text-[34px] font-bold leading-none text-brand-600">{stats.inProgress}</div>
           <div className="mt-1 text-[14px] text-slate-400">Moving through stages</div>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)]">
           <div className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">Admitted</div>
           <div className="mt-2 text-[34px] font-bold leading-none text-emerald-600">{stats.admitted}</div>
           <div className="mt-1 text-[14px] text-slate-400">Reached final stage</div>
@@ -374,7 +374,7 @@ export default function MyReferrals({ currentUser }) {
       <HowItWorks />
 
       {/* REFERRAL LIST with live stages */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)]">
         <div className="text-[15px] font-semibold text-slate-900">Your referrals</div>
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
@@ -388,7 +388,7 @@ export default function MyReferrals({ currentUser }) {
         ) : (
           <div className="mt-4 space-y-3">
             {referrals.map((r) => (
-              <div key={r.id} className="rounded-xl border border-slate-200 bg-white p-4 transition hover:shadow-md">
+              <div key={r.id} className="rounded-xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_6px_18px_rgba(79,70,229,0.08)]">
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-[12px] font-semibold text-white">
                     {initialsOf(r.lead.name)}

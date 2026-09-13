@@ -3251,7 +3251,7 @@ export default function SettingsView({
                   onClick={
                     loadAuditLogs
                   }
-                  className="h-9 px-4 bg-slate-950 hover:bg-slate-800 text-white rounded-lg text-[13px] font-semibold"
+                  className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[13px] font-semibold shadow-sm transition-colors"
                 >
                   Search
                 </button>

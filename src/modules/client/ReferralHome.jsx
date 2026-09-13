@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import {
-  Loader2,
   Copy,
   Check,
   Share2,
@@ -9,31 +8,94 @@ import {
   TrendingUp,
   Gift,
   ChevronDown,
+  Link2,
 } from "lucide-react";
 
-import { apiRequest } from "../../lib/api";
-
 function initialsOf(name) {
-  return String(name || "?").split(" ").filter(Boolean).slice(0, 2)
-    .map((p) => p[0]).join("").toUpperCase();
+  return String(name || "?")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }
 
 /* ---- Interactive "How referral works" pipeline ---- */
 const HOW_STEPS = [
-  { label: "Share", title: "Share your referral link", body: "Copy your unique code or link and send it to anyone — via WhatsApp, email, or a QR code. Every share is tracked to you.", icon: Share2 },
-  { label: "They refer", title: "They get referred", body: "When the person enters the pipeline, they're tagged to you. No manual work — the system links them to your referral.", icon: Users },
-  { label: "Track", title: "Track their progress", body: "Watch each referral move through the stages live. Nudge them with a reminder whenever they stall.", icon: TrendingUp },
-  { label: "Earn", title: "Earn your reward", body: "When your referral reaches the reward stage, your earning unlocks automatically.", icon: Gift },
+  {
+    label: "Share",
+    title: "Share your referral link",
+    body:
+      "Copy your unique code or link and send it to anyone — via WhatsApp, email, or a QR code. Every share is tracked to you.",
+    icon: Share2,
+  },
+  {
+    label: "They refer",
+    title: "They get referred",
+    body:
+      "When the person enters the pipeline, they're tagged to you. No manual work — the system links them to your referral.",
+    icon: Users,
+  },
+  {
+    label: "Track",
+    title: "Track their progress",
+    body:
+      "Watch each referral move through the stages live. Nudge them with a reminder whenever they stall.",
+    icon: TrendingUp,
+  },
+  {
+    label: "Earn",
+    title: "Earn your reward",
+    body:
+      "When your referral reaches the reward stage, your earning unlocks automatically.",
+    icon: Gift,
+  },
 ];
 
 const FAQS = [
-  ["How do I refer someone?", "Copy your referral link or code from your profile and share it. When they enter the pipeline, they're tagged to you automatically."],
-  ["When do I earn my reward?", "Rewards unlock as your referral progresses through the stages. The exact amount depends on your tier."],
-  ["How much can I earn per referral?", "Up to the highest tier amount per successful referral, depending on how many you've converted. Earnings are exclusive of applicable TDS."],
-  ["Where do I see my referrals?", "Open the My Referrals tab to see everyone you've referred and their current stage, updated live."],
+  [
+    "How do I refer someone?",
+    "Copy your referral link or code from your profile and share it. When they enter the pipeline, they're tagged to you automatically.",
+  ],
+  [
+    "When do I earn my reward?",
+    "Rewards unlock as your referral progresses through the stages. The exact amount depends on your tier.",
+  ],
+  [
+    "How much can I earn per referral?",
+    "Up to the highest tier amount per successful referral, depending on how many you've converted. Earnings are exclusive of applicable TDS.",
+  ],
+  [
+    "Where do I see my referrals?",
+    "Open the My Referrals tab to see everyone you've referred and their current stage, updated live.",
+  ],
 ];
 
-export default function ReferralHome({ currentUser, code, stats, onGoReferrals }) {
+function StatCard({ label, value, description, valueClass = "text-slate-950" }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_6px_18px_rgba(79,70,229,0.08)]">
+      <div className="text-[12px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+        {label}
+      </div>
+
+      <div className={`mt-2 text-[26px] font-bold leading-none tracking-tight ${valueClass}`}>
+        {value}
+      </div>
+
+      <div className="mt-3 border-t border-slate-100 pt-3 text-[13px] font-medium leading-5 text-slate-500">
+        {description}
+      </div>
+    </div>
+  );
+}
+
+export default function ReferralHome({
+  currentUser,
+  code,
+  stats,
+  onGoReferrals,
+}) {
   const [active, setActive] = useState(0);
   const [copied, setCopied] = useState("");
   const [openFaq, setOpenFaq] = useState(-1);
@@ -42,107 +104,174 @@ export default function ReferralHome({ currentUser, code, stats, onGoReferrals }
   const Step = HOW_STEPS[active];
 
   function copy(text, which) {
+    if (!text) return;
+
     try {
       navigator.clipboard.writeText(text);
       setCopied(which);
-      setTimeout(() => setCopied(""), 1400);
-    } catch (e) {}
+      window.setTimeout(() => setCopied(""), 1400);
+    } catch (error) {
+      console.error("Unable to copy referral value:", error);
+    }
   }
 
   return (
     <div className="space-y-5">
-      {/* TOP SUMMARY ROW */}
-      <div className="grid items-start gap-5 lg:grid-cols-[320px_1fr]">
-        {/* PROFILE CARD */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-[28px] font-bold text-white">
-            {initialsOf(currentUser?.name)}
-          </div>
+      {/* KPI CARDS */}
+      <section className="grid gap-4 sm:grid-cols-3">
+        <StatCard
+          label="Total Referrals"
+          value={stats?.total ?? 0}
+          description="Total people referred"
+        />
 
-          <div className="mt-3 text-[18px] font-semibold text-slate-900">
-            {currentUser?.name || "You"}
-          </div>
-          <div className="mt-0.5 text-[14px] text-slate-600">
-            {currentUser?.jobTitle || currentUser?.department || "Referrer"}
-          </div>
+        <StatCard
+          label="Admitted"
+          value={stats?.admitted ?? 0}
+          description="Students admitted"
+          valueClass="text-emerald-600"
+        />
 
-          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[13px] font-semibold text-emerald-600">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Active referrer
-          </div>
+        <StatCard
+          label="In Progress"
+          value={stats?.inProgress ?? 0}
+          description="Referrals currently in progress"
+          valueClass="text-amber-600"
+        />
+      </section>
 
-          <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50 p-3 text-left">
-            <div className="text-[12px] font-semibold uppercase tracking-wide text-slate-500">
-              Your referral code
+      {/* REFERRER + REFERRAL CODE */}
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)]">
+        <div className="grid lg:grid-cols-[1fr_300px]">
+          <div className="p-5 sm:p-6">
+            {/* Identity */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-4">
+                <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-[22px] font-bold text-white shadow-sm">
+                  {initialsOf(currentUser?.name)}
+                </div>
+
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="truncate text-[19px] font-semibold tracking-[-0.015em] text-slate-950">
+                      {currentUser?.name || "You"}
+                    </h2>
+
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[12px] font-semibold text-emerald-700">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      Active referrer
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-[14px] text-slate-500">
+                    {currentUser?.jobTitle ||
+                      currentUser?.department ||
+                      "Referrer"}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="mt-1 flex items-center justify-between gap-2">
-              <span className="text-[16px] font-bold tracking-wide text-slate-900">
-                {code || "…"}
-              </span>
-              <button
-                type="button"
-                onClick={() => copy(code, "code")}
-                className="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1 text-[13px] font-semibold text-white hover:bg-brand-700"
-              >
-                {copied === "code" ? <Check size={12} /> : <Copy size={12} />}
-                {copied === "code" ? "Copied" : "Copy"}
-              </button>
+
+            <div className="my-5 h-px bg-slate-100" />
+
+            {/* Referral code */}
+            <div>
+              <div className="text-[12px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+                Your Referral Code
+              </div>
+
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <div className="flex h-12 min-w-0 flex-1 items-center rounded-xl border border-slate-200 bg-slate-50 px-4">
+                  <span className="truncate text-[16px] font-bold tracking-[0.03em] text-slate-900">
+                    {code || "…"}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => copy(code, "code")}
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+                >
+                  {copied === "code" ? (
+                    <Check size={16} />
+                  ) : (
+                    <Copy size={16} />
+                  )}
+                  {copied === "code" ? "Copied" : "Copy Code"}
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <a
-              href={`https://wa.me/?text=${encodeURIComponent(`Check this out: ${link}`)}`}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-xl bg-brand-600 py-2.5 text-[12px] font-semibold text-white hover:bg-brand-700"
-            >
-              WhatsApp
-            </a>
-            <button
-              type="button"
-              onClick={() => copy(link, "link")}
-              className="rounded-xl border border-slate-200 py-2.5 text-[12px] font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              {copied === "link" ? "Copied" : "Copy link"}
-            </button>
+          {/* Share actions — stacked, not side-by-side */}
+          <div className="border-t border-slate-100 bg-slate-50/70 p-5 sm:p-6 lg:border-l lg:border-t-0">
+            <div className="flex h-full flex-col">
+              <div>
+                <div className="text-[12px] font-semibold uppercase tracking-[0.09em] text-slate-400">
+                  Share Referral
+                </div>
+                <p className="mt-1.5 text-[13px] leading-5 text-slate-500">
+                  Use your preferred sharing method.
+                </p>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(
+                    `Check this out: ${link}`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-[13px] font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+                >
+                  <Share2 size={16} />
+                  Share on WhatsApp
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => copy(link, "link")}
+                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                >
+                  {copied === "link" ? (
+                    <Check size={16} />
+                  ) : (
+                    <Link2 size={16} />
+                  )}
+                  {copied === "link" ? "Link Copied" : "Copy Referral Link"}
+                </button>
+              </div>
+
+              <div className="mt-auto pt-5 text-[12px] leading-5 text-slate-400">
+                Your referral code and link are unique to your account.
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* KPI + CTA */}
-        <div className="space-y-5">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-[13px] font-semibold uppercase tracking-wide text-slate-500">Total referrals</div>
-              <div className="mt-1 text-[30px] font-semibold text-slate-900">{stats?.total ?? 0}</div>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-[13px] font-semibold uppercase tracking-wide text-slate-500">Admitted</div>
-              <div className="mt-1 text-[30px] font-semibold text-emerald-600">{stats?.admitted ?? 0}</div>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-[13px] font-semibold uppercase tracking-wide text-slate-500">In progress</div>
-              <div className="mt-1 text-[30px] font-semibold text-amber-600">{stats?.inProgress ?? 0}</div>
-            </div>
-          </div>
-
-                    <div className="flex min-h-[176px] flex-col rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                <Gift size={19} />
+      {/* REFER MORE */}
+      <section className="relative overflow-hidden rounded-2xl border border-indigo-200 bg-white shadow-[0_6px_20px_rgba(79,70,229,0.07)] transition-all duration-200 hover:border-indigo-400 hover:shadow-[0_10px_28px_rgba(79,70,229,0.10)]">
+        <div className="absolute inset-y-0 left-0 w-2 bg-indigo-600" />
+        <div className="grid min-h-[170px] md:grid-cols-[1fr_220px]">
+          <div className="flex flex-col justify-center p-5 pl-7 sm:p-6 sm:pl-8">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                <Gift size={21} />
               </div>
 
               <div className="min-w-0">
-                <div className="text-[17px] font-semibold tracking-[-0.01em] text-slate-900">
-                  Ready to refer more?
-                </div>
+                <h2 className="text-[21px] font-semibold tracking-[-0.015em] text-slate-950">
+                  Refer more. Earn more.
+                </h2>
+
                 <p className="mt-1 text-[14px] leading-6 text-slate-600">
                   Share your link and watch your referrals progress live.
                 </p>
               </div>
             </div>
 
-            <div className="mt-auto pt-5">
+            <div className="mt-5">
               <button
                 type="button"
                 onClick={onGoReferrals}
@@ -152,130 +281,192 @@ export default function ReferralHome({ currentUser, code, stats, onGoReferrals }
               </button>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* HOW REFERRAL WORKS — FULL WIDTH */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between bg-gradient-to-r from-brand-700 to-brand-900 px-6 py-5 text-white">
-          <div>
-            <div className="text-[13px] font-semibold uppercase tracking-[0.14em] text-brand-100">How referral works</div>
-            <div className="text-[20px] font-semibold tracking-tight">From share to reward in 4 steps</div>
-          </div>
-          <div className="hidden rounded-full bg-white/10 px-4 py-2 text-[12px] font-medium text-brand-100 sm:block">
-            Tap a step to learn more
+          <div className="hidden items-center justify-center border-l border-indigo-100 bg-indigo-50/60 md:flex">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-indigo-100 bg-white text-indigo-600 shadow-sm">
+              <Gift size={30} />
+            </div>
           </div>
         </div>
+      </section>
 
-        <div className="px-6 py-8 sm:px-10">
+      {/* HOW REFERRAL WORKS */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)] sm:p-6">
+        <div>
+          <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-slate-950">
+            How Referral Works
+          </h2>
+          <p className="mt-1 text-[13px] text-slate-500">
+            From share to reward in 4 steps.
+          </p>
+        </div>
+
+        <div className="mt-6">
           <div className="relative">
-            <div className="pointer-events-none absolute top-[23px] hidden h-1 sm:block" style={{ left: "19%", width: "12%" }}>
-              <div className="h-1 w-full rounded-full bg-brand-500" />
-            </div>
-            <div className="pointer-events-none absolute top-[23px] hidden h-1 sm:block" style={{ left: "44%", width: "12%" }}>
-              <div className="h-1 w-full rounded-full bg-brand-500" />
-            </div>
-            <div className="pointer-events-none absolute top-[23px] hidden h-1 sm:block" style={{ left: "69%", width: "12%" }}>
-              <div className="h-1 w-full rounded-full bg-brand-500" />
-            </div>
+            <div className="pointer-events-none absolute left-[13%] right-[13%] top-6 hidden h-px bg-indigo-200 md:block" />
 
-            <div className="relative z-10 grid grid-cols-4 gap-2">
-              {HOW_STEPS.map((s, i) => {
-                const Icon = s.icon;
-                const on = i === active;
+            <div className="relative z-10 grid gap-5 md:grid-cols-4">
+              {HOW_STEPS.map((step, index) => {
+                const Icon = step.icon;
+                const isActive = index === active;
+
                 return (
                   <button
-                    key={s.label}
+                    key={step.label}
                     type="button"
-                    onClick={() => setActive(i)}
-                    className="group flex flex-col items-center gap-3 text-center"
+                    onClick={() => setActive(index)}
+                    className="group flex items-start gap-3 text-left md:flex-col md:items-center md:text-center"
                   >
-                    <span className={`flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm transition ${on ? "scale-110 opacity-100 shadow-[0_12px_30px_rgba(79,70,229,.35)]" : "opacity-60 group-hover:scale-105 group-hover:opacity-90"}`}>
-                      <Icon size={18} />
+                    <span
+                      className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border transition ${
+                        isActive
+                          ? "border-indigo-600 bg-indigo-600 text-white shadow-sm"
+                          : "border-indigo-100 bg-indigo-50 text-indigo-600 group-hover:border-indigo-200 group-hover:bg-indigo-100"
+                      }`}
+                    >
+                      <Icon size={19} />
                     </span>
-                    <span className={`text-[13px] font-semibold ${on ? "text-brand-700" : "text-slate-700"}`}>
-                      {s.label}
+
+                    <span>
+                      <span
+                        className={`block text-[14px] font-semibold ${
+                          isActive
+                            ? "text-indigo-700"
+                            : "text-slate-900"
+                        }`}
+                      >
+                        {index + 1}. {step.label}
+                      </span>
+
+                      <span className="mt-1 block text-[13px] leading-5 text-slate-500">
+                        {step.title}
+                      </span>
                     </span>
                   </button>
                 );
               })}
             </div>
 
-            <div className="mt-7 rounded-2xl border border-brand-100 bg-brand-50/60 p-5">
-              <div className="text-[15px] font-semibold text-brand-800">{Step.title}</div>
-              <div className="mt-1 text-[14px] text-slate-600">{Step.body}</div>
+            <div className="mt-6 rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3.5">
+              <div className="text-[14px] font-semibold text-indigo-800">
+                {Step.title}
+              </div>
+
+              <p className="mt-1 text-[13px] leading-5 text-slate-600">
+                {Step.body}
+              </p>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* REFERRAL MILESTONES — FULL WIDTH */}
-      <div className="rounded-2xl border-2 border-indigo-300 bg-white p-5 shadow-[0_6px_20px_rgba(79,70,229,0.05)] sm:p-6">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-[20px] font-semibold text-slate-900">Referral Milestones</h2>
-            <p className="mt-0.5 text-[14px] text-slate-600">
-              Your reward level grows as successful referrals increase.
+      {/* REFERRAL MILESTONES */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)] sm:p-6">
+        <div>
+          <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-slate-950">
+            Referral Milestones
+          </h2>
+
+          <p className="mt-1 text-[13px] text-slate-500">
+            Your reward level grows as successful referrals increase.
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 transition-all duration-200 hover:border-indigo-300 hover:bg-indigo-50/40">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[15px] font-semibold text-slate-900">
+                Tier 1
+              </span>
+
+              <span className="rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 text-[12px] font-semibold text-indigo-700">
+                1–2 conversions
+              </span>
+            </div>
+
+            <p className="mt-2 text-[13px] text-slate-600">
+              Base reward per referral
             </p>
           </div>
-          <Gift size={18} className="mt-1 hidden flex-shrink-0 text-indigo-600 sm:block" />
-        </div>
 
-        <div className="mt-5 grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-[16px] font-semibold text-slate-900">Tier 1</span>
-              <span className="rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 text-[12px] font-semibold text-indigo-700">1–2 conversions</span>
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 transition-all duration-200 hover:border-indigo-300 hover:bg-indigo-50/40">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[15px] font-semibold text-slate-900">
+                Tier 2
+              </span>
+
+              <span className="rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 text-[12px] font-semibold text-indigo-700">
+                3–5 conversions
+              </span>
             </div>
-            <p className="mt-2 text-[13px] text-slate-600">Base reward per referral</p>
+
+            <p className="mt-2 text-[13px] text-slate-600">
+              Higher reward per referral
+            </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-[16px] font-semibold text-slate-900">Tier 2</span>
-              <span className="rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 text-[12px] font-semibold text-indigo-700">3–5 conversions</span>
-            </div>
-            <p className="mt-2 text-[13px] text-slate-600">Higher reward per referral</p>
-          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 transition-all duration-200 hover:border-indigo-300 hover:bg-indigo-50/40">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[15px] font-semibold text-slate-900">
+                Tier 3
+              </span>
 
-          <div className="rounded-2xl border border-indigo-200 bg-indigo-50/40 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-[16px] font-semibold text-slate-900">Tier 3</span>
-              <span className="rounded-full border border-indigo-100 bg-white px-2.5 py-1 text-[12px] font-semibold text-indigo-700">5+ conversions</span>
+              <span className="rounded-full border border-indigo-100 bg-white px-2.5 py-1 text-[12px] font-semibold text-indigo-700">
+                5+ conversions
+              </span>
             </div>
-            <p className="mt-2 text-[13px] text-slate-600">Top reward per referral</p>
+
+            <p className="mt-2 text-[13px] text-slate-600">
+              Top reward per referral
+            </p>
           </div>
         </div>
 
         <p className="mt-4 text-[12px] leading-5 text-slate-500">
           Reward amounts are configured by your company.
         </p>
-      </div>
+      </section>
 
-      {/* FAQ — FULL WIDTH */}
-      <div>
-        <h2 className="text-[22px] font-semibold tracking-tight text-slate-900">Frequently asked questions</h2>
-        <div className="mt-4 space-y-2.5">
-          {FAQS.map(([q, a], i) => (
-            <div key={i} className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      {/* FAQ */}
+      <section>
+        <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-slate-950">
+          Frequently Asked Questions
+        </h2>
+
+        <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)]">
+          {FAQS.map(([question, answer], index) => (
+            <div
+              key={question}
+              className="border-b border-slate-100 last:border-b-0"
+            >
               <button
                 type="button"
-                onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
-                className="flex w-full items-center justify-between px-5 py-4 text-left"
+                onClick={() =>
+                  setOpenFaq(openFaq === index ? -1 : index)
+                }
+                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
               >
-                <span className="text-[15px] font-semibold text-slate-900">{q}</span>
+                <span className="text-[14px] font-semibold text-slate-900">
+                  {question}
+                </span>
+
                 <ChevronDown
                   size={18}
-                  className={`text-slate-400 transition-transform ${openFaq === i ? "rotate-180" : ""}`}
+                  className={`flex-shrink-0 text-slate-400 transition-transform ${
+                    openFaq === index ? "rotate-180" : ""
+                  }`}
                 />
               </button>
-              {openFaq === i && (
-                <div className="px-5 pb-4 text-[13px] leading-relaxed text-slate-500">{a}</div>
+
+              {openFaq === index && (
+                <div className="px-5 pb-4 text-[13px] leading-6 text-slate-500">
+                  {answer}
+                </div>
               )}
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }
