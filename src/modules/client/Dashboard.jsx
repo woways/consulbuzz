@@ -102,7 +102,7 @@ function axisMoney(value) {
 }
 
 function LayoutDashboardIcon() {
-  return <Activity size={13} />;
+  return <Activity size={15} />;
 }
 
 function MetricCard({
