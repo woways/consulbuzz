@@ -181,7 +181,7 @@ function recommendedStreamColor(name) {
     value.includes("medical") ||
     value.includes("mbbs") ||
     value.includes("health")
-  ) return "rose";
+  ) return "cyan";
 
   if (
     value.includes("engineering") ||
@@ -591,27 +591,24 @@ function StreamModal({
               }}
               className="sm-input"
             >
-              <option value="blue">
-                Blue — recommended for Engineering / Technology
-              </option>
-              <option value="rose">
-                Rose / Red — recommended for Medical / Health
-              </option>
-              <option value="amber">
-                Orange / Amber — recommended for Management / Business
-              </option>
-              <option value="cyan">
-                Cyan — recommended for Pharmacy / Life Sciences
-              </option>
-              <option value="emerald">
-                Green — recommended for Law / Legal
-              </option>
-              <option value="purple">
-                Purple — recommended for Degree / Arts / Science
-              </option>
-              <option value="slate">
-                Dark Navy / Slate — General / Other
-              </option>
+              <option value="blue">Blue</option>
+              <option value="orange">Orange</option>
+              <option value="purple">Purple</option>
+              <option value="green">Green</option>
+              <option value="rose">Rose</option>
+              <option value="slate">Slate</option>
+              <option value="sky">Sky</option>
+              <option value="cyan">Cyan</option>
+              <option value="teal">Teal</option>
+              <option value="lime">Lime</option>
+              <option value="yellow">Yellow</option>
+              <option value="amber">Amber</option>
+              <option value="red">Red</option>
+              <option value="pink">Pink</option>
+              <option value="fuchsia">Fuchsia</option>
+              <option value="indigo">Indigo</option>
+              <option value="navy">Navy</option>
+              <option value="black">Black</option>
             </select>
 
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
@@ -1831,46 +1828,80 @@ function AdmissionsManager({
 
   const STREAM_GRADIENTS = {
     blue: {
-      primary:
-        "bg-gradient-to-br from-[#2563eb] via-[#1d4ed8] to-[#1e3a8a]",
-      secondary:
-        "bg-gradient-to-br from-[#3b82f6] via-[#2563eb] to-[#1d4ed8]",
+      primary: "bg-gradient-to-br from-[#2563eb] via-[#1d4ed8] to-[#3730a3]",
+      secondary: "bg-gradient-to-br from-[#3b82f6] via-[#2563eb] to-[#1d4ed8]",
     },
-    rose: {
-      primary:
-        "bg-gradient-to-br from-[#ef4444] via-[#dc2626] to-[#991b1b]",
-      secondary:
-        "bg-gradient-to-br from-[#fb7185] via-[#e11d48] to-[#be123c]",
-    },
-    amber: {
-      primary:
-        "bg-gradient-to-br from-[#f59e0b] via-[#f97316] to-[#c2410c]",
-      secondary:
-        "bg-gradient-to-br from-[#fbbf24] via-[#f59e0b] to-[#ea580c]",
-    },
-    cyan: {
-      primary:
-        "bg-gradient-to-br from-[#06b6d4] via-[#0891b2] to-[#155e75]",
-      secondary:
-        "bg-gradient-to-br from-[#22d3ee] via-[#06b6d4] to-[#0e7490]",
-    },
-    emerald: {
-      primary:
-        "bg-gradient-to-br from-[#10b981] via-[#059669] to-[#065f46]",
-      secondary:
-        "bg-gradient-to-br from-[#34d399] via-[#10b981] to-[#047857]",
+    orange: {
+      primary: "bg-gradient-to-br from-[#f97316] via-[#ea580c] to-[#c2410c]",
+      secondary: "bg-gradient-to-br from-[#fb923c] via-[#f97316] to-[#ea580c]",
     },
     purple: {
-      primary:
-        "bg-gradient-to-br from-[#a855f7] via-[#9333ea] to-[#6b21a8]",
-      secondary:
-        "bg-gradient-to-br from-[#c084fc] via-[#a855f7] to-[#7e22ce]",
+      primary: "bg-gradient-to-br from-[#7c3aed] via-[#7e22ce] to-[#6b21a8]",
+      secondary: "bg-gradient-to-br from-[#a855f7] via-[#9333ea] to-[#7e22ce]",
+    },
+    green: {
+      primary: "bg-gradient-to-br from-[#059669] via-[#0d9488] to-[#0f766e]",
+      secondary: "bg-gradient-to-br from-[#10b981] via-[#059669] to-[#0d9488]",
+    },
+    rose: {
+      primary: "bg-gradient-to-br from-[#e11d48] via-[#be123c] to-[#be185d]",
+      secondary: "bg-gradient-to-br from-[#f43f5e] via-[#e11d48] to-[#be123c]",
     },
     slate: {
-      primary:
-        "bg-gradient-to-br from-[#111827] via-[#172033] to-[#0f172a]",
-      secondary:
-        "bg-gradient-to-br from-[#334155] via-[#1e293b] to-[#0f172a]",
+      primary: "bg-gradient-to-br from-[#475569] via-[#334155] to-[#1e293b]",
+      secondary: "bg-gradient-to-br from-[#64748b] via-[#475569] to-[#334155]",
+    },
+    sky: {
+      primary: "bg-gradient-to-br from-[#0ea5e9] via-[#0284c7] to-[#1d4ed8]",
+      secondary: "bg-gradient-to-br from-[#38bdf8] via-[#0ea5e9] to-[#0284c7]",
+    },
+    cyan: {
+      primary: "bg-gradient-to-br from-[#06b6d4] via-[#0891b2] to-[#0f766e]",
+      secondary: "bg-gradient-to-br from-[#22d3ee] via-[#06b6d4] to-[#0e7490]",
+    },
+    teal: {
+      primary: "bg-gradient-to-br from-[#14b8a6] via-[#0d9488] to-[#047857]",
+      secondary: "bg-gradient-to-br from-[#2dd4bf] via-[#14b8a6] to-[#0d9488]",
+    },
+    lime: {
+      primary: "bg-gradient-to-br from-[#84cc16] via-[#65a30d] to-[#15803d]",
+      secondary: "bg-gradient-to-br from-[#a3e635] via-[#84cc16] to-[#65a30d]",
+    },
+    yellow: {
+      primary: "bg-gradient-to-br from-[#facc15] via-[#f59e0b] to-[#ea580c]",
+      secondary: "bg-gradient-to-br from-[#fde047] via-[#facc15] to-[#f59e0b]",
+    },
+    amber: {
+      primary: "bg-gradient-to-br from-[#f59e0b] via-[#d97706] to-[#a16207]",
+      secondary: "bg-gradient-to-br from-[#fbbf24] via-[#f59e0b] to-[#d97706]",
+    },
+    red: {
+      primary: "bg-gradient-to-br from-[#ef4444] via-[#dc2626] to-[#be123c]",
+      secondary: "bg-gradient-to-br from-[#f87171] via-[#ef4444] to-[#dc2626]",
+    },
+    pink: {
+      primary: "bg-gradient-to-br from-[#ec4899] via-[#db2777] to-[#be123c]",
+      secondary: "bg-gradient-to-br from-[#f472b6] via-[#ec4899] to-[#db2777]",
+    },
+    fuchsia: {
+      primary: "bg-gradient-to-br from-[#c026d3] via-[#a21caf] to-[#be185d]",
+      secondary: "bg-gradient-to-br from-[#d946ef] via-[#c026d3] to-[#a21caf]",
+    },
+    indigo: {
+      primary: "bg-gradient-to-br from-[#4f46e5] via-[#4338ca] to-[#1e40af]",
+      secondary: "bg-gradient-to-br from-[#6366f1] via-[#4f46e5] to-[#4338ca]",
+    },
+    navy: {
+      primary: "bg-gradient-to-br from-[#1e3a8a] via-[#172554] to-[#0f172a]",
+      secondary: "bg-gradient-to-br from-[#1e40af] via-[#1e3a8a] to-[#172554]",
+    },
+    black: {
+      primary: "bg-gradient-to-br from-[#27272a] via-[#18181b] to-[#000000]",
+      secondary: "bg-gradient-to-br from-[#3f3f46] via-[#27272a] to-[#18181b]",
+    },
+    emerald: {
+      primary: "bg-gradient-to-br from-[#10b981] via-[#059669] to-[#065f46]",
+      secondary: "bg-gradient-to-br from-[#34d399] via-[#10b981] to-[#047857]",
     },
   };
 
@@ -2516,8 +2547,8 @@ function AdmissionsManager({
     return (
       <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-          <div className="rounded-xl bg-slate-950 px-4 py-4 text-white">
-            <div className="text-xs font-semibold text-slate-300">
+          <div className="rounded-xl bg-gradient-to-br from-[#4f46e5] via-[#4338ca] to-[#312e81] px-4 py-4 text-white">
+            <div className="text-xs font-semibold text-white/70">
               Total Admissions
             </div>
 
@@ -2525,7 +2556,7 @@ function AdmissionsManager({
               {overall.admissions}
             </div>
 
-            <div className="mt-2 text-[13px] text-slate-400">
+            <div className="mt-2 text-[13px] text-white/60">
               Across all streams
             </div>
           </div>
@@ -2583,15 +2614,15 @@ function AdmissionsManager({
 
     return (
       <div
-        className={`relative overflow-hidden rounded-[22px] p-5 text-white shadow-[0_16px_34px_rgba(15,23,42,0.14)] ${gradient.bg}`}
+        className={`relative overflow-hidden rounded-2xl p-4 text-white shadow-[0_10px_24px_rgba(15,23,42,0.12)] ${gradient.bg}`}
       >
         <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/10" />
         <div className="absolute -bottom-14 -left-10 h-36 w-36 rounded-full bg-black/10" />
 
         <div className="relative">
           <div className="flex items-start justify-between gap-4">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${gradient.soft}`}>
-              <Icon size={23} />
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${gradient.soft}`}>
+              <Icon size={20} />
             </div>
 
             <div className="flex gap-2">
@@ -2599,9 +2630,9 @@ function AdmissionsManager({
                 <button
                   type="button"
                   onClick={onEdit}
-                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/12 text-white hover:bg-white/20"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/12 text-white hover:bg-white/20"
                 >
-                  <Pencil size={14} />
+                  <Pencil size={13} />
                 </button>
               ) : null}
 
@@ -2609,34 +2640,34 @@ function AdmissionsManager({
                 <button
                   type="button"
                   onClick={onDelete}
-                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/12 text-white hover:bg-white/20"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/12 text-white hover:bg-white/20"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={13} />
                 </button>
               ) : null}
             </div>
           </div>
 
-          <div className="mt-7">
-            <div className="text-2xl font-bold tracking-[-0.02em]">
+          <div className="mt-4">
+            <div className="text-[17px] font-bold tracking-[-0.02em]">
               {title}
             </div>
 
-            <div className="mt-2 text-[15px] font-semibold text-white/90">
+            <div className="mt-1 text-[13px] font-semibold text-white/90">
               {subtitle}
             </div>
 
             {description ? (
-              <div className="mt-2 min-h-[38px] text-[13px] leading-5 text-white/72">
+              <div className="mt-1.5 min-h-[30px] text-[12px] leading-5 text-white/72">
                 {description}
               </div>
             ) : (
-              <div className="min-h-[38px]" />
+              <div className="min-h-[30px]" />
             )}
           </div>
 
           {extra ? (
-            <div className="mt-5">
+            <div className="mt-3">
               {extra}
             </div>
           ) : null}
@@ -2644,7 +2675,7 @@ function AdmissionsManager({
           <button
             type="button"
             onClick={onOpen}
-            className={`mt-5 flex w-full items-center justify-between rounded-xl px-4 py-3 text-[15px] font-bold ${gradient.button}`}
+            className={`mt-4 flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[13px] font-bold ${gradient.button}`}
           >
             {openLabel}
             <ChevronRight size={16} />

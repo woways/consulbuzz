@@ -1,6 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
+  safelist: [
+    'from-amber-400', 'from-emerald-400', 'from-fuchsia-500', 'from-indigo-500',
+    'from-orange-400', 'from-pink-400', 'from-rose-400', 'from-sky-400',
+    'from-violet-500', 'from-yellow-400',
+    'to-blue-700', 'to-green-600', 'to-indigo-600', 'to-orange-600',
+    'to-pink-600', 'to-purple-700', 'to-red-600', 'to-rose-600', 'to-teal-600',
+  ],
   theme: {
     extend: {
       colors: {

@@ -517,12 +517,24 @@ router.post("/streams", async (req, res) => {
 
     const allowedColors = [
       "blue",
+      "orange",
       "purple",
+      "green",
       "rose",
-      "amber",
-      "emerald",
-      "cyan",
       "slate",
+      "sky",
+      "cyan",
+      "teal",
+      "lime",
+      "yellow",
+      "amber",
+      "red",
+      "pink",
+      "fuchsia",
+      "indigo",
+      "navy",
+      "black",
+      "emerald",
     ];
 
     if (!name) {
@@ -611,12 +623,24 @@ router.patch("/streams/:id", async (req, res) => {
       const color = String(req.body.color || "").trim().toLowerCase();
       const allowedColors = [
         "blue",
+        "orange",
         "purple",
+        "green",
         "rose",
-        "amber",
-        "emerald",
-        "cyan",
         "slate",
+        "sky",
+        "cyan",
+        "teal",
+        "lime",
+        "yellow",
+        "amber",
+        "red",
+        "pink",
+        "fuchsia",
+        "indigo",
+        "navy",
+        "black",
+        "emerald",
       ];
 
       if (!allowedColors.includes(color)) {

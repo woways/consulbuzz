@@ -3166,7 +3166,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
         <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center">
           <Icon
-            size={24}
+            size={26}
             strokeWidth={2}
             className={
               active
@@ -3733,7 +3733,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                   {active && (
                                     <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-indigo-400" />
                                   )}
-                                  <ChildIcon size={18} strokeWidth={2} />
+                                  <ChildIcon size={20} strokeWidth={2} />
 
                                   {(key.includes("walkins") || key.includes("counselling")) && (
                                     <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-400" />

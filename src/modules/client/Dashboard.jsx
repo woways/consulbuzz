@@ -133,7 +133,7 @@ function MetricCard({
         {value}
       </div>
 
-      <div className="mt-2 text-[14px] font-bold text-slate-800 break-words">
+      <div className="mt-2 text-[15px] font-bold text-slate-800 break-words">
         {label}
       </div>
 
@@ -900,7 +900,7 @@ export default function Dashboard({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         {uiPreferences?.showGreeting !== false ? (
           <div>
-            <h1 className="text-[30px] font-bold leading-[1.25] tracking-[-0.02em] text-slate-950">
+            <h1 className="text-[40px] font-normal leading-[1.2] tracking-[-0.01em] text-slate-950" style={{ fontFamily: "'Newsreader', Georgia, serif" }}>
               {(() => {
                 const hour = new Date().getHours();
                 if (hour < 12) return "Good Morning";
@@ -908,7 +908,7 @@ export default function Dashboard({
                 return "Good Evening";
               })()}
               ,{" "}
-              <span className="font-bold text-slate-950">
+              <span className="font-medium text-slate-950">
                 {(user?.name || tenant?.ownerName || "Admin").split(" ")[0]}
               </span>
             </h1>
@@ -918,7 +918,7 @@ export default function Dashboard({
           </div>
         ) : (
           <div>
-            <h1 className="text-[30px] font-bold leading-[1.25] tracking-[-0.02em] text-slate-950">Dashboard</h1>
+            <h1 className="text-[40px] font-normal leading-[1.2] tracking-[-0.01em] text-slate-950" style={{ fontFamily: "'Newsreader', Georgia, serif" }}>Dashboard</h1>
             <p className="mt-1.5 text-[15px] font-medium text-slate-500">{formatUiDate(new Date())}</p>
           </div>
         )}

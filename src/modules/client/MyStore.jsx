@@ -204,7 +204,7 @@ export default function MyStore() {
   const spotEmoji = spotlight?.emoji || tpl?.occasion?.emoji || "✨";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Toast toast={toast} />
 
       <SectionHeader
@@ -321,7 +321,7 @@ export default function MyStore() {
         <div className="mb-3 flex items-center justify-between">
           <div className="text-[16px] font-black text-slate-900">Ready designs</div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {(tpl?.designs || []).map((d, i) => (
             <div
               key={i}
