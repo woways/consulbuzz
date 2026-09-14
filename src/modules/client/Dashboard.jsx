@@ -113,37 +113,32 @@ function MetricCard({
   accent = "indigo",
 }) {
   const tones = {
-    indigo: "bg-indigo-50 text-indigo-600 border-indigo-100",
-    emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    amber: "bg-amber-50 text-amber-600 border-amber-100",
-    rose: "bg-rose-50 text-rose-600 border-rose-100",
-    slate: "bg-slate-50 text-slate-600 border-slate-200",
+    indigo: "bg-indigo-500",
+    emerald: "bg-emerald-500",
+    amber: "bg-amber-500",
+    rose: "bg-rose-500",
+    slate: "bg-slate-500",
   };
+  const bar = tones[accent] || tones.indigo;
 
   return (
-    <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[13px] font-semibold uppercase tracking-[0.09em] text-slate-400 break-words">
-            {label}
-          </div>
+    <div className="group relative min-w-0 overflow-hidden rounded-xl border border-slate-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.05)] transition-all duration-200 hover:-translate-y-1 hover:border-slate-200 hover:shadow-[0_14px_32px_rgba(15,23,42,0.12)]">
+      <div
+        className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-white ${bar}`}
+      >
+        <Icon size={20} />
+      </div>
 
-          <div className="mt-2 text-[22px] leading-none font-bold tracking-tight text-slate-950 break-words">
-            {value}
-          </div>
-        </div>
+      <div className="mt-3 text-[24px] leading-none font-extrabold tracking-tight text-slate-900 break-words">
+        {value}
+      </div>
 
-        <div
-          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border ${
-            tones[accent] || tones.indigo
-          }`}
-        >
-          <Icon size={17} />
-        </div>
+      <div className="mt-2 text-[14px] font-bold text-slate-800 break-words">
+        {label}
       </div>
 
       {detail ? (
-        <div className="mt-3 border-t border-slate-100 pt-3 text-[13px] leading-5 text-slate-500 break-words">
+        <div className="mt-0.5 text-[12px] text-slate-400 break-words">
           {detail}
         </div>
       ) : null}
@@ -984,7 +979,7 @@ export default function Dashboard({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   {pulseMetrics.map((metric) => (
                     <MetricCard
                       key={metric.label}

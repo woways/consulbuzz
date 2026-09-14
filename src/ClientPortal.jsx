@@ -3546,7 +3546,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       <div className="flex">
         {/* FIXED LIGHT SIDEBAR */}
         <aside
-          className={`fixed inset-y-0 left-0 z-[70] overflow-visible border-r border-white/[0.07] bg-[#151A3A] transition-[width,transform,box-shadow] duration-200 ease-out ${
+          className={`fixed inset-y-0 left-0 z-[70] overflow-visible border-r border-white/[0.07] bg-[#0f172a] transition-[width,transform,box-shadow] duration-200 ease-out ${
             mobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           } ${
             sidebarCompact
@@ -3645,33 +3645,31 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         }}
                         className={`relative mb-1 w-full transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isDragOver ? "opacity-60 " : ""}${
                           sidebarCompact
-                            ? "h-11 rounded-lg flex items-center justify-center"
-                            : "h-11 rounded-lg px-2 flex items-center gap-2"
+                            ? "h-11 rounded-xl flex items-center justify-center"
+                            : "rounded-xl px-3 py-2.5 flex items-center gap-3"
                         } ${
                           active
                             ? "bg-brand-600 text-white shadow-brand-sm"
-                            : "text-slate-300 hover:bg-white/[0.06] hover:text-white"
+                            : "text-slate-400 hover:bg-slate-800 hover:text-white"
                         }`}
                       >
-                        {active && (
-                          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-400" />
+                        {sidebarCompact ? (
+                          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center">
+                            <Icon size={20} strokeWidth={2} />
+                          </span>
+                        ) : (
+                          <Icon size={16} strokeWidth={2} className="flex-shrink-0" />
                         )}
-
-                        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center">
-                          <Icon
-                            size={24}
-                            strokeWidth={2}
-                            className={active ? "text-white" : "text-slate-400"}
-                          />
-                        </span>
 
                         {!sidebarCompact && (
                           <>
-                            <span className="flex-1 text-left text-[13px] font-semibold">
+                            <span className="flex-1 text-left text-sm font-medium">
                               {group.label}
                             </span>
 
-                            {locked ? (
+                            {active ? (
+                              <ChevronRight className="h-3.5 w-3.5 text-white/60" />
+                            ) : locked ? (
                               <Lock size={11} className="text-slate-400" />
                             ) : null}
                           </>
@@ -3768,31 +3766,17 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         onClick={() =>
                           toggleGroup(group.key)
                         }
-                        className={`relative h-11 w-full rounded-lg px-2 flex items-center gap-2 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                        className={`relative w-full rounded-xl px-3 py-2.5 flex items-center gap-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                           groupActive
-                            ? "bg-[#5148E5] text-white"
+                            ? "bg-brand-600 text-white shadow-brand-sm"
                             : open
-                            ? "bg-white/[0.04] text-white"
-                            : "text-slate-300 hover:bg-white/[0.05] hover:text-white"
+                            ? "bg-slate-800 text-white"
+                            : "text-slate-400 hover:bg-slate-800 hover:text-white"
                         }`}
                       >
-                        {groupActive && (
-                          <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-indigo-400" />
-                        )}
+                        <Icon size={16} strokeWidth={2} className="flex-shrink-0" />
 
-                        <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center">
-                          <Icon
-                            size={24}
-                            strokeWidth={2}
-                            className={
-                              groupActive
-                                ? "text-white"
-                                : "text-slate-400"
-                            }
-                          />
-                        </span>
-
-                        <span className="flex-1 text-left text-[13px] font-semibold">
+                        <span className="flex-1 text-left text-sm font-medium">
                           {group.label}
                         </span>
 
@@ -3834,25 +3818,15 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                       setModule(key);
                                       setMobileSidebarOpen(false);
                                     }}
-                                    className={`relative w-full min-h-9 rounded-lg px-2.5 py-2 flex items-center gap-2.5 text-left transition-colors ${
+                                    className={`relative w-full min-h-9 rounded-xl px-3 py-2 flex items-center gap-3 text-left transition-colors ${
                                       active
                                         ? "text-white"
                                         : "text-slate-400 hover:text-white"
                                     }`}
                                   >
-                                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
-                                      <ChildIcon
-                                        size={18}
-                                        strokeWidth={2}
-                                        className={
-                                          active
-                                            ? "text-white"
-                                            : "text-slate-500"
-                                        }
-                                      />
-                                    </span>
+                                    <ChildIcon size={16} strokeWidth={2} className="flex-shrink-0" />
 
-                                    <span className="flex-1 text-[12px] font-semibold">
+                                    <span className="flex-1 text-[13px] font-medium">
                                       {key === "domestic-walkins" ? <span className="mb-1 block text-[12px] uppercase tracking-[0.12em] text-slate-500">Domestic</span> : null}
                                       {key === "international-walkins" ? <span className="mb-1 block text-[12px] uppercase tracking-[0.12em] text-slate-500">International</span> : null}
                                       {key === "admissions" ? "Overall" : meta.label}
