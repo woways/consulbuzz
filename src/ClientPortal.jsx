@@ -4347,7 +4347,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   <div>
                     <div className="rounded-2xl border border-slate-200 bg-[#f8f9fb] px-4 py-5 sm:px-6 sm:py-6">
                     <div className="mx-auto max-w-2xl text-center">
-                      <div className="text-[12px] font-bold uppercase tracking-[0.14em] text-indigo-500">
+                      <div className="text-[12px] font-bold uppercase tracking-[0.14em] text-brand-600">
                         Pricing Plans
                       </div>
 
@@ -4366,7 +4366,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                             onClick={() => setBillingCycleView("MONTHLY")}
                             className={`h-9 min-w-[108px] rounded-full px-4 text-xs font-bold transition-all ${
                               billingCycleView === "MONTHLY"
-                                ? "bg-slate-950 text-white shadow-sm"
+                                ? "bg-brand-600 text-white shadow-sm"
                                 : "text-slate-500 hover:text-slate-800"
                             }`}
                           >
@@ -4378,14 +4378,14 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                             onClick={() => setBillingCycleView("YEARLY")}
                             className={`relative h-9 min-w-[120px] rounded-full px-4 text-xs font-bold transition-all ${
                               billingCycleView === "YEARLY"
-                                ? "bg-slate-950 text-white shadow-sm"
+                                ? "bg-brand-600 text-white shadow-sm"
                                 : "text-slate-500 hover:text-slate-800"
                             }`}
                           >
                             Annually
 
                             {annualSavingsPercent > 0 && (
-                              <span className="absolute -right-3 -top-3 rounded-full bg-emerald-600 px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-white shadow-sm">
+                              <span className="absolute -right-3 -top-3 rounded-full bg-brand-600 px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-white shadow-brand-sm">
                                 Save {annualSavingsPercent}%
                               </span>
                             )}
@@ -4470,13 +4470,15 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                             key={billingPlan.id}
                             className={`relative overflow-hidden rounded-[22px] border transition-all duration-300 ${
                               isPopular
-                                ? "border-indigo-300 bg-slate-950 text-white shadow-[0_18px_50px_rgba(15,23,42,0.18)]"
+                                ? "border-brand-400 bg-brand-900 text-white shadow-brand-lg"
                                 : "border-slate-200 bg-white text-slate-950 shadow-[0_8px_24px_rgba(15,23,42,0.05)] hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
                             }`}
                           >
                             {isPopular && (
-                              <div className="absolute right-4 top-4 rounded-full bg-indigo-500/20 px-2.5 py-1 text-[13px] font-black uppercase tracking-[0.08em] text-indigo-200 ring-1 ring-inset ring-indigo-400/30">
-                                Most Popular
+                              <div className="flex items-center justify-center border-b border-brand-300/20 bg-brand-800/70 px-4 py-2.5">
+                                <span className="rounded-full bg-brand-700/70 px-3 py-1 text-[12px] font-black uppercase tracking-[0.08em] text-brand-50 ring-1 ring-inset ring-brand-300/40">
+                                  Most Popular
+                                </span>
                               </div>
                             )}
 
@@ -4486,7 +4488,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                   <div
                                     className={`text-[12px] font-black uppercase tracking-[0.12em] ${
                                       isPopular
-                                        ? "text-indigo-300"
+                                        ? "text-brand-200"
                                         : "text-slate-400"
                                     }`}
                                   >
@@ -4508,8 +4510,8 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                   <span
                                     className={`rounded-full px-2.5 py-1 text-[13px] font-bold uppercase tracking-wide ${
                                       isPopular
-                                        ? "bg-white/10 text-white ring-1 ring-inset ring-white/15"
-                                        : "bg-slate-100 text-slate-600"
+                                        ? "bg-brand-800/70 text-white ring-1 ring-inset ring-brand-300/30"
+                                        : "bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-100"
                                     }`}
                                   >
                                     Current
@@ -4532,7 +4534,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                   <div
                                     className={`pb-1.5 text-[13px] font-medium ${
                                       isPopular
-                                        ? "text-slate-400"
+                                        ? "text-brand-100"
                                         : "text-slate-400"
                                     }`}
                                   >
@@ -4547,8 +4549,8 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                     <div
                                       className={`mt-1 text-[12px] font-medium ${
                                         isPopular
-                                          ? "text-emerald-300"
-                                          : "text-emerald-700"
+                                          ? "text-brand-200"
+                                          : "text-brand-700"
                                       }`}
                                     >
                                       ₹{monthlyEquivalent.toLocaleString("en-IN")}/month equivalent
@@ -4559,7 +4561,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                               <div
                                 className={`my-5 h-px ${
                                   isPopular
-                                    ? "bg-white/10"
+                                    ? "bg-brand-700"
                                     : "bg-slate-100"
                                 }`}
                               />
@@ -4570,7 +4572,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                     key={feature}
                                     className={`flex items-start gap-2.5 text-xs leading-5 ${
                                       isPopular
-                                        ? "text-slate-300"
+                                        ? "text-brand-100"
                                         : "text-slate-600"
                                     }`}
                                   >
@@ -4578,8 +4580,8 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                       size={14}
                                       className={`mt-0.5 flex-shrink-0 ${
                                         isPopular
-                                          ? "text-indigo-300"
-                                          : "text-indigo-600"
+                                          ? "text-brand-200"
+                                          : "text-brand-600"
                                       }`}
                                     />
                                     <span>{feature}</span>
@@ -4594,7 +4596,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                     disabled
                                     className={`h-11 w-full rounded-xl text-xs font-bold ${
                                       isPopular
-                                        ? "bg-white text-slate-950"
+                                        ? "bg-white text-brand-700"
                                         : "bg-slate-100 text-slate-500"
                                     }`}
                                   >
@@ -4616,8 +4618,8 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                     }
                                     className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 ${
                                       isPopular
-                                        ? "bg-white text-slate-950 hover:bg-slate-100"
-                                        : "bg-slate-950 text-white hover:bg-slate-800"
+                                        ? "bg-white text-brand-700 hover:bg-brand-50"
+                                        : "bg-brand-600 text-white hover:bg-brand-700"
                                     }`}
                                   >
                                     {paymentProcessing ===
