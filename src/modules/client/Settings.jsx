@@ -1886,18 +1886,12 @@ export default function SettingsView({
 
       {/* SETTINGS LAYOUT */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)] gap-5">
+      <div className="space-y-5">
 
-        {/* LEFT SETTINGS NAV */}
+        {/* HORIZONTAL TAB BAR */}
 
-        <aside className="bg-white border border-slate-200 rounded-xl p-2 shadow-[0_1px_2px_rgba(15,23,42,0.03)] h-fit">
-          <div className="px-3 pt-2 pb-3">
-            <div className="text-[13px] uppercase tracking-[0.12em] font-semibold text-slate-400">
-              Configuration
-            </div>
-          </div>
-
-          <div className="space-y-1">
+        <div className="bg-white border border-slate-200 rounded-xl p-2 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+          <div className="flex flex-wrap gap-1">
             {TABS.map(
               (
                 item
@@ -1920,7 +1914,7 @@ export default function SettingsView({
                         item.k
                       )
                     }
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] transition-colors ${
+                    className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-[15px] transition-colors ${
                       active
                         ? "bg-indigo-600 text-white font-semibold shadow-sm"
                         : "text-slate-600 hover:text-indigo-700 hover:bg-indigo-50"
@@ -1937,7 +1931,7 @@ export default function SettingsView({
                       }
                     />
 
-                    <span className="flex-1 text-left">
+                    <span className="text-left">
                       {
                         item.l
                       }
@@ -1947,7 +1941,7 @@ export default function SettingsView({
               }
             )}
           </div>
-        </aside>
+        </div>
 
         {/* CONTENT */}
 
