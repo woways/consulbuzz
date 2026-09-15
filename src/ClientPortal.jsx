@@ -380,8 +380,20 @@ function getAccent(
     blue:
       "bg-blue-600",
 
+    sky:
+      "bg-sky-600",
+
+    teal:
+      "bg-teal-600",
+
     emerald:
       "bg-emerald-600",
+
+    maroon:
+      "bg-rose-800",
+
+    orange:
+      "bg-orange-600",
 
     amber:
       "bg-amber-600",

@@ -13,12 +13,18 @@ const router = Router();
 router.use(requireClientUser);
 
 const ALLOWED_COLORS = [
-  "indigo",
-  "blue",
-  "sky",
-  "teal",
   "emerald",
+  "teal",
+  "sky",
+  "blue",
+  "indigo",
   "purple",
+  "maroon",
+  "orange",
+  "slate",
+  // Legacy values accepted for backwards compatibility.
+  "amber",
+  "rose",
 ];
 
 async function getActor(req) {

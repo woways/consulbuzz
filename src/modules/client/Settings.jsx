@@ -36,7 +36,7 @@ import {
   apiRequest,
 } from "../../lib/api";
 
-import { applyBrandTheme } from "../../lib/brandTheme";
+import { applyBrandTheme, BRAND_COLORS } from "../../lib/brandTheme";
 
 const TABS = [
   {
@@ -76,33 +76,11 @@ const TABS = [
   },
 ];
 
-const BRAND_COLORS = [
-  {
-    key: "indigo",
-    hex: "#4f46e5",
-  },
-  {
-    key: "blue",
-    hex: "#2563eb",
-  },
-  {
-    key: "sky",
-    hex: "#0284c7",
-  },
-  {
-    key: "teal",
-    hex: "#0d9488",
-  },
-  {
-    key: "emerald",
-    hex: "#059669",
-  },
-  {
-    key: "purple",
-    hex: "#7c3aed",
-  },
-];
 
+
+function normalizeBrandColorForPicker(color) {
+  return color === "sky" ? "blue" : color;
+}
 
 function getAccent(
   color
@@ -209,9 +187,11 @@ export default function SettingsView({
     selectedColor,
     setSelectedColor,
   ] = useState(
-    primaryColor ||
-    tenant?.primaryColor ||
-    "indigo"
+    normalizeBrandColorForPicker(
+      primaryColor ||
+        tenant?.primaryColor ||
+        "indigo"
+    )
   );
 
   const [
@@ -587,8 +567,10 @@ export default function SettingsView({
       });
 
       setSelectedColor(
-        workspace.primaryColor ||
-        "indigo"
+        normalizeBrandColorForPicker(
+          workspace.primaryColor ||
+            "indigo"
+        )
       );
 
       setLogoPreview(
@@ -654,8 +636,10 @@ export default function SettingsView({
       });
 
       setSelectedColor(
-        workspace.primaryColor ||
-        "indigo"
+        normalizeBrandColorForPicker(
+          workspace.primaryColor ||
+            "indigo"
+        )
       );
 
       applyBrandTheme(
@@ -1783,7 +1767,7 @@ export default function SettingsView({
             workspaceSettingsSaving ||
             workspaceSettingsLoading
           }
-          className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[13px] font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
+          className="h-9 px-3.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[13px] font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
         >
           {workspaceSettingsSaving ? (
             <Loader2
@@ -2098,6 +2082,8 @@ export default function SettingsView({
                             color.key
                           }
                           type="button"
+                          title={color.label}
+                          aria-label={`Use ${color.label} as the primary brand color`}
                           onClick={() => {
                             setSelectedColor(
                               color.key
@@ -2126,6 +2112,34 @@ export default function SettingsView({
                       );
                     }
                   )}
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={saveWorkspaceSettings}
+                    disabled={
+                      workspaceSettingsSaving ||
+                      workspaceSettingsLoading
+                    }
+                    className="h-10 rounded-lg bg-brand-600 px-4 text-[13px] font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                  >
+                    {workspaceSettingsSaving ? (
+                      <Loader2
+                        size={14}
+                        className="animate-spin"
+                      />
+                    ) : (
+                      <Save size={14} />
+                    )}
+                    {workspaceSettingsSaving
+                      ? "Saving..."
+                      : "Save Brand Color"}
+                  </button>
+
+                  <div className="text-[13px] text-slate-500">
+                    Color changes preview instantly. Save it to keep the same color after refresh.
+                  </div>
                 </div>
               </div>
 
