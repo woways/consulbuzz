@@ -913,7 +913,7 @@ export default function Dashboard({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         {uiPreferences?.showGreeting !== false ? (
           <div>
-            <h1 className="text-[40px] font-normal leading-[1.2] tracking-[-0.01em] text-slate-950" style={{ fontFamily: "'Newsreader', Georgia, serif" }}>
+            <h1 className="text-[40px] font-bold leading-[1.2] tracking-[-0.01em] text-slate-950" style={{ fontFamily: "'Newsreader', Georgia, serif" }}>
               {(() => {
                 const hour = new Date().getHours();
                 if (hour < 12) return "Good Morning";
@@ -921,7 +921,7 @@ export default function Dashboard({
                 return "Good Evening";
               })()}
               ,{" "}
-              <span className="font-medium text-slate-950">
+              <span className="font-bold text-slate-950">
                 {(user?.name || tenant?.ownerName || "Admin").split(" ")[0]}
               </span>
             </h1>
@@ -992,7 +992,7 @@ export default function Dashboard({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   {pulseMetrics.map((metric) => (
                     <MetricCard
                       key={metric.label}

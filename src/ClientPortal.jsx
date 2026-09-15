@@ -3602,7 +3602,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   </div>
 
                   <div className="min-w-0 overflow-visible">
-                    <div className="whitespace-nowrap text-[17px] font-black leading-none tracking-[-0.03em] text-white">
+                    <div className="whitespace-nowrap text-[20px] font-black leading-none tracking-[-0.03em] text-white">
                       Bis<span className="text-[#4f8cff]">pun</span>
                     </div>
                     <div className="mt-1 whitespace-nowrap text-[8px] font-bold uppercase tracking-[0.20em] text-slate-500">
