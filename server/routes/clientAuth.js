@@ -442,7 +442,7 @@ function buildClientSession(user) {
                 activeSubscription.status,
 
               billingCycle:
-                activeSubscription.billingCycle,
+                "YEARLY",
 
               startDate:
                 activeSubscription.startDate,
@@ -472,11 +472,6 @@ function buildClientSession(user) {
 
                 tagline:
                   activeSubscription.plan.tagline,
-
-                monthlyPrice:
-                  Number(
-                    activeSubscription.plan.monthlyPrice
-                  ),
 
                 yearlyPrice:
                   activeSubscription.plan.yearlyPrice

@@ -12,7 +12,7 @@ const router = Router();
 
 router.use(requireClientUser);
 
-const ALLOWED_COLORS = [
+const ALLOWED_COLOR_KEYS = [
   "emerald",
   "teal",
   "sky",
@@ -26,6 +26,16 @@ const ALLOWED_COLORS = [
   "amber",
   "rose",
 ];
+
+const CUSTOM_HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+function isValidPrimaryColor(value) {
+  return (
+    ALLOWED_COLOR_KEYS.includes(value) ||
+    CUSTOM_HEX_COLOR.test(value)
+  );
+}
+
 
 async function getActor(req) {
   return prisma.user.findUnique({
@@ -276,14 +286,14 @@ router.patch("/", async (req, res) => {
     }
 
     if (
-      !ALLOWED_COLORS.includes(
+      !isValidPrimaryColor(
         primaryColor
       )
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "Invalid primary color",
+          "Choose a supported brand color or enter a valid HEX color such as #4f46e5",
       });
     }
 

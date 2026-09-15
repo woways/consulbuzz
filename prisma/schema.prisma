@@ -302,7 +302,8 @@ model Plan {
   description String?
   tagline     String?
 
-  monthlyPrice Decimal  @db.Decimal(12, 2)
+  // Legacy compatibility only; annual pricing is the active billing source.
+  monthlyPrice Decimal  @default(0) @db.Decimal(12, 2)
   yearlyPrice  Decimal? @db.Decimal(12, 2)
 
   active Boolean @default(true)
@@ -374,7 +375,7 @@ model Subscription {
   planId    String
 
   status       SubscriptionStatus @default(TRIAL)
-  billingCycle BillingCycle       @default(MONTHLY)
+  billingCycle BillingCycle       @default(YEARLY)
 
   startDate   DateTime  @default(now())
   renewalDate DateTime?
@@ -411,7 +412,7 @@ model PaymentTransaction {
   provider PaymentProvider @default(RAZORPAY)
   status   PaymentStatus   @default(CREATED)
 
-  billingCycle BillingCycle
+  billingCycle BillingCycle @default(YEARLY)
 
   amount   Decimal @db.Decimal(12, 2)
   currency String  @default("INR")
@@ -1108,7 +1109,7 @@ model SystemSettings {
 
   defaultTrialDays Int @default(14)
 
-  defaultBillingCycle BillingCycle @default(MONTHLY)
+  defaultBillingCycle BillingCycle @default(YEARLY)
 
   defaultEmailNotifications Boolean @default(true)
   defaultSmsNotifications   Boolean @default(false)

@@ -23,7 +23,7 @@ function getCurrentSubscription(
   );
 }
 
-function monthlyEquivalent(
+function annualValue(
   subscription
 ) {
   if (
@@ -41,8 +41,8 @@ function monthlyEquivalent(
 
   return subscription.billingCycle ===
     "YEARLY"
-    ? amount / 12
-    : amount;
+    ? amount
+    : amount * 12;
 }
 
 router.get("/", async (req, res) => {
@@ -119,15 +119,15 @@ router.get("/", async (req, res) => {
                 ?.status || null,
             billingCycle:
               subscription
-                ?.billingCycle ||
-              null,
+                ? "YEARLY"
+                : null,
             amount:
               Number(
                 subscription
                   ?.amount || 0
               ),
-            monthlyEquivalent:
-              monthlyEquivalent(
+            annualValue:
+              annualValue(
                 subscription
               ),
             startDate:
@@ -142,14 +142,6 @@ router.get("/", async (req, res) => {
               subscription
                 ?.endDate ||
               null,
-            monthlyPrice:
-              subscription?.plan
-                ?.monthlyPrice
-                ? Number(
-                    subscription.plan
-                      .monthlyPrice
-                  )
-                : 0,
             yearlyPrice:
               subscription?.plan
                 ?.yearlyPrice
@@ -203,9 +195,9 @@ router.get("/", async (req, res) => {
               1;
           }
 
-          summary.monthlyRecurringValue +=
+          summary.annualRecurringValue +=
             Number(
-              client.monthlyEquivalent ||
+              client.annualValue ||
                 0
             );
 
@@ -229,16 +221,16 @@ router.get("/", async (req, res) => {
             0,
           expiredSubscriptions:
             0,
-          monthlyRecurringValue:
+          annualRecurringValue:
             0,
           totalSubscriptionValue:
             0,
         }
       );
 
-    totals.monthlyRecurringValue =
+    totals.annualRecurringValue =
       Number(
-        totals.monthlyRecurringValue.toFixed(
+        totals.annualRecurringValue.toFixed(
           2
         )
       );

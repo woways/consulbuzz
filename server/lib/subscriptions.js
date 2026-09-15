@@ -1,27 +1,8 @@
 import prisma from "./prisma.js";
 
-function addBillingPeriod(
-  date,
-  billingCycle
-) {
-  const next =
-    new Date(date);
-
-  if (
-    billingCycle ===
-    "YEARLY"
-  ) {
-    next.setFullYear(
-      next.getFullYear() +
-        1
-    );
-  } else {
-    next.setMonth(
-      next.getMonth() +
-        1
-    );
-  }
-
+function addBillingPeriod(date) {
+  const next = new Date(date);
+  next.setFullYear(next.getFullYear() + 1);
   return next;
 }
 
@@ -105,10 +86,7 @@ export async function finalizeCapturedPayment({
           : now;
 
       const renewalDate =
-        addBillingPeriod(
-          renewalBase,
-          existing.billingCycle
-        );
+        addBillingPeriod(renewalBase);
 
       let subscription;
 

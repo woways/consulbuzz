@@ -168,9 +168,9 @@ function OverviewTab({ client, setClient }) {
         />
 
         <StatCard
-          label="Monthly Plan"
+          label="Annual Plan"
           value={formatMoney(
-            client.monthlyPrice
+            client.yearlyPrice
           )}
           icon={DollarSign}
           tone="indigo"
@@ -266,7 +266,7 @@ function OverviewTab({ client, setClient }) {
             <InfoRow
               label="Billing"
               value={
-                client.billingCycle || "—"
+                "Annual"
               }
             />
 
@@ -608,8 +608,7 @@ function SubscriptionTab({
         client.plan || "",
 
       billingCycle:
-        client.billingCycle ||
-        "MONTHLY",
+        "YEARLY",
     });
 
   useEffect(() => {
@@ -618,8 +617,7 @@ function SubscriptionTab({
         client.plan || "",
 
       billingCycle:
-        client.billingCycle ||
-        "MONTHLY",
+        "YEARLY",
     });
   }, [
     client.plan,
@@ -688,7 +686,7 @@ function SubscriptionTab({
                 form.planKey,
 
               billingCycle:
-                form.billingCycle,
+                "YEARLY",
             }),
           }
         );
@@ -761,7 +759,7 @@ function SubscriptionTab({
             <InfoRow
               label="Billing Cycle"
               value={
-                client.billingCycle || "—"
+                "Annual"
               }
             />
 
@@ -848,9 +846,9 @@ function SubscriptionTab({
                     >
                       {plan.name} —{" "}
                       {formatMoney(
-                        plan.monthlyPrice
+                        plan.yearlyPrice
                       )}
-                      /month
+                      /year
                     </option>
                   )
                 )}
@@ -862,58 +860,21 @@ function SubscriptionTab({
                 Billing Cycle
               </label>
 
-              <select
-                value={
-                  form.billingCycle
-                }
-                disabled={saving}
-                onChange={(
-                  event
-                ) =>
-                  setForm(
-                    (current) => ({
-                      ...current,
-
-                      billingCycle:
-                        event.target
-                          .value,
-                    })
-                  )
-                }
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
-              >
-                <option value="MONTHLY">
-                  Monthly
-                </option>
-
-                <option value="YEARLY">
-                  Yearly
-                </option>
-              </select>
+              <div className="flex h-10 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700">
+                Annual only
+              </div>
             </div>
 
             {selectedPlan && (
               <div className="bg-slate-50 border border-slate-200 rounded-md p-3 space-y-2">
                 <InfoRow
-                  label="Monthly Price"
-                  value={formatMoney(
-                    selectedPlan.monthlyPrice
-                  )}
-                />
-
-                <InfoRow
-                  label="Yearly Price"
+                  label="Annual Price"
                   value={
                     selectedPlan.yearlyPrice
                       ? formatMoney(
                           selectedPlan.yearlyPrice
                         )
-                      : formatMoney(
-                          Number(
-                            selectedPlan.monthlyPrice ||
-                              0
-                          ) * 12
-                        )
+                      : "—"
                   }
                 />
 
@@ -1004,14 +965,7 @@ function SubscriptionTab({
           />
 
           <InfoRow
-            label="Monthly Plan Value"
-            value={formatMoney(
-              client.monthlyPrice
-            )}
-          />
-
-          <InfoRow
-            label="Yearly Plan Value"
+            label="Annual Plan Value"
             value={formatMoney(
               client.yearlyPrice
             )}
@@ -2530,12 +2484,7 @@ function BillingTab({
           tone="indigo"
         />
         <StatCard
-          label="Monthly Price"
-          value={formatMoney(billing.plan?.monthlyPrice)}
-          icon={CreditCard}
-        />
-        <StatCard
-          label="Yearly Price"
+          label="Annual Price"
           value={
             billing.plan?.yearlyPrice
               ? formatMoney(billing.plan.yearlyPrice)
@@ -2545,7 +2494,7 @@ function BillingTab({
         />
         <StatCard
           label="Billing Cycle"
-          value={billing.billingCycle || "—"}
+          value="Annual"
           icon={RefreshCw}
         />
       </div>
@@ -2573,7 +2522,7 @@ function BillingTab({
 
           <div className="mt-5 space-y-3">
             <InfoRow label="Plan" value={billing.plan?.name || "—"} />
-            <InfoRow label="Billing Cycle" value={billing.billingCycle || "—"} />
+            <InfoRow label="Billing Cycle" value="Annual" />
             <InfoRow
               label="Subscription Amount"
               value={formatMoney(billing.amount)}

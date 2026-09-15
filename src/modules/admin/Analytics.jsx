@@ -200,9 +200,9 @@ export default function Analytics() {
         />
 
         <StatCard
-          label="Monthly Recurring Value"
+          label="Annual Recurring Value"
           value={formatMoney(
-            summary.monthlyRecurringValue
+            summary.annualRecurringValue
           )}
           icon={DollarSign}
           tone="emerald"
@@ -413,12 +413,12 @@ export default function Analytics() {
 
         <div className="min-w-0 overflow-hidden bg-white border border-slate-200 rounded-xl p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition-shadow">
           <h3 className="text-sm font-bold tracking-tight text-slate-950">
-            Monthly Value by Client
+            Annual Value by Client
           </h3>
 
           <p className="text-xs text-slate-500 mt-1 mb-4">
-            Monthly-equivalent SaaS
-            subscription value.
+            Annual SaaS subscription
+            value.
           </p>
 
           <ResponsiveContainer
@@ -427,7 +427,7 @@ export default function Analytics() {
           >
             <BarChart
               data={
-                data.mrrByClient ||
+                data.arrByClient ||
                 []
               }
             >
@@ -465,8 +465,8 @@ export default function Analytics() {
               />
 
               <Bar
-                dataKey="monthlyValue"
-                name="Monthly Value"
+                dataKey="annualValue"
+                name="Annual Value"
                 fill="#10b981"
                 radius={[
                   4,

@@ -28,10 +28,15 @@ async function getOrCreateSettings() {
       key:
         SETTINGS_KEY,
     },
-    update: {},
+    update: {
+      defaultBillingCycle:
+        "YEARLY",
+    },
     create: {
       key:
         SETTINGS_KEY,
+      defaultBillingCycle:
+        "YEARLY",
     },
   });
 }
@@ -218,23 +223,16 @@ router.patch("/", async (req, res) => {
           .trim()
           .toUpperCase();
 
-      if (
-        ![
-          "MONTHLY",
-          "YEARLY",
-        ].includes(
-          cycle
-        )
-      ) {
+      if (cycle !== "YEARLY") {
         return res.status(400).json({
           success: false,
           message:
-            "Invalid billing cycle",
+            "Only annual billing is available",
         });
       }
 
       data.defaultBillingCycle =
-        cycle;
+        "YEARLY";
     }
 
     for (

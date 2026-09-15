@@ -44,7 +44,7 @@ function formatBilling(
       id: subscription.id,
       status: subscription.status,
       billingCycle:
-        subscription.billingCycle,
+        "YEARLY",
       startDate:
         subscription.startDate,
       renewalDate:
@@ -65,11 +65,6 @@ function formatBilling(
           subscription.plan.key,
         name:
           subscription.plan.name,
-        monthlyPrice:
-          Number(
-            subscription.plan
-              .monthlyPrice
-          ),
         yearlyPrice:
           subscription.plan
             .yearlyPrice

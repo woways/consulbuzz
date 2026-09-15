@@ -141,7 +141,7 @@ function OnboardClientModal({
     subdomain: "",
     primaryColor: "indigo",
     planKey: "basic",
-    billingCycle: "MONTHLY",
+    billingCycle: "YEARLY",
     adminName: "",
     adminEmail: "",
     adminPassword: "",
@@ -477,12 +477,12 @@ function OnboardClientModal({
                             <div className="mt-2 text-lg font-semibold text-slate-900">
                               ₹
                               {Number(
-                                plan.monthlyPrice
+                                plan.yearlyPrice || 0
                               ).toLocaleString(
                                 "en-IN"
                               )}
                               <span className="text-xs font-normal text-slate-500">
-                                /month
+                                /year
                               </span>
                             </div>
 
@@ -508,26 +508,9 @@ function OnboardClientModal({
                       Billing Cycle
                     </label>
 
-                    <select
-                      value={
-                        form.billingCycle
-                      }
-                      onChange={(e) =>
-                        updateField(
-                          "billingCycle",
-                          e.target.value
-                        )
-                      }
-                      className="w-full h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
-                    >
-                      <option value="MONTHLY">
-                        Monthly
-                      </option>
-
-                      <option value="YEARLY">
-                        Yearly
-                      </option>
-                    </select>
+                    <div className="flex h-10 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700">
+                      Annual only
+                    </div>
                   </div>
                 </>
               )}

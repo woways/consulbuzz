@@ -266,18 +266,18 @@ const NAV_GROUPS = [
   },
 
   {
-    key: "team-target",
-    label: "Team Target",
-    icon: Target,
-    items: ["team-target"],
-    direct: true,
-  },
-
-  {
     key: "my-referrals",
     label: "My Referrals",
     icon: Gift,
     items: ["my-referrals"],
+    direct: true,
+  },
+
+  {
+    key: "team-target",
+    label: "Team Target",
+    icon: Target,
+    items: ["team-target"],
     direct: true,
   },
 
@@ -290,6 +290,21 @@ const NAV_GROUPS = [
   },
 
 ];
+
+function placeMyReferralsBelowChats(groups) {
+  const next = Array.isArray(groups) ? groups.slice() : [];
+  const referralsIndex = next.findIndex((group) => group.key === "my-referrals");
+  const chatsIndex = next.findIndex((group) => group.key === "chats");
+
+  if (referralsIndex === -1 || chatsIndex === -1 || referralsIndex === chatsIndex + 1) {
+    return next;
+  }
+
+  const [referralsGroup] = next.splice(referralsIndex, 1);
+  const updatedChatsIndex = next.findIndex((group) => group.key === "chats");
+  next.splice(updatedChatsIndex + 1, 0, referralsGroup);
+  return next;
+}
 
 const PAGE_META = {
   dashboard: { label: "Dashboard" },
@@ -610,10 +625,6 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
   ] = useState("");
 
   const [
-    billingCycleView,
-    setBillingCycleView,
-  ] = useState("MONTHLY");
-  const [
     receiptOpen,
     setReceiptOpen,
   ] = useState(false);
@@ -674,6 +685,34 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
   useEffect(() => {
     setNavGroups(orderedNavGroups);
   }, [orderedNavGroups]);
+
+  useEffect(() => {
+    const userId = clientSession?.user?.id || "default";
+    const migrationKey = `cb_sidebar_referrals_below_chats_v1_${userId}`;
+
+    try {
+      if (window.localStorage.getItem(migrationKey) === "done") return;
+    } catch (error) {
+      console.error("Unable to read sidebar order migration state:", error);
+    }
+
+    setNavGroups((current) => {
+      const next = placeMyReferralsBelowChats(current);
+      const changed = next.some((group, index) => group.key !== current[index]?.key);
+
+      if (changed) {
+        persistSidebarOrder(next.map((group) => group.key));
+      }
+
+      return changed ? next : current;
+    });
+
+    try {
+      window.localStorage.setItem(migrationKey, "done");
+    } catch (error) {
+      console.error("Unable to save sidebar order migration state:", error);
+    }
+  }, [clientSession?.user?.id]);
 
   const dragIndexRef = useRef(null);
   const [dragOverKey, setDragOverKey] = useState(null);
@@ -999,13 +1038,6 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           0,
 
         admissions:
-          0,
-
-        mrr:
-          company
-            ?.subscription
-            ?.plan
-            ?.monthlyPrice ||
           0,
 
         plan,
@@ -1366,9 +1398,9 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
   }
 
   async function startSubscriptionPayment(
-    planKey,
-    billingCycle
+    planKey
   ) {
+    const billingCycle = "YEARLY";
     const paymentKey =
       `${planKey}:${billingCycle}`;
 
@@ -1401,7 +1433,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             orderData.order.currency,
           name: "Bispun",
           description:
-            `${orderData.plan.name} ${billingCycle.toLowerCase()} subscription`,
+            `${orderData.plan.name} annual subscription`,
           order_id:
             orderData.order.id,
           prefill: {
@@ -3384,28 +3416,6 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
   const timeGreeting = getTimeGreeting();
 
-  const annualSavingsPercent = (() => {
-    const percentages = (billingData.plans || [])
-      .map((billingPlan) => {
-        const monthly = Number(billingPlan.monthlyPrice || 0);
-        const yearly = Number(billingPlan.yearlyPrice || 0);
-
-        if (!monthly || !yearly) return 0;
-
-        const regularYearly = monthly * 12;
-        if (yearly >= regularYearly) return 0;
-
-        return Math.round(
-          ((regularYearly - yearly) / regularYearly) * 100
-        );
-      })
-      .filter((value) => value > 0);
-
-    return percentages.length
-      ? Math.max(...percentages)
-      : 0;
-  })();
-
   const sidebarCompact =
     sidebarCollapsed &&
     !mobileSidebarOpen;
@@ -4327,7 +4337,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
                       {billingData.subscription && (
                         <div className="text-xs text-slate-500 mt-1">
-                          {billingData.subscription.billingCycle} · Renewal{" "}
+                          Annual · Renewal{" "}
                           {billingData.subscription.renewalDate
                             ? new Date(
                                 billingData.subscription.renewalDate
@@ -4368,40 +4378,12 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       </h2>
 
                       <p className="mt-2 text-xs leading-5 text-slate-500">
-                        Compare features, switch billing cycles and upgrade without changing your existing CRM data.
+                        Compare annual plans and upgrade without changing your existing CRM data.
                       </p>
 
                       <div className="mt-5 flex justify-center">
-                        <div className="inline-flex items-center rounded-full border border-slate-200 bg-white p-1 shadow-sm">
-                          <button
-                            type="button"
-                            onClick={() => setBillingCycleView("MONTHLY")}
-                            className={`h-9 min-w-[108px] rounded-full px-4 text-xs font-bold transition-all ${
-                              billingCycleView === "MONTHLY"
-                                ? "bg-brand-600 text-white shadow-sm"
-                                : "text-slate-500 hover:text-slate-800"
-                            }`}
-                          >
-                            Monthly
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setBillingCycleView("YEARLY")}
-                            className={`relative h-9 min-w-[120px] rounded-full px-4 text-xs font-bold transition-all ${
-                              billingCycleView === "YEARLY"
-                                ? "bg-brand-600 text-white shadow-sm"
-                                : "text-slate-500 hover:text-slate-800"
-                            }`}
-                          >
-                            Annually
-
-                            {annualSavingsPercent > 0 && (
-                              <span className="absolute -right-3 -top-3 rounded-full bg-brand-600 px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-white shadow-brand-sm">
-                                Save {annualSavingsPercent}%
-                              </span>
-                            )}
-                          </button>
+                        <div className="inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-bold text-brand-700">
+                          Annual billing
                         </div>
                       </div>
                     </div>
@@ -4419,16 +4401,9 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           billingPlan.yearlyPrice !== undefined;
 
                         const selectedPrice =
-                          billingCycleView === "YEARLY" && yearlyAvailable
+                          yearlyAvailable
                             ? Number(billingPlan.yearlyPrice || 0)
-                            : Number(billingPlan.monthlyPrice || 0);
-
-                        const monthlyEquivalent =
-                          billingCycleView === "YEARLY" && yearlyAvailable
-                            ? Math.round(
-                                Number(billingPlan.yearlyPrice || 0) / 12
-                              )
-                            : Number(billingPlan.monthlyPrice || 0);
+                            : 0;
 
                         const planDescriptions = {
                           basic:
@@ -4550,24 +4525,11 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                         : "text-slate-400"
                                     }`}
                                   >
-                                    {billingCycleView === "YEARLY"
-                                      ? "/year"
-                                      : "/month"}
+                                    /year
                                   </div>
                                 </div>
 
-                                {billingCycleView === "YEARLY" &&
-                                  yearlyAvailable && (
-                                    <div
-                                      className={`mt-1 text-[12px] font-medium ${
-                                        isPopular
-                                          ? "text-brand-200"
-                                          : "text-brand-700"
-                                      }`}
-                                    >
-                                      ₹{monthlyEquivalent.toLocaleString("en-IN")}/month equivalent
-                                    </div>
-                                  )}
+
                               </div>
 
                               <div
@@ -4619,13 +4581,11 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                     type="button"
                                     disabled={
                                       Boolean(paymentProcessing) ||
-                                      (billingCycleView === "YEARLY" &&
-                                        !yearlyAvailable)
+                                      !yearlyAvailable
                                     }
                                     onClick={() =>
                                       startSubscriptionPayment(
-                                        billingPlan.key,
-                                        billingCycleView
+                                        billingPlan.key
                                       )
                                     }
                                     className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 ${
@@ -4635,15 +4595,14 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                     }`}
                                   >
                                     {paymentProcessing ===
-                                      `${billingPlan.key}:${billingCycleView}` && (
+                                      `${billingPlan.key}:YEARLY` && (
                                       <Loader2
                                         size={13}
                                         className="animate-spin"
                                       />
                                     )}
 
-                                    {billingCycleView === "YEARLY" &&
-                                    !yearlyAvailable
+                                    {!yearlyAvailable
                                       ? "Annual plan unavailable"
                                       : `Upgrade to ${billingPlan.name}`}
                                   </button>
@@ -4681,7 +4640,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                             >
                               <div>
                                 <div className="text-xs font-semibold text-slate-800">
-                                  {payment.plan.name} · {payment.billingCycle}
+                                  {payment.plan.name} · Annual
                                 </div>
                                 <div className="text-[12px] text-slate-500 mt-0.5">
                                   {new Date(
@@ -4884,7 +4843,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         </div>
 
                         <div className="mt-1 text-xs leading-5 text-slate-500">
-                          {receiptData.billingCycle} Billing
+                          Annual Billing
                           <br />
                           Renewal:{" "}
                           {receiptData.subscription?.renewalDate
@@ -4912,9 +4871,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                             Bispun {receiptData.plan?.name} Plan
                           </div>
                           <div className="mt-1 text-[13px] text-slate-500">
-                            {receiptData.billingCycle === "YEARLY"
-                              ? "Annual CRM subscription"
-                              : "Monthly CRM subscription"}
+                            Annual CRM subscription
                           </div>
                         </div>
 
@@ -4969,7 +4926,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           ["Status", receiptData.status || "CAPTURED"],
                           [
                             "Billing Cycle",
-                            receiptData.billingCycle || "—",
+                            "Annual",
                           ],
                         ].map(([label, value]) => (
                           <div

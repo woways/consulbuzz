@@ -54,17 +54,11 @@ function safeEqualHex(a, b) {
   }
 }
 
-function paymentAmount(plan, billingCycle) {
-  if (billingCycle === "YEARLY") {
-    return plan.yearlyPrice !== null &&
-      plan.yearlyPrice !== undefined
-      ? Number(plan.yearlyPrice)
-      : null;
-  }
-
-  return Number(
-    plan.monthlyPrice
-  );
+function paymentAmount(plan) {
+  return plan.yearlyPrice !== null &&
+    plan.yearlyPrice !== undefined
+    ? Number(plan.yearlyPrice)
+    : null;
 }
 
 router.get("/", async (req, res) => {
@@ -94,7 +88,7 @@ router.get("/", async (req, res) => {
           active: true,
         },
         orderBy: {
-          monthlyPrice: "asc",
+          yearlyPrice: "asc",
         },
       }),
 
@@ -122,7 +116,7 @@ router.get("/", async (req, res) => {
               status:
                 subscription.status,
               billingCycle:
-                subscription.billingCycle,
+                "YEARLY",
               amount: Number(
                 subscription.amount || 0
               ),
@@ -152,9 +146,6 @@ router.get("/", async (req, res) => {
             plan.tagline || "",
           description:
             plan.description || "",
-          monthlyPrice: Number(
-            plan.monthlyPrice
-          ),
           yearlyPrice:
             plan.yearlyPrice !== null
               ? Number(
@@ -169,7 +160,7 @@ router.get("/", async (req, res) => {
           id: payment.id,
           status: payment.status,
           billingCycle:
-            payment.billingCycle,
+            "YEARLY",
           amount: Number(
             payment.amount
           ),
@@ -222,27 +213,22 @@ router.post(
         .trim()
         .toLowerCase();
 
-      const billingCycle = String(
+      const requestedBillingCycle = String(
         req.body?.billingCycle ||
-          "MONTHLY"
+          "YEARLY"
       )
         .trim()
         .toUpperCase();
 
-      if (
-        ![
-          "MONTHLY",
-          "YEARLY",
-        ].includes(
-          billingCycle
-        )
-      ) {
+      if (requestedBillingCycle !== "YEARLY") {
         return res.status(400).json({
           success: false,
           message:
-            "Invalid billing cycle",
+            "Only annual billing is available",
         });
       }
+
+      const billingCycle = "YEARLY";
 
       const plan =
         await prisma.plan.findUnique({
@@ -260,10 +246,7 @@ router.post(
       }
 
       const amount =
-        paymentAmount(
-          plan,
-          billingCycle
-        );
+        paymentAmount(plan);
 
       if (
         amount === null ||
@@ -273,7 +256,7 @@ router.post(
         return res.status(400).json({
           success: false,
           message:
-            `${billingCycle === "YEARLY" ? "Yearly" : "Monthly"} pricing is unavailable for this plan`,
+            "Annual pricing is unavailable for this plan",
         });
       }
 
@@ -525,7 +508,7 @@ router.post(
             title:
               "Subscription payment successful",
             message:
-              `${paidTransaction?.plan?.name || "ConsulBuzz"} ${transaction.billingCycle.toLowerCase()} subscription payment of ₹${Number(transaction.amount).toLocaleString("en-IN")} was received successfully.`,
+              `${paidTransaction?.plan?.name || "Bispun"} annual subscription payment of ₹${Number(transaction.amount).toLocaleString("en-IN")} was received successfully.`,
             type:
               "SUCCESS",
             actionModule:
@@ -553,7 +536,7 @@ router.post(
                 currency:
                   paidTransaction.currency,
                 billingCycle:
-                  paidTransaction.billingCycle,
+                  "YEARLY",
                 provider:
                   paidTransaction.provider,
                 providerOrderId:
@@ -674,7 +657,7 @@ router.get(
           currency:
             payment.currency,
           billingCycle:
-            payment.billingCycle,
+            "YEARLY",
           provider:
             payment.provider,
           providerOrderId:

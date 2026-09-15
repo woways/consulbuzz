@@ -23,7 +23,7 @@ function getCurrentSubscription(
   );
 }
 
-function getMonthlyEquivalent(
+function getAnnualValue(
   subscription
 ) {
   if (
@@ -40,8 +40,8 @@ function getMonthlyEquivalent(
 
   return subscription.billingCycle ===
     "YEARLY"
-    ? amount / 12
-    : amount;
+    ? amount
+    : amount * 12;
 }
 
 function monthKey(date) {
@@ -123,8 +123,8 @@ router.get("/", async (req, res) => {
             subscriptionStatus:
               subscription
                 ?.status || null,
-            monthlyValue:
-              getMonthlyEquivalent(
+            annualValue:
+              getAnnualValue(
                 subscription
               ),
           };
@@ -151,7 +151,7 @@ router.get("/", async (req, res) => {
             client.planName ||
             "No Plan",
           clients: 0,
-          monthlyValue: 0,
+          annualValue: 0,
         });
       }
 
@@ -161,9 +161,9 @@ router.get("/", async (req, res) => {
       current.clients +=
         1;
 
-      current.monthlyValue +=
+      current.annualValue +=
         Number(
-          client.monthlyValue ||
+          client.annualValue ||
             0
         );
     }
@@ -303,12 +303,12 @@ router.get("/", async (req, res) => {
         0
       );
 
-    const monthlyRecurringValue =
+    const annualRecurringValue =
       clients.reduce(
         (sum, client) =>
           sum +
           Number(
-            client.monthlyValue ||
+            client.annualValue ||
               0
           ),
         0
@@ -321,9 +321,9 @@ router.get("/", async (req, res) => {
         totalClients,
         activeClients,
         totalUsers,
-        monthlyRecurringValue:
+        annualRecurringValue:
           Number(
-            monthlyRecurringValue.toFixed(
+            annualRecurringValue.toFixed(
               2
             )
           ),
@@ -394,21 +394,21 @@ router.get("/", async (req, res) => {
             })
           ),
 
-      mrrByClient:
+      arrByClient:
         clients
           .slice()
           .sort(
             (a, b) =>
-              b.monthlyValue -
-              a.monthlyValue
+              b.annualValue -
+              a.annualValue
           )
           .map(
             (client) => ({
               name:
                 client.name,
-              monthlyValue:
+              annualValue:
                 Number(
-                  client.monthlyValue.toFixed(
+                  client.annualValue.toFixed(
                     2
                   )
                 ),

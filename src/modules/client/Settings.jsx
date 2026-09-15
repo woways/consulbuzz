@@ -36,7 +36,20 @@ import {
   apiRequest,
 } from "../../lib/api";
 
-import { applyBrandTheme, BRAND_COLORS } from "../../lib/brandTheme";
+import { applyBrandTheme, BRAND_COLORS, BRAND_PALETTE, brandHex } from "../../lib/brandTheme";
+
+const QUICK_BRAND_COLOR_KEYS = [
+  "indigo",
+  "blue",
+  "teal",
+  "emerald",
+  "purple",
+  "orange",
+];
+
+const QUICK_BRAND_COLORS = BRAND_COLORS.filter((color) =>
+  QUICK_BRAND_COLOR_KEYS.includes(color.key)
+);
 
 const TABS = [
   {
@@ -79,7 +92,8 @@ const TABS = [
 
 
 function normalizeBrandColorForPicker(color) {
-  return color === "sky" ? "blue" : color;
+  const value = String(color || "indigo").trim();
+  return value === "sky" ? "blue" : value;
 }
 
 function getAccent(
@@ -193,6 +207,24 @@ export default function SettingsView({
         "indigo"
     )
   );
+
+  const [
+    customColor,
+    setCustomColor,
+  ] = useState(() =>
+    brandHex(
+      normalizeBrandColorForPicker(
+        primaryColor ||
+          tenant?.primaryColor ||
+          "indigo"
+      )
+    )
+  );
+
+  const [
+    customPaletteOpen,
+    setCustomPaletteOpen,
+  ] = useState(false);
 
   const [
     workspaceSettingsLoading,
@@ -573,6 +605,15 @@ export default function SettingsView({
         )
       );
 
+      setCustomColor(
+        brandHex(
+          normalizeBrandColorForPicker(
+            workspace.primaryColor ||
+              "indigo"
+          )
+        )
+      );
+
       setLogoPreview(
         workspace.logoUrl || ""
       );
@@ -639,6 +680,15 @@ export default function SettingsView({
         normalizeBrandColorForPicker(
           workspace.primaryColor ||
             "indigo"
+        )
+      );
+
+      setCustomColor(
+        brandHex(
+          normalizeBrandColorForPicker(
+            workspace.primaryColor ||
+              "indigo"
+          )
         )
       );
 
@@ -1928,7 +1978,11 @@ export default function SettingsView({
 
         {/* CONTENT */}
 
-        <section className="bg-white border border-slate-200 rounded-xl shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
+        <section
+          className={`bg-white border border-slate-200 rounded-xl shadow-[0_1px_2px_rgba(15,23,42,0.03)] ${
+            tab === "branding" ? "overflow-visible" : "overflow-hidden"
+          }`}
+        >
           <div className="px-6 py-5 border-b border-slate-200">
             <div className="flex items-center gap-2">
               {activeTab && (
@@ -2067,51 +2121,226 @@ export default function SettingsView({
                   Primary Color
                 </label>
 
-                <div className="flex gap-3 flex-wrap">
-                  {BRAND_COLORS.map(
-                    (
-                      color
-                    ) => {
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <div className="text-[15px] font-bold text-slate-900">
+                        System Colors
+                      </div>
+                      <div className="mt-1 text-[13px] text-slate-500">
+                        Choose a quick brand color or customize the full theme palette.
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5">
+                      <span
+                        className="h-5 w-5 rounded-full border border-black/10"
+                        style={{ backgroundColor: brandHex(selectedColor) }}
+                      />
+                      <span className="font-mono text-[12px] font-semibold uppercase text-slate-600">
+                        {brandHex(selectedColor)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap items-start gap-4">
+                    {QUICK_BRAND_COLORS.map((color) => {
                       const selected =
-                        selectedColor ===
-                        color.key;
+                        brandHex(selectedColor) === color.hex.toLowerCase();
 
                       return (
                         <button
-                          key={
-                            color.key
-                          }
+                          key={color.key}
                           type="button"
                           title={color.label}
                           aria-label={`Use ${color.label} as the primary brand color`}
                           onClick={() => {
-                            setSelectedColor(
-                              color.key
-                            );
-                            applyBrandTheme(
-                              color.key
-                            );
+                            setSelectedColor(color.key);
+                            setCustomColor(color.hex);
+                            applyBrandTheme(color.key);
                           }}
-                          style={{
-                            backgroundColor:
-                              color.hex,
-                          }}
-                          className={`relative w-10 h-10 rounded-xl ring-offset-2 transition-all ${
-                            selected
-                              ? "ring-2 ring-slate-900"
-                              : "ring-2 ring-transparent hover:ring-slate-300"
-                          }`}
+                          className="group flex w-[58px] flex-col items-center gap-2 text-center"
                         >
-                          {selected && (
-                            <Check
-                              size={15}
-                              className="absolute inset-0 m-auto text-white"
-                            />
-                          )}
+                          <span
+                            style={{ backgroundColor: color.hex }}
+                            className={`relative flex h-11 w-11 items-center justify-center rounded-full border border-black/10 ring-offset-2 transition-all group-hover:-translate-y-0.5 ${
+                              selected
+                                ? "ring-2 ring-brand-600 shadow-[0_6px_14px_rgba(79,70,229,0.18)]"
+                                : "ring-2 ring-transparent group-hover:ring-slate-300"
+                            }`}
+                          >
+                            {selected && (
+                              <Check
+                                size={16}
+                                strokeWidth={3}
+                                className="text-white drop-shadow-sm"
+                              />
+                            )}
+                          </span>
+
+                          <span
+                            className={`text-[12px] font-semibold ${
+                              selected ? "text-brand-700" : "text-slate-600"
+                            }`}
+                          >
+                            {color.label}
+                          </span>
                         </button>
                       );
-                    }
-                  )}
+                    })}
+
+                    <div className="relative ml-auto">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCustomPaletteOpen((current) => !current)
+                        }
+                        className={`group flex min-w-[92px] flex-col items-center gap-2 rounded-xl border px-3 py-2.5 transition-all ${
+                          customPaletteOpen
+                            ? "border-brand-300 bg-brand-50/70"
+                            : "border-dashed border-slate-300 bg-slate-50/50 hover:border-brand-300 hover:bg-brand-50/50"
+                        }`}
+                      >
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-brand-600 shadow-sm ring-1 ring-slate-200">
+                          <Plus size={17} />
+                        </span>
+                        <span className="text-[12px] font-semibold text-slate-700 group-hover:text-brand-700">
+                          Customize
+                        </span>
+                      </button>
+
+                      {customPaletteOpen && (
+                        <>
+                          <button
+                            type="button"
+                            className="fixed inset-0 z-[79] cursor-default bg-transparent"
+                            aria-label="Close custom color palette"
+                            onClick={() => setCustomPaletteOpen(false)}
+                          />
+
+                          <div className="fixed right-6 top-1/2 z-[80] w-[360px] max-w-[calc(100vw-48px)] -translate-y-1/2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.22)]">
+                            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3.5">
+                              <div>
+                                <div className="text-[14px] font-bold text-slate-900">
+                                  Custom Colors
+                                </div>
+                                <div className="mt-0.5 text-[11px] text-slate-500">
+                                  Choose from the full palette or enter an exact HEX color.
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => setCustomPaletteOpen(false)}
+                                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                                aria-label="Close custom colors"
+                              >
+                                <X size={15} />
+                              </button>
+                            </div>
+
+                            <div className="max-h-[calc(100vh-180px)] overflow-y-auto overscroll-contain p-4">
+                              <div className="grid grid-cols-10 gap-2">
+                                {BRAND_PALETTE.map((hex) => {
+                                  const selected =
+                                    brandHex(selectedColor) === hex.toLowerCase();
+
+                                  return (
+                                    <button
+                                      key={hex}
+                                      type="button"
+                                      title={hex.toUpperCase()}
+                                      aria-label={`Use ${hex} as the primary brand color`}
+                                      onClick={() => {
+                                        const normalized = hex.toLowerCase();
+                                        setSelectedColor(normalized);
+                                        setCustomColor(normalized);
+                                        applyBrandTheme(normalized);
+                                      }}
+                                      style={{ backgroundColor: hex }}
+                                      className={`relative h-6 w-6 justify-self-center rounded-md border border-black/10 ring-offset-1 transition hover:scale-110 ${
+                                        selected
+                                          ? "ring-2 ring-slate-900 shadow-sm"
+                                          : "ring-1 ring-transparent hover:ring-slate-300"
+                                      }`}
+                                    >
+                                      {selected && (
+                                        <Check
+                                          size={10}
+                                          strokeWidth={3}
+                                          className="absolute inset-0 m-auto text-white drop-shadow"
+                                        />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="mt-4 border-t border-slate-100 pt-4">
+                                <div className="text-[12px] font-semibold text-slate-800">
+                                  Exact HEX
+                                </div>
+
+                                <div className="mt-2 flex items-center gap-2">
+                                  <label
+                                    className="relative flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+                                    title="Open system color picker"
+                                  >
+                                    <span
+                                      className="h-6 w-6 rounded-md border border-black/10"
+                                      style={{ backgroundColor: customColor }}
+                                    />
+                                    <input
+                                      type="color"
+                                      value={/^#[0-9a-fA-F]{6}$/.test(customColor) ? customColor : "#4f46e5"}
+                                      onChange={(event) => {
+                                        const value = event.target.value.toLowerCase();
+                                        setCustomColor(value);
+                                        setSelectedColor(value);
+                                        applyBrandTheme(value);
+                                      }}
+                                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                                      aria-label="Choose a custom brand color"
+                                    />
+                                  </label>
+
+                                  <input
+                                    value={customColor}
+                                    onChange={(event) => {
+                                      const value = event.target.value.trim();
+                                      setCustomColor(value);
+
+                                      if (/^#[0-9a-fA-F]{6}$/.test(value)) {
+                                        const normalized = value.toLowerCase();
+                                        setSelectedColor(normalized);
+                                        applyBrandTheme(normalized);
+                                      }
+                                    }}
+                                    placeholder="#4F46E5"
+                                    maxLength={7}
+                                    className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 font-mono text-[13px] font-semibold uppercase text-slate-800 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                                  />
+                                </div>
+
+                                <button
+                                  type="button"
+                                  disabled={!/^#[0-9a-fA-F]{6}$/.test(customColor)}
+                                  onClick={() => {
+                                    const normalized = customColor.toLowerCase();
+                                    setSelectedColor(normalized);
+                                    applyBrandTheme(normalized);
+                                  }}
+                                  className="mt-3 h-10 w-full rounded-lg bg-brand-600 px-4 text-[13px] font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                  Apply Color
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -2122,23 +2351,18 @@ export default function SettingsView({
                       workspaceSettingsSaving ||
                       workspaceSettingsLoading
                     }
-                    className="h-10 rounded-lg bg-brand-600 px-4 text-[13px] font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 text-[13px] font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {workspaceSettingsSaving ? (
-                      <Loader2
-                        size={14}
-                        className="animate-spin"
-                      />
+                      <Loader2 size={14} className="animate-spin" />
                     ) : (
                       <Save size={14} />
                     )}
-                    {workspaceSettingsSaving
-                      ? "Saving..."
-                      : "Save Brand Color"}
+                    {workspaceSettingsSaving ? "Saving..." : "Save Brand Color"}
                   </button>
 
                   <div className="text-[13px] text-slate-500">
-                    Color changes preview instantly. Save it to keep the same color after refresh.
+                    Preview is instant. Save to keep this color after refresh.
                   </div>
                 </div>
               </div>

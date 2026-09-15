@@ -338,9 +338,9 @@ export default function Billing() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StatCard
-          label="Monthly Recurring Value"
+          label="Annual Recurring Value"
           value={formatMoney(
-            totals.monthlyRecurringValue
+            totals.annualRecurringValue
           )}
           icon={DollarSign}
           tone="indigo"
@@ -461,7 +461,7 @@ export default function Billing() {
                 </th>
 
                 <th className="px-4 py-3 text-left">
-                  Monthly Value
+                  Annual Value
                 </th>
 
                 <th className="px-4 py-3 text-left">
@@ -514,8 +514,7 @@ export default function Billing() {
                     </td>
 
                     <td className="px-4 py-3 text-slate-700">
-                      {client.billingCycle ||
-                        "—"}
+                      Annual
                     </td>
 
                     <td className="px-4 py-3 font-medium text-slate-900">
@@ -526,7 +525,7 @@ export default function Billing() {
 
                     <td className="px-4 py-3 font-medium text-indigo-700">
                       {formatMoney(
-                        client.monthlyEquivalent
+                        client.annualValue
                       )}
                     </td>
 
@@ -661,7 +660,7 @@ export default function Billing() {
                     </td>
 
                     <td className="px-4 py-3 text-slate-600">
-                      {payment.billingCycle}
+                      Annual
                     </td>
 
                     <td className="px-4 py-3 font-medium">

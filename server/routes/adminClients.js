@@ -58,13 +58,9 @@ function formatClient(company) {
 
     renewalDate: activeSubscription?.renewalDate || null,
 
-    billingCycle: activeSubscription?.billingCycle || null,
+    billingCycle: activeSubscription ? "YEARLY" : null,
 
     subscriptionStatus: activeSubscription?.status || null,
-
-    monthlyPrice: activeSubscription?.plan?.monthlyPrice
-      ? Number(activeSubscription.plan.monthlyPrice)
-      : 0,
 
     yearlyPrice: activeSubscription?.plan?.yearlyPrice
       ? Number(activeSubscription.plan.yearlyPrice)
@@ -179,7 +175,7 @@ router.get("/plans/available", async (req, res) => {
       },
 
       orderBy: {
-        monthlyPrice: "asc",
+        yearlyPrice: "asc",
       },
 
       include: {
@@ -200,8 +196,6 @@ router.get("/plans/available", async (req, res) => {
         name: plan.name,
         tagline: plan.tagline,
         description: plan.description,
-
-        monthlyPrice: Number(plan.monthlyPrice),
 
         yearlyPrice: plan.yearlyPrice
           ? Number(plan.yearlyPrice)
@@ -268,7 +262,6 @@ router.post("/", async (req, res) => {
       subdomain,
       primaryColor,
       planKey,
-      billingCycle,
       adminName,
       adminEmail,
       adminPassword,
@@ -296,10 +289,7 @@ router.post("/", async (req, res) => {
       .trim()
       .toLowerCase();
 
-    const selectedBillingCycle =
-      billingCycle === "YEARLY"
-        ? "YEARLY"
-        : "MONTHLY";
+    const selectedBillingCycle = "YEARLY";
 
     if (!companyName) {
       return res.status(400).json({
@@ -417,18 +407,20 @@ router.post("/", async (req, res) => {
     const passwordHash =
       await bcrypt.hash(password, 12);
 
+    if (
+      plan.yearlyPrice === null ||
+      plan.yearlyPrice === undefined ||
+      Number(plan.yearlyPrice) <= 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Annual pricing is unavailable for this plan",
+      });
+    }
+
     const startDate = new Date();
-
-    const renewalDate =
-      selectedBillingCycle === "YEARLY"
-        ? addMonths(startDate, 12)
-        : addMonths(startDate, 1);
-
-    const subscriptionAmount =
-      selectedBillingCycle === "YEARLY"
-        ? plan.yearlyPrice ||
-          Number(plan.monthlyPrice) * 12
-        : plan.monthlyPrice;
+    const renewalDate = addMonths(startDate, 12);
+    const subscriptionAmount = plan.yearlyPrice;
 
     const company = await prisma.$transaction(
       async (tx) => {
@@ -622,10 +614,7 @@ router.patch("/:id/subscription", async (req, res) => {
       .trim()
       .toLowerCase();
 
-    const billingCycle =
-      req.body?.billingCycle === "YEARLY"
-        ? "YEARLY"
-        : "MONTHLY";
+    const billingCycle = "YEARLY";
 
     if (!planKey) {
       return res.status(400).json({
@@ -686,16 +675,19 @@ router.patch("/:id/subscription", async (req, res) => {
 
     const renewalBase = new Date();
 
-    const renewalDate =
-      billingCycle === "YEARLY"
-        ? addMonths(renewalBase, 12)
-        : addMonths(renewalBase, 1);
+    if (
+      plan.yearlyPrice === null ||
+      plan.yearlyPrice === undefined ||
+      Number(plan.yearlyPrice) <= 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Annual pricing is unavailable for this plan",
+      });
+    }
 
-    const subscriptionAmount =
-      billingCycle === "YEARLY"
-        ? plan.yearlyPrice ||
-          Number(plan.monthlyPrice) * 12
-        : plan.monthlyPrice;
+    const renewalDate = addMonths(renewalBase, 12);
+    const subscriptionAmount = plan.yearlyPrice;
 
     const updatedSubscription =
       await prisma.$transaction(async (tx) => {
@@ -778,7 +770,7 @@ router.patch("/:id/subscription", async (req, res) => {
         id: updatedSubscription.id,
         status: updatedSubscription.status,
         billingCycle:
-          updatedSubscription.billingCycle,
+          "YEARLY",
         startDate:
           updatedSubscription.startDate,
         renewalDate:
@@ -793,9 +785,6 @@ router.patch("/:id/subscription", async (req, res) => {
           id: updatedSubscription.plan.id,
           key: updatedSubscription.plan.key,
           name: updatedSubscription.plan.name,
-          monthlyPrice: Number(
-            updatedSubscription.plan.monthlyPrice
-          ),
           yearlyPrice:
             updatedSubscription.plan.yearlyPrice
               ? Number(

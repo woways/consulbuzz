@@ -247,8 +247,8 @@ export default function AdminDashboard({
         admissions:
           usage.admissions || 0,
 
-        mrr:
-          billing.monthlyRecurringValue ||
+        arr:
+          billing.annualRecurringValue ||
           0,
       };
     }, [data]);
@@ -383,9 +383,9 @@ export default function AdminDashboard({
         />
 
         <AdminMetric
-          label="Monthly Recurring Value"
+          label="Annual Recurring Value"
           value={money(
-            totals.mrr
+            totals.arr
           )}
           icon={DollarSign}
           detail="Active SaaS subscription value"

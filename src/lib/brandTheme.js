@@ -20,6 +20,26 @@ export const BRAND_COLORS = [
   { key: "slate", label: "Slate", hex: "#334155" },
 ];
 
+// Expanded professional palette. These are additional swatches only;
+// the recommended BRAND_COLORS above stay first and are not duplicated here.
+export const BRAND_PALETTE = [
+  // Neutrals
+  "#000000", "#171717", "#262626", "#404040", "#525252", "#737373", "#a3a3a3", "#d4d4d4", "#e5e5e5", "#f5f5f5",
+  // Reds / oranges / yellows
+  "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f97316", "#fb923c", "#f59e0b", "#facc15", "#fde047",
+  "#881337", "#be123c", "#e11d48", "#f43f5e", "#fb7185", "#ea580c", "#fbbf24", "#eab308", "#a16207",
+  // Greens / teals / cyans
+  "#14532d", "#166534", "#15803d", "#22c55e", "#4ade80", "#365314", "#4d7c0f", "#84cc16", "#a3e635", "#bef264",
+  "#134e4a", "#115e59", "#0f766e", "#14b8a6", "#2dd4bf", "#164e63", "#0e7490", "#06b6d4", "#22d3ee", "#67e8f9",
+  // Blues / indigos / violets
+  "#172554", "#1e3a8a", "#1d4ed8", "#3b82f6", "#60a5fa", "#312e81", "#3730a3", "#4338ca", "#6366f1", "#818cf8",
+  "#4c1d95", "#5b21b6", "#6d28d9", "#8b5cf6", "#a78bfa", "#581c87", "#7e22ce", "#9333ea", "#a855f7", "#c084fc",
+  // Pinks / magentas / warm browns
+  "#701a75", "#86198f", "#a21caf", "#d946ef", "#e879f9", "#831843", "#9d174d", "#be185d", "#ec4899", "#f472b6",
+  "#431407", "#7c2d12", "#9a3412", "#b45309", "#92400e", "#78350f", "#713f12", "#854d0e", "#ca8a04", "#d97706",
+].filter((hex, index, all) => all.indexOf(hex) === index);
+
+
 export const BRAND_RAMPS = {
   emerald: {
     50: "240 253 244", 100: "220 252 231", 200: "187 247 208", 300: "134 239 172",
@@ -81,18 +101,80 @@ export const BRAND_RAMPS = {
 
 const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
 
-export function applyBrandTheme(colorKey) {
+const HEX_PATTERN = /^#[0-9a-f]{6}$/i;
+
+function normalizeHex(value) {
+  const raw = String(value || "").trim();
+  if (/^#[0-9a-f]{3}$/i.test(raw)) {
+    return `#${raw.slice(1).split("").map((char) => char + char).join("")}`.toLowerCase();
+  }
+  return HEX_PATTERN.test(raw) ? raw.toLowerCase() : null;
+}
+
+function hexToRgb(value) {
+  const hex = normalizeHex(value);
+  if (!hex) return null;
+  return {
+    r: parseInt(hex.slice(1, 3), 16),
+    g: parseInt(hex.slice(3, 5), 16),
+    b: parseInt(hex.slice(5, 7), 16),
+  };
+}
+
+function mixChannel(channel, target, amount) {
+  return Math.round(channel + (target - channel) * amount);
+}
+
+function mixRgb(rgb, target, amount) {
+  return `${mixChannel(rgb.r, target, amount)} ${mixChannel(rgb.g, target, amount)} ${mixChannel(rgb.b, target, amount)}`;
+}
+
+function customRamp(value) {
+  const rgb = hexToRgb(value);
+  if (!rgb) return null;
+
+  // Shade 600 is the exact company color. The remaining shades are generated
+  // automatically so existing brand-* / indigo-* utilities keep working.
+  return {
+    50: mixRgb(rgb, 255, 0.94),
+    100: mixRgb(rgb, 255, 0.86),
+    200: mixRgb(rgb, 255, 0.72),
+    300: mixRgb(rgb, 255, 0.54),
+    400: mixRgb(rgb, 255, 0.34),
+    500: mixRgb(rgb, 255, 0.16),
+    600: `${rgb.r} ${rgb.g} ${rgb.b}`,
+    700: mixRgb(rgb, 0, 0.14),
+    800: mixRgb(rgb, 0, 0.28),
+    900: mixRgb(rgb, 0, 0.42),
+    950: mixRgb(rgb, 0, 0.58),
+  };
+}
+
+export function isCustomBrandColor(value) {
+  return Boolean(normalizeHex(value));
+}
+
+export function applyBrandTheme(colorValue) {
   if (typeof document === "undefined") return;
-  const ramp = BRAND_RAMPS[colorKey] || BRAND_RAMPS.indigo;
+
+  const normalizedHex = normalizeHex(colorValue);
+  const ramp =
+    BRAND_RAMPS[colorValue] ||
+    (normalizedHex ? customRamp(normalizedHex) : null) ||
+    BRAND_RAMPS.indigo;
+
   const root = document.documentElement;
   SHADES.forEach((shade) => {
     root.style.setProperty(`--brand-${shade}`, ramp[shade]);
   });
 }
 
-export function brandHex(colorKey) {
+export function brandHex(colorValue) {
+  const normalizedHex = normalizeHex(colorValue);
+  if (normalizedHex) return normalizedHex;
+
   return (
-    BRAND_COLORS.find((color) => color.key === colorKey)?.hex ||
+    BRAND_COLORS.find((color) => color.key === colorValue)?.hex ||
     BRAND_COLORS.find((color) => color.key === "indigo")?.hex ||
     "#4f46e5"
   );

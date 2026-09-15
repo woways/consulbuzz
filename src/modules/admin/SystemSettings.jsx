@@ -153,9 +153,7 @@ export default function SystemSettings() {
           ),
 
         defaultBillingCycle:
-          data.settings
-            .defaultBillingCycle ||
-          "MONTHLY",
+          "YEARLY",
 
         defaultEmailNotifications:
           data.settings
@@ -535,29 +533,12 @@ export default function SystemSettings() {
 
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">
-              Default Billing Cycle
+              Billing Cycle
             </label>
 
-            <select
-              value={
-                form.defaultBillingCycle
-              }
-              onChange={(event) =>
-                setField(
-                  "defaultBillingCycle",
-                  event.target.value
-                )
-              }
-              className="w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-colors"
-            >
-              <option value="MONTHLY">
-                Monthly
-              </option>
-
-              <option value="YEARLY">
-                Yearly
-              </option>
-            </select>
+            <div className="flex h-10 w-full items-center rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700">
+              Annual only
+            </div>
           </div>
         </div>
       </div>

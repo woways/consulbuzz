@@ -145,7 +145,7 @@ const planDefinitions = {
       "Core Bispun CRM package",
     tagline:
       "Core CRM for small consultancies",
-    monthlyPrice: 2500,
+    monthlyPrice: 0,
     yearlyPrice: 27000,
 
     modules: [
@@ -166,7 +166,7 @@ const planDefinitions = {
       "Advanced CRM package for growing consultancies",
     tagline:
       "Adds walk-ins & career counselling",
-    monthlyPrice: 5000,
+    monthlyPrice: 0,
     yearlyPrice: 54000,
 
     modules: [
@@ -189,7 +189,7 @@ const planDefinitions = {
       "Complete Bispun CRM package",
     tagline:
       "Advanced customization, white-label and priority capabilities",
-    monthlyPrice: 7500,
+    monthlyPrice: 0,
     yearlyPrice: 81000,
 
     modules: [
@@ -519,23 +519,30 @@ async function seedStudentMentor() {
       },
     });
 
+  const annualRenewalDate = new Date();
+  annualRenewalDate.setFullYear(
+    annualRenewalDate.getFullYear() + 1
+  );
+
   if (!existingSubscription) {
     await prisma.subscription.create({
       data: {
         companyId: company.id,
         planId: proPlan.id,
         status: "ACTIVE",
-        billingCycle: "MONTHLY",
+        billingCycle: "YEARLY",
         startDate: new Date(),
-        renewalDate: new Date(
-          "2026-09-15T00:00:00.000Z"
-        ),
-        amount: 5000,
+        renewalDate: annualRenewalDate,
+        amount: 54000,
       },
     });
   } else if (
     existingSubscription.planId !==
-    proPlan.id
+      proPlan.id ||
+    existingSubscription.billingCycle !==
+      "YEARLY" ||
+    Number(existingSubscription.amount || 0) !==
+      54000
   ) {
     await prisma.subscription.update({
       where: {
@@ -545,8 +552,9 @@ async function seedStudentMentor() {
 
       data: {
         planId: proPlan.id,
-        billingCycle: "MONTHLY",
-        amount: 5000,
+        billingCycle: "YEARLY",
+        renewalDate: annualRenewalDate,
+        amount: 54000,
       },
     });
   }

@@ -64,11 +64,6 @@ function PlanCard({
       description:
         plan.description || "",
 
-      monthlyPrice:
-        String(
-          plan.monthlyPrice
-        ),
-
       yearlyPrice:
         plan.yearlyPrice !==
         null
@@ -94,7 +89,7 @@ function PlanCard({
     useState("");
 
   useEffect(() => {
-    setForm({ name: plan.name, tagline: plan.tagline || "", description: plan.description || "", monthlyPrice: String(plan.monthlyPrice), yearlyPrice: plan.yearlyPrice !== null ? String(plan.yearlyPrice) : "", active: plan.active });
+    setForm({ name: plan.name, tagline: plan.tagline || "", description: plan.description || "", yearlyPrice: plan.yearlyPrice !== null ? String(plan.yearlyPrice) : "", active: plan.active });
   }, [plan]);
 
   const Icon =
@@ -121,9 +116,6 @@ function PlanCard({
 
               description:
                 form.description,
-
-              monthlyPrice:
-                form.monthlyPrice,
 
               yearlyPrice:
                 form.yearlyPrice,
@@ -293,61 +285,32 @@ function PlanCard({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">
-              Monthly Price
-            </label>
+        <div>
+          <label className="block text-xs font-medium text-slate-600 mb-1">
+            Annual Price
+          </label>
 
-            <input
-              type="number"
-              min="0"
-              value={
-                form.monthlyPrice
-              }
-              onChange={(
-                event
-              ) =>
-                setForm(
-                  (current) => ({
-                    ...current,
-                    monthlyPrice:
-                      event.target
-                        .value,
-                  })
-                )
-              }
-              className="w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-colors"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">
-              Yearly Price
-            </label>
-
-            <input
-              type="number"
-              min="0"
-              value={
-                form.yearlyPrice
-              }
-              onChange={(
-                event
-              ) =>
-                setForm(
-                  (current) => ({
-                    ...current,
-                    yearlyPrice:
-                      event.target
-                        .value,
-                  })
-                )
-              }
-              placeholder="Optional"
-              className="w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-colors"
-            />
-          </div>
+          <input
+            type="number"
+            min="0"
+            value={
+              form.yearlyPrice
+            }
+            onChange={(
+              event
+            ) =>
+              setForm(
+                (current) => ({
+                  ...current,
+                  yearlyPrice:
+                    event.target
+                      .value,
+                })
+              )
+            }
+            placeholder="Annual subscription price"
+            className="w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-colors"
+          />
         </div>
 
         <div>
@@ -506,10 +469,10 @@ function PlanCard({
       </div>
 
       <div className="mt-5 pt-4 border-t border-slate-200 text-xs text-slate-500">
-        Current monthly value:{" "}
+        Current annual value:{" "}
         <strong>
           {formatMoney(
-            plan.monthlyPrice
+            plan.yearlyPrice
           )}
         </strong>
       </div>
