@@ -85,6 +85,7 @@ import ChatPanel from "./modules/client/ChatPanel";
 import TeamTarget from "./modules/client/TeamTarget";
 import Referrals from "./modules/client/Referrals";
 import MyStore from "./modules/client/MyStore";
+import { applyBrandTheme } from "./lib/brandTheme";
 
 
 function SidebarIcon({
@@ -819,6 +820,14 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
   const company =
     liveCompany;
+
+  useEffect(() => {
+    applyBrandTheme(
+      company?.settings?.primaryColor ||
+        company?.primaryColor ||
+        "indigo"
+    );
+  }, [company?.settings?.primaryColor, company?.primaryColor]);
 
   const user =
     clientSession?.user;
@@ -2498,7 +2507,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                               <div
                                 className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${
                                   session.current
-                                    ? "bg-[#5148E5] text-white"
+                                    ? "bg-brand-600 text-white"
                                     : "bg-slate-100 text-slate-700"
                                 }`}
                               >
@@ -3166,7 +3175,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
         <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center">
           <Icon
-            size={26}
+            size={24}
             strokeWidth={2}
             className={
               active
@@ -3524,7 +3533,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             setMobileSidebarOpen(true);
             setAccountActionsOpen(true);
           }}
-          className="relative w-9 h-9 rounded-full bg-[#5148E5] text-white flex items-center justify-center text-[12px] font-bold shadow-sm"
+          className="relative w-9 h-9 rounded-full bg-brand-600 text-white flex items-center justify-center text-[12px] font-bold shadow-sm"
           aria-label="Open account"
         >
           {initials}
@@ -3575,7 +3584,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             {!sidebarCompact ? (
               <div className="px-5 pt-4 pb-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-[#3b82f6] via-[#4f46e5] to-[#7c3aed] text-[13px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.28)]">
+                  <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-[13px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.28)]">
                     <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.35),transparent_42%)]" />
                     <span className="relative">CB</span>
                   </div>
@@ -3593,7 +3602,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             ) : (
               <div className="pt-4 pb-2 flex justify-center">
                 <div
-                  className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-[#3b82f6] via-[#4f46e5] to-[#7c3aed] text-[13px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.24)]"
+                  className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-[13px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.24)]"
                   title="ConsulBuzz"
                 >
                   <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.35),transparent_42%)]" />
@@ -3733,7 +3742,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                   {active && (
                                     <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-indigo-400" />
                                   )}
-                                  <ChildIcon size={20} strokeWidth={2} />
+                                  <ChildIcon size={18} strokeWidth={2} />
 
                                   {(key.includes("walkins") || key.includes("counselling")) && (
                                     <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-400" />
@@ -3951,7 +3960,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   <button
                     type="button"
                     onClick={openBilling}
-                    className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#7c3aed] px-3 text-[13px] font-bold text-white shadow-[0_8px_22px_rgba(79,70,229,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(79,70,229,0.30)]"
+                    className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-500 via-brand-600 to-brand-700 px-3 text-[13px] font-bold text-white shadow-brand-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-brand-lg"
                   >
                     <Rocket size={14} strokeWidth={2.2} />
                     Upgrade your plan
@@ -3961,7 +3970,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 <button
                   type="button"
                   onClick={openBilling}
-                  className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#2563eb] via-[#4f46e5] to-[#7c3aed] text-white shadow-[0_8px_20px_rgba(79,70,229,0.26)] transition-all duration-300 hover:scale-[1.04]"
+                  className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-white shadow-[0_8px_20px_rgba(79,70,229,0.26)] transition-all duration-300 hover:scale-[1.04]"
                   title="Upgrade your plan"
                 >
                   <Rocket size={17} strokeWidth={2.2} />
@@ -4086,7 +4095,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     <Bell size={18} />
 
                     {unreadNotificationCount > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-[#5148E5] text-white text-[13px] font-bold leading-[17px] text-center">
+                      <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-brand-600 text-white text-[13px] font-bold leading-[17px] text-center">
                         {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
                       </span>
                     )}
@@ -4163,7 +4172,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     aria-label="Open account menu"
                     title={user.name || tenant.name}
                   >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#5148E5] text-xs font-bold text-white ring-2 ring-white/10">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white ring-2 ring-white/10">
                       {initials}
                     </div>
 

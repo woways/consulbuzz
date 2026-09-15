@@ -2547,7 +2547,7 @@ function AdmissionsManager({
     return (
       <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-          <div className="rounded-xl bg-gradient-to-br from-[#4f46e5] via-[#4338ca] to-[#312e81] px-4 py-4 text-white">
+          <div className="rounded-xl bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 px-4 py-4 text-white">
             <div className="text-xs font-semibold text-white/70">
               Total Admissions
             </div>

@@ -247,11 +247,12 @@ export default function TeamTarget({ currentUser }) {
         <div className="mt-5 flex flex-col items-center gap-8 sm:flex-row sm:justify-between">
           <div className="relative h-44 w-44 flex-shrink-0">
             <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="#e0e7ff" strokeWidth="14" />
+              <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" strokeWidth="14" className="text-brand-100" />
               <circle
-                cx="60" cy="60" r="52" fill="none" stroke="#4f46e5" strokeWidth="14"
+                cx="60" cy="60" r="52" fill="none" stroke="currentColor" strokeWidth="14"
                 strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-                style={{ transition: "stroke-dashoffset 1s ease", filter: "drop-shadow(0 2px 6px rgba(79,70,229,.35))" }}
+                className="text-brand-600"
+                style={{ transition: "stroke-dashoffset 1s ease", filter: "drop-shadow(0 2px 6px rgb(var(--brand-600) / 0.35))" }}
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">

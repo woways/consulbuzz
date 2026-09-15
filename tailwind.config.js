@@ -1,4 +1,14 @@
 /** @type {import('tailwindcss').Config} */
+
+// brand-* and indigo-* both read the runtime CSS variables set by
+// src/lib/brandTheme.js. Changing the Branding colour rewrites those variables
+// and re-themes the whole platform. Semantic colours (accent/amber, success,
+// emerald/rose/red used for meaning) stay fixed and are NOT tied to the brand.
+const brandVar = (shade) => `rgb(var(--brand-${shade}) / <alpha-value>)`;
+const brandScale = Object.fromEntries(
+  [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map((s) => [s, brandVar(s)])
+);
+
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   safelist: [
@@ -11,20 +21,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Brand palette — matches Student Mentor exactly
-        brand: {
-          50:  "#eef2ff",
-          100: "#e0e7ff",
-          200: "#c7d2fe",
-          300: "#a5b4fc",
-          400: "#818cf8",
-          500: "#6366f1",
-          600: "#4f46e5",
-          700: "#4338ca",
-          800: "#3730a3",
-          900: "#312e81",
-          950: "#1e1b4b",
-        },
+        // Brand + indigo are themeable (driven by --brand-* variables).
+        brand: brandScale,
+        indigo: brandScale,
         accent: {
           50:  "#fffbeb",
           100: "#fef3c7",
@@ -45,12 +44,13 @@ export default {
         },
       },
       backgroundImage: {
-        "gradient-brand": "linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #6366f1 100%)",
+        "gradient-brand":
+          "linear-gradient(135deg, rgb(var(--brand-600)) 0%, rgb(var(--brand-500)) 50%, rgb(var(--brand-400)) 100%)",
       },
       boxShadow: {
-        "brand-sm": "0 2px 8px rgba(79, 70, 229, 0.15)",
-        "brand-md": "0 4px 16px rgba(79, 70, 229, 0.25)",
-        "brand-lg": "0 8px 32px rgba(79, 70, 229, 0.35)",
+        "brand-sm": "0 2px 8px rgb(var(--brand-600) / 0.15)",
+        "brand-md": "0 4px 16px rgb(var(--brand-600) / 0.25)",
+        "brand-lg": "0 8px 32px rgb(var(--brand-600) / 0.35)",
       },
     },
   },

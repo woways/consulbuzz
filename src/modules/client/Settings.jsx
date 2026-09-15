@@ -36,6 +36,8 @@ import {
   apiRequest,
 } from "../../lib/api";
 
+import { applyBrandTheme } from "../../lib/brandTheme";
+
 const TABS = [
   {
     k: "company",
@@ -77,33 +79,27 @@ const TABS = [
 const BRAND_COLORS = [
   {
     key: "indigo",
-    className:
-      "bg-indigo-600",
+    hex: "#4f46e5",
   },
   {
-    key: "emerald",
-    className:
-      "bg-emerald-600",
-  },
-  {
-    key: "amber",
-    className:
-      "bg-amber-600",
-  },
-  {
-    key: "rose",
-    className:
-      "bg-rose-600",
-  },
-  {
-    key: "purple",
-    className:
-      "bg-purple-600",
+    key: "blue",
+    hex: "#2563eb",
   },
   {
     key: "sky",
-    className:
-      "bg-sky-600",
+    hex: "#0284c7",
+  },
+  {
+    key: "teal",
+    hex: "#0d9488",
+  },
+  {
+    key: "emerald",
+    hex: "#059669",
+  },
+  {
+    key: "purple",
+    hex: "#7c3aed",
   },
 ];
 
@@ -119,8 +115,8 @@ function getAccent(
     );
 
   return (
-    item?.className ||
-    "bg-indigo-600"
+    item?.hex ||
+    "#4f46e5"
   );
 }
 
@@ -658,6 +654,11 @@ export default function SettingsView({
       });
 
       setSelectedColor(
+        workspace.primaryColor ||
+        "indigo"
+      );
+
+      applyBrandTheme(
         workspace.primaryColor ||
         "indigo"
       );
@@ -1816,9 +1817,7 @@ export default function SettingsView({
       <div className="bg-white border border-slate-200 rounded-xl px-5 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div
-            className={`w-10 h-10 rounded-xl ${getAccent(
-              selectedColor
-            )} text-white flex items-center justify-center text-[13px] font-bold overflow-hidden`}
+            className="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center text-[13px] font-bold overflow-hidden"
           >
             {logoPreview ? (
               <img
@@ -2099,15 +2098,22 @@ export default function SettingsView({
                             color.key
                           }
                           type="button"
-                          onClick={() =>
+                          onClick={() => {
                             setSelectedColor(
                               color.key
-                            )
-                          }
-                          className={`relative w-10 h-10 rounded-xl ${color.className} ring-offset-2 transition-all ${
+                            );
+                            applyBrandTheme(
+                              color.key
+                            );
+                          }}
+                          style={{
+                            backgroundColor:
+                              color.hex,
+                          }}
+                          className={`relative w-10 h-10 rounded-xl ring-offset-2 transition-all ${
                             selected
-                              ? "ring-2 ring-indigo-600"
-                              : "ring-2 ring-transparent hover:ring-indigo-200"
+                              ? "ring-2 ring-slate-900"
+                              : "ring-2 ring-transparent hover:ring-slate-300"
                           }`}
                         >
                           {selected && (

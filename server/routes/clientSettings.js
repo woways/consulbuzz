@@ -14,11 +14,11 @@ router.use(requireClientUser);
 
 const ALLOWED_COLORS = [
   "indigo",
-  "emerald",
-  "amber",
-  "rose",
-  "purple",
+  "blue",
   "sky",
+  "teal",
+  "emerald",
+  "purple",
 ];
 
 async function getActor(req) {

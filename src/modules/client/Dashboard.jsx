@@ -41,6 +41,7 @@ import {
 } from "recharts";
 
 import { apiRequest } from "../../lib/api";
+import { brandColor } from "../../lib/brandTheme";
 import { formatUiDate, formatUiTime, formatUiDateTime } from "../../lib/uiPreferences";
 
 const PIE_COLORS = [
@@ -102,7 +103,7 @@ function axisMoney(value) {
 }
 
 function LayoutDashboardIcon() {
-  return <Activity size={15} />;
+  return <Activity size={13} />;
 }
 
 function MetricCard({
@@ -224,6 +225,16 @@ export default function Dashboard({
   selectedYear = "all",
   uiPreferences,
 }) {
+  const accentColor = brandColor(600);
+  const pieColors = [
+    brandColor(600),
+    brandColor(500),
+    brandColor(400),
+    brandColor(300),
+    "#334155",
+    "#94a3b8",
+  ];
+
   const [data, setData] = useState({
     summary: {},
     revenueTrend: [],
@@ -1080,12 +1091,12 @@ export default function Dashboard({
                         type="monotone"
                         dataKey="received"
                         name="Received"
-                        stroke="#4f46e5"
+                        stroke={accentColor}
                         strokeWidth={2.75}
                         dot={false}
                         activeDot={{
                           r: 5,
-                          fill: "#4f46e5",
+                          fill: accentColor,
                           stroke: "#ffffff",
                           strokeWidth: 2,
                         }}
@@ -1133,9 +1144,9 @@ export default function Dashboard({
                                       entry.name
                                     }
                                     fill={
-                                      PIE_COLORS[
+                                      pieColors[
                                         index %
-                                          PIE_COLORS.length
+                                          pieColors.length
                                       ]
                                     }
                                   />
@@ -1180,10 +1191,10 @@ export default function Dashboard({
                                     className="h-2 w-2 flex-shrink-0 rounded-full"
                                     style={{
                                       background:
-                                        PIE_COLORS[
-                                          index %
-                                            PIE_COLORS.length
-                                        ],
+                                        pieColors[
+                                        index %
+                                          pieColors.length
+                                      ],
                                     }}
                                   />
 
@@ -1334,7 +1345,7 @@ export default function Dashboard({
                               ? "count"
                               : "admissions"
                           }
-                          fill="#4f46e5"
+                          fill={accentColor}
                           radius={[4, 4, 0, 0]}
                         />
                       </BarChart>
