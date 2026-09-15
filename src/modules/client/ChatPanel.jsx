@@ -105,6 +105,37 @@ const EMOJIS = [
 const MEETING_PREFIX = "\uD83D\uDCF9 Meeting started \u2014 join: ";
 const JITSI_BASE = "https://meet.jit.si/";
 
+function groupMessageReactions(reactions, myId) {
+  const groups = new Map();
+
+  (Array.isArray(reactions) ? reactions : []).forEach((reaction) => {
+    const emoji = String(reaction?.emoji || "").trim();
+    if (!emoji) return;
+
+    if (!groups.has(emoji)) {
+      groups.set(emoji, {
+        emoji,
+        count: 0,
+        reactedByMe: false,
+        names: [],
+      });
+    }
+
+    const group = groups.get(emoji);
+    group.count += 1;
+
+    if (reaction?.user?.id === myId) {
+      group.reactedByMe = true;
+    }
+
+    if (reaction?.user?.name) {
+      group.names.push(reaction.user.name);
+    }
+  });
+
+  return Array.from(groups.values());
+}
+
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
@@ -838,6 +869,7 @@ export default function ChatPanel({ currentUser }) {
                       const m = item.message;
                       const mine = m.sender?.id === myId;
                       const room = meetingRoomFromBody(m.body);
+                      const reactionGroups = groupMessageReactions(m.reactions, myId);
                       return (
                         <div key={item.key} className={`group flex items-end gap-2 ${mine ? "justify-end" : "justify-start"}`}>
                           {!mine && (
@@ -885,6 +917,41 @@ export default function ChatPanel({ currentUser }) {
                                 {formatTime(m.createdAt)}
                               </div>
                             </div>
+
+                            {reactionGroups.length > 0 && (
+                              <div
+                                className={`mt-1 flex flex-wrap items-center gap-1 ${
+                                  mine ? "justify-end" : "justify-start"
+                                }`}
+                              >
+                                {reactionGroups.map((reaction) => (
+                                  <button
+                                    key={reaction.emoji}
+                                    type="button"
+                                    title={
+                                      reaction.names.length
+                                        ? reaction.names.join(", ")
+                                        : "Message reaction"
+                                    }
+                                    onClick={() => reactToMessage(m.id, reaction.emoji)}
+                                    className={`inline-flex h-7 items-center gap-1 rounded-full border px-2 text-[12px] font-medium transition ${
+                                      reaction.reactedByMe
+                                        ? "border-indigo-200 bg-indigo-50 text-indigo-700 shadow-sm"
+                                        : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/60"
+                                    }`}
+                                  >
+                                    <span className="text-[14px] leading-none">
+                                      {reaction.emoji}
+                                    </span>
+                                    {reaction.count > 1 && (
+                                      <span className="text-[11px] tabular-nums">
+                                        {reaction.count}
+                                      </span>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
 
                             <div className={`relative mt-1 flex items-center gap-1 ${mine ? "justify-end" : "justify-start"}`}>
                               {!m.deletedForEveryone && <div className="relative">
