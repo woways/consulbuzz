@@ -181,7 +181,7 @@ export default function ClientLogin() {
             <div className="flex items-center gap-3">
               <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-[12px] border border-blue-400/30 bg-white/[0.06] shadow-[0_8px_30px_rgba(37,99,235,0.15)]">
                 <span className="text-[12px] font-black tracking-[0.08em] text-white">
-                  CB
+                  BI
                 </span>
               </div>
 
@@ -523,7 +523,7 @@ export default function ClientLogin() {
 
       <div className="mt-5 space-y-3">
         <a
-          href="mailto:support@consulbuzz.com"
+          href="mailto:support@bispun.com"
           className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 transition-colors hover:bg-slate-50"
         >
           <Mail size={17} className="text-blue-600" />
@@ -534,7 +534,7 @@ export default function ClientLogin() {
             </div>
 
             <div className="mt-0.5 text-[13px] font-semibold text-slate-800">
-              support@consulbuzz.com
+              support@bispun.com
             </div>
           </div>
         </a>
@@ -579,7 +579,7 @@ export default function ClientLogin() {
 
       <p className="mt-4 text-center text-[10px] leading-4 text-slate-400">
         Support details shown here are temporary and will be replaced
-        with official ConsulBuzz contact information before launch.
+        with official Bispun contact information before launch.
       </p>
     </div>
   </div>
