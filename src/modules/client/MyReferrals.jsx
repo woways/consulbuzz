@@ -91,7 +91,7 @@ function HowItWorks() {
           Tap a step to learn more
         </div>
       </div>
-      <div className="px-6 py-8 sm:px-10">
+      <div className="px-6 py-9 sm:px-10">
         <div className="relative">
           {/* connector segments between nodes */}
           <div className="pointer-events-none absolute top-[23px] hidden h-1 sm:block" style={{ left: "19%", width: "12%" }}>
@@ -113,7 +113,7 @@ function HowItWorks() {
                   key={s.key}
                   type="button"
                   onClick={() => setActive(i)}
-                  className="group flex flex-col items-center gap-3 text-center"
+                  className="group flex flex-col items-center gap-4 text-center"
                 >
                   <span
                     className={`flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm transition ${
@@ -130,7 +130,7 @@ function HowItWorks() {
             })}
           </div>
 
-          <div className="mt-7 rounded-2xl border border-brand-100 bg-brand-50/60 p-5">
+          <div className="mt-8 rounded-2xl border border-brand-100 bg-brand-50/60 p-5">
             <div className="text-[15px] font-semibold text-brand-800">{Step.title}</div>
             <div className="mt-1 text-[13px] text-slate-600">{Step.body}</div>
           </div>
@@ -244,7 +244,7 @@ export default function MyReferrals({ currentUser }) {
   const convRate = stats.total > 0 ? Math.round((stats.admitted / stats.total) * 100) : 0;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-7">
       <div className="flex items-center justify-end">
         <button
           type="button"
@@ -264,10 +264,10 @@ export default function MyReferrals({ currentUser }) {
       )}
 
       {/* SHARE STRIP */}
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_auto]">
+      <div className="grid gap-5 lg:grid-cols-[1.5fr_auto]">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)]">
           <div className="text-[20px] font-semibold tracking-[-0.015em] text-slate-950">Share &amp; earn</div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
               <div className="text-[12px] font-semibold uppercase tracking-wide text-slate-400">Referral code</div>
               <div className="mt-1 flex items-center justify-between gap-2">
@@ -297,7 +297,7 @@ export default function MyReferrals({ currentUser }) {
               </div>
             </div>
           </div>
-          <div className="mt-3 flex gap-2">
+          <div className="mt-4 flex gap-3">
             <a
               href={`https://wa.me/?text=${encodeURIComponent(`Check this out: ${link}`)}`}
               target="_blank"
@@ -339,7 +339,7 @@ export default function MyReferrals({ currentUser }) {
       </div>
 
       {/* STATS */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-5 lg:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)]">
           <div className="flex items-center justify-between">
             <div>
@@ -386,7 +386,7 @@ export default function MyReferrals({ currentUser }) {
             <div className="mt-1 text-[12px] text-slate-500">Share your link to see your referrals appear here.</div>
           </div>
         ) : (
-          <div className="mt-4 space-y-3">
+          <div className="mt-5 space-y-4">
             {referrals.map((r) => (
               <div key={r.id} className="rounded-xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_6px_18px_rgba(79,70,229,0.08)]">
                 <div className="flex flex-wrap items-center gap-3">
@@ -410,7 +410,7 @@ export default function MyReferrals({ currentUser }) {
                   </span>
                 </div>
                 {/* stage rail */}
-                <div className="mt-3 flex items-center gap-1.5">
+                <div className="mt-4 flex items-center gap-1.5">
                   {STAGE_ORDER.map((st, i) => (
                     <span
                       key={st}

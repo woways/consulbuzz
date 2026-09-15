@@ -33,9 +33,9 @@ export default function Referrals({ currentUser }) {
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-7">
       {/* Header + tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-brand-600">Rewards</div>
           <h1 className="text-[26px] font-bold tracking-[-0.02em] text-slate-900">Referrals</h1>

@@ -611,25 +611,7 @@ function StreamModal({
               <option value="black">Black</option>
             </select>
 
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span>
-                Recommended:
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setColor(
-                    recommendedStreamColor(
-                      name
-                    )
-                  );
-                  setColorTouched(false);
-                }}
-                className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-100"
-              >
-                Use recommended colour
-              </button>
-            </div>
+            
           </div>
         </Field>
 

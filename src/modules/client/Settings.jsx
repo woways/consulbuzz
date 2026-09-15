@@ -2975,7 +2975,7 @@ export default function SettingsView({
                             "Show workspace alerts in the notification bell.",
                           icon: Bell,
                           defaultText:
-                            "Available inside ConsulBuzz",
+                            "Available inside Bispun",
                         },
                         {
                           key: "emailEnabled",

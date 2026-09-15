@@ -142,7 +142,7 @@ const planDefinitions = {
   basic: {
     name: "Basic",
     description:
-      "Core ConsulBuzz CRM package",
+      "Core Bispun CRM package",
     tagline:
       "Core CRM for small consultancies",
     monthlyPrice: 2500,
@@ -186,7 +186,7 @@ const planDefinitions = {
   advanced: {
     name: "Advanced",
     description:
-      "Complete ConsulBuzz CRM package",
+      "Complete Bispun CRM package",
     tagline:
       "Advanced customization, white-label and priority capabilities",
     monthlyPrice: 7500,
@@ -374,7 +374,7 @@ async function seedPlans() {
 
 async function seedSuperAdmin() {
   console.log(
-    "Seeding ConsulBuzz Super Admin..."
+    "Seeding Bispun Super Admin..."
   );
 
   const passwordHash =
@@ -391,7 +391,7 @@ async function seedSuperAdmin() {
 
     update: {
       name:
-        "ConsulBuzz Super Admin",
+        "Bispun Super Admin",
       passwordHash,
       role: "SUPER_ADMIN",
       active: true,
@@ -400,7 +400,7 @@ async function seedSuperAdmin() {
 
     create: {
       name:
-        "ConsulBuzz Super Admin",
+        "Bispun Super Admin",
       email:
         SUPER_ADMIN_EMAIL,
       passwordHash,
@@ -638,7 +638,7 @@ async function seedStudentMentor() {
 async function main() {
   console.log("");
   console.log(
-    "Starting ConsulBuzz database seed..."
+    "Starting Bispun database seed..."
   );
   console.log("");
 
@@ -650,7 +650,7 @@ async function main() {
 
   console.log("");
   console.log(
-    "ConsulBuzz seed completed successfully."
+    "Bispun seed completed successfully."
   );
   console.log("");
 }

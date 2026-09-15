@@ -124,22 +124,24 @@ function MetricCard({
 
   return (
     <div className="group relative min-w-0 overflow-hidden rounded-xl border border-slate-100 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.05)] transition-all duration-200 hover:-translate-y-1 hover:border-slate-200 hover:shadow-[0_14px_32px_rgba(15,23,42,0.12)]">
-      <div
-        className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-white ${bar}`}
-      >
-        <Icon size={20} />
+      <div className="flex items-center gap-3">
+        <div
+          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-white ${bar}`}
+        >
+          <Icon size={20} />
+        </div>
+
+        <div className="min-w-0 text-[16px] font-bold text-slate-800 break-words">
+          {label}
+        </div>
       </div>
 
-      <div className="mt-3 text-[24px] leading-none font-extrabold tracking-tight text-slate-900 break-words">
+      <div className="mt-3 text-[22px] leading-none font-extrabold tracking-tight text-slate-900 break-words">
         {value}
       </div>
 
-      <div className="mt-2 text-[15px] font-bold text-slate-800 break-words">
-        {label}
-      </div>
-
       {detail ? (
-        <div className="mt-0.5 text-[12px] text-slate-400 break-words">
+        <div className="mt-2 text-[12px] text-slate-400 break-words">
           {detail}
         </div>
       ) : null}
@@ -1824,7 +1826,7 @@ export default function Dashboard({
             <div className="h-16 px-5 sm:px-6 bg-white border-b border-slate-200 flex items-center justify-between">
               <div>
                 <div className="text-base font-bold text-slate-950">
-                  ConsulBuzz Calendar
+                  Bispun Calendar
                 </div>
                 <div className="text-[13px] text-slate-500 mt-0.5">
                   Meetings, follow-ups, counselling, admissions and payment reminders.

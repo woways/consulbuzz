@@ -44,9 +44,9 @@ export default function AdminLogin() {
 
       <div className="relative w-full max-w-[430px]">
         <div className="flex items-center justify-center gap-3 mb-10">
-          <div className="w-10 h-10 rounded-xl border border-white/10 bg-white/[0.06] flex items-center justify-center text-[11px] font-bold tracking-[0.08em]">CB</div>
+          <div className="w-10 h-10 rounded-xl border border-white/10 bg-white/[0.06] flex items-center justify-center text-[11px] font-bold tracking-[0.08em]">BI</div>
           <div>
-            <div className="text-sm font-bold tracking-[-0.02em]">ConsulBuzz</div>
+            <div className="text-sm font-bold tracking-[-0.02em]">Bispun</div>
             <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Platform Administration</div>
           </div>
         </div>

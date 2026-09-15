@@ -116,9 +116,9 @@ export default function ReferralHome({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-7">
       {/* KPI CARDS */}
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-5 sm:grid-cols-3">
         <StatCard
           label="Total Referrals"
           value={stats?.total ?? 0}
@@ -145,8 +145,8 @@ export default function ReferralHome({
         <div className="grid lg:grid-cols-[1fr_300px]">
           <div className="p-5 sm:p-6">
             {/* Identity */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex min-w-0 items-center gap-4">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-5">
                 <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-[22px] font-bold text-white shadow-sm">
                   {initialsOf(currentUser?.name)}
                 </div>
@@ -172,7 +172,7 @@ export default function ReferralHome({
               </div>
             </div>
 
-            <div className="my-5 h-px bg-slate-100" />
+            <div className="my-6 h-px bg-slate-100" />
 
             {/* Referral code */}
             <div>
@@ -180,7 +180,7 @@ export default function ReferralHome({
                 Your Referral Code
               </div>
 
-              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row">
                 <div className="flex h-12 min-w-0 flex-1 items-center rounded-xl border border-slate-200 bg-slate-50 px-4">
                   <span className="truncate text-[16px] font-bold tracking-[0.03em] text-slate-900">
                     {code || "…"}
@@ -215,7 +215,7 @@ export default function ReferralHome({
                 </p>
               </div>
 
-              <div className="mt-5 space-y-3">
+              <div className="mt-6 space-y-4">
                 <a
                   href={`https://wa.me/?text=${encodeURIComponent(
                     `Check this out: ${link}`
@@ -242,7 +242,7 @@ export default function ReferralHome({
                 </button>
               </div>
 
-              <div className="mt-auto pt-5 text-[12px] leading-5 text-slate-400">
+              <div className="mt-auto pt-6 text-[12px] leading-5 text-slate-400">
                 Your referral code and link are unique to your account.
               </div>
             </div>
@@ -255,7 +255,7 @@ export default function ReferralHome({
         <div className="absolute inset-y-0 left-0 w-2 bg-indigo-600" />
         <div className="grid min-h-[170px] md:grid-cols-[1fr_220px]">
           <div className="flex flex-col justify-center p-5 pl-7 sm:p-6 sm:pl-8">
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-5">
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
                 <Gift size={21} />
               </div>
@@ -271,7 +271,7 @@ export default function ReferralHome({
               </div>
             </div>
 
-            <div className="mt-5">
+            <div className="mt-7">
               <button
                 type="button"
                 onClick={onGoReferrals}
@@ -305,7 +305,7 @@ export default function ReferralHome({
           <div className="relative">
             <div className="pointer-events-none absolute left-[13%] right-[13%] top-6 hidden h-px bg-indigo-200 md:block" />
 
-            <div className="relative z-10 grid gap-5 md:grid-cols-4">
+            <div className="relative z-10 grid gap-6 md:grid-cols-4">
               {HOW_STEPS.map((step, index) => {
                 const Icon = step.icon;
                 const isActive = index === active;
@@ -347,7 +347,7 @@ export default function ReferralHome({
               })}
             </div>
 
-            <div className="mt-6 rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3.5">
+            <div className="mt-7 rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3.5">
               <div className="text-[14px] font-semibold text-indigo-800">
                 {Step.title}
               </div>
@@ -372,7 +372,7 @@ export default function ReferralHome({
           </p>
         </div>
 
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
           <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 transition-all duration-200 hover:border-indigo-300 hover:bg-indigo-50/40">
             <div className="flex items-center justify-between gap-3">
               <span className="text-[15px] font-semibold text-slate-900">
@@ -433,7 +433,7 @@ export default function ReferralHome({
           Frequently Asked Questions
         </h2>
 
-        <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)]">
+        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:border-indigo-400 hover:ring-2 hover:ring-indigo-100 hover:shadow-[0_8px_22px_rgba(79,70,229,0.08)]">
           {FAQS.map(([question, answer], index) => (
             <div
               key={question}

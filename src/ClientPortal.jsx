@@ -1387,7 +1387,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             orderData.order.amount,
           currency:
             orderData.order.currency,
-          name: "ConsulBuzz",
+          name: "Bispun",
           description:
             `${orderData.plan.name} ${billingCycle.toLowerCase()} subscription`,
           order_id:
@@ -1536,7 +1536,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       <html>
         <head>
           <meta charset="utf-8" />
-          <title>ConsulBuzz Payment Receipt</title>
+          <title>Bispun Payment Receipt</title>
 
           <script src="https://cdn.tailwindcss.com"></script>
 
@@ -2173,7 +2173,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   UI Preferences
                 </h3>
                 <p className="mt-1 text-[13px] leading-5 text-slate-500">
-                  Personalize how ConsulBuzz looks and feels for your account.
+                  Personalize how Bispun looks and feels for your account.
                 </p>
               </div>
 
@@ -2421,7 +2421,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     Active Sessions
                   </h3>
                   <p className="mt-1 text-[13px] leading-5 text-slate-500">
-                    See every device currently signed in to this ConsulBuzz account.
+                    See every device currently signed in to this Bispun account.
                   </p>
                 </div>
 
@@ -2759,7 +2759,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               )}
 
               <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] leading-5 text-amber-800">
-                Multiple devices can share the same public IP when they use the same Wi-Fi or office network. ConsulBuzz identifies sessions by a unique secure session ID, not by IP address.
+                Multiple devices can share the same public IP when they use the same Wi-Fi or office network. Bispun identifies sessions by a unique secure session ID, not by IP address.
               </div>
             </div>
           )}
@@ -3580,18 +3580,18 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           </button>
 
           <div className="h-full flex flex-col overflow-visible">
-            {/* CONSULBUZZ PRODUCT IDENTITY — TOP LEFT */}
+            {/* BISPUN PRODUCT IDENTITY — TOP LEFT */}
             {!sidebarCompact ? (
               <div className="px-5 pt-4 pb-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-[13px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.28)]">
                     <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.35),transparent_42%)]" />
-                    <span className="relative">CB</span>
+                    <span className="relative">BI</span>
                   </div>
 
                   <div className="min-w-0 overflow-visible">
                     <div className="whitespace-nowrap text-[17px] font-black leading-none tracking-[-0.03em] text-white">
-                      Consul<span className="text-[#4f8cff]">Buzz</span>
+                      Bis<span className="text-[#4f8cff]">pun</span>
                     </div>
                     <div className="mt-1 whitespace-nowrap text-[8px] font-bold uppercase tracking-[0.20em] text-slate-500">
                       CRM Made Simple
@@ -3603,10 +3603,10 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               <div className="pt-4 pb-2 flex justify-center">
                 <div
                   className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-[13px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.24)]"
-                  title="ConsulBuzz"
+                  title="Bispun"
                 >
                   <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.35),transparent_42%)]" />
-                  <span className="relative">CB</span>
+                  <span className="relative">BI</span>
                 </div>
               </div>
             )}
@@ -4777,7 +4777,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       <div>
                         <div className="flex items-center gap-3">
                           <div className="w-11 h-11 rounded-2xl bg-[#071321] text-white flex items-center justify-center text-[13px] font-black">
-                            CB
+                            BI
                           </div>
 
                           <div>
@@ -4895,7 +4895,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       <div className="grid grid-cols-[1fr_auto] px-4 py-3 border-t border-slate-100">
                         <div>
                           <div className="text-sm font-semibold text-slate-900">
-                            ConsulBuzz {receiptData.plan?.name} Plan
+                            Bispun {receiptData.plan?.name} Plan
                           </div>
                           <div className="mt-1 text-[13px] text-slate-500">
                             {receiptData.billingCycle === "YEARLY"
@@ -4984,7 +4984,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       </div>
 
                       <div className="text-[12px] text-slate-400 sm:text-right">
-                        ConsulBuzz CRM
+                        Bispun CRM
                         <br />
                         Subscription Receipt
                       </div>

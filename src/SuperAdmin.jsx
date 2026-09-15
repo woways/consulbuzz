@@ -475,7 +475,7 @@ export default function SuperAdmin() {
 
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-slate-950 text-white text-sm font-bold flex items-center justify-center shadow-sm">
-              CB
+              BI
             </div>
 
             <div className="min-w-0">
@@ -620,7 +620,7 @@ export default function SuperAdmin() {
 
             <div ref={profileMenuRef} className="relative">
               <button type="button" onClick={()=>setProfileMenuOpen((current)=>!current)} className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-colors">
-                <div className="hidden sm:block text-right"><div className="text-xs font-semibold text-slate-800">{adminUser?.name || "ConsulBuzz Admin"}</div><div className="text-[10px] text-slate-500">Super Admin</div></div>
+                <div className="hidden sm:block text-right"><div className="text-xs font-semibold text-slate-800">{adminUser?.name || "Bispun Admin"}</div><div className="text-[10px] text-slate-500">Super Admin</div></div>
                 <div className="w-9 h-9 rounded-full bg-slate-950 text-white text-xs font-semibold flex items-center justify-center">{adminInitials()}</div>
                 <ChevronDown size={14} className={`text-slate-400 transition-transform ${profileMenuOpen ? "rotate-180" : ""}`} />
               </button>
