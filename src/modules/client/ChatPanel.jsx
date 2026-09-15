@@ -28,6 +28,12 @@ import {
   Archive,
   Mail,
   Reply,
+  MoreVertical,
+  Trash2,
+  Eraser,
+  ListChecks,
+  Square,
+  CheckSquare,
 } from "lucide-react";
 
 import MeetingRoom from "./MeetingRoom";
@@ -120,6 +126,13 @@ export default function ChatPanel({ currentUser }) {
   const [search, setSearch] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [reactionOpenId, setReactionOpenId] = useState(null);
+  const [messageMenuId, setMessageMenuId] = useState(null);
+  const [threadSearchOpen, setThreadSearchOpen] = useState(false);
+  const [threadSearch, setThreadSearch] = useState("");
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedConversationIds, setSelectedConversationIds] = useState([]);
+  const [deleting, setDeleting] = useState(false);
 
   const [newOpen, setNewOpen] = useState(false);
   const [users, setUsers] = useState([]);
@@ -181,6 +194,38 @@ export default function ChatPanel({ currentUser }) {
           message.id === messageId
             ? { ...message, reactions: Array.isArray(reactions) ? reactions : [] }
             : message
+        )
+      );
+    });
+
+    socket.on("message:deleted", ({ messageId, scope }) => {
+      if (scope !== "everyone") return;
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === messageId
+            ? {
+                ...message,
+                body: "",
+                deletedForEveryone: true,
+                pinned: false,
+                reactions: [],
+                attachments: [],
+          }
+            : message
+        )
+      );
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.lastMessage?.id === messageId
+            ? {
+                ...conversation,
+                lastMessage: {
+                  ...conversation.lastMessage,
+                  body: "This message was deleted",
+                  deletedForEveryone: true,
+                },
+              }
+            : conversation
         )
       );
     });
@@ -306,6 +351,7 @@ export default function ChatPanel({ currentUser }) {
   }
 
   async function togglePin(message) {
+    if (message.deletedForEveryone) return;
     const next = !message.pinned;
     setMessages((current) =>
       current.map((m) => (m.id === message.id ? { ...m, pinned: next } : m))
@@ -319,6 +365,96 @@ export default function ChatPanel({ currentUser }) {
       setMessages((current) =>
         current.map((m) => (m.id === message.id ? { ...m, pinned: !next } : m))
       );
+    }
+  }
+
+  async function deleteMessage(message, scope) {
+    if (!message?.id || deleting) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await apiRequest(`/api/client/chat/messages/${message.id}?scope=${scope}`, {
+        method: "DELETE",
+      });
+      if (scope === "everyone") {
+        setMessages((current) =>
+          current.map((item) =>
+            item.id === message.id
+              ? {
+                  ...item,
+                  body: "",
+                  deletedForEveryone: true,
+                  pinned: false,
+                  reactions: [],
+                  attachments: [],
+                }
+              : item
+          )
+        );
+      } else {
+        setMessages((current) => current.filter((item) => item.id !== message.id));
+      }
+      setMessageMenuId(null);
+      await loadConversations();
+    } catch (err) {
+      setError(err?.data?.message || "Unable to delete message");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  async function clearActiveChat() {
+    if (!activeId || deleting) return;
+    if (!window.confirm("Clear this chat for you? The other participants will keep their messages.")) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await apiRequest(`/api/client/chat/${activeId}/clear`, { method: "POST" });
+      setMessages([]);
+      setReplyTo(null);
+      setThreadSearch("");
+      setHeaderMenuOpen(false);
+      await loadConversations();
+    } catch (err) {
+      setError(err?.data?.message || "Unable to clear chat");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function toggleConversationSelection(id) {
+    setSelectedConversationIds((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+    );
+  }
+
+  function leaveSelectionMode() {
+    setSelectionMode(false);
+    setSelectedConversationIds([]);
+  }
+
+  async function deleteSelectedChats() {
+    if (!selectedConversationIds.length || deleting) return;
+    if (!window.confirm(`Delete ${selectedConversationIds.length} selected chat${selectedConversationIds.length > 1 ? "s" : ""} for you?`)) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await apiRequest("/api/client/chat/delete-many", {
+        method: "POST",
+        body: JSON.stringify({ conversationIds: selectedConversationIds }),
+      });
+      if (selectedConversationIds.includes(activeId)) {
+        setActiveId(null);
+        setMessages([]);
+      }
+      setConversations((current) =>
+        current.filter((conversation) => !selectedConversationIds.includes(conversation.id))
+      );
+      leaveSelectionMode();
+    } catch (err) {
+      setError(err?.data?.message || "Unable to delete selected chats");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -473,10 +609,21 @@ export default function ChatPanel({ currentUser }) {
 
   const pinnedMessages = useMemo(() => messages.filter((m) => m.pinned), [messages]);
 
+  const visibleMessages = useMemo(() => {
+    const q = threadSearch.trim().toLowerCase();
+    if (!q) return messages;
+    return messages.filter(
+      (message) =>
+        !message.deletedForEveryone &&
+        (String(message.body || "").toLowerCase().includes(q) ||
+          String(message.sender?.name || "").toLowerCase().includes(q))
+    );
+  }, [messages, threadSearch]);
+
   const groupedMessages = useMemo(() => {
     const groups = [];
     let currentDay = null;
-    messages.forEach((m) => {
+    visibleMessages.forEach((m) => {
       const day = formatDay(m.createdAt);
       if (day !== currentDay) {
         groups.push({ type: "day", day, key: `day-${m.id}` });
@@ -485,7 +632,7 @@ export default function ChatPanel({ currentUser }) {
       groups.push({ type: "msg", message: m, key: m.id });
     });
     return groups;
-  }, [messages]);
+  }, [visibleMessages]);
 
 
   return (
@@ -508,15 +655,25 @@ export default function ChatPanel({ currentUser }) {
         {/* LEFT NAV + CHAT LIST */}
         <div className={`w-full flex-shrink-0 border-r border-slate-200 bg-white lg:flex lg:w-[350px] lg:flex-col ${activeId ? "hidden" : "flex flex-col"}`}>
           <div className="flex h-[66px] items-center justify-between border-b border-neutral-200 px-4">
-            <div className="text-[18px] font-semibold tracking-[-0.015em] text-neutral-950">Chats</div>
-            <button
-              type="button"
-              onClick={openNewChat}
-              className="inline-flex h-9 items-center gap-2 rounded-[9px] border border-neutral-300 bg-white px-3.5 text-[13px] font-semibold text-neutral-800 shadow-sm hover:bg-neutral-50"
-            >
-              <Plus size={14} />
-              New
-            </button>
+            <div>
+              <div className="text-[18px] font-semibold tracking-[-0.015em] text-neutral-950">
+                {selectionMode ? `${selectedConversationIds.length} selected` : "Chats"}
+              </div>
+              {selectionMode && <div className="text-[11px] text-slate-500">Select one or multiple chats</div>}
+            </div>
+            <div className="flex items-center gap-1.5">
+              {selectionMode ? (
+                <>
+                  <button type="button" onClick={leaveSelectionMode} className="h-9 rounded-lg px-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
+                  <button type="button" onClick={deleteSelectedChats} disabled={!selectedConversationIds.length || deleting} className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 disabled:opacity-40" aria-label="Delete selected chats"><Trash2 size={15} /></button>
+                </>
+              ) : (
+                <>
+                  <button type="button" onClick={() => setSelectionMode(true)} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Select chats" title="Select chats"><ListChecks size={16} /></button>
+                  <button type="button" onClick={openNewChat} className="inline-flex h-9 items-center gap-2 rounded-[9px] border border-neutral-300 bg-white px-3.5 text-[13px] font-semibold text-neutral-800 shadow-sm hover:bg-neutral-50"><Plus size={14} />New</button>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="px-3 pb-2 pt-3">
@@ -547,11 +704,11 @@ export default function ChatPanel({ currentUser }) {
                   <button
                     key={c.id}
                     type="button"
-                    onClick={() => setActiveId(c.id)}
+                    onClick={() => selectionMode ? toggleConversationSelection(c.id) : setActiveId(c.id)}
                     className={`mx-2 flex w-[calc(100%-16px)] items-center gap-3 rounded-[11px] border px-3 py-2.5 text-left transition ${active ? "border-indigo-200 bg-indigo-50/90 shadow-[inset_3px_0_0_#4f46e5]" : "border-transparent hover:bg-neutral-50"}`}
                   >
-                    <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold shadow-sm ${c.isGroup ? "bg-neutral-100 text-neutral-600" : "bg-indigo-100 text-indigo-600"}`}>
-                      {c.isGroup ? <Users size={16} /> : initialsOf(c.title)}
+                    <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold shadow-sm ${selectedConversationIds.includes(c.id) ? "bg-indigo-600 text-white" : c.isGroup ? "bg-neutral-100 text-neutral-600" : "bg-indigo-100 text-indigo-600"}`}>
+                      {selectionMode ? (selectedConversationIds.includes(c.id) ? <CheckSquare size={17} /> : <Square size={17} />) : c.isGroup ? <Users size={16} /> : initialsOf(c.title)}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
@@ -606,7 +763,44 @@ export default function ChatPanel({ currentUser }) {
                   <Video size={14} />
                   <span className="hidden sm:inline">Meet now</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setThreadSearchOpen((open) => !open);
+                    setHeaderMenuOpen(false);
+                  }}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-indigo-600"
+                  aria-label="Search this chat"
+                  title="Search this chat"
+                >
+                  <Search size={16} />
+                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setHeaderMenuOpen((open) => !open)}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+                    aria-label="Chat options"
+                    title="Chat options"
+                  >
+                    <MoreVertical size={17} />
+                  </button>
+                  {headerMenuOpen && (
+                    <div className="absolute right-0 top-11 z-40 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+                      <button type="button" onClick={clearActiveChat} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"><Eraser size={14} />Clear chat for me</button>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {threadSearchOpen && (
+                <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2">
+                  <Search size={14} className="text-slate-400" />
+                  <input autoFocus value={threadSearch} onChange={(e) => setThreadSearch(e.target.value)} placeholder="Search messages in this chat" className="h-9 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-[13px] outline-none focus:border-indigo-400" />
+                  <span className="whitespace-nowrap text-[11px] font-semibold text-slate-500">{visibleMessages.length} found</span>
+                  <button type="button" onClick={() => { setThreadSearchOpen(false); setThreadSearch(""); }} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-white" aria-label="Close chat search"><X size={14} /></button>
+                </div>
+              )}
 
               {pinnedMessages.length > 0 && (
                 <div className="border-b border-amber-200 bg-amber-50/80 px-4 py-2">
@@ -624,6 +818,12 @@ export default function ChatPanel({ currentUser }) {
                   <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-slate-400">
                     <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm"><MessageSquare size={21} strokeWidth={1.6} /></span>
                     <div><div className="text-sm font-bold text-slate-600">Start the conversation</div><div className="mt-1 text-[13px]">Send a message or start a meeting.</div></div>
+                  </div>
+                ) : visibleMessages.length === 0 ? (
+                  <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-slate-400">
+                    <Search size={21} />
+                    <div className="text-sm font-semibold text-slate-600">No matching messages</div>
+                    <div className="text-[12px]">Try another word or sender name.</div>
                   </div>
                 ) : (
                   <div className="space-y-1.5">
@@ -659,7 +859,11 @@ export default function ChatPanel({ currentUser }) {
                                 </div>
                               )}
 
-                              {room ? (
+                              {m.deletedForEveryone ? (
+                                <div className="flex items-center gap-2 italic text-slate-500">
+                                  <Trash2 size={13} /> This message was deleted
+                                </div>
+                              ) : room ? (
                                 <div className="flex flex-wrap items-center gap-2">
                                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-indigo-600">
                                     <Video size={13} />
@@ -683,7 +887,7 @@ export default function ChatPanel({ currentUser }) {
                             </div>
 
                             <div className={`relative mt-1 flex items-center gap-1 ${mine ? "justify-end" : "justify-start"}`}>
-                              <div className="relative">
+                              {!m.deletedForEveryone && <div className="relative">
                                 <button
                                   type="button"
                                   onClick={() => setReactionOpenId((current) => current === m.id ? null : m.id)}
@@ -707,25 +911,44 @@ export default function ChatPanel({ currentUser }) {
                                     ))}
                                   </div>
                                 )}
-                              </div>
+                              </div>}
 
-                              <button
+                              {!m.deletedForEveryone && <button
                                 type="button"
                                 onClick={() => setReplyTo(m)}
                                 title="Reply"
                                 className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
                               >
                                 <Reply size={13} />
-                              </button>
+                              </button>}
 
-                              <button
+                              {!m.deletedForEveryone && <button
                                 type="button"
                                 onClick={() => togglePin(m)}
                                 title={m.pinned ? "Unpin" : "Pin"}
                                 className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
                               >
                                 {m.pinned ? <PinOff size={13} /> : <Pin size={13} />}
-                              </button>
+                              </button>}
+
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => setMessageMenuId((current) => current === m.id ? null : m.id)}
+                                  title="Message options"
+                                  className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                                >
+                                  <MoreVertical size={13} />
+                                </button>
+                                {messageMenuId === m.id && (
+                                  <div className={`absolute bottom-8 z-40 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl ${mine ? "right-0" : "left-0"}`}>
+                                    <button type="button" onClick={() => deleteMessage(m, "me")} disabled={deleting} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"><Trash2 size={14} />Delete for me</button>
+                                    {mine && !m.deletedForEveryone && (
+                                      <button type="button" onClick={() => deleteMessage(m, "everyone")} disabled={deleting} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-50"><Trash2 size={14} />Delete for everyone</button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>

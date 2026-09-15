@@ -2,6 +2,7 @@ import { Router } from "express";
 import crypto from "crypto";
 
 import prisma from "../lib/prisma.js";
+import { deleteChatFile } from "../lib/chatStorage.js";
 import { requireClientUser } from "../middleware/clientAuth.js";
 
 const router = Router();
@@ -33,12 +34,18 @@ function formatConversation(conversation, currentUserId, unreadCount = 0) {
     ? conversation.name || "Group chat"
     : others[0]?.name || "Conversation";
 
-  const lastMessage = conversation.messages?.[0]
+  const visibleMessages = (conversation.messages || []).filter(
+    (message) => !myMembership?.clearedAt || message.createdAt > myMembership.clearedAt
+  );
+  const lastMessage = visibleMessages[0]
     ? {
-        id: conversation.messages[0].id,
-        body: conversation.messages[0].body,
-        createdAt: conversation.messages[0].createdAt,
-        senderId: conversation.messages[0].senderId,
+        id: visibleMessages[0].id,
+        body: visibleMessages[0].deletedForEveryoneAt
+          ? "This message was deleted"
+          : visibleMessages[0].body,
+        createdAt: visibleMessages[0].createdAt,
+        senderId: visibleMessages[0].senderId,
+        deletedForEveryone: Boolean(visibleMessages[0].deletedForEveryoneAt),
       }
     : null;
 
@@ -91,7 +98,9 @@ router.get("/", async (req, res) => {
     const conversations = await prisma.conversation.findMany({
       where: {
         companyId: req.clientUser.companyId,
-        members: { some: { userId: req.clientUser.userId } },
+        members: {
+          some: { userId: req.clientUser.userId, hiddenAt: null },
+        },
       },
       include: {
         members: {
@@ -100,8 +109,11 @@ router.get("/", async (req, res) => {
           },
         },
         messages: {
+          where: {
+            deletions: { none: { userId: req.clientUser.userId } },
+          },
           orderBy: { createdAt: "desc" },
-          take: 1,
+          take: 25,
         },
       },
       orderBy: { updatedAt: "desc" },
@@ -113,12 +125,16 @@ router.get("/", async (req, res) => {
     const withUnread = await Promise.all(
       conversations.map(async (c) => {
         const myMembership = c.members.find((m) => m.userId === me);
-        const lastReadAt = myMembership?.lastReadAt || null;
+        const lastReadAt = [myMembership?.lastReadAt, myMembership?.clearedAt]
+          .filter(Boolean)
+          .sort((a, b) => b.getTime() - a.getTime())[0] || null;
 
         const unreadCount = await prisma.chatMessage.count({
           where: {
             conversationId: c.id,
             senderId: { not: me },
+            deletedForEveryoneAt: null,
+            deletions: { none: { userId: me } },
             ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
           },
         });
@@ -175,7 +191,13 @@ router.get("/:id/messages", async (req, res) => {
     const messages = await prisma.chatMessage.findMany({
       where: {
         conversationId,
-        ...(before ? { createdAt: { lt: before } } : {}),
+        deletions: { none: { userId: req.clientUser.userId } },
+        ...((member.clearedAt || before) ? {
+          createdAt: {
+            ...(member.clearedAt ? { gt: member.clearedAt } : {}),
+            ...(before ? { lt: before } : {}),
+          },
+        } : {}),
       },
       include: {
         sender: { select: { id: true, name: true, email: true } },
@@ -201,6 +223,7 @@ router.get("/:id/messages", async (req, res) => {
       id: m.id,
       conversationId: m.conversationId,
       body: m.body,
+      deletedForEveryone: Boolean(m.deletedForEveryoneAt),
       pinned: m.pinned,
       createdAt: m.createdAt,
       sender: userMini(m.sender),
@@ -212,7 +235,7 @@ router.get("/:id/messages", async (req, res) => {
         emoji: r.emoji,
         user: userMini(r.user),
       })),
-      attachments: (m.attachments || []).map((a) => ({
+      attachments: m.deletedForEveryoneAt ? [] : (m.attachments || []).map((a) => ({
         id: a.id,
         url: a.url,
         publicId: a.publicId,
@@ -313,6 +336,10 @@ router.post("/", async (req, res) => {
       });
 
       if (existing && existing.members.length === 2) {
+        await prisma.conversationMember.update({
+          where: { conversationId_userId: { conversationId: existing.id, userId: me } },
+          data: { hiddenAt: null },
+        });
         return res.json({
           success: true,
           conversation: formatConversation(existing, me),
@@ -569,13 +596,14 @@ router.post("/upload-signature", async (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
-/* DELETE /messages/:messageId — sender can delete own message         */
+/* DELETE /messages/:messageId — WhatsApp-style per-user deletion      */
 /* ------------------------------------------------------------------ */
 
 router.delete("/messages/:messageId", async (req, res) => {
   try {
     const messageId = req.params.messageId;
     const me = req.clientUser.userId;
+    const scope = String(req.query.scope || "me").toLowerCase();
 
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId },
@@ -585,12 +613,43 @@ router.delete("/messages/:messageId", async (req, res) => {
     if (!message || message.conversation.companyId !== req.clientUser.companyId) {
       return res.status(404).json({ success: false, message: "Message not found" });
     }
-    if (message.senderId !== me) {
-      return res.status(403).json({ success: false, message: "You can delete only your own messages" });
+    const membership = await prisma.conversationMember.findUnique({
+      where: { conversationId_userId: { conversationId: message.conversationId, userId: me } },
+    });
+    if (!membership) {
+      return res.status(403).json({ success: false, message: "Not a member" });
     }
 
-    await prisma.chatMessage.delete({ where: { id: messageId } });
-    return res.json({ success: true, messageId, conversationId: message.conversationId });
+    if (scope === "everyone") {
+      if (message.senderId !== me) {
+        return res.status(403).json({ success: false, message: "You can delete for everyone only messages you sent" });
+      }
+      if (!message.deletedForEveryoneAt) {
+        await Promise.allSettled(
+          message.attachments
+            .filter((attachment) => attachment.publicId)
+            .map((attachment) => deleteChatFile({ publicId: attachment.publicId, resourceType: attachment.resourceType }))
+        );
+        await prisma.$transaction([
+          prisma.chatReaction.deleteMany({ where: { messageId } }),
+          prisma.chatAttachment.deleteMany({ where: { messageId } }),
+          prisma.chatMessage.update({
+            where: { id: messageId },
+            data: { body: "", pinned: false, deletedForEveryoneAt: new Date() },
+          }),
+        ]);
+      }
+      const payload = { messageId, conversationId: message.conversationId, scope: "everyone" };
+      req.app.get("io")?.to(`conversation:${message.conversationId}`).emit("message:deleted", payload);
+      return res.json({ success: true, ...payload });
+    }
+
+    await prisma.chatMessageDeletion.upsert({
+      where: { messageId_userId: { messageId, userId: me } },
+      update: { deletedAt: new Date() },
+      create: { messageId, userId: me },
+    });
+    return res.json({ success: true, messageId, conversationId: message.conversationId, scope: "me" });
   } catch (error) {
     console.error("Delete message failed:", error);
     return res.status(500).json({ success: false, message: "Unable to delete message" });
@@ -598,7 +657,62 @@ router.delete("/messages/:messageId", async (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
-/* DELETE /:id — delete direct chat or creator-owned group             */
+/* POST /:id/clear — clear only the current user's message history     */
+/* ------------------------------------------------------------------ */
+
+router.post("/:id/clear", async (req, res) => {
+  try {
+    const conversationId = req.params.id;
+    const me = req.clientUser.userId;
+    const member = await prisma.conversationMember.findUnique({
+      where: { conversationId_userId: { conversationId, userId: me } },
+      include: { conversation: true },
+    });
+    if (!member || member.conversation.companyId !== req.clientUser.companyId) {
+      return res.status(404).json({ success: false, message: "Conversation not found" });
+    }
+    const clearedAt = new Date();
+    await prisma.conversationMember.update({
+      where: { conversationId_userId: { conversationId, userId: me } },
+      data: { clearedAt, lastReadAt: clearedAt },
+    });
+    return res.json({ success: true, conversationId, clearedAt });
+  } catch (error) {
+    console.error("Clear conversation failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to clear conversation" });
+  }
+});
+
+/* POST /delete-many — hide selected chats for the current user        */
+/* ------------------------------------------------------------------ */
+
+router.post("/delete-many", async (req, res) => {
+  try {
+    const ids = Array.from(new Set(
+      (Array.isArray(req.body?.conversationIds) ? req.body.conversationIds : [])
+        .filter((id) => typeof id === "string")
+        .slice(0, 100)
+    ));
+    if (!ids.length) {
+      return res.status(400).json({ success: false, message: "Select at least one chat" });
+    }
+    const now = new Date();
+    const result = await prisma.conversationMember.updateMany({
+      where: {
+        userId: req.clientUser.userId,
+        conversationId: { in: ids },
+        conversation: { companyId: req.clientUser.companyId },
+      },
+      data: { hiddenAt: now, clearedAt: now, lastReadAt: now },
+    });
+    return res.json({ success: true, conversationIds: ids, deletedCount: result.count });
+  } catch (error) {
+    console.error("Delete selected chats failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to delete selected chats" });
+  }
+});
+
+/* DELETE /:id — hide one chat only for the current user               */
 /* ------------------------------------------------------------------ */
 
 router.delete("/:id", async (req, res) => {
@@ -606,25 +720,20 @@ router.delete("/:id", async (req, res) => {
     const conversationId = req.params.id;
     const me = req.clientUser.userId;
 
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
-      include: { members: true },
+    const member = await prisma.conversationMember.findUnique({
+      where: { conversationId_userId: { conversationId, userId: me } },
+      include: { conversation: true },
     });
 
-    if (!conversation || conversation.companyId !== req.clientUser.companyId) {
+    if (!member || member.conversation.companyId !== req.clientUser.companyId) {
       return res.status(404).json({ success: false, message: "Conversation not found" });
     }
 
-    const isMember = conversation.members.some((m) => m.userId === me);
-    if (!isMember) {
-      return res.status(403).json({ success: false, message: "Not a member" });
-    }
-
-    if (conversation.isGroup && conversation.createdByUserId !== me) {
-      return res.status(403).json({ success: false, message: "Only the group creator can delete this group" });
-    }
-
-    await prisma.conversation.delete({ where: { id: conversationId } });
+    const now = new Date();
+    await prisma.conversationMember.update({
+      where: { conversationId_userId: { conversationId, userId: me } },
+      data: { hiddenAt: now, clearedAt: now, lastReadAt: now },
+    });
     return res.json({ success: true, conversationId });
   } catch (error) {
     console.error("Delete conversation failed:", error);

@@ -209,7 +209,8 @@ app.use((error, req, res, next) => {
 const server = http.createServer(app);
 
 // Attach Socket.IO for real-time chat (shares cookie-JWT auth).
-attachSocketServer(server, config);
+const io = attachSocketServer(server, config);
+app.set("io", io);
 
 server.listen(config.port, () =>
   console.log(`ConsulBuzz API running on http://localhost:${config.port}`)

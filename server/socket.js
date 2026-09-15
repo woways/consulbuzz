@@ -148,6 +148,10 @@ export function attachSocketServer(httpServer, config) {
           },
         });
 
+        await prisma.conversationMember.updateMany({
+          where: { conversationId },
+          data: { hiddenAt: null },
+        });
         await prisma.conversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
 
         const payload = {
@@ -155,6 +159,7 @@ export function attachSocketServer(httpServer, config) {
           conversationId,
           body: message.body,
           pinned: message.pinned,
+          deletedForEveryone: false,
           createdAt: message.createdAt,
           sender: miniUser(message.sender),
           replyTo: message.replyTo ? { id: message.replyTo.id, body: message.replyTo.body, sender: miniUser(message.replyTo.sender) } : null,

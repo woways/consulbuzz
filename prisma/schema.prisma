@@ -253,6 +253,7 @@ model User {
   chatMemberships        ConversationMember[]        @relation("ChatMember")
   chatMessages           ChatMessage[]               @relation("ChatSender")
   chatReactions          ChatReaction[]              @relation("ChatReactionUser")
+  chatMessageDeletions   ChatMessageDeletion[]       @relation("ChatMessageDeletionUser")
   targetTasksOwned       TargetTask[]                @relation("TargetOwner")
   targetTasksAssigned    TargetTask[]                @relation("TargetAssigner")
   monthlyTargets         MonthlyTarget[]             @relation("MonthlyTargetOwner")
@@ -1189,6 +1190,8 @@ model ConversationMember {
   isFavorite Boolean   @default(false)
   isMuted    Boolean   @default(false)
   isArchived Boolean   @default(false)
+  clearedAt  DateTime?
+  hiddenAt   DateTime?
 
   @@unique([conversationId, userId])
   @@index([userId])
@@ -1201,18 +1204,33 @@ model ChatMessage {
   senderId       String
   sender         User         @relation("ChatSender", fields: [senderId], references: [id], onDelete: Cascade)
 
-  body      String
-  createdAt DateTime @default(now())
-  pinned    Boolean  @default(false)
+  body                 String
+  createdAt            DateTime  @default(now())
+  pinned               Boolean   @default(false)
+  deletedForEveryoneAt DateTime?
 
   replyToId   String?
-  replyTo     ChatMessage?     @relation("ChatMessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
-  replies     ChatMessage[]    @relation("ChatMessageReplies")
+  replyTo     ChatMessage?          @relation("ChatMessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies     ChatMessage[]         @relation("ChatMessageReplies")
   reactions   ChatReaction[]
   attachments ChatAttachment[]
+  deletions   ChatMessageDeletion[]
 
   @@index([conversationId, createdAt])
   @@index([replyToId])
+}
+
+model ChatMessageDeletion {
+  id        String      @id @default(cuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation("ChatMessageDeletionUser", fields: [userId], references: [id], onDelete: Cascade)
+  deletedAt DateTime    @default(now())
+
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@index([messageId])
 }
 
 model ChatAttachment {
