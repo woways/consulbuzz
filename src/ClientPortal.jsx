@@ -4006,33 +4006,10 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                         </div>
                       )}
 
-                      <div className="mt-3 grid grid-cols-3 gap-1.5">
-                        <div className="flex min-h-[50px] flex-col items-center justify-center gap-1 rounded-[9px] border border-white/[0.07] bg-white/[0.02] px-1 py-1.5 text-center">
-                          <UserRound size={14} strokeWidth={2} className="text-brand-300" />
-                          <span className="text-[8px] font-medium leading-[10px] text-slate-300">
-                            Unlimited contacts
-                          </span>
-                        </div>
-
-                        <div className="flex min-h-[50px] flex-col items-center justify-center gap-1 rounded-[9px] border border-white/[0.07] bg-white/[0.02] px-1 py-1.5 text-center">
-                          <BarChart3 size={14} strokeWidth={2} className="text-brand-300" />
-                          <span className="text-[8px] font-medium leading-[10px] text-slate-300">
-                            Advanced analytics
-                          </span>
-                        </div>
-
-                        <div className="flex min-h-[50px] flex-col items-center justify-center gap-1 rounded-[9px] border border-white/[0.07] bg-white/[0.02] px-1 py-1.5 text-center">
-                          <CircleHelp size={14} strokeWidth={2} className="text-brand-300" />
-                          <span className="text-[8px] font-medium leading-[10px] text-slate-300">
-                            Priority support
-                          </span>
-                        </div>
-                      </div>
-
                       <button
                         type="button"
                         onClick={openBilling}
-                        className="mt-3 flex h-[46px] w-full items-center justify-center gap-2 rounded-[10px] border border-brand-300/40 bg-gradient-to-r from-brand-500 via-brand-600 to-brand-500 px-3 text-[13px] font-bold text-white shadow-[0_5px_14px_rgba(15,23,42,0.20)] transition-all hover:-translate-y-0.5"
+                        className="mt-4 flex h-[46px] w-full items-center justify-center gap-2 rounded-[10px] border border-brand-300/40 bg-gradient-to-r from-brand-500 via-brand-600 to-brand-500 px-3 text-[13px] font-bold text-white shadow-[0_5px_14px_rgba(15,23,42,0.20)] transition-all hover:-translate-y-0.5"
                       >
                         <Rocket size={16} strokeWidth={2.2} className="flex-shrink-0" />
                         <span className="whitespace-nowrap">
