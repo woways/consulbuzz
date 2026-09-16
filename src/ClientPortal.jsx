@@ -2071,10 +2071,6 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   </span>
                 </div>
 
-                <div className="mt-3 inline-flex items-center gap-2 text-[12px] font-semibold text-slate-200">
-                  <Building2 size={14} />
-                  {companyDisplayName}
-                </div>
               </div>
             </div>
           </div>
@@ -4118,9 +4114,6 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                               <span className="block text-[10px] text-slate-500">Valid till {sidebarNextAnnualRenewalLabel}</span>
                             )}
                           </span>
-                        </button>
-                        <button type="button" onClick={() => { setAccountActionsOpen(false); setModule("settings"); }} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-200 hover:bg-white/[0.06]">
-                          <Settings size={15} strokeWidth={2} className="flex-shrink-0 text-slate-400" />Settings
                         </button>
                         <button type="button" onClick={() => { setAccountActionsOpen(false); setProfileTab("profile"); setModule("profile"); }} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-200 hover:bg-white/[0.06]">
                           <UserRound size={15} strokeWidth={2} className="flex-shrink-0 text-slate-400" />Profile
