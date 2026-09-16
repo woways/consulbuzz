@@ -242,6 +242,10 @@ export default function Dashboard({
     revenueTrend: [],
     leadsBySource: [],
     teamPerformance: [],
+    myPerformance: null,
+    recentAdmissions: [],
+    admissionsByMonth: [],
+    recentActivity: [],
   });
 
   const [loading, setLoading] =
@@ -342,6 +346,14 @@ export default function Dashboard({
           result.leadsBySource || [],
         teamPerformance:
           result.teamPerformance || [],
+        myPerformance:
+          result.myPerformance || null,
+        recentAdmissions:
+          result.recentAdmissions || [],
+        admissionsByMonth:
+          result.admissionsByMonth || [],
+        recentActivity:
+          result.recentActivity || [],
       });
 
     } catch (error) {
@@ -833,6 +845,47 @@ export default function Dashboard({
       ? data.recentActivity
       : [];
 
+  const roleDefaultDashboardView =
+    user?.role === "MANAGER"
+      ? "team"
+      : user?.role === "EMPLOYEE"
+        ? "my-work"
+        : "business";
+
+  const dashboardView =
+    uiPreferences?.dashboardView ||
+    roleDefaultDashboardView;
+
+  const isBusinessView =
+    dashboardView === "business";
+  const isTeamView =
+    dashboardView === "team";
+  const isMyWorkView =
+    dashboardView === "my-work";
+
+  const showCalendarRail =
+    !isBusinessView &&
+    uiPreferences?.showCalendar !== false;
+
+  const normalizedUserName =
+    String(user?.name || "")
+      .trim()
+      .toLowerCase();
+
+  const myPerformance =
+    data.myPerformance ||
+    data.teamPerformance.find(
+      (member) =>
+        member?.userId === user?.id
+    ) ||
+    data.teamPerformance.find(
+      (member) =>
+        String(member?.name || "")
+          .trim()
+          .toLowerCase() ===
+        normalizedUserName
+    ) || null;
+
   const pulseMetrics = [
     {
       label: "Total Leads",
@@ -852,6 +905,16 @@ export default function Dashboard({
       accent: "emerald",
     },
     {
+      label: "New Leads",
+      value: summary.newLeads || 0,
+      icon: Clock,
+      detail:
+        selectedYear === "all"
+          ? "New CRM leads"
+          : `New leads in ${selectedYear}`,
+      accent: "slate",
+    },
+    {
       label: "Admissions",
       value: summary.totalAdmissions || 0,
       icon: UserCheck,
@@ -869,29 +932,6 @@ export default function Dashboard({
       accent: "amber",
     },
     {
-      label: "Current Profit",
-      value: money(summary.currentProfit),
-      icon: Wallet,
-      detail:
-        selectedYear === "all"
-          ? "Current profitability"
-          : `Profit for ${selectedYear}`,
-      accent:
-        summary.currentProfit >= 0
-          ? "emerald"
-          : "rose",
-    },
-    {
-      label: "New Leads",
-      value: summary.newLeads || 0,
-      icon: Clock,
-      detail:
-        selectedYear === "all"
-          ? "New CRM leads"
-          : `New leads in ${selectedYear}`,
-      accent: "slate",
-    },
-    {
       label: "Received Revenue",
       value: money(summary.receivedAmount),
       icon: DollarSign,
@@ -905,10 +945,23 @@ export default function Dashboard({
       detail: "Revenue pending collection",
       accent: "amber",
     },
+    {
+      label: "Current Profit",
+      value: money(summary.currentProfit),
+      icon: Wallet,
+      detail:
+        selectedYear === "all"
+          ? "Current profitability"
+          : `Profit for ${selectedYear}`,
+      accent:
+        summary.currentProfit >= 0
+          ? "emerald"
+          : "rose",
+    },
   ];
 
   return (
-    <div className={`cb-dashboard-root ${uiPreferences?.density === "compact" ? "space-y-3" : "space-y-5"}`}>
+    <div className="cb-dashboard-root space-y-5">
       {/* WORKSPACE HEADER */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         {uiPreferences?.showGreeting !== false ? (
@@ -922,7 +975,7 @@ export default function Dashboard({
               })()}
               ,{" "}
               <span className="font-bold text-slate-950">
-                {(user?.name || tenant?.ownerName || "Admin").split(" ")[0]}
+                {tenant?.name || tenant?.brandName || user?.name || tenant?.ownerName || "Company"}
               </span>
             </h1>
             <p className="mt-1.5 text-[15px] font-medium tracking-normal text-slate-500">
@@ -978,8 +1031,59 @@ export default function Dashboard({
         </div>
       ) : (
         <>
-          <div className={`grid grid-cols-1 gap-4 ${uiPreferences?.showCalendar === false ? "" : "xl:grid-cols-[minmax(0,1fr)_320px]"}`}>
+          <div className={`grid grid-cols-1 gap-4 ${showCalendarRail ? "xl:grid-cols-[minmax(0,1fr)_320px]" : ""}`}>
             <div className="min-w-0 space-y-4">
+              {isMyWorkView && (
+                <section>
+                  <div className="mb-2.5 flex items-center gap-2">
+                    <UserRound
+                      size={13}
+                      className="text-indigo-600"
+                    />
+                    <div className="text-[12px] font-bold uppercase tracking-[0.10em] text-indigo-600">
+                      My Work Overview
+                    </div>
+                  </div>
+
+                  {myPerformance ? (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      <MetricCard
+                        label="My Leads"
+                        value={myPerformance.leads || 0}
+                        icon={Users}
+                        detail="Leads reflected in your performance"
+                        accent="indigo"
+                      />
+                      <MetricCard
+                        label="My Admissions"
+                        value={myPerformance.admissions || 0}
+                        icon={UserCheck}
+                        detail="Admissions reflected in your performance"
+                        accent="emerald"
+                      />
+                      <MetricCard
+                        label="My Revenue"
+                        value={money(myPerformance.revenue)}
+                        icon={Wallet}
+                        detail="Revenue reflected in your performance"
+                        accent="amber"
+                      />
+                    </div>
+                  ) : (
+                    <div className="rounded-[14px] border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+                      <div className="text-[14px] font-bold text-slate-900">
+                        Personal performance will appear here
+                      </div>
+                      <div className="mt-1 text-[13px] leading-5 text-slate-500">
+                        No matching personal performance record is available for the selected period yet.
+                      </div>
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {!isMyWorkView && (
+                <>
               {/* BUSINESS PULSE */}
               <section>
                 <div className="mb-2.5 flex items-center gap-2">
@@ -993,7 +1097,7 @@ export default function Dashboard({
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  {pulseMetrics.map((metric) => (
+                  {(isTeamView ? pulseMetrics.slice(0, 4) : pulseMetrics).map((metric) => (
                     <MetricCard
                       key={metric.label}
                       {...metric}
@@ -1002,6 +1106,11 @@ export default function Dashboard({
                 </div>
               </section>
 
+                </>
+              )}
+
+              {isBusinessView && (
+                <>
               {/* ANALYTICS CORE */}
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(280px,.85fr)]">
                 <section className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-5">
@@ -1224,6 +1333,11 @@ export default function Dashboard({
                   )}
                 </section>
               </div>
+                </>
+              )}
+
+              {!isMyWorkView && (
+                <>
               {/* OPERATIONS ROW */}
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                 <section className="overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
@@ -1365,10 +1479,12 @@ export default function Dashboard({
                   )}
                 </section>
               </div>
+                </>
+              )}
             </div>
 
             {/* PRODUCTIVITY RAIL */}
-            {uiPreferences?.showCalendar !== false && (
+            {showCalendarRail && (
             <aside className="overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
               <div className="p-4">
                 <div className="flex items-center justify-between gap-2">
@@ -1734,6 +1850,8 @@ export default function Dashboard({
             )}
           </div>
 
+          {!isMyWorkView && (
+            <>
           {/* TEAM PERFORMANCE */}
 
           <div className="rounded-[14px] border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] sm:p-5">
@@ -1817,6 +1935,9 @@ export default function Dashboard({
           </div>
         </>
       )}
+
+            </>
+          )}
 
       {/* EVENT MODAL */}
 

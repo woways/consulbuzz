@@ -135,6 +135,7 @@ export default function SuperAdmin() {
   ] = useState(false);
 
   const [globalSearch, setGlobalSearch] = useState("");
+  const [supportScope, setSupportScope] = useState("support");
   const [adminClients, setAdminClients] = useState([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [adminAlerts, setAdminAlerts] = useState([]);
@@ -184,9 +185,16 @@ export default function SuperAdmin() {
 
       const supportAlerts = (supportData.tickets || [])
         .filter((ticket) =>
-          ["NEW", "UNDER_REVIEW", "APPROVED", "IN_PROGRESS", "DEVELOPMENT"].includes(
-            ticket.status
-          )
+          [
+            "NEW",
+            "UNDER_REVIEW",
+            "APPROVED",
+            "IN_PROGRESS",
+            "DEVELOPMENT",
+            "RM_ASSIGNED",
+            "CALL_SCHEDULED",
+            "FOLLOW_UP_REQUIRED",
+          ].includes(ticket.status)
         )
         .slice(0, 8)
         .map((ticket) => ({
@@ -197,6 +205,17 @@ export default function SuperAdmin() {
           time: ticket.createdAt,
           action: () => {
             setSelectedClient(null);
+            setSupportScope(
+              ticket.type === "CALL_TO_RM"
+                ? "rm"
+                : [
+                    "CUSTOMIZATION",
+                    "FEATURE_REQUEST",
+                    "INTEGRATION",
+                  ].includes(ticket.type)
+                  ? "customization"
+                  : "support"
+            );
             setSection("support");
             setNotificationsOpen(false);
           },
@@ -233,6 +252,18 @@ export default function SuperAdmin() {
       setAdminAlertsLoading(false);
     }
   }
+
+  useEffect(() => {
+    loadAdminAlerts();
+
+    const timer = window.setInterval(
+      loadAdminAlerts,
+      60000
+    );
+
+    return () =>
+      window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     function outside(event) {
@@ -365,7 +396,7 @@ export default function SuperAdmin() {
         return <Billing />;
 
       case "support":
-        return <Support />;
+        return <Support initialScope={supportScope} />;
 
       case "analytics":
         return <Analytics />;
@@ -403,6 +434,9 @@ export default function SuperAdmin() {
           description: "Super Admin section",
           action: () => {
             setSelectedClient(null);
+            if (item.key === "support") {
+              setSupportScope("support");
+            }
             setSection(item.key);
             setGlobalSearch("");
           },
@@ -691,6 +725,10 @@ export default function SuperAdmin() {
                           : undefined
                       }
                       onClick={() => {
+                        if (item.key === "support") {
+                          setSupportScope("support");
+                        }
+
                         setSection(
                           item.key
                         );

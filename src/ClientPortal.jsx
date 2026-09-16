@@ -509,19 +509,85 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
   });
   const profilePhotoInputRef = useRef(null);
 
+  const dashboardRole =
+    clientSession?.user?.role || "EMPLOYEE";
+
+  const dashboardViewOptions =
+    dashboardRole === "CLIENT_ADMIN"
+      ? [
+          [
+            "business",
+            "Business Overview",
+            "Company KPIs, revenue and performance",
+          ],
+          [
+            "team",
+            "Team Operations",
+            "Leads, admissions and team execution",
+          ],
+          [
+            "my-work",
+            "My Work",
+            "Your schedule and personal performance",
+          ],
+        ]
+      : dashboardRole === "MANAGER"
+        ? [
+            [
+              "team",
+              "Team Operations",
+              "Leads, admissions and team execution",
+            ],
+            [
+              "my-work",
+              "My Work",
+              "Your schedule and personal performance",
+            ],
+          ]
+        : [
+            [
+              "my-work",
+              "My Work",
+              "Your schedule and personal performance",
+            ],
+          ];
+
+  const allowedDashboardViews =
+    dashboardViewOptions.map(([value]) => value);
+
+  const defaultDashboardView =
+    dashboardRole === "MANAGER"
+      ? "team"
+      : dashboardRole === "EMPLOYEE"
+        ? "my-work"
+        : "business";
+
+  const uiPreferencesStorageKey =
+    `cb_ui_preferences_${clientSession?.user?.id || "default"}`;
+
   const [uiPreferences, setUiPreferences] = useState(() => {
     try {
-      const saved = window.localStorage.getItem("cb_ui_preferences");
+      const savedForUser =
+        window.localStorage.getItem(uiPreferencesStorageKey);
+      const legacySaved =
+        window.localStorage.getItem("cb_ui_preferences");
+      const saved = savedForUser || legacySaved;
 
       if (saved) {
+        const parsed = JSON.parse(saved);
+
         return {
           appearance: "light",
-          density: "comfortable",
           showGreeting: true,
           showCalendar: true,
           dateFormat: "DD/MM/YYYY",
           timeFormat: "12H",
-          ...JSON.parse(saved),
+          ...parsed,
+          dashboardView:
+            savedForUser &&
+            allowedDashboardViews.includes(parsed.dashboardView)
+              ? parsed.dashboardView
+              : defaultDashboardView,
         };
       }
     } catch (error) {
@@ -530,13 +596,24 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
     return {
       appearance: "light",
-      density: "comfortable",
+      dashboardView: defaultDashboardView,
       showGreeting: true,
       showCalendar: true,
       dateFormat: "DD/MM/YYYY",
       timeFormat: "12H",
     };
   });
+
+  useEffect(() => {
+    setUiPreferences((current) =>
+      allowedDashboardViews.includes(current.dashboardView)
+        ? current
+        : {
+            ...current,
+            dashboardView: defaultDashboardView,
+          }
+    );
+  }, [dashboardRole]);
 
   const [uiPreferencesSaved, setUiPreferencesSaved] = useState(false);
 
@@ -787,9 +864,13 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
   useEffect(() => {
     try {
       window.localStorage.setItem(
-        "cb_ui_preferences",
-        JSON.stringify(uiPreferences)
-      );
+          uiPreferencesStorageKey,
+          JSON.stringify(uiPreferences)
+        );
+        window.localStorage.setItem(
+          "cb_ui_preferences",
+          JSON.stringify(uiPreferences)
+        );
     } catch (error) {
       console.error("Unable to save UI preferences:", error);
     }
@@ -1907,6 +1988,10 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     function saveUiPreferences() {
       try {
         window.localStorage.setItem(
+          uiPreferencesStorageKey,
+          JSON.stringify(uiPreferences)
+        );
+        window.localStorage.setItem(
           "cb_ui_preferences",
           JSON.stringify(uiPreferences)
         );
@@ -1920,7 +2005,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     return (
       <div className="space-y-5">
         <div>
-          <h1 className="text-[22px] font-black tracking-[-0.035em] text-slate-950">
+          <h1 className="text-[22px] font-black tracking-[-0.035em] text-indigo-900">
             My Profile
           </h1>
           <p className="mt-1 text-xs text-slate-500">
@@ -1928,12 +2013,12 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           </p>
         </div>
 
-        <section className="overflow-hidden rounded-[22px] border border-[#1b2a3b] bg-gradient-to-r from-[#07111d] via-[#0b1725] to-[#10243a] shadow-[0_14px_36px_rgba(2,8,23,0.16)]">
+        <section className="overflow-hidden rounded-[22px] border border-indigo-700 bg-gradient-to-r from-indigo-950 via-indigo-900 to-indigo-800 shadow-[0_14px_36px_rgba(2,8,23,0.16)]">
           <div className="relative px-5 py-6 sm:px-7">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_10%,rgba(255,255,255,0.08),transparent_35%)]" />
             <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
               <div className="relative flex-shrink-0">
-                <div className="flex h-[92px] w-[92px] items-center justify-center overflow-hidden rounded-full border-[3px] border-white/80 bg-slate-800 text-2xl font-black text-white shadow-lg">
+                <div className="flex h-[92px] w-[92px] items-center justify-center overflow-hidden rounded-full border-[3px] border-white/80 bg-indigo-700 text-2xl font-black text-white shadow-lg">
                   {profilePhoto ? (
                     <img
                       src={profilePhoto}
@@ -1948,7 +2033,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 <button
                   type="button"
                   onClick={() => profilePhotoInputRef.current?.click()}
-                  className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-[#0b1725] bg-white text-slate-950 shadow-md hover:bg-slate-100"
+                  className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-indigo-900 bg-white text-indigo-900 shadow-md hover:bg-slate-100"
                   aria-label="Change profile photo"
                 >
                   <Camera size={14} />
@@ -2007,14 +2092,14 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   onClick={() => setProfileTab(tab.key)}
                   className={`relative flex min-h-[76px] flex-col items-center justify-center gap-1.5 px-1 text-[12px] font-bold transition-colors sm:text-xs ${
                     active
-                      ? "text-slate-950"
+                      ? "text-indigo-900"
                       : "text-slate-400 hover:text-slate-700"
                   }`}
                 >
                   <span
                     className={`flex h-8 w-8 items-center justify-center rounded-full ${
                       active
-                        ? "bg-slate-950 text-white"
+                        ? "bg-indigo-600 text-white"
                         : "bg-slate-100 text-slate-500"
                     }`}
                   >
@@ -2022,7 +2107,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   </span>
                   {tab.label}
                   {active && (
-                    <span className="absolute bottom-0 h-[2px] w-14 rounded-full bg-slate-950" />
+                    <span className="absolute bottom-0 h-[2px] w-14 rounded-full bg-indigo-600" />
                   )}
                 </button>
               );
@@ -2036,7 +2121,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 className="rounded-2xl border border-slate-200 p-5"
               >
                 <div>
-                  <h3 className="text-sm font-black text-slate-950">
+                  <h3 className="text-sm font-black text-indigo-900">
                     Personal Information
                   </h3>
                   <p className="mt-1 text-[13px] text-slate-500">
@@ -2057,7 +2142,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           name: event.target.value,
                         }))
                       }
-                      className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-slate-400"
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-indigo-900 outline-none focus:border-slate-400"
                     />
                   </label>
 
@@ -2074,7 +2159,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           email: event.target.value,
                         }))
                       }
-                      className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-slate-400"
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-indigo-900 outline-none focus:border-slate-400"
                     />
                   </label>
 
@@ -2090,7 +2175,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           phone: event.target.value,
                         }))
                       }
-                      className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-slate-400"
+                      className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-indigo-900 outline-none focus:border-slate-400"
                     />
                   </label>
 
@@ -2115,7 +2200,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
                   <button
                     type="submit"
-                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white hover:bg-slate-800"
+                    className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white hover:bg-indigo-700"
                   >
                     {profileSaved ? (
                       <CheckCircle2 size={14} />
@@ -2129,7 +2214,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
               <div className="space-y-5">
                 <div className="rounded-2xl border border-slate-200 p-5">
-                  <h3 className="text-sm font-black text-slate-950">
+                  <h3 className="text-sm font-black text-indigo-900">
                     Quick Actions
                   </h3>
 
@@ -2143,7 +2228,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     Profile Preview
                   </div>
                   <div className="mt-3 flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-slate-950 text-xs font-black text-white">
+                    <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-xs font-black text-white">
                       {profilePhoto ? (
                         <img
                           src={profilePhoto}
@@ -2155,7 +2240,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-black text-slate-950">
+                      <div className="truncate text-sm font-black text-indigo-900">
                         {displayName}
                       </div>
                       <div className="truncate text-[13px] text-slate-500">
@@ -2172,11 +2257,11 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             <div className="grid gap-5 p-5 lg:grid-cols-2 lg:p-6">
               <div className="rounded-2xl border border-slate-200 p-5">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-white">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white">
                     <ShieldCheck size={18} />
                   </span>
                   <div>
-                    <h3 className="text-sm font-black text-slate-950">
+                    <h3 className="text-sm font-black text-indigo-900">
                       Security Overview
                     </h3>
                     <p className="mt-0.5 text-[13px] text-slate-500">
@@ -2188,7 +2273,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 <button
                   type="button"
                   onClick={openChangePassword}
-                  className="mt-5 inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white hover:bg-slate-800"
+                  className="mt-5 inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white hover:bg-indigo-700"
                 >
                   <KeyRound size={14} />
                   Change Password
@@ -2196,13 +2281,13 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               </div>
 
               <div className="rounded-2xl border border-slate-200 p-5">
-                <div className="text-xs font-black text-slate-950">
+                <div className="text-xs font-black text-indigo-900">
                   Account Access
                 </div>
                 <div className="mt-4 space-y-3">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3 text-xs">
                     <span className="text-slate-500">Account role</span>
-                    <span className="font-bold text-slate-900">
+                    <span className="font-bold text-indigo-900">
                       {formatRole(user.role)}
                     </span>
                   </div>
@@ -2218,7 +2303,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           {profileTab === "preferences" && (
             <div className="p-5 lg:p-6">
               <div className="mb-5">
-                <h3 className="text-sm font-black text-slate-950">
+                <h3 className="text-sm font-black text-indigo-900">
                   UI Preferences
                 </h3>
                 <p className="mt-1 text-[13px] leading-5 text-slate-500">
@@ -2235,7 +2320,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     </span>
 
                     <div>
-                      <div className="text-xs font-black text-slate-950">
+                      <div className="text-xs font-black text-indigo-900">
                         Appearance
                       </div>
                       <div className="mt-1 text-[12px] leading-4 text-slate-500">
@@ -2260,7 +2345,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           uiPreferences.appearance === value
                             ? value === "dark"
                               ? "border-[#17375e] bg-[#0b223d] text-white"
-                              : "border-slate-950 bg-slate-950 text-white"
+                              : "border-indigo-600 bg-indigo-600 text-white"
                             : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                         }`}
                       >
@@ -2273,40 +2358,65 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 {/* DASHBOARD VIEW */}
                 <div className="rounded-2xl border border-slate-200 bg-white p-5">
                   <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
                       <SlidersHorizontal size={18} />
                     </span>
 
                     <div>
-                      <div className="text-xs font-black text-slate-950">
+                      <div className="text-xs font-black text-indigo-900">
                         Dashboard View
                       </div>
                       <div className="mt-1 text-[12px] leading-4 text-slate-500">
-                        Control the spacing and information density.
+                        Choose the dashboard that best matches how you work.
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-2 gap-2">
-                    {[
-                      ["compact", "Compact"],
-                      ["comfortable", "Comfortable"],
-                    ].map(([value, label]) => (
+                  <div
+                    className={`mt-4 grid grid-cols-1 gap-2 ${
+                      dashboardViewOptions.length >= 3
+                        ? "sm:grid-cols-3"
+                        : dashboardViewOptions.length === 2
+                          ? "sm:grid-cols-2"
+                          : ""
+                    }`}
+                  >
+                    {dashboardViewOptions.map(([value, label, description]) => (
                       <button
                         key={value}
                         type="button"
                         onClick={() =>
-                          updateUiPreference("density", value)
+                          updateUiPreference("dashboardView", value)
                         }
-                        className={`h-9 rounded-xl border text-[13px] font-bold transition-all ${
-                          uiPreferences.density === value
-                            ? "border-slate-950 bg-slate-950 text-white"
-                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        className={`min-h-[72px] rounded-xl border px-3 py-2.5 text-left transition-all ${
+                          uiPreferences.dashboardView === value
+                            ? "border-indigo-600 bg-indigo-600 text-white shadow-[0_6px_16px_rgba(79,70,229,0.16)]"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-indigo-200 hover:bg-indigo-50/40"
                         }`}
                       >
-                        {label}
+                        <span className="block text-[12px] font-black">
+                          {label}
+                        </span>
+                        <span
+                          className={`mt-1 block text-[10px] leading-[14px] ${
+                            uiPreferences.dashboardView === value
+                              ? "text-indigo-100"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          {description}
+                        </span>
                       </button>
                     ))}
+                  </div>
+
+                  <div className="mt-3 text-[10px] font-semibold text-slate-400">
+                    Default for {formatRole(user.role)}:{" "}
+                    {defaultDashboardView === "business"
+                      ? "Business Overview"
+                      : defaultDashboardView === "team"
+                        ? "Team Operations"
+                        : "My Work"}
                   </div>
                 </div>
 
@@ -2318,7 +2428,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     </span>
 
                     <div>
-                      <div className="text-xs font-black text-slate-950">
+                      <div className="text-xs font-black text-indigo-900">
                         Dashboard Elements
                       </div>
                       <div className="mt-1 text-[12px] leading-4 text-slate-500">
@@ -2330,7 +2440,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   <div className="mt-4 divide-y divide-slate-100">
                     {[
                       ["showGreeting", "Show Greeting", "Good morning / afternoon / evening"],
-                      ["showCalendar", "Show Dashboard Calendar", "Calendar and today’s events"],
+                      ["showCalendar", "Show Dashboard Calendar", "Calendar in Team Operations and My Work"],
                     ].map(([key, label, description]) => (
                       <div
                         key={key}
@@ -2382,7 +2492,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     </span>
 
                     <div>
-                      <div className="text-xs font-black text-slate-950">
+                      <div className="text-xs font-black text-indigo-900">
                         Date & Time
                       </div>
                       <div className="mt-1 text-[12px] leading-4 text-slate-500">
@@ -2447,7 +2557,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                 <button
                   type="button"
                   onClick={saveUiPreferences}
-                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-bold text-white hover:bg-slate-800"
+                  className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white hover:bg-indigo-700"
                 >
                   {uiPreferencesSaved ? (
                     <CheckCircle2 size={14} />
@@ -2466,7 +2576,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             <div className="p-5 lg:p-6">
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <h3 className="text-sm font-black text-slate-950">
+                  <h3 className="text-sm font-black text-indigo-900">
                     Active Sessions
                   </h3>
                   <p className="mt-1 text-[13px] leading-5 text-slate-500">
@@ -2569,7 +2679,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
                               <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <div className="text-sm font-black text-slate-950">
+                                  <div className="text-sm font-black text-indigo-900">
                                     {session.deviceName || "Unknown device"}
                                   </div>
 
@@ -2659,7 +2769,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                           size={24}
                           className="mx-auto text-slate-300"
                         />
-                        <div className="mt-3 text-sm font-black text-slate-900">
+                        <div className="mt-3 text-sm font-black text-indigo-900">
                           No active sessions found
                         </div>
                       </div>
@@ -2669,7 +2779,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   <div className="mt-7">
                     <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                       <div>
-                        <h3 className="text-sm font-black text-slate-950">
+                        <h3 className="text-sm font-black text-indigo-900">
                           Session History
                         </h3>
                         <p className="mt-1 text-[13px] text-slate-500">
@@ -2756,7 +2866,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
                                 <div className="min-w-0 flex-1">
                                   <div className="flex flex-wrap items-center gap-2">
-                                    <div className="text-xs font-black text-slate-900">
+                                    <div className="text-xs font-black text-indigo-900">
                                       {session.deviceName || "Unknown device"}
                                     </div>
                                     <span className="rounded-full bg-slate-100 px-2 py-1 text-[8px] font-black uppercase tracking-wide text-slate-500">
@@ -3030,7 +3140,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             tenant={tenant}
             user={user}
             selectedYear={selectedYear}
-            uiPreferences={{ ...uiPreferences, showCalendar: false }}
+            uiPreferences={uiPreferences}
           />
         );
 
@@ -3147,6 +3257,9 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             }
             plan={
               plan
+            }
+            user={
+              user
             }
           />
         );
@@ -3435,7 +3548,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
   return (
     <div
       data-cb-theme={resolvedTheme}
-      data-cb-density={uiPreferences.density}
+      data-cb-dashboard-view={uiPreferences.dashboardView}
       className="cb-client-portal min-h-screen bg-[#f6f7fa] text-slate-900 overflow-x-hidden"
     >
       <style>{`

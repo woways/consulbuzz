@@ -117,6 +117,7 @@ enum SupportTicketType {
   CUSTOMIZATION
   INTEGRATION
   BILLING
+  CALL_TO_RM
 }
 
 enum SupportTicketPriority {
@@ -132,6 +133,10 @@ enum SupportTicketStatus {
   APPROVED
   IN_PROGRESS
   DEVELOPMENT
+  RM_ASSIGNED
+  CALL_SCHEDULED
+  DISCUSSION_COMPLETED
+  FOLLOW_UP_REQUIRED
   COMPLETED
   REJECTED
   CLOSED
@@ -259,6 +264,7 @@ model User {
   targetTasksAssigned    TargetTask[]                @relation("TargetAssigner")
   monthlyTargets         MonthlyTarget[]             @relation("MonthlyTargetOwner")
   referrals              Referral[]                  @relation("ReferralReferrer")
+  rmSupportTickets       SupportTicket[]             @relation("SupportTicketAssignedRM")
 
   @@unique([companyId, employeeId])
   @@index([companyId])
@@ -919,6 +925,19 @@ model SupportTicket {
   submittedByEmail String?
   department       String?
 
+  // Relationship Manager call request details. These remain null for normal support tickets.
+  discussionCategory String?
+  preferredCallDate  DateTime? @db.Date
+  preferredTimeSlot  String?
+  contactName        String?
+  contactPhone       String?
+  contactEmail       String?
+
+  assignedRmUserId String?
+  assignedRmUser   User?   @relation("SupportTicketAssignedRM", fields: [assignedRmUserId], references: [id], onDelete: SetNull)
+
+  scheduledCallAt DateTime?
+
   adminRemarks String?
 
   createdAt DateTime @default(now())
@@ -929,6 +948,8 @@ model SupportTicket {
   @@index([companyId])
   @@index([companyId, status])
   @@index([companyId, type])
+  @@index([assignedRmUserId])
+  @@index([scheduledCallAt])
   @@index([createdAt])
 }
 

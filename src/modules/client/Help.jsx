@@ -21,6 +21,7 @@ import {
   Search,
   Eye,
   MessageSquareText,
+  PhoneCall,
 } from "lucide-react";
 
 import {
@@ -93,7 +94,53 @@ const TYPES = [
     advancedOnly:
       true,
   },
+
+  {
+    key:
+      "CALL_TO_RM",
+
+    label:
+      "Call to RM",
+
+    description:
+      "Request a discussion with your Relationship Manager for changes, guidance, plans or any business requirement.",
+
+    color:
+      "bg-indigo-50 text-indigo-600 border-indigo-100",
+
+    icon:
+      PhoneCall,
+
+    advancedOnly:
+      false,
+  },
 ];
+
+const RM_DISCUSSION_CATEGORIES = [
+  ["GENERAL", "General Discussion"],
+  ["PRODUCT_CHANGE", "Product / Workflow Change"],
+  ["CUSTOMIZATION", "Customization"],
+  ["INTEGRATION", "Integration"],
+  ["BILLING_PLAN", "Billing / Plan"],
+  ["TRAINING_GUIDANCE", "Training / Guidance"],
+  ["OTHER", "Other"],
+];
+
+const RM_TIME_SLOTS = [
+  ["10:00 AM - 12:00 PM", "10:00 AM - 12:00 PM"],
+  ["12:00 PM - 02:00 PM", "12:00 PM - 02:00 PM"],
+  ["02:00 PM - 04:00 PM", "02:00 PM - 04:00 PM"],
+  ["04:00 PM - 06:00 PM", "04:00 PM - 06:00 PM"],
+  ["FLEXIBLE", "Flexible / RM can suggest a time"],
+];
+
+function todayInputValue() {
+  const now = new Date();
+  const local = new Date(
+    now.getTime() - now.getTimezoneOffset() * 60000
+  );
+  return local.toISOString().slice(0, 10);
+}
 
 const PRIORITIES = [
   {
@@ -154,16 +201,21 @@ function ticketStatusTone(
     status ===
       "COMPLETED" ||
     status ===
+      "DISCUSSION_COMPLETED" ||
+    status ===
       "CLOSED"
   ) {
     return "emerald";
   }
 
   if (
-    status ===
-      "DEVELOPMENT" ||
-    status ===
-      "IN_PROGRESS"
+    [
+      "DEVELOPMENT",
+      "IN_PROGRESS",
+      "RM_ASSIGNED",
+      "CALL_SCHEDULED",
+      "FOLLOW_UP_REQUIRED",
+    ].includes(status)
   ) {
     return "sky";
   }
@@ -199,6 +251,25 @@ function formatDate(
   }
 
   return formatUiDateTime(date);
+}
+
+function formatDateOnly(value) {
+  if (!value) {
+    return "—";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 function SupportMetric({
@@ -263,6 +334,8 @@ function NewTicketModal({
   defaultType,
   plan,
   departments = [],
+  tenant,
+  user,
   onClose,
   onCreated,
 }) {
@@ -318,6 +391,18 @@ function NewTicketModal({
       "MEDIUM",
     department:
       departments[0]?.name || "Admin",
+    discussionCategory:
+      "GENERAL",
+    preferredCallDate:
+      "",
+    preferredTimeSlot:
+      "FLEXIBLE",
+    contactName:
+      user?.name || tenant?.ownerName || tenant?.owner || "",
+    contactPhone:
+      user?.phone || tenant?.phone || "",
+    contactEmail:
+      user?.email || tenant?.email || "",
   });
 
   function update(
@@ -384,19 +469,22 @@ function NewTicketModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-[2px] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-white/70 w-full max-w-xl overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl border border-white/70 w-full max-w-xl max-h-[92vh] overflow-hidden flex flex-col">
 
         {/* HEADER */}
 
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
           <div>
             <h2 className="text-[17px] font-bold text-slate-950">
-              New Support Ticket
+              {form.type === "CALL_TO_RM"
+                ? "Request a Call to RM"
+                : "New Support Ticket"}
             </h2>
 
             <p className="text-[13px] text-slate-500 mt-1">
-              Submit a request to
-              ConsulBuzz support.
+              {form.type === "CALL_TO_RM"
+                ? "Share what you would like to discuss with your Relationship Manager."
+                : "Submit a request to Bispun support."}
             </p>
           </div>
 
@@ -420,8 +508,9 @@ function NewTicketModal({
           onSubmit={
             submit
           }
+          className="min-h-0 flex flex-1 flex-col"
         >
-          <div className="p-6 space-y-4">
+          <div className="p-6 space-y-4 overflow-y-auto">
 
             {error && (
               <div className="px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-[15px]">
@@ -475,6 +564,8 @@ function NewTicketModal({
               </select>
             </div>
 
+            {form.type !== "CALL_TO_RM" && (
+              <>
             {/* DEPARTMENT */}
 
             <div>
@@ -500,11 +591,16 @@ function NewTicketModal({
               </p>
             </div>
 
+              </>
+            )}
+
             {/* TITLE */}
 
             <div>
               <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
-                Title
+                {form.type === "CALL_TO_RM"
+                  ? "Discussion Topic"
+                  : "Title"}
 
                 <span className="text-rose-500 ml-0.5">
                   *
@@ -526,10 +622,128 @@ function NewTicketModal({
                       .value
                   )
                 }
-                placeholder="Describe your request briefly"
+                placeholder={form.type === "CALL_TO_RM" ? "What would you like to discuss?" : "Describe your request briefly"}
                 className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
               />
             </div>
+
+            {form.type === "CALL_TO_RM" && (
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-4">
+                <div>
+                  <div className="text-[13px] font-bold text-indigo-900">
+                    Relationship Manager Call Details
+                  </div>
+                  <div className="mt-1 text-[12px] leading-5 text-slate-500">
+                    Your company and plan are captured automatically. Add the best contact and preferred time for the discussion.
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                    Discussion Category
+                  </label>
+                  <select
+                    value={form.discussionCategory}
+                    onChange={(event) =>
+                      update("discussionCategory", event.target.value)
+                    }
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg bg-white text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                  >
+                    {RM_DISCUSSION_CATEGORIES.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                      Preferred Call Date <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      required
+                      type="date"
+                      min={todayInputValue()}
+                      value={form.preferredCallDate}
+                      onChange={(event) =>
+                        update("preferredCallDate", event.target.value)
+                      }
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg bg-white text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                      Preferred Time <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      required
+                      value={form.preferredTimeSlot}
+                      onChange={(event) =>
+                        update("preferredTimeSlot", event.target.value)
+                      }
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg bg-white text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                    >
+                      {RM_TIME_SLOTS.map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                      Contact Person <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      required
+                      value={form.contactName}
+                      onChange={(event) =>
+                        update("contactName", event.target.value)
+                      }
+                      placeholder="Contact person name"
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                      Phone Number <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      required
+                      value={form.contactPhone}
+                      onChange={(event) =>
+                        update("contactPhone", event.target.value)
+                      }
+                      placeholder="Phone number"
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                    Email <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    required
+                    type="email"
+                    value={form.contactEmail}
+                    onChange={(event) =>
+                      update("contactEmail", event.target.value)
+                    }
+                    placeholder="Contact email"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* PRIORITY */}
 
@@ -579,7 +793,9 @@ function NewTicketModal({
 
             <div>
               <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
-                Description
+                {form.type === "CALL_TO_RM"
+                  ? "What would you like to discuss?"
+                  : "Description"}
 
                 <span className="text-rose-500 ml-0.5">
                   *
@@ -605,8 +821,10 @@ function NewTicketModal({
                   )
                 }
                 placeholder={
-                  form.type ===
-                  "CUSTOMIZATION"
+                  form.type === "CALL_TO_RM"
+                    ? "Explain the change, question, requirement or topic you want to discuss with your Relationship Manager..."
+                    : form.type ===
+                      "CUSTOMIZATION"
                     ? "Explain the feature, field, workflow, integration, report or UI change you need..."
                     : form.type ===
                       "BILLING"
@@ -650,7 +868,9 @@ function NewTicketModal({
 
               {saving
                 ? "Submitting..."
-                : "Submit Ticket"}
+                : form.type === "CALL_TO_RM"
+                  ? "Request RM Call"
+                  : "Submit Ticket"}
             </button>
           </div>
         </form>
@@ -740,6 +960,43 @@ function TicketDetailsModal({
               value={ticket.department || "—"}
             />
 
+            {ticket.type === "CALL_TO_RM" && (
+              <>
+                <DetailItem
+                  label="Discussion Category"
+                  value={ticket.discussionCategoryLabel || "—"}
+                />
+                <DetailItem
+                  label="Preferred Call Date"
+                  value={formatDateOnly(ticket.preferredCallDate)}
+                />
+                <DetailItem
+                  label="Preferred Time"
+                  value={ticket.preferredTimeSlot || "—"}
+                />
+                <DetailItem
+                  label="Contact Person"
+                  value={ticket.contactName || "—"}
+                />
+                <DetailItem
+                  label="Contact Phone"
+                  value={ticket.contactPhone || "—"}
+                />
+                <DetailItem
+                  label="Contact Email"
+                  value={ticket.contactEmail || "—"}
+                />
+                <DetailItem
+                  label="Relationship Manager"
+                  value={ticket.assignedRm?.name || "Not assigned yet"}
+                />
+                <DetailItem
+                  label="Scheduled Call"
+                  value={ticket.scheduledCallAt ? formatDate(ticket.scheduledCallAt) : "Not scheduled yet"}
+                />
+              </>
+            )}
+
             <DetailItem
               label="Created"
               value={
@@ -785,7 +1042,7 @@ function TicketDetailsModal({
               <MessageSquareText
                 size={12}
               />
-              ConsulBuzz Response
+              Bispun Response
             </div>
 
             {ticket.adminRemarks ? (
@@ -823,6 +1080,8 @@ function DetailItem({
 
 export default function Help({
   plan = "basic",
+  tenant,
+  user,
 }) {
   const [
     tickets,
@@ -988,6 +1247,9 @@ export default function Help({
         [
           "IN_PROGRESS",
           "DEVELOPMENT",
+          "RM_ASSIGNED",
+          "CALL_SCHEDULED",
+          "FOLLOW_UP_REQUIRED",
         ].includes(
           ticket.status
         )
@@ -999,6 +1261,7 @@ export default function Help({
         ticket
       ) =>
         [
+          "DISCUSSION_COMPLETED",
           "COMPLETED",
           "CLOSED",
         ].includes(
@@ -1029,6 +1292,12 @@ export default function Help({
                 ticket.submittedByName,
                 ticket.submittedByEmail,
                 ticket.department,
+                ticket.discussionCategoryLabel,
+                ticket.preferredTimeSlot,
+                ticket.contactName,
+                ticket.contactPhone,
+                ticket.contactEmail,
+                ticket.assignedRm?.name,
                 ticket.adminRemarks,
               ]
                 .filter(
@@ -1096,10 +1365,7 @@ export default function Help({
           </h1>
 
           <p className="mt-1 text-[15px] text-slate-500">
-            Manage technical issues,
-            billing requests and
-            Advanced-plan customization
-            support.
+            Manage technical issues, billing requests, Advanced-plan customization support, or request a direct discussion with your Relationship Manager.
           </p>
         </div>
 
@@ -1196,7 +1462,7 @@ export default function Help({
 
       {/* SUPPORT TYPES */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {TYPES.map(
           (
             type
@@ -1349,6 +1615,18 @@ export default function Help({
           <option value="DEVELOPMENT">
             Development
           </option>
+          <option value="RM_ASSIGNED">
+            RM Assigned
+          </option>
+          <option value="CALL_SCHEDULED">
+            Call Scheduled
+          </option>
+          <option value="DISCUSSION_COMPLETED">
+            Discussion Completed
+          </option>
+          <option value="FOLLOW_UP_REQUIRED">
+            Follow-up Required
+          </option>
           <option value="COMPLETED">
             Completed
           </option>
@@ -1384,6 +1662,9 @@ export default function Help({
           </option>
           <option value="CUSTOMIZATION">
             Customization Request
+          </option>
+          <option value="CALL_TO_RM">
+            Call to RM
           </option>
         </select>
 
@@ -1511,6 +1792,12 @@ export default function Help({
                     </Badge>
                   </td>
 
+                  <td className="px-4 py-3 text-[13px] text-slate-600">
+                    {ticket.type === "CALL_TO_RM"
+                      ? "Relationship Manager"
+                      : ticket.department || "—"}
+                  </td>
+
                   <td className="px-4 py-3">
                     <Badge
                       tone={priorityTone(
@@ -1575,6 +1862,8 @@ export default function Help({
             plan
           }
           departments={departments}
+          tenant={tenant}
+          user={user}
           onClose={() => {
             setShowTicketModal(
               false
@@ -1594,7 +1883,7 @@ export default function Help({
             );
 
             setSuccessMessage(
-              "Support ticket submitted successfully"
+              "Request submitted successfully"
             );
 
             await loadTickets();
