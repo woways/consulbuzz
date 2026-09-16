@@ -971,18 +971,23 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       ?.renewalDate ||
     null;
 
-  const sidebarRenewalLabel =
-    sidebarRenewalDate
-      ? new Date(
-          sidebarRenewalDate
-        ).toLocaleDateString(
-          "en-IN",
-          {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }
-        )
+  const sidebarNextAnnualRenewalDate =
+    sidebarRenewalDate &&
+    !Number.isNaN(new Date(sidebarRenewalDate).getTime())
+      ? (() => {
+          const next = new Date(sidebarRenewalDate);
+          next.setFullYear(next.getFullYear() + 1);
+          return next;
+        })()
+      : null;
+
+  const sidebarNextAnnualRenewalLabel =
+    sidebarNextAnnualRenewalDate
+      ? sidebarNextAnnualRenewalDate.toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
       : null;
 
   const tenant =
@@ -3947,7 +3952,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               </div>
             </nav>
 
-            {/* CURRENT PLAN — exact approved sidebar style */}
+            {/* CURRENT PLAN — reference-inspired compact premium card */}
             <div
               className={`${
                 sidebarCompact
@@ -3956,51 +3961,89 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               } pb-3`}
             >
               {!sidebarCompact ? (
-                <div className="rounded-[12px] border border-white/10 bg-white/[0.045] px-4 py-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-[13px] font-medium text-slate-300">
-                      Current Plan
+                <div className="rounded-[15px] bg-gradient-to-br from-brand-300/80 via-brand-500/25 to-brand-400/75 p-px">
+                  <div className="relative overflow-hidden rounded-[14px] bg-[#081424] px-3.5 py-3.5">
+                    {/* restrained outline/detail only — no heavy inner glow */}
+                    <div className="pointer-events-none absolute inset-0 rounded-[14px] ring-1 ring-inset ring-white/[0.035]" />
+                    <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full border border-brand-400/10" />
+                    <div className="pointer-events-none absolute -right-7 -top-7 h-20 w-20 rounded-full border border-brand-400/10" />
+
+                    <div className="relative">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-[9px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                            Current Plan
+                          </div>
+
+                          <div className="mt-1.5 text-[28px] font-bold leading-none tracking-[-0.04em] text-white">
+                            {planLabel}
+                          </div>
+                        </div>
+
+                        <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-brand-400/25 bg-[#0b192c]">
+                          <div className="absolute inset-[4px] rounded-full border border-brand-400/15" />
+                          <Crown
+                            size={21}
+                            strokeWidth={2}
+                            className="relative text-amber-400"
+                          />
+                        </div>
+                      </div>
+
+                      {sidebarNextAnnualRenewalLabel && (
+                        <div className="mt-3 flex items-center gap-2 text-[12px] text-slate-300">
+                          <CalendarDays
+                            size={14}
+                            strokeWidth={2}
+                            className="flex-shrink-0 text-brand-300"
+                          />
+                          <span className="font-medium">
+                            Valid till{" "}
+                            <span className="font-semibold text-slate-100">
+                              {sidebarNextAnnualRenewalLabel}
+                            </span>
+                          </span>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={openBilling}
+                        className="mt-4 flex h-[46px] w-full items-center justify-center gap-2 rounded-[10px] border border-brand-300/40 bg-gradient-to-r from-brand-500 via-brand-600 to-brand-500 px-3 text-[13px] font-bold text-white shadow-[0_5px_14px_rgba(15,23,42,0.20)] transition-all hover:-translate-y-0.5"
+                      >
+                        <Rocket size={16} strokeWidth={2.2} className="flex-shrink-0" />
+                        <span className="whitespace-nowrap">
+                          Upgrade your plan
+                        </span>
+                        <span className="ml-auto flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/10">
+                          <ChevronRight size={15} strokeWidth={2.2} />
+                        </span>
+                      </button>
+
+                      <div className="mt-2 text-center text-[8px] font-medium uppercase tracking-[0.18em] text-slate-600">
+                        More success together
+                      </div>
                     </div>
-
-                    <Crown
-                      size={16}
-                      strokeWidth={2}
-                      className="text-amber-400"
-                    />
                   </div>
-
-                  <div className="mt-2 text-[18px] font-bold leading-none text-white">
-                    {planLabel}
-                  </div>
-
-                  <div className="mt-2 text-[13px] text-slate-300">
-                    {sidebarRenewalLabel
-                      ? `Valid till ${sidebarRenewalLabel}`
-                      : "Active subscription"}
-                  </div>
-
+                </div>
+              ) : (
+                <div className="mx-auto h-11 w-11 rounded-[12px] bg-gradient-to-br from-brand-300/80 via-brand-500/25 to-brand-400/75 p-px">
                   <button
                     type="button"
                     onClick={openBilling}
-                    className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-brand-500 via-brand-600 to-brand-700 px-3 text-[13px] font-bold text-white shadow-brand-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-brand-lg"
+                    className="flex h-full w-full items-center justify-center rounded-[11px] bg-[#081424] text-amber-400 transition-colors hover:bg-[#0d1c30]"
+                    title={`${planLabel} plan${
+                      sidebarNextAnnualRenewalLabel
+                        ? ` · Renews on ${sidebarNextAnnualRenewalLabel}`
+                        : ""
+                    }`}
                   >
-                    <Rocket size={14} strokeWidth={2.2} />
-                    Upgrade your plan
+                    <Crown size={17} strokeWidth={2} />
                   </button>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={openBilling}
-                  className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-white shadow-[0_8px_20px_rgba(79,70,229,0.26)] transition-all duration-300 hover:scale-[1.04]"
-                  title="Upgrade your plan"
-                >
-                  <Rocket size={17} strokeWidth={2.2} />
-                </button>
               )}
             </div>
           </div>
-
         </aside>
 
         {/* MAIN WORKSPACE */}
