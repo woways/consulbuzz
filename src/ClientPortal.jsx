@@ -3742,21 +3742,24 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           </button>
 
           <div className="h-full flex flex-col overflow-visible">
-            {/* BISPUN PRODUCT IDENTITY — TOP LEFT */}
+            {/* CLIENT COMPANY IDENTITY — TOP LEFT */}
             {!sidebarCompact ? (
               <div className="px-5 pt-4 pb-3">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-[13px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.28)]">
-                    <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.35),transparent_42%)]" />
-                    <span className="relative">BI</span>
+                  <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-white/10 bg-brand-600 text-[13px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.28)]">
+                    {company?.logoUrl ? (
+                      <img src={company.logoUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="relative">{(company?.brandName || company?.name || "CB").slice(0, 2).toUpperCase()}</span>
+                    )}
                   </div>
 
                   <div className="min-w-0 overflow-visible">
-                    <div className="whitespace-nowrap text-[20px] font-black leading-none tracking-[-0.03em] text-white">
-                      Bis<span className="text-[#4f8cff]">pun</span>
+                    <div className="truncate text-[17px] font-black leading-tight tracking-[-0.02em] text-white">
+                      {company?.brandName || company?.name || "Workspace"}
                     </div>
-                    <div className="mt-1 whitespace-nowrap text-[8px] font-bold uppercase tracking-[0.20em] text-slate-500">
-                      CRM Made Simple
+                    <div className="mt-0.5 truncate text-[8px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                      {company?.business || company?.subdomain || "Workspace"}
                     </div>
                   </div>
                 </div>
@@ -3764,11 +3767,14 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
             ) : (
               <div className="pt-4 pb-2 flex justify-center">
                 <div
-                  className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-indigo-300/20 bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-[13px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.24)]"
-                  title="Bispun"
+                  className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border border-white/10 bg-brand-600 text-[13px] font-black tracking-tight text-white shadow-[0_8px_22px_rgba(79,70,229,0.24)]"
+                  title={company?.brandName || company?.name || "Workspace"}
                 >
-                  <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.35),transparent_42%)]" />
-                  <span className="relative">BI</span>
+                  {company?.logoUrl ? (
+                    <img src={company.logoUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="relative">{(company?.brandName || company?.name || "CB").slice(0, 2).toUpperCase()}</span>
+                  )}
                 </div>
               </div>
             )}
@@ -4087,95 +4093,55 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               </div>
             </nav>
 
-            {/* CURRENT PLAN — reference-inspired compact premium card */}
-            <div
-              className={`${
-                sidebarCompact
-                  ? "px-2"
-                  : "px-3"
-              } pb-3`}
-            >
+            {/* BISPUN ACCOUNT — compact button + menu */}
+            <div className={`${sidebarCompact ? "px-2" : "px-3"} pb-3`}>
               {!sidebarCompact ? (
-                <div className="rounded-[15px] bg-gradient-to-br from-brand-300/80 via-brand-500/25 to-brand-400/75 p-px">
-                  <div className="relative overflow-hidden rounded-[14px] bg-[#081424] px-3.5 py-3.5">
-                    {/* restrained outline/detail only — no heavy inner glow */}
-                    <div className="pointer-events-none absolute inset-0 rounded-[14px] ring-1 ring-inset ring-white/[0.035]" />
-                    <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full border border-brand-400/10" />
-                    <div className="pointer-events-none absolute -right-7 -top-7 h-20 w-20 rounded-full border border-brand-400/10" />
+                <div className="relative">
+                  <button type="button" onClick={() => setAccountActionsOpen((v) => !v)} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition hover:bg-white/[0.06]">
+                    <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-[11px] font-black text-white">BI</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13px] font-bold leading-tight text-white">Bis<span className="text-[#4f8cff]">pun</span></span>
+                      <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">{planLabel} plan</span>
+                    </span>
+                    <ChevronRight size={15} strokeWidth={2.2} className={`flex-shrink-0 text-slate-400 transition-transform ${accountActionsOpen ? "-rotate-90" : ""}`} />
+                  </button>
 
-                    <div className="relative">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-[9px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                            Current Plan
-                          </div>
-
-                          <div className="mt-1.5 text-[28px] font-bold leading-none tracking-[-0.04em] text-white">
-                            {planLabel}
-                          </div>
-                        </div>
-
-                        <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-brand-400/25 bg-[#0b192c]">
-                          <div className="absolute inset-[4px] rounded-full border border-brand-400/15" />
-                          <Crown
-                            size={21}
-                            strokeWidth={2}
-                            className="relative text-amber-400"
-                          />
-                        </div>
-                      </div>
-
-                      {sidebarNextAnnualRenewalLabel && (
-                        <div className="mt-3 flex items-center gap-2 text-[12px] text-slate-300">
-                          <CalendarDays
-                            size={14}
-                            strokeWidth={2}
-                            className="flex-shrink-0 text-brand-300"
-                          />
-                          <span className="font-medium">
-                            Valid till{" "}
-                            <span className="font-semibold text-slate-100">
-                              {sidebarNextAnnualRenewalLabel}
-                            </span>
+                  {accountActionsOpen && (
+                    <>
+                      <div className="fixed inset-0 z-[75]" onClick={() => setAccountActionsOpen(false)} />
+                      <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-[80] overflow-hidden rounded-xl border border-white/10 bg-[#111a2e] py-1 shadow-[0_18px_40px_rgba(2,8,23,0.5)]">
+                        <button type="button" onClick={() => { setAccountActionsOpen(false); openBilling(); }} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left hover:bg-white/[0.06]">
+                          <Rocket size={15} strokeWidth={2} className="flex-shrink-0 text-slate-400" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[13px] font-semibold text-slate-200">Upgrade plan</span>
+                            {sidebarNextAnnualRenewalLabel && (
+                              <span className="block text-[10px] text-slate-500">Valid till {sidebarNextAnnualRenewalLabel}</span>
+                            )}
                           </span>
-                        </div>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={openBilling}
-                        className="mt-4 flex h-[46px] w-full items-center justify-center gap-2 rounded-[10px] border border-brand-300/40 bg-gradient-to-r from-brand-500 via-brand-600 to-brand-500 px-3 text-[13px] font-bold text-white shadow-[0_5px_14px_rgba(15,23,42,0.20)] transition-all hover:-translate-y-0.5"
-                      >
-                        <Rocket size={16} strokeWidth={2.2} className="flex-shrink-0" />
-                        <span className="whitespace-nowrap">
-                          Upgrade your plan
-                        </span>
-                        <span className="ml-auto flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/10">
-                          <ChevronRight size={15} strokeWidth={2.2} />
-                        </span>
-                      </button>
-
-                      <div className="mt-2 text-center text-[8px] font-medium uppercase tracking-[0.18em] text-slate-600">
-                        More success together
+                        </button>
+                        <button type="button" onClick={() => { setAccountActionsOpen(false); setModule("settings"); }} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-200 hover:bg-white/[0.06]">
+                          <Settings size={15} strokeWidth={2} className="flex-shrink-0 text-slate-400" />Settings
+                        </button>
+                        <button type="button" onClick={() => { setAccountActionsOpen(false); setProfileTab("profile"); setModule("profile"); }} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-200 hover:bg-white/[0.06]">
+                          <UserRound size={15} strokeWidth={2} className="flex-shrink-0 text-slate-400" />Profile
+                        </button>
+                        <div className="my-1 border-t border-white/10" />
+                        <button type="button" onClick={() => { setAccountActionsOpen(false); signOut(); }} disabled={signingOut} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-rose-300 hover:bg-rose-500/10 disabled:opacity-50">
+                          <LogOut size={15} strokeWidth={2} className="flex-shrink-0" />{signingOut ? "Signing out..." : "Log out"}
+                        </button>
                       </div>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </div>
               ) : (
-                <div className="mx-auto h-11 w-11 rounded-[12px] bg-gradient-to-br from-brand-300/80 via-brand-500/25 to-brand-400/75 p-px">
-                  <button
-                    type="button"
-                    onClick={openBilling}
-                    className="flex h-full w-full items-center justify-center rounded-[11px] bg-[#081424] text-amber-400 transition-colors hover:bg-[#0d1c30]"
-                    title={`${planLabel} plan${
-                      sidebarNextAnnualRenewalLabel
-                        ? ` · Renews on ${sidebarNextAnnualRenewalLabel}`
-                        : ""
-                    }`}
-                  >
-                    <Crown size={17} strokeWidth={2} />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={openBilling}
+                  className="mx-auto flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-[11px] font-black text-white transition hover:brightness-110"
+                  title={`${planLabel} plan`}
+                >
+                  BI
+                </button>
               )}
             </div>
           </div>
@@ -4360,88 +4326,6 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   )}
                 </div>
 
-                {/* PROFILE — ICON ONLY IN TOP BAR */}
-                <div ref={profileMenuRef} className="relative">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileMenuOpen((current) => !current);
-                      setNotificationsOpen(false);
-                    }}
-                    className="relative flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-slate-100"
-                    aria-label="Open account menu"
-                    title={user.name || tenant.name}
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white ring-2 ring-white/10">
-                      {initials}
-                    </div>
-
-                  </button>
-
-                  {profileMenuOpen && (
-                    <div className="absolute right-0 mt-3 w-[300px] overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.16)]">
-                      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                        <div className="text-[13px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                          Account
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={signOut}
-                          disabled={signingOut}
-                          className="text-[12px] font-semibold text-slate-700 hover:text-slate-950 disabled:opacity-50"
-                        >
-                          {signingOut ? "Signing out..." : "Sign out"}
-                        </button>
-                      </div>
-
-                      <div className="px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-[#168A42] text-[17px] font-bold text-white">
-                            {initials}
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-[15px] font-bold text-slate-950">
-                              {user.name || tenant.name}
-                            </div>
-                            <div className="mt-0.5 truncate text-[12px] text-slate-500">
-                              {user.email}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setProfileMenuOpen(false);
-                                setProfileTab("profile");
-                                setModule("profile");
-                              }}
-                              className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-slate-700 hover:text-slate-950"
-                            >
-                              Manage account
-                              <ChevronRight size={14} />
-                            </button>
-                          </div>
-                        </div>
-
-                        {(user.role === "CLIENT_ADMIN" ||
-                          permissions.canManageSettings === true) && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setProfileMenuOpen(false);
-                              setModule("settings");
-                            }}
-                            className="mt-4 flex h-10 w-full items-center gap-2.5 rounded-xl px-3 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                          >
-                            <Settings size={14} />
-                            Company Settings
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
           </header>
