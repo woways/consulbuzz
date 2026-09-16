@@ -129,13 +129,15 @@ function parseClientDevice(userAgent = "") {
 
   let browser = "Unknown browser";
 
-  if (/Edg\//i.test(ua)) {
+  if (/SamsungBrowser\//i.test(ua)) {
+    browser = "Samsung Internet";
+  } else if (/EdgA?\//i.test(ua) || /EdgiOS\//i.test(ua)) {
     browser = "Microsoft Edge";
-  } else if (/OPR\//i.test(ua)) {
+  } else if (/OPR\//i.test(ua) || /Opera/i.test(ua)) {
     browser = "Opera";
   } else if (/Chrome\//i.test(ua) && !/Chromium/i.test(ua)) {
     browser = "Chrome";
-  } else if (/Firefox\//i.test(ua)) {
+  } else if (/Firefox\//i.test(ua) || /FxiOS\//i.test(ua)) {
     browser = "Firefox";
   } else if (/Safari\//i.test(ua) && /Version\//i.test(ua)) {
     browser = "Safari";
@@ -535,6 +537,9 @@ router.post(
     res
   ) => {
     try {
+      res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+      res.set("Pragma", "no-cache");
+
       const email =
         String(
           req.body
@@ -780,6 +785,8 @@ router.get(
     res
   ) => {
     try {
+      res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+      res.set("Pragma", "no-cache");
       const user =
         await getClientUser(
           req.clientUser

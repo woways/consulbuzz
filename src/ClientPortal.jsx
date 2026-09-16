@@ -55,6 +55,7 @@ import {
   CircleDollarSign,
   BarChart3,
   CircleHelp,
+  Menu,
 } from "lucide-react";
 
 import {
@@ -3659,9 +3660,29 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       `}</style>
 
       {/* MOBILE APP BAR */}
-      <div className="lg:hidden sticky top-0 z-40 h-14 bg-[#f6f7fb]/95 backdrop-blur-xl border-b border-slate-200/70 px-4 flex items-center justify-between">
-        
-        <div className="min-w-0 px-3 text-center">
+      <div className="lg:hidden fixed inset-x-0 top-0 z-[60] h-14 bg-[#f6f7fb]/95 backdrop-blur-xl border-b border-slate-200/70 px-3 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() =>
+            setMobileSidebarOpen(
+              (current) => !current
+            )
+          }
+          className="w-10 h-10 rounded-xl border border-slate-200 bg-white text-slate-700 flex items-center justify-center shadow-sm active:scale-[0.98]"
+          aria-label={
+            mobileSidebarOpen
+              ? "Close navigation"
+              : "Open navigation"
+          }
+        >
+          {mobileSidebarOpen ? (
+            <X size={19} />
+          ) : (
+            <Menu size={20} />
+          )}
+        </button>
+
+        <div className="absolute left-1/2 max-w-[58vw] -translate-x-1/2 text-center">
           <div className="text-[13px] font-bold text-slate-950 truncate">
             {company.brandName}
           </div>
@@ -3670,11 +3691,12 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
         <button
           type="button"
           onClick={() => {
-            setMobileSidebarOpen(true);
-            setAccountActionsOpen(true);
+            setMobileSidebarOpen(false);
+            setProfileTab("profile");
+            setModule("profile");
           }}
           className="relative w-9 h-9 rounded-full bg-brand-600 text-white flex items-center justify-center text-[12px] font-bold shadow-sm"
-          aria-label="Open account"
+          aria-label="Open profile"
         >
           {initials}
           {unreadNotificationCount > 0 && (
@@ -3700,7 +3722,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           } ${
             sidebarCompact
               ? "w-[72px] shadow-[5px_0_18px_rgba(2,8,23,0.08)]"
-              : "w-[252px] shadow-[8px_0_28px_rgba(2,8,23,0.10)]"
+              : "w-[82vw] max-w-[292px] lg:w-[252px] lg:max-w-none shadow-[8px_0_28px_rgba(2,8,23,0.10)]"
           }`}
         >
           <button
@@ -4167,7 +4189,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
         >
           {/* TOP BAR — continuous with sidebar */}
           <header
-            className={`fixed top-0 right-0 z-40 h-[64px] bg-[#f6f7fa]/96 text-slate-900 backdrop-blur-xl transition-[left] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+            className={`hidden lg:block fixed top-0 right-0 z-40 h-[64px] bg-[#f6f7fa]/96 text-slate-900 backdrop-blur-xl transition-[left] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
               sidebarCollapsed
                 ? "left-[72px]"
                 : "left-[252px]"
@@ -4425,7 +4447,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
           </header>
 
           {/* MAIN CONTENT */}
-          <main className="mt-[64px] min-h-[calc(100vh-64px)] bg-[#f6f7fa] px-3 pt-3 pb-4 sm:px-5 sm:pt-4 sm:pb-5 lg:px-6 lg:pt-4 lg:pb-6">
+          <main className="mt-14 min-h-[calc(100vh-56px)] bg-[#f6f7fa] px-3 pt-3 pb-4 sm:px-5 sm:pt-4 sm:pb-5 lg:mt-[64px] lg:min-h-[calc(100vh-64px)] lg:px-6 lg:pt-4 lg:pb-6">
             <div className="max-w-[1560px] mx-auto">
               {renderModule()}
             </div>

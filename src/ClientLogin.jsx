@@ -81,6 +81,24 @@ export default function ClientLogin() {
         }),
       });
 
+      // Do not treat a 200 login response as a complete sign-in until
+      // the browser proves that it kept and can resend the session cookie.
+      try {
+        await apiRequest("/api/client/auth/me", {
+          cache: "no-store",
+        });
+      } catch (sessionError) {
+        const browserSessionError = new Error(
+          "Your credentials were accepted, but this browser did not keep the secure login session. Please allow cookies for this site and try again."
+        );
+        browserSessionError.status = sessionError?.status;
+        browserSessionError.data = {
+          message:
+            "Your credentials were accepted, but this browser did not keep the secure login session. Please allow cookies for this site and try again.",
+        };
+        throw browserSessionError;
+      }
+
       if (rememberMe) {
         localStorage.setItem(
           "cb_remembered_email",
@@ -284,7 +302,7 @@ export default function ClientLogin() {
 
             <div className="mb-12 flex items-center gap-3 lg:hidden">
               <div className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#061124] text-[11px] font-black tracking-[0.08em] text-white">
-                CB
+                BI
               </div>
 
               <div className="text-[19px] font-bold tracking-[-0.03em] text-slate-950">
