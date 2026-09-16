@@ -211,6 +211,7 @@ model User {
   name         String
   email        String   @unique
   passwordHash String
+  avatarUrl    String?
   role         UserRole @default(EMPLOYEE)
 
   active Boolean @default(true)
@@ -1192,6 +1193,7 @@ model ConversationMember {
   isArchived Boolean   @default(false)
   clearedAt  DateTime?
   hiddenAt   DateTime?
+  nickname   String?
 
   @@unique([conversationId, userId])
   @@index([userId])

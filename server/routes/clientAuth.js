@@ -297,6 +297,8 @@ function buildClientSession(user) {
         user.name,
       email:
         user.email,
+      avatarUrl:
+        user.avatarUrl || null,
       role:
         user.role,
       phone:

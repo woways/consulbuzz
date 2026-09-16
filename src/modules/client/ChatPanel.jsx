@@ -20,6 +20,8 @@ import {
   BellOff,
   Star,
   Loader2,
+  Camera,
+  Pencil,
   Users,
   AlertCircle,
   MessageSquare,
@@ -105,6 +107,37 @@ const EMOJIS = [
 const MEETING_PREFIX = "\uD83D\uDCF9 Meeting started \u2014 join: ";
 const JITSI_BASE = "https://meet.jit.si/";
 
+function groupMessageReactions(reactions, myId) {
+  const groups = new Map();
+
+  (Array.isArray(reactions) ? reactions : []).forEach((reaction) => {
+    const emoji = String(reaction?.emoji || "").trim();
+    if (!emoji) return;
+
+    if (!groups.has(emoji)) {
+      groups.set(emoji, {
+        emoji,
+        count: 0,
+        reactedByMe: false,
+        names: [],
+      });
+    }
+
+    const group = groups.get(emoji);
+    group.count += 1;
+
+    if (reaction?.user?.id === myId) {
+      group.reactedByMe = true;
+    }
+
+    if (reaction?.user?.name) {
+      group.names.push(reaction.user.name);
+    }
+  });
+
+  return Array.from(groups.values());
+}
+
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
@@ -133,6 +166,78 @@ export default function ChatPanel({ currentUser }) {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedConversationIds, setSelectedConversationIds] = useState([]);
   const [deleting, setDeleting] = useState(false);
+
+  const [myAvatar, setMyAvatar] = useState(currentUser?.avatarUrl || null);
+  const avatarInputRef = useRef(null);
+
+  async function onPickAvatar(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      setError("Please choose a PNG, JPG or WEBP image");
+      return;
+    }
+    if (file.size > 500 * 1024) {
+      setError("Image must be under 500 KB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = String(reader.result || "");
+      try {
+        const res = await apiRequest("/api/client/chat/me/avatar", {
+          method: "PATCH",
+          body: JSON.stringify({ avatarUrl: dataUrl }),
+        });
+        setMyAvatar(res.avatarUrl || dataUrl);
+      } catch (err) {
+        setError(err?.data?.message || "Unable to update photo");
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function renameGroup() {
+    const name = window.prompt("Group name", activeConversation?.title || "");
+    if (name == null) return;
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    try {
+      await apiRequest(`/api/client/chat/${activeId}/name`, {
+        method: "PATCH",
+        body: JSON.stringify({ name: trimmed }),
+      });
+      setConversations((prev) =>
+        prev.map((c) => (c.id === activeId ? { ...c, name: trimmed, title: c.nickname || trimmed } : c))
+      );
+      setHeaderMenuOpen(false);
+    } catch (err) {
+      setError(err?.data?.message || "Unable to rename group");
+    }
+  }
+
+  async function setChatNickname() {
+    const name = window.prompt("Rename this chat (only you will see this)", activeConversation?.title || "");
+    if (name == null) return;
+    const trimmed = name.trim();
+    try {
+      const res = await apiRequest(`/api/client/chat/${activeId}/nickname`, {
+        method: "PATCH",
+        body: JSON.stringify({ nickname: trimmed || null }),
+      });
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== activeId) return c;
+          const base = c.isGroup ? c.name || "Group chat" : c.otherMembers?.[0]?.name || c.title;
+          return { ...c, nickname: res.nickname || null, title: res.nickname || base };
+        })
+      );
+      setHeaderMenuOpen(false);
+    } catch (err) {
+      setError(err?.data?.message || "Unable to rename chat");
+    }
+  }
 
   const [newOpen, setNewOpen] = useState(false);
   const [users, setUsers] = useState([]);
@@ -194,6 +299,20 @@ export default function ChatPanel({ currentUser }) {
           message.id === messageId
             ? { ...message, reactions: Array.isArray(reactions) ? reactions : [] }
             : message
+        )
+      );
+    });
+
+    socket.on("user:avatar", ({ userId, avatarUrl }) => {
+      setConversations((prev) =>
+        prev.map((c) => (c.otherUserId === userId ? { ...c, avatarUrl } : c))
+      );
+    });
+
+    socket.on("conversation:renamed", ({ conversationId, name }) => {
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === conversationId ? { ...c, name, title: c.nickname || name } : c
         )
       );
     });
@@ -655,11 +774,35 @@ export default function ChatPanel({ currentUser }) {
         {/* LEFT NAV + CHAT LIST */}
         <div className={`w-full flex-shrink-0 border-r border-slate-200 bg-white lg:flex lg:w-[350px] lg:flex-col ${activeId ? "hidden" : "flex flex-col"}`}>
           <div className="flex h-[66px] items-center justify-between border-b border-neutral-200 px-4">
-            <div>
-              <div className="text-[18px] font-semibold tracking-[-0.015em] text-neutral-950">
-                {selectionMode ? `${selectedConversationIds.length} selected` : "Chats"}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                className="group relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-100 text-xs font-bold text-indigo-600 shadow-sm"
+                title="Change your photo"
+              >
+                {myAvatar ? (
+                  <img src={myAvatar} alt="You" className="h-full w-full object-cover" />
+                ) : (
+                  initialsOf(currentUser?.name)
+                )}
+                <span className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition group-hover:opacity-100">
+                  <Camera size={14} className="text-white" />
+                </span>
+              </button>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={onPickAvatar}
+                className="hidden"
+              />
+              <div>
+                <div className="text-[18px] font-semibold tracking-[-0.015em] text-neutral-950">
+                  {selectionMode ? `${selectedConversationIds.length} selected` : "Chats"}
+                </div>
+                {selectionMode && <div className="text-[11px] text-slate-500">Select one or multiple chats</div>}
               </div>
-              {selectionMode && <div className="text-[11px] text-slate-500">Select one or multiple chats</div>}
             </div>
             <div className="flex items-center gap-1.5">
               {selectionMode ? (
@@ -707,8 +850,8 @@ export default function ChatPanel({ currentUser }) {
                     onClick={() => selectionMode ? toggleConversationSelection(c.id) : setActiveId(c.id)}
                     className={`mx-2 flex w-[calc(100%-16px)] items-center gap-3 rounded-[11px] border px-3 py-2.5 text-left transition ${active ? "border-indigo-200 bg-indigo-50/90 shadow-[inset_3px_0_0_#4f46e5]" : "border-transparent hover:bg-neutral-50"}`}
                   >
-                    <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold shadow-sm ${selectedConversationIds.includes(c.id) ? "bg-indigo-600 text-white" : c.isGroup ? "bg-neutral-100 text-neutral-600" : "bg-indigo-100 text-indigo-600"}`}>
-                      {selectionMode ? (selectedConversationIds.includes(c.id) ? <CheckSquare size={17} /> : <Square size={17} />) : c.isGroup ? <Users size={16} /> : initialsOf(c.title)}
+                    <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-bold shadow-sm ${selectedConversationIds.includes(c.id) ? "bg-indigo-600 text-white" : c.isGroup ? "bg-neutral-100 text-neutral-600" : "bg-indigo-100 text-indigo-600"}`}>
+                      {selectionMode ? (selectedConversationIds.includes(c.id) ? <CheckSquare size={17} /> : <Square size={17} />) : c.isGroup ? <Users size={16} /> : c.avatarUrl ? <img src={c.avatarUrl} alt="" className="h-full w-full object-cover" /> : initialsOf(c.title)}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
@@ -745,8 +888,8 @@ export default function ChatPanel({ currentUser }) {
                 <button type="button" onClick={() => setActiveId(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden" aria-label="Back">
                   <ChevronLeft size={17} />
                 </button>
-                <span className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm ${activeConversation.isGroup ? "bg-gradient-to-br from-violet-500 to-purple-600" : `bg-gradient-to-br ${avatarGradient(activeConversation.title)}`}`}>
-                  {activeConversation.isGroup ? <Users size={16} /> : initialsOf(activeConversation.title)}
+                <span className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-full text-sm font-bold text-white shadow-sm ${activeConversation.isGroup ? "bg-gradient-to-br from-violet-500 to-purple-600" : `bg-gradient-to-br ${avatarGradient(activeConversation.title)}`}`}>
+                  {activeConversation.isGroup ? <Users size={16} /> : activeConversation.avatarUrl ? <img src={activeConversation.avatarUrl} alt="" className="h-full w-full object-cover" /> : initialsOf(activeConversation.title)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[16px] font-semibold tracking-[-0.01em] text-slate-900">{activeConversation.title}</div>
@@ -787,6 +930,11 @@ export default function ChatPanel({ currentUser }) {
                   </button>
                   {headerMenuOpen && (
                     <div className="absolute right-0 top-11 z-40 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+                      {activeConversation.isGroup ? (
+                        <button type="button" onClick={renameGroup} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"><Pencil size={14} />Rename group</button>
+                      ) : (
+                        <button type="button" onClick={setChatNickname} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"><Pencil size={14} />Rename (only you)</button>
+                      )}
                       <button type="button" onClick={clearActiveChat} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"><Eraser size={14} />Clear chat for me</button>
                     </div>
                   )}
@@ -838,6 +986,7 @@ export default function ChatPanel({ currentUser }) {
                       const m = item.message;
                       const mine = m.sender?.id === myId;
                       const room = meetingRoomFromBody(m.body);
+                      const reactionGroups = groupMessageReactions(m.reactions, myId);
                       return (
                         <div key={item.key} className={`group flex items-end gap-2 ${mine ? "justify-end" : "justify-start"}`}>
                           {!mine && (
@@ -885,6 +1034,41 @@ export default function ChatPanel({ currentUser }) {
                                 {formatTime(m.createdAt)}
                               </div>
                             </div>
+
+                            {reactionGroups.length > 0 && (
+                              <div
+                                className={`mt-1 flex flex-wrap items-center gap-1 ${
+                                  mine ? "justify-end" : "justify-start"
+                                }`}
+                              >
+                                {reactionGroups.map((reaction) => (
+                                  <button
+                                    key={reaction.emoji}
+                                    type="button"
+                                    title={
+                                      reaction.names.length
+                                        ? reaction.names.join(", ")
+                                        : "Message reaction"
+                                    }
+                                    onClick={() => reactToMessage(m.id, reaction.emoji)}
+                                    className={`inline-flex h-7 items-center gap-1 rounded-full border px-2 text-[12px] font-medium transition ${
+                                      reaction.reactedByMe
+                                        ? "border-indigo-200 bg-indigo-50 text-indigo-700 shadow-sm"
+                                        : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/60"
+                                    }`}
+                                  >
+                                    <span className="text-[14px] leading-none">
+                                      {reaction.emoji}
+                                    </span>
+                                    {reaction.count > 1 && (
+                                      <span className="text-[11px] tabular-nums">
+                                        {reaction.count}
+                                      </span>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
 
                             <div className={`relative mt-1 flex items-center gap-1 ${mine ? "justify-end" : "justify-start"}`}>
                               {!m.deletedForEveryone && <div className="relative">

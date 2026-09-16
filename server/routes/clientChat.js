@@ -15,7 +15,7 @@ router.use(requireClientUser);
 
 function userMini(user) {
   return user
-    ? { id: user.id, name: user.name, email: user.email }
+    ? { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatarUrl || null }
     : null;
 }
 
@@ -30,9 +30,10 @@ function formatConversation(conversation, currentUserId, unreadCount = 0) {
     (m) => m.userId === currentUserId
   );
 
-  const title = conversation.isGroup
+  const baseTitle = conversation.isGroup
     ? conversation.name || "Group chat"
     : others[0]?.name || "Conversation";
+  const title = myMembership?.nickname || baseTitle;
 
   const visibleMessages = (conversation.messages || []).filter(
     (message) => !myMembership?.clearedAt || message.createdAt > myMembership.clearedAt
@@ -54,6 +55,9 @@ function formatConversation(conversation, currentUserId, unreadCount = 0) {
     isGroup: conversation.isGroup,
     name: conversation.name,
     title,
+    nickname: myMembership?.nickname || null,
+    avatarUrl: conversation.isGroup ? null : others[0]?.avatarUrl || null,
+    otherUserId: conversation.isGroup ? null : others[0]?.id || null,
     members: conversation.members.map((m) => userMini(m.user)),
     otherMembers: others.map(userMini),
     lastMessage,
@@ -77,7 +81,7 @@ router.get("/users", async (req, res) => {
         active: true,
         id: { not: req.clientUser.userId },
       },
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true, email: true, avatarUrl: true },
       orderBy: { name: "asc" },
     });
     return res.json({ success: true, users });
@@ -105,7 +109,7 @@ router.get("/", async (req, res) => {
       include: {
         members: {
           include: {
-            user: { select: { id: true, name: true, email: true } },
+            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
           },
         },
         messages: {
@@ -200,15 +204,15 @@ router.get("/:id/messages", async (req, res) => {
         } : {}),
       },
       include: {
-        sender: { select: { id: true, name: true, email: true } },
+        sender: { select: { id: true, name: true, email: true, avatarUrl: true } },
         replyTo: {
           include: {
-            sender: { select: { id: true, name: true, email: true } },
+            sender: { select: { id: true, name: true, email: true, avatarUrl: true } },
           },
         },
         reactions: {
           include: {
-            user: { select: { id: true, name: true, email: true } },
+            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
           },
           orderBy: { createdAt: "asc" },
         },
@@ -328,7 +332,7 @@ router.post("/", async (req, res) => {
         include: {
           members: {
             include: {
-              user: { select: { id: true, name: true, email: true } },
+              user: { select: { id: true, name: true, email: true, avatarUrl: true } },
             },
           },
           messages: { orderBy: { createdAt: "desc" }, take: 1 },
@@ -361,7 +365,7 @@ router.post("/", async (req, res) => {
       include: {
         members: {
           include: {
-            user: { select: { id: true, name: true, email: true } },
+            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
           },
         },
         messages: { orderBy: { createdAt: "desc" }, take: 1 },
@@ -741,5 +745,124 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+
+/* ------------------------------------------------------------------ */
+/* PATCH /me/avatar — set or remove my display picture (shown to all)   */
+/* ------------------------------------------------------------------ */
+
+router.patch("/me/avatar", async (req, res) => {
+  try {
+    const me = req.clientUser.userId;
+    let avatarUrl = req.body?.avatarUrl ?? null;
+
+    if (avatarUrl) {
+      avatarUrl = String(avatarUrl);
+      if (!/^data:image\/(png|jpe?g|webp);base64,/.test(avatarUrl)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Please upload a PNG, JPG or WEBP image" });
+      }
+      // base64 is ~1.37x the byte size; 500 KB image ≈ 685 KB string
+      if (avatarUrl.length > 700 * 1024) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Image must be under 500 KB" });
+      }
+    }
+
+    await prisma.user.update({
+      where: { id: me },
+      data: { avatarUrl },
+    });
+
+    // Push the new photo live to everyone who shares a chat with me.
+    const memberships = await prisma.conversationMember.findMany({
+      where: { userId: me },
+      select: { conversationId: true },
+    });
+    const io = req.app.get("io");
+    memberships.forEach((m) =>
+      io
+        ?.to(`conversation:${m.conversationId}`)
+        .emit("user:avatar", { userId: me, avatarUrl })
+    );
+
+    return res.json({ success: true, avatarUrl });
+  } catch (error) {
+    console.error("Update avatar failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to update photo" });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* PATCH /:id/name — rename a group chat (shared with all members)      */
+/* ------------------------------------------------------------------ */
+
+router.patch("/:id/name", async (req, res) => {
+  try {
+    const conversationId = req.params.id;
+    const me = req.clientUser.userId;
+    const name = String(req.body?.name || "").trim().slice(0, 80);
+    if (!name) {
+      return res.status(400).json({ success: false, message: "Name is required" });
+    }
+
+    const member = await prisma.conversationMember.findUnique({
+      where: { conversationId_userId: { conversationId, userId: me } },
+      include: { conversation: true },
+    });
+    if (!member || member.conversation.companyId !== req.clientUser.companyId) {
+      return res.status(404).json({ success: false, message: "Conversation not found" });
+    }
+    if (!member.conversation.isGroup) {
+      return res.status(400).json({ success: false, message: "Only group chats can be renamed" });
+    }
+
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: { name },
+    });
+    req.app
+      .get("io")
+      ?.to(`conversation:${conversationId}`)
+      .emit("conversation:renamed", { conversationId, name });
+
+    return res.json({ success: true, conversationId, name });
+  } catch (error) {
+    console.error("Rename group failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to rename group" });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* PATCH /:id/nickname — private per-user chat name (only I see it)     */
+/* ------------------------------------------------------------------ */
+
+router.patch("/:id/nickname", async (req, res) => {
+  try {
+    const conversationId = req.params.id;
+    const me = req.clientUser.userId;
+    const raw = req.body?.nickname;
+    const nickname =
+      raw == null || String(raw).trim() === "" ? null : String(raw).trim().slice(0, 80);
+
+    const member = await prisma.conversationMember.findUnique({
+      where: { conversationId_userId: { conversationId, userId: me } },
+      include: { conversation: true },
+    });
+    if (!member || member.conversation.companyId !== req.clientUser.companyId) {
+      return res.status(404).json({ success: false, message: "Conversation not found" });
+    }
+
+    await prisma.conversationMember.update({
+      where: { conversationId_userId: { conversationId, userId: me } },
+      data: { nickname },
+    });
+    return res.json({ success: true, conversationId, nickname });
+  } catch (error) {
+    console.error("Set nickname failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to rename chat" });
+  }
+});
 
 export default router;
