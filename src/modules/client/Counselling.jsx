@@ -31,19 +31,35 @@ import {
 } from "../../lib/api";
 import { formatUiDateTime } from "../../lib/uiPreferences";
 
+const OTHER_OPTION = "__OTHER__";
+
+const CAME_WITH_OPTIONS = [
+  "Alone",
+  "Parent",
+  "Both Parents",
+  "Brother",
+  "Sister",
+  "Guardian",
+  "Parent + Sibling",
+  "Family / Relative",
+  "Friend(s)",
+];
+
 const EMPTY_FORM = {
-  leadId: "",
   studentName: "",
   studentPhone: "",
+  alternatePhone: "",
   studentEmail: "",
   course: "",
+  courseOther: "",
   counsellorName: "",
   mode: "IN_PERSON",
   meetingLink: "",
   accompaniedBy: "",
+  accompaniedByOther: "",
   scheduledAt: "",
   status: "SCHEDULED",
-  remarks: "",
+  notes: "",
   followUpAt: "",
   converted: false,
 };
@@ -154,7 +170,11 @@ export default function Counselling({ selectedYear = "all", market = "DOMESTIC" 
     conversionRate: 0,
     pendingFollowUps: 0,
   });
-  const [leads, setLeads] = useState([]);
+  const [streamOptions, setStreamOptions] = useState([]);
+  const [counsellorOptions, setCounsellorOptions] = useState([]);
+  const [walkInStudents, setWalkInStudents] = useState([]);
+  const [optionsLoading, setOptionsLoading] = useState(false);
+  const [matchedWalkInId, setMatchedWalkInId] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState("");
@@ -199,12 +219,30 @@ export default function Counselling({ selectedYear = "all", market = "DOMESTIC" 
     }
   }
 
-  async function loadLeads() {
+  async function loadFormOptions(showError = false) {
+    setOptionsLoading(true);
+
     try {
-      const data = await apiRequest("/api/client/counselling/eligible-leads");
-      setLeads(data.leads || []);
-    } catch {
-      setLeads([]);
+      const activeMarket =
+        market === "INTERNATIONAL" ? "INTERNATIONAL" : "DOMESTIC";
+      const data = await apiRequest(
+        `/api/client/counselling/options?market=${encodeURIComponent(activeMarket)}`
+      );
+
+      setStreamOptions(data.streams || []);
+      setCounsellorOptions(data.counsellors || []);
+      setWalkInStudents(data.walkInStudents || []);
+    } catch (error) {
+      setStreamOptions([]);
+      setCounsellorOptions([]);
+      setWalkInStudents([]);
+      if (showError) {
+        setFormError(
+          error?.data?.message || "Unable to load counselling form options"
+        );
+      }
+    } finally {
+      setOptionsLoading(false);
     }
   }
 
@@ -214,56 +252,88 @@ export default function Counselling({ selectedYear = "all", market = "DOMESTIC" 
   }, [search, statusFilter, selectedYear, market]);
 
   useEffect(() => {
-    loadLeads();
-  }, []);
+    loadFormOptions();
+  }, [market]);
 
   function updateForm(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  function selectLead(leadId) {
-    const lead = leads.find((item) => item.id === leadId);
+  function applyExactWalkInMatch(studentName) {
+    const normalized = String(studentName || "").trim().toLowerCase();
+
+    if (!normalized) {
+      setMatchedWalkInId("");
+      return;
+    }
+
+    const match = walkInStudents.find(
+      (item) =>
+        String(item.studentName || "").trim().toLowerCase() === normalized
+    );
+
+    if (!match) {
+      setMatchedWalkInId("");
+      return;
+    }
+
+    setMatchedWalkInId(match.id);
     setForm((current) => ({
       ...current,
-      leadId,
-      studentName: lead?.name || current.studentName,
-      studentPhone: lead?.phone || current.studentPhone,
-      studentEmail: lead?.email || current.studentEmail,
-      course: lead?.course || current.course,
-      counsellorName: lead?.assignedToName || current.counsellorName,
+      studentName,
+      studentPhone: match.phone || current.studentPhone,
+      alternatePhone: match.alternatePhone || current.alternatePhone,
+      studentEmail: match.email || current.studentEmail,
+      course: match.course || current.course,
+      courseOther: match.course || current.courseOther,
+      accompaniedBy: match.accompaniedBy || current.accompaniedBy,
+      accompaniedByOther: match.accompaniedBy || current.accompaniedByOther,
+      counsellorName: match.counsellorName || current.counsellorName,
     }));
   }
 
   function openCreate() {
     setEditing(null);
+    setMatchedWalkInId("");
     setFormError("");
     setForm({
       ...EMPTY_FORM,
       scheduledAt: toLocalInput(new Date()),
     });
     setModalOpen(true);
+    loadFormOptions(true);
   }
 
   function openEdit(session) {
     setEditing(session);
     setFormError("");
+    setMatchedWalkInId("");
+    const existingCourse = session.course === "—" ? "" : session.course || "";
+    const existingCameWith =
+      session.accompaniedBy === "—" ? "" : session.accompaniedBy || "";
     setForm({
-      leadId: session.leadId || "",
       studentName: session.studentName || session.student || "",
       studentPhone: session.phone || "",
+      alternatePhone: session.alternatePhone || "",
       studentEmail: session.email || "",
-      course: session.course === "—" ? "" : session.course || "",
+      course: existingCourse,
+      courseOther: existingCourse,
       counsellorName: session.counsellorName || "",
       mode: session.mode || "IN_PERSON",
       meetingLink: session.meetingLink || "",
-      accompaniedBy: session.accompaniedBy === "—" ? "" : session.accompaniedBy || "",
+      accompaniedBy: existingCameWith,
+      accompaniedByOther: existingCameWith,
       scheduledAt: toLocalInput(session.scheduledAt),
       status: session.statusKey || "SCHEDULED",
-      remarks: session.remarks === "—" ? "" : session.remarks || "",
+      notes:
+        (session.notes === "—" ? "" : session.notes) ||
+        (session.remarks === "—" ? "" : session.remarks) ||
+        "",
       followUpAt: toLocalInput(session.followUpAt),
       converted: Boolean(session.converted),
     });
     setModalOpen(true);
+    loadFormOptions(true);
   }
 
   async function submit(event) {
@@ -272,15 +342,36 @@ export default function Counselling({ selectedYear = "all", market = "DOMESTIC" 
     setFormError("");
 
     try {
+      const resolvedCourse =
+        form.course === OTHER_OPTION
+          ? form.courseOther.trim()
+          : String(form.course || "").trim();
+
+      const resolvedAccompaniedBy =
+        form.accompaniedBy === OTHER_OPTION
+          ? form.accompaniedByOther.trim()
+          : String(form.accompaniedBy || "").trim();
+
       const payload = {
-        ...form,
-        market,
+        studentName: form.studentName,
+        studentPhone: form.studentPhone,
+        alternatePhone: form.alternatePhone,
+        studentEmail: form.studentEmail,
+        course: resolvedCourse,
+        counsellorName: form.counsellorName,
+        mode: form.mode,
+        meetingLink: form.meetingLink,
+        accompaniedBy: resolvedAccompaniedBy,
         scheduledAt: form.scheduledAt
           ? new Date(form.scheduledAt).toISOString()
           : null,
+        status: form.status,
+        notes: form.notes,
         followUpAt: form.followUpAt
           ? new Date(form.followUpAt).toISOString()
           : null,
+        converted: form.converted,
+        market,
       };
 
       await apiRequest(
@@ -294,7 +385,7 @@ export default function Counselling({ selectedYear = "all", market = "DOMESTIC" 
       );
 
       setModalOpen(false);
-      await Promise.all([loadData(), loadLeads()]);
+      await loadData();
     } catch (error) {
       setFormError(error?.data?.message || "Unable to save counselling session");
     } finally {
@@ -340,7 +431,7 @@ export default function Counselling({ selectedYear = "all", market = "DOMESTIC" 
             {market === "INTERNATIONAL" ? "International Counselling" : "Domestic Counselling"}
           </h1>
           <p className="mt-1 text-[15px] text-slate-500">
-            Manage sessions, meeting links, remarks and follow-up activity.
+            Manage sessions, meeting links, notes and follow-up activity.
           </p>
         </div>
 
@@ -492,10 +583,12 @@ export default function Counselling({ selectedYear = "all", market = "DOMESTIC" 
                       </div>
                     ) : null}
 
-                    {session.remarks !== "—" ? (
+                    {(session.notes || session.remarks) !== "—" ? (
                       <div className="mt-4 text-[13px] bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
-                        <span className="font-semibold text-slate-700">Remarks:</span>{" "}
-                        <span className="text-slate-600">{session.remarks}</span>
+                        <span className="font-semibold text-slate-700">Notes:</span>{" "}
+                        <span className="text-slate-600">
+                          {session.notes || session.remarks}
+                        </span>
                       </div>
                     ) : null}
 
@@ -549,7 +642,7 @@ export default function Counselling({ selectedYear = "all", market = "DOMESTIC" 
                   {editing ? "Edit Counselling Session" : "Schedule Counselling Session"}
                 </div>
                 <div className="text-[13px] text-slate-500 mt-1">
-                  Link a CRM lead or enter student details manually.
+                  Enter student details or match an existing Walk-in student.
                 </div>
               </div>
               <button
@@ -563,33 +656,40 @@ export default function Counselling({ selectedYear = "all", market = "DOMESTIC" 
 
             <form onSubmit={submit} className="p-5 overflow-y-auto max-h-[calc(92vh-74px)]">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="CRM Lead" full>
-                  <select
-                    value={form.leadId}
-                    onChange={(event) => selectLead(event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
-                  >
-                    <option value="">Manual / No linked lead</option>
-                    {leads.map((lead) => (
-                      <option key={lead.id} value={lead.id}>
-                        {lead.name} · {lead.phone}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-
                 <Field label="Student Name" required>
-                  <input
-                    required
-                    value={form.studentName}
-                    onChange={(event) => updateForm("studentName", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
-                  />
+                  <div className="space-y-1.5">
+                    <input
+                      required
+                      value={form.studentName}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        updateForm("studentName", value);
+                        applyExactWalkInMatch(value);
+                      }}
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
+                    />
+                    {matchedWalkInId ? (
+                      <div className="text-[12px] font-medium text-emerald-600">
+                        Exact Walk-in match found — details auto-filled.
+                      </div>
+                    ) : null}
+                  </div>
                 </Field>
                 <Field label="Phone">
                   <input
                     value={form.studentPhone}
                     onChange={(event) => updateForm("studentPhone", event.target.value)}
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
+                  />
+                </Field>
+                <Field label="Alternate Phone">
+                  <input
+                    type="tel"
+                    value={form.alternatePhone}
+                    onChange={(event) =>
+                      updateForm("alternatePhone", event.target.value)
+                    }
+                    placeholder="Optional alternate number"
                     className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
@@ -602,18 +702,95 @@ export default function Counselling({ selectedYear = "all", market = "DOMESTIC" 
                   />
                 </Field>
                 <Field label="Course / Interest">
-                  <input
-                    value={form.course}
-                    onChange={(event) => updateForm("course", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
-                  />
+                  <div className="space-y-2">
+                    <select
+                      value={
+                        form.course === OTHER_OPTION
+                          ? OTHER_OPTION
+                          : streamOptions.some(
+                              (stream) => stream.name === form.course
+                            )
+                            ? form.course
+                            : form.course
+                              ? OTHER_OPTION
+                              : ""
+                      }
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setForm((current) => ({
+                          ...current,
+                          course: value,
+                          courseOther:
+                            value === OTHER_OPTION ? current.courseOther : "",
+                        }));
+                      }}
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
+                    >
+                      <option value="">
+                        {optionsLoading ? "Loading streams..." : "Select stream"}
+                      </option>
+                      {streamOptions.map((stream) => (
+                        <option key={stream.id} value={stream.name}>
+                          {stream.name}
+                        </option>
+                      ))}
+                      <option value={OTHER_OPTION}>Other</option>
+                    </select>
+
+                    {(form.course === OTHER_OPTION ||
+                      (form.course &&
+                        !streamOptions.some(
+                          (stream) => stream.name === form.course
+                        ))) ? (
+                      <input
+                        value={
+                          form.course === OTHER_OPTION
+                            ? form.courseOther
+                            : form.courseOther || form.course
+                        }
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            course: OTHER_OPTION,
+                            courseOther: event.target.value,
+                          }))
+                        }
+                        placeholder="Type course / interest"
+                        className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
+                      />
+                    ) : null}
+                  </div>
                 </Field>
                 <Field label="Counsellor">
-                  <input
+                  <select
                     value={form.counsellorName}
-                    onChange={(event) => updateForm("counsellorName", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
-                  />
+                    onChange={(event) =>
+                      updateForm("counsellorName", event.target.value)
+                    }
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
+                  >
+                    <option value="">
+                      {optionsLoading ? "Loading employees..." : "Unassigned"}
+                    </option>
+                    {form.counsellorName &&
+                    !counsellorOptions.some(
+                      (user) => user.name === form.counsellorName
+                    ) ? (
+                      <option value={form.counsellorName}>
+                        {form.counsellorName} (current)
+                      </option>
+                    ) : null}
+                    {counsellorOptions.map((user) => (
+                      <option key={user.id} value={user.name}>
+                        {user.name}
+                        {user.jobTitle
+                          ? ` · ${user.jobTitle}`
+                          : user.role
+                            ? ` · ${String(user.role).replaceAll("_", " ")}`
+                            : ""}
+                      </option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="Mode">
                   <select
@@ -632,7 +809,8 @@ export default function Counselling({ selectedYear = "all", market = "DOMESTIC" 
                     required
                     value={form.scheduledAt}
                     onChange={(event) => updateForm("scheduledAt", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
+                    onClick={(event) => event.currentTarget.showPicker?.()}
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] cursor-pointer"
                   />
                 </Field>
                 <Field label="Status">
@@ -647,11 +825,60 @@ export default function Counselling({ selectedYear = "all", market = "DOMESTIC" 
                   </select>
                 </Field>
                 <Field label="Came With">
-                  <input
-                    value={form.accompaniedBy}
-                    onChange={(event) => updateForm("accompaniedBy", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
-                  />
+                  <div className="space-y-2">
+                    <select
+                      value={
+                        form.accompaniedBy === OTHER_OPTION
+                          ? OTHER_OPTION
+                          : CAME_WITH_OPTIONS.includes(form.accompaniedBy)
+                            ? form.accompaniedBy
+                            : form.accompaniedBy
+                              ? OTHER_OPTION
+                              : ""
+                      }
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setForm((current) => ({
+                          ...current,
+                          accompaniedBy: value,
+                          accompaniedByOther:
+                            value === OTHER_OPTION
+                              ? current.accompaniedByOther
+                              : "",
+                        }));
+                      }}
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
+                    >
+                      <option value="">Select</option>
+                      {CAME_WITH_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                      <option value={OTHER_OPTION}>Other</option>
+                    </select>
+
+                    {(form.accompaniedBy === OTHER_OPTION ||
+                      (form.accompaniedBy &&
+                        !CAME_WITH_OPTIONS.includes(form.accompaniedBy))) ? (
+                      <input
+                        value={
+                          form.accompaniedBy === OTHER_OPTION
+                            ? form.accompaniedByOther
+                            : form.accompaniedByOther || form.accompaniedBy
+                        }
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            accompaniedBy: OTHER_OPTION,
+                            accompaniedByOther: event.target.value,
+                          }))
+                        }
+                        placeholder="Specify who came with the student"
+                        className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
+                      />
+                    ) : null}
+                  </div>
                 </Field>
                 <Field label="Meeting Link">
                   <input
@@ -667,14 +894,15 @@ export default function Counselling({ selectedYear = "all", market = "DOMESTIC" 
                     type="datetime-local"
                     value={form.followUpAt}
                     onChange={(event) => updateForm("followUpAt", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
+                    onClick={(event) => event.currentTarget.showPicker?.()}
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] cursor-pointer"
                   />
                 </Field>
-                <Field label="Remarks" full>
+                <Field label="Notes" full>
                   <textarea
                     rows={3}
-                    value={form.remarks}
-                    onChange={(event) => updateForm("remarks", event.target.value)}
+                    value={form.notes}
+                    onChange={(event) => updateForm("notes", event.target.value)}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>

@@ -216,6 +216,10 @@ router.get("/:id/messages", async (req, res) => {
           },
           orderBy: { createdAt: "asc" },
         },
+        stars: {
+          where: { userId: req.clientUser.userId },
+          select: { id: true },
+        },
         attachments: true,
       },
       orderBy: { createdAt: "desc" },
@@ -229,6 +233,7 @@ router.get("/:id/messages", async (req, res) => {
       body: m.body,
       deletedForEveryone: Boolean(m.deletedForEveryoneAt),
       pinned: m.pinned,
+      starred: Boolean(m.stars?.length),
       createdAt: m.createdAt,
       sender: userMini(m.sender),
       replyTo: m.replyTo
@@ -567,6 +572,305 @@ router.patch("/messages/:messageId/pin", async (req, res) => {
 
 
 /* ------------------------------------------------------------------ */
+/* PATCH /messages/:messageId/star — private per-user star             */
+/* ------------------------------------------------------------------ */
+
+router.patch("/messages/:messageId/star", async (req, res) => {
+  try {
+    const messageId = req.params.messageId;
+    const me = req.clientUser.userId;
+    const starred = Boolean(req.body?.starred);
+
+    const message = await prisma.chatMessage.findUnique({
+      where: { id: messageId },
+      include: { conversation: true },
+    });
+
+    if (!message || message.conversation.companyId !== req.clientUser.companyId) {
+      return res.status(404).json({ success: false, message: "Message not found" });
+    }
+
+    const membership = await prisma.conversationMember.findUnique({
+      where: {
+        conversationId_userId: {
+          conversationId: message.conversationId,
+          userId: me,
+        },
+      },
+    });
+
+    if (!membership) {
+      return res.status(403).json({ success: false, message: "Not a member" });
+    }
+
+    if (starred) {
+      await prisma.chatMessageStar.upsert({
+        where: {
+          messageId_userId: {
+            messageId,
+            userId: me,
+          },
+        },
+        update: {},
+        create: {
+          messageId,
+          userId: me,
+        },
+      });
+    } else {
+      await prisma.chatMessageStar.deleteMany({
+        where: {
+          messageId,
+          userId: me,
+        },
+      });
+    }
+
+    return res.json({ success: true, messageId, starred });
+  } catch (error) {
+    console.error("Toggle message star failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to update star" });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* GET /messages/:messageId/info — sent/read information               */
+/* ------------------------------------------------------------------ */
+
+router.get("/messages/:messageId/info", async (req, res) => {
+  try {
+    const messageId = req.params.messageId;
+    const me = req.clientUser.userId;
+
+    const message = await prisma.chatMessage.findUnique({
+      where: { id: messageId },
+      include: {
+        conversation: true,
+        sender: {
+          select: { id: true, name: true, email: true, avatarUrl: true },
+        },
+      },
+    });
+
+    if (!message || message.conversation.companyId !== req.clientUser.companyId) {
+      return res.status(404).json({ success: false, message: "Message not found" });
+    }
+
+    const myMembership = await prisma.conversationMember.findUnique({
+      where: {
+        conversationId_userId: {
+          conversationId: message.conversationId,
+          userId: me,
+        },
+      },
+    });
+
+    if (!myMembership) {
+      return res.status(403).json({ success: false, message: "Not a member" });
+    }
+
+    const members = await prisma.conversationMember.findMany({
+      where: {
+        conversationId: message.conversationId,
+        userId: { not: message.senderId },
+        joinedAt: { lte: message.createdAt },
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, avatarUrl: true },
+        },
+      },
+      orderBy: { joinedAt: "asc" },
+    });
+
+    const readBy = [];
+    const notReadBy = [];
+
+    members.forEach((member) => {
+      const item = {
+        ...userMini(member.user),
+        readAt:
+          member.lastReadAt && member.lastReadAt >= message.createdAt
+            ? member.lastReadAt
+            : null,
+      };
+
+      if (item.readAt) {
+        readBy.push(item);
+      } else {
+        notReadBy.push(item);
+      }
+    });
+
+    const myStar = await prisma.chatMessageStar.findUnique({
+      where: {
+        messageId_userId: {
+          messageId,
+          userId: me,
+        },
+      },
+      select: { id: true },
+    });
+
+    return res.json({
+      success: true,
+      message: {
+        id: message.id,
+        body: message.body,
+        createdAt: message.createdAt,
+        deletedForEveryone: Boolean(message.deletedForEveryoneAt),
+        sender: userMini(message.sender),
+        isMine: message.senderId === me,
+        starred: Boolean(myStar),
+      },
+      readBy,
+      notReadBy,
+    });
+  } catch (error) {
+    console.error("Load message info failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to load message info" });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* POST /messages/:messageId/forward — forward text to chats           */
+/* ------------------------------------------------------------------ */
+
+router.post("/messages/:messageId/forward", async (req, res) => {
+  try {
+    const messageId = req.params.messageId;
+    const me = req.clientUser.userId;
+    const companyId = req.clientUser.companyId;
+    const conversationIds = Array.from(
+      new Set(
+        (Array.isArray(req.body?.conversationIds) ? req.body.conversationIds : [])
+          .filter((id) => typeof id === "string" && id.trim())
+          .map((id) => id.trim())
+          .slice(0, 5)
+      )
+    );
+
+    if (!conversationIds.length) {
+      return res.status(400).json({ success: false, message: "Select at least one chat" });
+    }
+
+    const source = await prisma.chatMessage.findUnique({
+      where: { id: messageId },
+      include: { conversation: true },
+    });
+
+    if (
+      !source ||
+      source.conversation.companyId !== companyId ||
+      source.deletedForEveryoneAt
+    ) {
+      return res.status(404).json({ success: false, message: "Message not found" });
+    }
+
+    const sourceMembership = await prisma.conversationMember.findUnique({
+      where: {
+        conversationId_userId: {
+          conversationId: source.conversationId,
+          userId: me,
+        },
+      },
+    });
+
+    if (!sourceMembership) {
+      return res.status(403).json({ success: false, message: "Not a member" });
+    }
+
+    const memberships = await prisma.conversationMember.findMany({
+      where: {
+        userId: me,
+        conversationId: { in: conversationIds },
+        conversation: { companyId },
+      },
+      include: { conversation: true },
+    });
+
+    if (!memberships.length) {
+      return res.status(400).json({ success: false, message: "No valid destination chats selected" });
+    }
+
+    const sender = await prisma.user.findUnique({
+      where: { id: me },
+      select: { id: true, name: true, email: true, avatarUrl: true },
+    });
+
+    const io = req.app.get("io");
+    const forwarded = [];
+
+    for (const membership of memberships) {
+      const created = await prisma.$transaction(async (tx) => {
+        const item = await tx.chatMessage.create({
+          data: {
+            conversationId: membership.conversationId,
+            senderId: me,
+            body: source.body,
+          },
+        });
+
+        await tx.conversation.update({
+          where: { id: membership.conversationId },
+          data: { updatedAt: new Date() },
+        });
+
+        await tx.conversationMember.update({
+          where: {
+            conversationId_userId: {
+              conversationId: membership.conversationId,
+              userId: me,
+            },
+          },
+          data: { hiddenAt: null },
+        });
+
+        return item;
+      });
+
+      const payload = {
+        id: created.id,
+        conversationId: created.conversationId,
+        body: created.body,
+        deletedForEveryone: false,
+        pinned: false,
+        starred: false,
+        createdAt: created.createdAt,
+        sender: userMini(sender),
+        replyTo: null,
+        reactions: [],
+        attachments: [],
+      };
+
+      forwarded.push(payload);
+
+      io?.to(`conversation:${membership.conversationId}`).emit("message:new", payload);
+      io?.to(`conversation:${membership.conversationId}`).emit("conversation:activity", {
+        conversationId: membership.conversationId,
+        lastMessage: {
+          id: created.id,
+          body: created.body,
+          createdAt: created.createdAt,
+          senderId: me,
+          deletedForEveryone: false,
+        },
+      });
+    }
+
+    return res.json({
+      success: true,
+      forwardedCount: forwarded.length,
+      messages: forwarded,
+    });
+  } catch (error) {
+    console.error("Forward message failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to forward message" });
+  }
+});
+
+
+/* ------------------------------------------------------------------ */
 /* POST /upload-signature — signed direct upload to Cloudinary         */
 /* ------------------------------------------------------------------ */
 
@@ -636,6 +940,7 @@ router.delete("/messages/:messageId", async (req, res) => {
         );
         await prisma.$transaction([
           prisma.chatReaction.deleteMany({ where: { messageId } }),
+          prisma.chatMessageStar.deleteMany({ where: { messageId } }),
           prisma.chatAttachment.deleteMany({ where: { messageId } }),
           prisma.chatMessage.update({
             where: { id: messageId },

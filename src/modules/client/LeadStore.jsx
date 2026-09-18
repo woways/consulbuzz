@@ -21,6 +21,10 @@ import {
   UploadCloud,
   CheckCircle2,
   UserPlus,
+  SlidersHorizontal,
+  Download,
+  RotateCcw,
+  Gift,
 } from "lucide-react";
 
 import {
@@ -82,6 +86,76 @@ function formatDate(
   }
 
   return formatUiDate(date);
+}
+
+function normalizeFilterText(value) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+function matchesDateRange(value, from, to) {
+  if (!from && !to) {
+    return true;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  if (from) {
+    const start = new Date(`${from}T00:00:00`);
+
+    if (date < start) {
+      return false;
+    }
+  }
+
+  if (to) {
+    const end = new Date(`${to}T23:59:59.999`);
+
+    if (date > end) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function csvCell(value) {
+  const text = String(value ?? "");
+
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
+function downloadCsv(filename, headers, rows) {
+  const csv = [
+    headers.map(csvCell).join(","),
+    ...rows.map((row) => row.map(csvCell).join(",")),
+  ].join("\n");
+
+  const blob = new Blob(
+    [`\ufeff${csv}`],
+    {
+      type: "text/csv;charset=utf-8;",
+    }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.setTimeout(
+    () => URL.revokeObjectURL(url),
+    0
+  );
 }
 
 function Field({
@@ -1775,6 +1849,25 @@ export default function LeadStore({ selectedYear = "all" }) {
     useState("");
 
   const [
+    filtersOpen,
+    setFiltersOpen,
+  ] =
+    useState(false);
+
+  const [
+    filters,
+    setFilters,
+  ] =
+    useState({
+      status: "",
+      assignedToUserId: "",
+      course: "",
+      source: "",
+      dateFrom: "",
+      dateTo: "",
+    });
+
+  const [
     showIndividual,
     setShowIndividual,
   ] =
@@ -1862,32 +1955,231 @@ export default function LeadStore({ selectedYear = "all" }) {
     loadAssignees();
   }, [selectedYear]);
 
+  const selectedType =
+    useMemo(
+      () =>
+        TYPES.find(
+          (type) =>
+            type.key ===
+            sub
+        ) ||
+        null,
+      [sub]
+    );
+
+  const currentTypeDatasets =
+    useMemo(
+      () =>
+        datasets.filter(
+          (dataset) =>
+            !selectedType ||
+            dataset.type ===
+              selectedType.api
+        ),
+      [
+        datasets,
+        selectedType,
+      ]
+    );
+
+  const selectedAssigneeName =
+    useMemo(
+      () => {
+        if (
+          !filters.assignedToUserId ||
+          filters.assignedToUserId ===
+            "__UNASSIGNED__"
+        ) {
+          return "";
+        }
+
+        return (
+          assignees.find(
+            (user) =>
+              user.id ===
+              filters.assignedToUserId
+          )?.name ||
+          ""
+        );
+      },
+      [
+        assignees,
+        filters.assignedToUserId,
+      ]
+    );
+
+  const individualStatusOptions =
+    useMemo(
+      () =>
+        Array.from(
+          new Set(
+            individualLeads
+              .map(
+                (lead) =>
+                  lead.stage
+              )
+              .filter(Boolean)
+          )
+        ).sort(),
+      [individualLeads]
+    );
+
+  const individualCourseOptions =
+    useMemo(
+      () =>
+        Array.from(
+          new Set(
+            individualLeads
+              .map(
+                (lead) =>
+                  lead.course
+              )
+              .filter(Boolean)
+          )
+        ).sort(
+          (a, b) =>
+            String(a).localeCompare(
+              String(b)
+            )
+        ),
+      [individualLeads]
+    );
+
+  const sourceOptions =
+    useMemo(
+      () => {
+        const rows =
+          sub === "individual"
+            ? individualLeads
+            : currentTypeDatasets;
+
+        return Array.from(
+          new Set(
+            rows
+              .map(
+                (row) =>
+                  row.sourceName
+              )
+              .filter(Boolean)
+          )
+        ).sort(
+          (a, b) =>
+            String(a).localeCompare(
+              String(b)
+            )
+        );
+      },
+      [
+        sub,
+        individualLeads,
+        currentTypeDatasets,
+      ]
+    );
+
+  const filteredIndividualLeads =
+    useMemo(
+      () => {
+        const query =
+          normalizeFilterText(
+            search
+          );
+
+        return individualLeads.filter(
+          (lead) => {
+            const searchMatches =
+              !query ||
+              [
+                lead.name,
+                lead.phone,
+                lead.email,
+                lead.course,
+                lead.assignedToName,
+                lead.sourceName,
+                lead.stage,
+              ]
+                .filter(Boolean)
+                .some(
+                  (value) =>
+                    normalizeFilterText(
+                      value
+                    ).includes(
+                      query
+                    )
+                );
+
+            const statusMatches =
+              !filters.status ||
+              lead.stage ===
+                filters.status;
+
+            const assignedMatches =
+              !filters.assignedToUserId ||
+              (
+                filters.assignedToUserId ===
+                  "__UNASSIGNED__"
+                  ? !lead.assignedToName
+                  : normalizeFilterText(
+                      lead.assignedToName
+                    ) ===
+                    normalizeFilterText(
+                      selectedAssigneeName
+                    )
+              );
+
+            const courseMatches =
+              !filters.course ||
+              normalizeFilterText(
+                lead.course
+              ) ===
+                normalizeFilterText(
+                  filters.course
+                );
+
+            const sourceMatches =
+              !filters.source ||
+              normalizeFilterText(
+                lead.sourceName
+              ) ===
+                normalizeFilterText(
+                  filters.source
+                );
+
+            const dateMatches =
+              matchesDateRange(
+                lead.createdAt,
+                filters.dateFrom,
+                filters.dateTo
+              );
+
+            return (
+              searchMatches &&
+              statusMatches &&
+              assignedMatches &&
+              courseMatches &&
+              sourceMatches &&
+              dateMatches
+            );
+          }
+        );
+      },
+      [
+        individualLeads,
+        search,
+        filters,
+        selectedAssigneeName,
+      ]
+    );
+
   const filtered =
     useMemo(
       () => {
-        const selected =
-          TYPES.find(
-            (
-              type
-            ) =>
-              type.key ===
-              sub
+        const query =
+          normalizeFilterText(
+            search
           );
 
-        const query =
-          search
-            .trim()
-            .toLowerCase();
-
-        return datasets.filter(
-          (
-            dataset
-          ) => {
-            const typeMatches =
-              !selected ||
-              dataset.type ===
-                selected.api;
-
+        return currentTypeDatasets.filter(
+          (dataset) => {
             const searchMatches =
               !query ||
               [
@@ -1896,35 +2188,223 @@ export default function LeadStore({ selectedYear = "all" }) {
                 dataset.sourceFileName,
                 dataset.assignedTo,
               ]
-                .filter(
-                  Boolean
-                )
+                .filter(Boolean)
                 .some(
-                  (
-                    value
-                  ) =>
-                    String(
+                  (value) =>
+                    normalizeFilterText(
                       value
+                    ).includes(
+                      query
                     )
-                      .toLowerCase()
-                      .includes(
-                        query
-                      )
                 );
 
+            const assignedMatches =
+              !filters.assignedToUserId ||
+              (
+                filters.assignedToUserId ===
+                  "__UNASSIGNED__"
+                  ? !dataset.assignedToUser
+                  : dataset
+                      .assignedToUser
+                      ?.id ===
+                    filters
+                      .assignedToUserId
+              );
+
+            const sourceMatches =
+              !filters.source ||
+              normalizeFilterText(
+                dataset.sourceName
+              ) ===
+                normalizeFilterText(
+                  filters.source
+                );
+
+            const dateMatches =
+              matchesDateRange(
+                dataset.uploadedAt ||
+                  dataset.createdAt,
+                filters.dateFrom,
+                filters.dateTo
+              );
+
             return (
-              typeMatches &&
-              searchMatches
+              searchMatches &&
+              assignedMatches &&
+              sourceMatches &&
+              dateMatches
             );
           }
         );
       },
       [
-        datasets,
-        sub,
+        currentTypeDatasets,
         search,
+        filters,
       ]
     );
+
+  const activeFilterCount =
+    [
+      filters.assignedToUserId,
+      filters.source,
+      filters.dateFrom,
+      filters.dateTo,
+      ...(sub === "individual"
+        ? [
+            filters.status,
+            filters.course,
+          ]
+        : []),
+    ].filter(Boolean).length;
+
+  const visibleCount =
+    sub === "individual"
+      ? filteredIndividualLeads.length
+      : filtered.length;
+
+  const totalCurrentCount =
+    sub === "individual"
+      ? individualLeads.length
+      : currentTypeDatasets.length;
+
+  function clearFilters() {
+    setFilters({
+      status: "",
+      assignedToUserId: "",
+      course: "",
+      source: "",
+      dateFrom: "",
+      dateTo: "",
+    });
+  }
+
+  function exportCurrentView() {
+    const dateStamp =
+      new Date()
+        .toISOString()
+        .slice(
+          0,
+          10
+        );
+
+    if (
+      sub === "individual"
+    ) {
+      const rows =
+        filteredIndividualLeads.map(
+          (lead) => [
+            lead.name,
+            lead.phone,
+            lead.email,
+            lead.course,
+            lead.sourceName,
+            lead.assignedToName ||
+              "Unassigned",
+            lead.stage ||
+              "NEW",
+            formatDate(
+              lead.createdAt
+            ),
+            (lead.customFields || [])
+              .map(
+                (field) =>
+                  `${field.name}: ${field.value || "—"}`
+              )
+              .join(
+                " | "
+              ),
+          ]
+        );
+
+      downloadCsv(
+        `lead-store-individual-${selectedYear}-${dateStamp}.csv`,
+        [
+          "Name",
+          "Phone",
+          "Email",
+          "Course",
+          "Source",
+          "Assigned To",
+          "Status",
+          "Created",
+          "Custom Fields",
+        ],
+        rows
+      );
+
+      return;
+    }
+
+    const rows =
+      filtered.map(
+        (dataset) => {
+          const conversion =
+            Number(
+              dataset.count ||
+                0
+            ) >
+            0
+              ? (
+                  (
+                    Number(
+                      dataset.converted ||
+                        0
+                    ) /
+                    Number(
+                      dataset.count ||
+                        0
+                    )
+                  ) *
+                  100
+                ).toFixed(
+                  1
+                )
+              : "0.0";
+
+          return [
+            dataset.name,
+            dataset.typeLabel ||
+              dataset.type,
+            dataset.sourceName,
+            dataset.sourceFileName,
+            dataset.count ||
+              0,
+            dataset.duplicateCount ||
+              0,
+            dataset.failedCount ||
+              0,
+            formatDate(
+              dataset.uploadedAt ||
+                dataset.createdAt
+            ),
+            dataset.assignedTo ||
+              "Unassigned",
+            dataset.converted ||
+              0,
+            `${conversion}%`,
+          ];
+        }
+      );
+
+    downloadCsv(
+      `lead-store-${sub}-${selectedYear}-${dateStamp}.csv`,
+      [
+        "Dataset",
+        "Type",
+        "Source",
+        "Source File",
+        "Imported",
+        "Duplicates",
+        "Invalid",
+        "Uploaded",
+        "Assigned To",
+        "Converted",
+        "Conversion",
+      ],
+      rows
+    );
+  }
 
   async function removeDataset(
     dataset
@@ -2158,70 +2638,463 @@ export default function LeadStore({ selectedYear = "all" }) {
         />
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl px-3 py-2.5 flex flex-col md:flex-row md:items-center gap-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-        <div className="flex gap-1 overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => setSub("individual")}
-            className={`px-3 py-2 text-[13px] font-semibold border-b-2 whitespace-nowrap ${
-              sub === "individual"
-                ? "border-indigo-600 text-indigo-600"
-                : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            Individual Leads
-          </button>
-
-          {TYPES.map(
-            (
-              type
-            ) => (
+      <div className="space-y-3">
+        <div className="bg-white border border-slate-200 rounded-xl px-3 py-2.5 flex flex-col gap-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] xl:flex-row xl:items-center">
+          <div className="min-w-0 flex-1 overflow-x-auto">
+            <div className="flex min-w-max gap-1">
               <button
-                key={
-                  type.key
-                }
                 type="button"
                 onClick={() =>
                   setSub(
-                    type.key
+                    "individual"
                   )
                 }
                 className={`px-3 py-2 text-[13px] font-semibold border-b-2 whitespace-nowrap ${
                   sub ===
-                  type.key
+                  "individual"
                     ? "border-indigo-600 text-indigo-600"
                     : "border-transparent text-slate-500 hover:text-slate-800"
                 }`}
               >
-                {
-                  type.label
-                }
+                Individual Leads
               </button>
-            )
-          )}
+
+              {TYPES.map(
+                (
+                  type
+                ) => (
+                  <button
+                    key={
+                      type.key
+                    }
+                    type="button"
+                    onClick={() =>
+                      setSub(
+                        type.key
+                      )
+                    }
+                    className={`px-3 py-2 text-[13px] font-semibold border-b-2 whitespace-nowrap ${
+                      sub ===
+                      type.key
+                        ? "border-indigo-600 text-indigo-600"
+                        : "border-transparent text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    {
+                      type.label
+                    }
+                  </button>
+                )
+              )}
+            </div>
+          </div>
+
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center xl:w-auto">
+            <div className="relative w-full sm:min-w-[280px] xl:w-[320px]">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+
+              <input
+                value={
+                  search
+                }
+                onChange={(
+                  event
+                ) =>
+                  setSearch(
+                    event
+                      .target
+                      .value
+                  )
+                }
+                placeholder={
+                  sub ===
+                  "individual"
+                    ? "Search name, phone, email or course..."
+                    : "Search dataset, source, file or assignee..."
+                }
+                className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setFiltersOpen(
+                  (current) =>
+                    !current
+                )
+              }
+              className={`relative h-9 px-3.5 rounded-lg border text-[13px] font-semibold inline-flex items-center justify-center gap-2 transition-colors ${
+                filtersOpen ||
+                activeFilterCount >
+                  0
+                  ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              }`}
+            >
+              <SlidersHorizontal
+                size={14}
+              />
+              Filter
+
+              {activeFilterCount >
+                0 && (
+                <span className="min-w-5 h-5 px-1 rounded-full bg-indigo-600 text-white text-[11px] font-bold inline-flex items-center justify-center">
+                  {
+                    activeFilterCount
+                  }
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                exportCurrentView
+              }
+              disabled={
+                visibleCount ===
+                0
+              }
+              className="h-9 px-3.5 rounded-lg border border-slate-200 bg-white text-[13px] font-semibold text-slate-700 inline-flex items-center justify-center gap-2 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Download
+                size={14}
+              />
+              Export CSV
+            </button>
+          </div>
         </div>
 
-        <div className="relative md:ml-auto w-full md:w-[320px] md:max-w-full">
-          <Search
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
+        {filtersOpen && (
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+              {sub ===
+                "individual" && (
+                <label className="block">
+                  <span className="mb-1.5 block text-[12px] font-semibold text-slate-500">
+                    Status
+                  </span>
 
-          <input
-            value={
-              search
-            }
-            onChange={(
-              event
-            ) =>
-              setSearch(
-                event.target.value
-              )
-            }
-            placeholder={sub === "individual" ? "Search name, phone, email or course..." : "Search dataset, source, file or assignee..."}
-            className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
-          />
-        </div>
+                  <select
+                    value={
+                      filters.status
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setFilters(
+                        (
+                          current
+                        ) => ({
+                          ...current,
+                          status:
+                            event
+                              .target
+                              .value,
+                        })
+                      )
+                    }
+                    className="form-input"
+                  >
+                    <option value="">
+                      All statuses
+                    </option>
+
+                    {individualStatusOptions.map(
+                      (
+                        status
+                      ) => (
+                        <option
+                          key={
+                            status
+                          }
+                          value={
+                            status
+                          }
+                        >
+                          {
+                            String(
+                              status
+                            ).replaceAll(
+                              "_",
+                              " "
+                            )
+                          }
+                        </option>
+                      )
+                    )}
+                  </select>
+                </label>
+              )}
+
+              <label className="block">
+                <span className="mb-1.5 block text-[12px] font-semibold text-slate-500">
+                  Assigned To
+                </span>
+
+                <select
+                  value={
+                    filters.assignedToUserId
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setFilters(
+                      (
+                        current
+                      ) => ({
+                        ...current,
+                        assignedToUserId:
+                          event
+                            .target
+                            .value,
+                      })
+                    )
+                  }
+                  className="form-input"
+                >
+                  <option value="">
+                    All assignees
+                  </option>
+
+                  <option value="__UNASSIGNED__">
+                    Unassigned
+                  </option>
+
+                  {assignees.map(
+                    (
+                      user
+                    ) => (
+                      <option
+                        key={
+                          user.id
+                        }
+                        value={
+                          user.id
+                        }
+                      >
+                        {
+                          user.name
+                        }
+                      </option>
+                    )
+                  )}
+                </select>
+              </label>
+
+              {sub ===
+                "individual" && (
+                <label className="block">
+                  <span className="mb-1.5 block text-[12px] font-semibold text-slate-500">
+                    Course
+                  </span>
+
+                  <select
+                    value={
+                      filters.course
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setFilters(
+                        (
+                          current
+                        ) => ({
+                          ...current,
+                          course:
+                            event
+                              .target
+                              .value,
+                        })
+                      )
+                    }
+                    className="form-input"
+                  >
+                    <option value="">
+                      All courses
+                    </option>
+
+                    {individualCourseOptions.map(
+                      (
+                        course
+                      ) => (
+                        <option
+                          key={
+                            course
+                          }
+                          value={
+                            course
+                          }
+                        >
+                          {
+                            course
+                          }
+                        </option>
+                      )
+                    )}
+                  </select>
+                </label>
+              )}
+
+              <label className="block">
+                <span className="mb-1.5 block text-[12px] font-semibold text-slate-500">
+                  Source
+                </span>
+
+                <select
+                  value={
+                    filters.source
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setFilters(
+                      (
+                        current
+                      ) => ({
+                        ...current,
+                        source:
+                          event
+                            .target
+                            .value,
+                      })
+                    )
+                  }
+                  className="form-input"
+                >
+                  <option value="">
+                    All sources
+                  </option>
+
+                  {sourceOptions.map(
+                    (
+                      source
+                    ) => (
+                      <option
+                        key={
+                          source
+                        }
+                        value={
+                          source
+                        }
+                      >
+                        {
+                          source
+                        }
+                      </option>
+                    )
+                  )}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[12px] font-semibold text-slate-500">
+                  From Date
+                </span>
+
+                <input
+                  type="date"
+                  value={
+                    filters.dateFrom
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setFilters(
+                      (
+                        current
+                      ) => ({
+                        ...current,
+                        dateFrom:
+                          event
+                            .target
+                            .value,
+                      })
+                    )
+                  }
+                  className="form-input"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[12px] font-semibold text-slate-500">
+                  To Date
+                </span>
+
+                <input
+                  type="date"
+                  value={
+                    filters.dateTo
+                  }
+                  min={
+                    filters.dateFrom ||
+                    undefined
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setFilters(
+                      (
+                        current
+                      ) => ({
+                        ...current,
+                        dateTo:
+                          event
+                            .target
+                            .value,
+                      })
+                    )
+                  }
+                  className="form-input"
+                />
+              </label>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-[12px] text-slate-500">
+                Showing{" "}
+                <span className="font-bold text-slate-800">
+                  {
+                    visibleCount
+                  }
+                </span>{" "}
+                of{" "}
+                <span className="font-bold text-slate-800">
+                  {
+                    totalCurrentCount
+                  }
+                </span>{" "}
+                {
+                  sub ===
+                  "individual"
+                    ? "leads"
+                    : "datasets"
+                }
+              </div>
+
+              <button
+                type="button"
+                onClick={
+                  clearFilters
+                }
+                disabled={
+                  activeFilterCount ===
+                  0
+                }
+                className="h-8 px-3 rounded-lg border border-slate-200 bg-white text-[12px] font-semibold text-slate-600 inline-flex items-center justify-center gap-1.5 hover:bg-slate-50 disabled:opacity-40"
+              >
+                <RotateCcw
+                  size={12}
+                />
+                Clear filters
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {successMessage && (
@@ -2267,14 +3140,7 @@ export default function LeadStore({ selectedYear = "all" }) {
                 "Actions",
               ]}
               empty="No individual leads found"
-              rows={individualLeads
-                .filter((lead) => {
-                  const query = search.trim().toLowerCase();
-                  if (!query) return true;
-                  return [lead.name, lead.phone, lead.email, lead.course, lead.assignedToName]
-                    .filter(Boolean)
-                    .some((value) => String(value).toLowerCase().includes(query));
-                })
+              rows={filteredIndividualLeads
                 .map((lead) => (
                   <tr key={lead.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-4 py-2.5 text-[15px] font-semibold text-slate-900">{lead.name}</td>

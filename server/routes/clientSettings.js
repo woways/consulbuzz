@@ -98,6 +98,10 @@ function formatWorkspace(company) {
       company.business ||
       "",
 
+    city:
+      company.city ||
+      "",
+
     subdomain:
       company.subdomain ||
       "",
@@ -236,6 +240,12 @@ router.patch("/", async (req, res) => {
           ""
       ).trim();
 
+    const city =
+      String(
+        req.body?.city ||
+          ""
+      ).trim();
+
     const subdomain =
       normalizeSubdomain(
         req.body?.subdomain
@@ -370,6 +380,10 @@ router.patch("/", async (req, res) => {
               businessType ||
               null,
 
+            city:
+              city ||
+              null,
+
             subdomain,
 
             brandName:
@@ -477,6 +491,8 @@ router.patch("/", async (req, res) => {
               before.companyName,
             businessType:
               before.businessType,
+            city:
+              before.city,
             subdomain:
               before.subdomain,
             portalName:
@@ -493,6 +509,8 @@ router.patch("/", async (req, res) => {
               after.companyName,
             businessType:
               after.businessType,
+            city:
+              after.city,
             subdomain:
               after.subdomain,
             portalName:

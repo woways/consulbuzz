@@ -259,6 +259,7 @@ model User {
   chatMemberships        ConversationMember[]        @relation("ChatMember")
   chatMessages           ChatMessage[]               @relation("ChatSender")
   chatReactions          ChatReaction[]              @relation("ChatReactionUser")
+  chatMessageStars       ChatMessageStar[]           @relation("ChatMessageStarUser")
   chatMessageDeletions   ChatMessageDeletion[]       @relation("ChatMessageDeletionUser")
   targetTasksOwned       TargetTask[]                @relation("TargetOwner")
   targetTasksAssigned    TargetTask[]                @relation("TargetAssigner")
@@ -600,9 +601,10 @@ model Admission {
   // This lets cancellation/deletion restore the CRM lead correctly.
   leadStageBeforeAdmission LeadStage?
 
-  studentName  String
-  studentPhone String?
-  studentEmail String?
+  studentName     String
+  studentPhone    String?
+  studentAltPhone String?
+  studentEmail    String?
 
   partnerId String?
   partner   AdmissionPartner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
@@ -732,10 +734,12 @@ model WalkIn {
 
   market AdmissionMarket @default(DOMESTIC)
 
-  visitorName String
-  phone       String
-  email       String?
-  course      String?
+  visitorName    String
+  studentName    String?
+  phone          String
+  alternatePhone String?
+  email          String?
+  course         String?
 
   purpose        String
   accompaniedBy  String?
@@ -1237,6 +1241,7 @@ model ChatMessage {
   replyTo     ChatMessage?          @relation("ChatMessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
   replies     ChatMessage[]         @relation("ChatMessageReplies")
   reactions   ChatReaction[]
+  stars       ChatMessageStar[]
   attachments ChatAttachment[]
   deletions   ChatMessageDeletion[]
 
@@ -1288,6 +1293,20 @@ model ChatReaction {
   @@unique([messageId, userId])
   @@index([messageId])
   @@index([userId])
+}
+
+model ChatMessageStar {
+  id        String      @id @default(cuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation("ChatMessageStarUser", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
+  @@index([userId, createdAt])
 }
 
 model TargetTask {

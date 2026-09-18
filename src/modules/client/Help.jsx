@@ -698,7 +698,7 @@ function NewTicketModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
-                      Contact Person <span className="text-rose-500">*</span>
+                      Candidate Name <span className="text-rose-500">*</span>
                     </label>
                     <input
                       required
@@ -1354,58 +1354,58 @@ export default function Help({
 
       {/* PAGE HEADER */}
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-            Support / Service Desk
-          </div>
+      <div>
+        <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+          Support / Service Desk
+        </div>
 
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
+        <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
             Help & Support
           </h1>
 
-          <p className="mt-1 text-[15px] text-slate-500">
-            Manage technical issues, billing requests, Advanced-plan customization support, or request a direct discussion with your Relationship Manager.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={
-              loadTickets
-            }
-            disabled={
-              loading
-            }
-            className="h-9 px-3.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 inline-flex items-center gap-2 shadow-sm disabled:opacity-50"
-          >
-            <RefreshCw
-              size={13}
-              className={
-                loading
-                  ? "animate-spin"
-                  : ""
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={
+                loadTickets
               }
-            />
+              disabled={
+                loading
+              }
+              className="h-9 px-3.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 inline-flex items-center gap-2 shadow-sm disabled:opacity-50"
+            >
+              <RefreshCw
+                size={13}
+                className={
+                  loading
+                    ? "animate-spin"
+                    : ""
+                }
+              />
 
-            Refresh
-          </button>
+              Refresh
+            </button>
 
-          <button
-            type="button"
-            onClick={() =>
-              createTicket()
-            }
-            className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm"
-          >
-            <Plus
-              size={14}
-            />
+            <button
+              type="button"
+              onClick={() =>
+                createTicket()
+              }
+              className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[13px] font-semibold inline-flex items-center gap-2 shadow-sm"
+            >
+              <Plus
+                size={14}
+              />
 
-            New Ticket
-          </button>
+              New Ticket
+            </button>
+          </div>
         </div>
+
+        <p className="mt-1 text-[15px] text-slate-500">
+          Manage technical issues, billing requests, Advanced-plan customization support, or request a direct discussion with your Relationship Manager.
+        </p>
       </div>
 
       {/* METRICS */}

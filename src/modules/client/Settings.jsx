@@ -247,6 +247,25 @@ export default function SettingsView({
   ] = useState("");
 
   const [
+    settingsSuccessMessage,
+    setSettingsSuccessMessage,
+  ] = useState("");
+
+  function showSettingsSuccess(message) {
+    setSettingsSuccessMessage(message || "Changes saved successfully");
+  }
+
+  useEffect(() => {
+    if (!settingsSuccessMessage) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setSettingsSuccessMessage("");
+    }, 5000);
+
+    return () => window.clearTimeout(timer);
+  }, [settingsSuccessMessage]);
+
+  const [
     logoPreview,
     setLogoPreview,
   ] = useState(
@@ -305,11 +324,11 @@ export default function SettingsView({
     businessType:
       tenant?.business ||
       "",
+    city:
+      tenant?.city ||
+      "",
     subdomain:
       tenant?.subdomain ||
-      "",
-    portalName:
-      tenant?.brandName ||
       "",
     logoUrl:
       tenant?.logoUrl ||
@@ -346,6 +365,7 @@ export default function SettingsView({
     },
   };
   const [organizationForm, setOrganizationForm] = useState(emptyOrganizationForm);
+  const [usersManagementTab, setUsersManagementTab] = useState("users");
 
   const [
     userSearch,
@@ -590,10 +610,10 @@ export default function SettingsView({
           workspace.companyName || "",
         businessType:
           workspace.businessType || "",
+        city:
+          workspace.city || "",
         subdomain:
           workspace.subdomain || "",
-        portalName:
-          workspace.portalName || "",
         logoUrl:
           workspace.logoUrl || "",
       });
@@ -648,10 +668,13 @@ export default function SettingsView({
                   form.companyName,
                 businessType:
                   form.businessType,
+                city:
+                  form.city,
                 subdomain:
                   form.subdomain,
+                // Keep legacy backend portalName synchronized with Company Name.
                 portalName:
-                  form.portalName,
+                  form.companyName,
                 primaryColor:
                   selectedColor,
                 logoUrl:
@@ -668,10 +691,10 @@ export default function SettingsView({
           workspace.companyName || "",
         businessType:
           workspace.businessType || "",
+        city:
+          workspace.city || "",
         subdomain:
           workspace.subdomain || "",
-        portalName:
-          workspace.portalName || "",
         logoUrl:
           workspace.logoUrl || "",
       });
@@ -702,6 +725,10 @@ export default function SettingsView({
       );
 
       setWorkspaceSettingsMessage(
+        data.message ||
+          "Settings saved successfully"
+      );
+      showSettingsSuccess(
         data.message ||
           "Settings saved successfully"
       );
@@ -834,6 +861,11 @@ export default function SettingsView({
         departments: data.departments || [],
         roles: data.roles || [],
       });
+      showSettingsSuccess(
+        organizationModal === "department"
+          ? "Department added successfully"
+          : "Role added successfully"
+      );
       setOrganizationModal(null);
       setOrganizationForm(emptyOrganizationForm);
     } catch (error) {
@@ -850,6 +882,11 @@ export default function SettingsView({
       const endpoint = type === "department" ? "departments" : "roles";
       const data = await apiRequest(`/api/client/users/${endpoint}/${id}`, { method: "DELETE" });
       setOrganization({ departments: data.departments || [], roles: data.roles || [] });
+      showSettingsSuccess(
+        type === "department"
+          ? "Department deleted successfully"
+          : "Role deleted successfully"
+      );
     } catch (error) {
       setUsersError(error?.data?.message || `Unable to delete ${type}`);
     }
@@ -1059,6 +1096,11 @@ export default function SettingsView({
               ]
       );
 
+      showSettingsSuccess(
+        editingUser
+          ? "User updated successfully"
+          : "User added successfully"
+      );
       setUserModalOpen(false);
       setEditingUser(null);
     } catch (error) {
@@ -1096,6 +1138,11 @@ export default function SettingsView({
                 : item
           )
       );
+      showSettingsSuccess(
+        data.user?.active
+          ? "User activated successfully"
+          : "User deactivated successfully"
+      );
     } catch (error) {
       setUsersError(
         error?.data?.message ||
@@ -1123,6 +1170,7 @@ export default function SettingsView({
         }
       );
 
+      showSettingsSuccess("Password reset successfully");
       setResetPasswordUser(null);
       setResetPassword("");
     } catch (error) {
@@ -1244,6 +1292,11 @@ export default function SettingsView({
         }
       );
 
+      showSettingsSuccess(
+        editingSource
+          ? "Lead source updated successfully"
+          : "Lead source added successfully"
+      );
       setSourceModalOpen(false);
       setEditingSource(null);
     } catch (error) {
@@ -1284,6 +1337,7 @@ export default function SettingsView({
                 : item
           )
       );
+      showSettingsSuccess("Lead source updated successfully");
     } catch (error) {
       setSourcesError(
         error?.data?.message ||
@@ -1319,6 +1373,7 @@ export default function SettingsView({
               source.id
           )
       );
+      showSettingsSuccess("Lead source deleted successfully");
     } catch (error) {
       setSourcesError(
         error?.data?.message ||
@@ -1483,6 +1538,11 @@ export default function SettingsView({
         }
       );
 
+      showSettingsSuccess(
+        editingCustomField
+          ? "Custom field updated successfully"
+          : "Custom field added successfully"
+      );
       setCustomFieldModalOpen(false);
       setEditingCustomField(null);
     } catch (error) {
@@ -1523,6 +1583,7 @@ export default function SettingsView({
                 : item
           )
       );
+      showSettingsSuccess("Custom field updated successfully");
     } catch (error) {
       setCustomFieldsError(
         error?.data?.message ||
@@ -1558,6 +1619,7 @@ export default function SettingsView({
               field.id
           )
       );
+      showSettingsSuccess("Custom field deleted successfully");
     } catch (error) {
       setCustomFieldsError(
         error?.data?.message ||
@@ -1654,6 +1716,10 @@ export default function SettingsView({
       );
 
       setNotificationPreferencesMessage(
+        data.message ||
+          "Notification preferences saved"
+      );
+      showSettingsSuccess(
         data.message ||
           "Notification preferences saved"
       );
@@ -1840,82 +1906,11 @@ export default function SettingsView({
         </div>
       )}
 
-      {workspaceSettingsMessage && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 text-[13px]">
-          {workspaceSettingsMessage}
+      {settingsSuccessMessage && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 text-[13px] font-medium">
+          {settingsSuccessMessage}
         </div>
       )}
-
-      {/* WORKSPACE SUMMARY */}
-
-      <div className="bg-white border border-slate-200 rounded-xl px-5 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center text-[13px] font-bold overflow-hidden"
-          >
-            {logoPreview ? (
-              <img
-                src={logoPreview}
-                alt="Company logo"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              tenant?.short ||
-              "CB"
-            )}
-          </div>
-
-          <div>
-            <div className="text-[15px] font-bold text-slate-900">
-              {
-                form.portalName ||
-                form.companyName ||
-                tenant?.brandName ||
-                tenant?.name ||
-                "CRM Workspace"
-              }
-            </div>
-
-            <div className="text-[13px] text-slate-500 mt-0.5">
-              {
-                form.subdomain ||
-                tenant?.subdomain ||
-                "Workspace"
-              }
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-5 text-[13px] text-slate-500">
-          <div>
-            <div className="text-[13px] uppercase tracking-[0.08em] font-semibold text-slate-400">
-              Business
-            </div>
-
-            <div className="mt-1 font-medium text-slate-700">
-              {
-                form.businessType ||
-                tenant?.business ||
-                "—"
-              }
-            </div>
-          </div>
-
-          <div>
-            <div className="text-[13px] uppercase tracking-[0.08em] font-semibold text-slate-400">
-              City
-            </div>
-
-            <div className="mt-1 font-medium text-slate-700">
-              {
-                tenant
-                  ?.city ||
-                "—"
-              }
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* SETTINGS LAYOUT */}
 
@@ -1983,23 +1978,25 @@ export default function SettingsView({
             tab === "branding" ? "overflow-visible" : "overflow-hidden"
           }`}
         >
-          <div className="px-6 py-5 border-b border-slate-200">
-            <div className="flex items-center gap-2">
-              {activeTab && (
-                <activeTab.i
-                  size={16}
-                  className="text-indigo-600"
-                />
-              )}
+          {tab !== "users" && (
+            <div className="px-6 py-5 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                {activeTab && (
+                  <activeTab.i
+                    size={16}
+                    className="text-indigo-600"
+                  />
+                )}
 
-              <h2 className="text-[17px] font-bold text-slate-950">
-                {
-                  activeTab
-                    ?.l
-                }
-              </h2>
+                <h2 className="text-[17px] font-bold text-slate-950">
+                  {
+                    activeTab
+                      ?.l
+                  }
+                </h2>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* COMPANY */}
 
@@ -2015,6 +2012,69 @@ export default function SettingsView({
                   Core workspace identity
                   shown throughout the CRM.
                 </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3.5">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div
+                      className="flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand-600 text-[13px] font-bold text-white shadow-sm"
+                    >
+                      {logoPreview ? (
+                        <img
+                          src={logoPreview}
+                          alt="Company logo"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        tenant?.short ||
+                        "CB"
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="truncate text-[16px] font-bold text-slate-950">
+                        {
+                          form.companyName ||
+                          tenant?.name ||
+                          tenant?.brandName ||
+                          "CRM Workspace"
+                        }
+                      </div>
+                      <div className="mt-0.5 truncate text-[12px] text-slate-500">
+                        {
+                          form.subdomain ||
+                          tenant?.subdomain ||
+                          "Workspace"
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px]">
+                    <div className="inline-flex items-center gap-2 text-slate-600">
+                      <Building size={14} className="text-slate-400" />
+                      <span className="font-semibold">
+                        {
+                          form.businessType ||
+                          tenant?.business ||
+                          "Business not set"
+                        }
+                      </span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 text-slate-600">
+                      <Globe2 size={14} className="text-slate-400" />
+                      <span className="font-semibold">
+                        {
+                          form.city ||
+                          tenant?.city ||
+                          "City not set"
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -2049,6 +2109,22 @@ export default function SettingsView({
                 />
 
                 <Field
+                  label="City"
+                  value={
+                    form.city
+                  }
+                  onChange={(
+                    value
+                  ) =>
+                    update(
+                      "city",
+                      value
+                    )
+                  }
+                  placeholder="e.g. Hyderabad"
+                />
+
+                <Field
                   label="Subdomain"
                   value={
                     form.subdomain
@@ -2064,20 +2140,6 @@ export default function SettingsView({
                   mono
                 />
 
-                <Field
-                  label="Portal Name"
-                  value={
-                    form.portalName
-                  }
-                  onChange={(
-                    value
-                  ) =>
-                    update(
-                      "portalName",
-                      value
-                    )
-                  }
-                />
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 flex items-start gap-3">
@@ -2453,238 +2515,357 @@ export default function SettingsView({
           {tab ===
             "users" && (
             <div className="p-6 space-y-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h3 className="text-[15px] font-bold text-slate-900">
-                    Users & Roles
-                  </h3>
+              <div>
+                <h3 className="text-[15px] font-bold text-slate-900">
+                  Users & Roles
+                </h3>
 
-                  <p className="text-[13px] text-slate-500 mt-1">
-                    Manage team members, account status and workspace permissions.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {currentUser?.role === "CLIENT_ADMIN" && (<>
-                    <button type="button" onClick={() => openOrganizationModal("department")} className="h-9 px-3 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[12px] font-semibold rounded-lg inline-flex items-center gap-2">
-                      <Plus size={13} /> Department
-                    </button>
-                    <button type="button" onClick={() => openOrganizationModal("role")} className="h-9 px-3 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[12px] font-semibold rounded-lg inline-flex items-center gap-2">
-                      <Plus size={13} /> Role
-                    </button>
-                  </>)}
-                  <button
-                    type="button"
-                    onClick={openCreateUser}
-                    className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-sm"
-                  >
-                    <Plus size={14} />
-                    Add User
-                  </button>
-                </div>
+                <p className="mt-1 text-[13px] text-slate-500">
+                  Manage team members, departments and role permissions without showing everything at once.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-                  <div className="flex items-center justify-between"><div><div className="text-[13px] font-bold text-slate-900">Departments</div><div className="mt-0.5 text-[13px] text-slate-500">Default Admin and Sales, plus your custom departments.</div></div></div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {organization.departments.map((department) => (
-                      <span key={department.id} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[13px] font-semibold text-slate-700">
-                        {department.name} <span className="text-slate-400">{department.code}</span>
-                        {!department.system && currentUser?.role === "CLIENT_ADMIN" && <button type="button" onClick={() => deleteOrganizationItem("department", department.id)} className="ml-1 text-slate-400 hover:text-rose-600"><X size={11}/></button>}
+              <div className="inline-flex max-w-full items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
+                {[
+                  ["users", "Users", users.length],
+                  ["departments", "Departments", organization.departments.length],
+                  ["roles", "Roles", organization.roles.length],
+                ].map(([key, label, count]) => {
+                  const active = usersManagementTab === key;
+
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setUsersManagementTab(key)}
+                      className={`inline-flex h-10 items-center gap-2.5 rounded-lg px-4 text-[15px] font-semibold transition-colors ${
+                        active
+                          ? "bg-white text-indigo-700 shadow-sm ring-1 ring-slate-200"
+                          : "text-slate-500 hover:bg-white/70 hover:text-slate-800"
+                      }`}
+                    >
+                      <span>{label}</span>
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
+                          active
+                            ? "bg-indigo-50 text-indigo-600"
+                            : "bg-slate-200/70 text-slate-500"
+                        }`}
+                      >
+                        {count}
                       </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-                  <div className="text-[13px] font-bold text-slate-900">Custom Roles</div>
-                  <div className="mt-0.5 text-[13px] text-slate-500">Create reusable role permission templates.</div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {organization.roles.length ? organization.roles.map((role) => (
-                      <span key={role.id} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[13px] font-semibold text-slate-700">
-                        {role.name} <span className="text-slate-400">{role.code}</span>
-                        {currentUser?.role === "CLIENT_ADMIN" && <button type="button" onClick={() => deleteOrganizationItem("role", role.id)} className="ml-1 text-slate-400 hover:text-rose-600"><X size={11}/></button>}
-                      </span>
-                    )) : <span className="text-[13px] text-slate-400">No custom roles yet.</span>}
-                  </div>
-                </div>
+                    </button>
+                  );
+                })}
               </div>
 
               {usersError && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-[13px]">
+                <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-[13px] text-rose-700">
                   {usersError}
                 </div>
               )}
 
-              <div className="relative max-w-sm">
-                <Search
-                  size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
+              {usersManagementTab === "users" && (
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="text-[14px] font-bold text-slate-900">
+                        Team Members
+                      </div>
+                      <div className="mt-0.5 text-[12px] text-slate-500">
+                        {filteredUsers.length} of {users.length} users
+                      </div>
+                    </div>
 
-                <input
-                  value={
-                    userSearch
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setUserSearch(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Search users..."
-                  className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
-                />
-              </div>
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                      <div className="relative w-full sm:w-[300px]">
+                        <Search
+                          size={14}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                        />
+                        <input
+                          value={userSearch}
+                          onChange={(event) => setUserSearch(event.target.value)}
+                          placeholder="Search users..."
+                          className="h-9 w-full rounded-lg border border-slate-200 pl-9 pr-3 text-[14px] focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+                        />
+                      </div>
 
-              {usersLoading ? (
-                <div className="py-16 flex items-center justify-center gap-2 text-[15px] text-slate-500">
-                  <Loader2
-                    size={16}
-                    className="animate-spin"
-                  />
-                  Loading users...
-                </div>
-              ) : (
-                <div className="border border-slate-200 rounded-xl overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-[15px]">
-                      <thead className="bg-slate-50 border-b border-slate-200">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">Employee ID</th>
-                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
-                            User
-                          </th>
-                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
-                            Role
-                          </th>
-                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
-                            Department
-                          </th>
-                          <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">
-                            Status
-                          </th>
-                          <th className="px-4 py-3 text-right text-[13px] font-semibold text-slate-500">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
+                      <button
+                        type="button"
+                        onClick={openCreateUser}
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3.5 text-[13px] font-semibold text-white shadow-sm hover:bg-indigo-700"
+                      >
+                        <Plus size={14} />
+                        Add User
+                      </button>
+                    </div>
+                  </div>
 
-                      <tbody className="divide-y divide-slate-100">
-                        {filteredUsers.map(
-                          (user) => (
-                            <tr
-                              key={
-                                user.id
-                              }
-                              className="hover:bg-slate-50/70"
-                            >
-                              <td className="px-4 py-3 font-mono text-[12px] font-semibold text-indigo-700 whitespace-nowrap">
-                                {user.employeeId || "—"}
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="font-semibold text-slate-900">
-                                  {user.name}
-                                </div>
+                  {usersLoading ? (
+                    <div className="flex items-center justify-center gap-2 py-16 text-[15px] text-slate-500">
+                      <Loader2 size={16} className="animate-spin" />
+                      Loading users...
+                    </div>
+                  ) : (
+                    <div className="overflow-hidden rounded-xl border border-slate-200">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-[15px]">
+                          <thead className="border-b border-slate-200 bg-slate-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">Employee ID</th>
+                              <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">User</th>
+                              <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">Role</th>
+                              <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">Department</th>
+                              <th className="px-4 py-3 text-left text-[13px] font-semibold text-slate-500">Status</th>
+                              <th className="px-4 py-3 text-right text-[13px] font-semibold text-slate-500">Actions</th>
+                            </tr>
+                          </thead>
 
-                                <div className="text-[13px] text-slate-500 mt-0.5">
-                                  {user.email}
-                                </div>
+                          <tbody className="divide-y divide-slate-100">
+                            {filteredUsers.map((user) => (
+                              <tr key={user.id} className="hover:bg-slate-50/70">
+                                <td className="whitespace-nowrap px-4 py-3 font-mono text-[12px] font-semibold text-indigo-700">
+                                  {user.employeeId || "—"}
+                                </td>
 
-                                {user.jobTitle && (
-                                  <div className="text-[13px] text-slate-400 mt-1">
-                                    {user.jobTitle}
+                                <td className="px-4 py-3">
+                                  <div className="font-semibold text-slate-900">
+                                    {user.name}
                                   </div>
-                                )}
-                              </td>
-
-                              <td className="px-4 py-3">
-                                <span className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 px-2.5 py-1 text-[13px] font-semibold">
-                                  {(user.customRoleName || user.role).replaceAll(
-                                    "_",
-                                    " "
+                                  <div className="mt-0.5 text-[13px] text-slate-500">
+                                    {user.email}
+                                  </div>
+                                  {user.jobTitle && (
+                                    <div className="mt-1 text-[13px] text-slate-400">
+                                      {user.jobTitle}
+                                    </div>
                                   )}
+                                </td>
+
+                                <td className="px-4 py-3">
+                                  <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 text-[13px] font-semibold text-indigo-700">
+                                    {(user.customRoleName || user.role).replaceAll("_", " ")}
+                                  </span>
+                                </td>
+
+                                <td className="px-4 py-3 text-[13px] text-slate-600">
+                                  {user.department || "—"}
+                                </td>
+
+                                <td className="px-4 py-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleUserActive(user)}
+                                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-[13px] font-semibold ${
+                                      user.active
+                                        ? "bg-emerald-50 text-emerald-700"
+                                        : "bg-slate-100 text-slate-600"
+                                    }`}
+                                  >
+                                    {user.active ? "Active" : "Inactive"}
+                                  </button>
+                                </td>
+
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => openEditUser(user)}
+                                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
+                                      title="Edit user"
+                                    >
+                                      <Pencil size={13} />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setResetPasswordUser(user);
+                                        setResetPassword("");
+                                      }}
+                                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
+                                      title="Reset password"
+                                    >
+                                      <KeyRound size={13} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+
+                            {!filteredUsers.length && (
+                              <tr>
+                                <td
+                                  colSpan={6}
+                                  className="py-12 text-center text-[15px] text-slate-500"
+                                >
+                                  No users found.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {usersManagementTab === "departments" && (
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="text-[14px] font-bold text-slate-900">
+                        Departments
+                      </div>
+                      <div className="mt-0.5 text-[12px] text-slate-500">
+                        Organize users by team or business function.
+                      </div>
+                    </div>
+
+                    {currentUser?.role === "CLIENT_ADMIN" && (
+                      <button
+                        type="button"
+                        onClick={() => openOrganizationModal("department")}
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3.5 text-[13px] font-semibold text-white shadow-sm hover:bg-indigo-700"
+                      >
+                        <Plus size={14} />
+                        Add Department
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                    <div className="divide-y divide-slate-100">
+                      {organization.departments.map((department) => {
+                        const memberCount = users.filter(
+                          (user) => user.department === department.name
+                        ).length;
+
+                        return (
+                          <div
+                            key={department.id}
+                            className="flex items-center justify-between gap-4 px-4 py-3.5 hover:bg-slate-50/70"
+                          >
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[13px] font-semibold text-slate-800">
+                                  {department.name}
                                 </span>
-                              </td>
+                                <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-500">
+                                  {department.code}
+                                </span>
+                                {department.system && (
+                                  <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600">
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-1 text-[11px] text-slate-400">
+                                {memberCount} {memberCount === 1 ? "member" : "members"}
+                              </div>
+                            </div>
 
-                              <td className="px-4 py-3 text-[13px] text-slate-600">
-                                {user.department ||
-                                  "—"}
-                              </td>
+                            {!department.system && currentUser?.role === "CLIENT_ADMIN" && (
+                              <button
+                                type="button"
+                                onClick={() => deleteOrganizationItem("department", department.id)}
+                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                                title="Delete department"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
 
-                              <td className="px-4 py-3">
+                      {!organization.departments.length && (
+                        <div className="px-4 py-12 text-center text-[13px] text-slate-400">
+                          No departments yet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {usersManagementTab === "roles" && (
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="text-[14px] font-bold text-slate-900">
+                        Custom Roles
+                      </div>
+                      <div className="mt-0.5 text-[12px] text-slate-500">
+                        Create reusable permission templates for your team.
+                      </div>
+                    </div>
+
+                    {currentUser?.role === "CLIENT_ADMIN" && (
+                      <button
+                        type="button"
+                        onClick={() => openOrganizationModal("role")}
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3.5 text-[13px] font-semibold text-white shadow-sm hover:bg-indigo-700"
+                      >
+                        <Plus size={14} />
+                        Add Role
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                    <div className="divide-y divide-slate-100">
+                      {organization.roles.length ? (
+                        organization.roles.map((role) => {
+                          const memberCount = users.filter(
+                            (user) => user.customRoleId === role.id || user.customRoleName === role.name
+                          ).length;
+
+                          return (
+                            <div
+                              key={role.id}
+                              className="flex items-center justify-between gap-4 px-4 py-3.5 hover:bg-slate-50/70"
+                            >
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="text-[13px] font-semibold text-slate-800">
+                                    {role.name}
+                                  </span>
+                                  <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-500">
+                                    {role.code}
+                                  </span>
+                                </div>
+                                <div className="mt-1 text-[11px] text-slate-400">
+                                  {memberCount} {memberCount === 1 ? "member" : "members"}
+                                </div>
+                              </div>
+
+                              {currentUser?.role === "CLIENT_ADMIN" && (
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    toggleUserActive(
-                                      user
-                                    )
-                                  }
-                                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-[13px] font-semibold ${
-                                    user.active
-                                      ? "bg-emerald-50 text-emerald-700"
-                                      : "bg-slate-100 text-slate-600"
-                                  }`}
+                                  onClick={() => deleteOrganizationItem("role", role.id)}
+                                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                                  title="Delete role"
                                 >
-                                  {user.active
-                                    ? "Active"
-                                    : "Inactive"}
+                                  <Trash2 size={13} />
                                 </button>
-                              </td>
-
-                              <td className="px-4 py-3">
-                                <div className="flex items-center justify-end gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      openEditUser(
-                                        user
-                                      )
-                                    }
-                                    className="w-8 h-8 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center"
-                                    title="Edit user"
-                                  >
-                                    <Pencil
-                                      size={13}
-                                    />
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setResetPasswordUser(
-                                        user
-                                      );
-                                      setResetPassword(
-                                        ""
-                                      );
-                                    }}
-                                    className="w-8 h-8 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 flex items-center justify-center"
-                                    title="Reset password"
-                                  >
-                                    <KeyRound
-                                      size={13}
-                                    />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        )}
-
-                        {!filteredUsers.length && (
-                          <tr>
-                            <td
-                              colSpan={6}
-                              className="py-12 text-center text-[15px] text-slate-500"
-                            >
-                              No users found.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                              )}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="px-4 py-12 text-center">
+                          <div className="text-[13px] font-semibold text-slate-500">
+                            No custom roles yet
+                          </div>
+                          <div className="mt-1 text-[12px] text-slate-400">
+                            Add a role when you need reusable access rules.
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -3180,12 +3361,6 @@ export default function SettingsView({
               {notificationPreferencesError && (
                 <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-[13px]">
                   {notificationPreferencesError}
-                </div>
-              )}
-
-              {notificationPreferencesMessage && (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg p-3 text-[13px]">
-                  {notificationPreferencesMessage}
                 </div>
               )}
 

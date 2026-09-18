@@ -64,33 +64,37 @@ function AnalyticsMetric({
 }) {
   const tones = {
     indigo:
-      "bg-indigo-50 text-indigo-600 border-indigo-100",
+      "bg-indigo-500 text-white",
 
     emerald:
-      "bg-emerald-50 text-emerald-600 border-emerald-100",
+      "bg-emerald-500 text-white",
 
     amber:
-      "bg-amber-50 text-amber-600 border-amber-100",
+      "bg-amber-500 text-white",
 
     slate:
-      "bg-slate-50 text-slate-600 border-slate-200",
+      "bg-slate-500 text-white",
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all">
+    <div className="bg-white border border-slate-200 rounded-xl px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-all">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <div className="text-[13px] font-semibold uppercase tracking-[0.09em] text-slate-400">
             {label}
           </div>
 
-          <div className="mt-2 text-[24px] leading-none font-bold tracking-tight text-slate-950">
+          <div className="mt-1.5 text-[24px] leading-none font-bold tracking-tight text-slate-950">
             {value}
+          </div>
+
+          <div className="mt-2 text-[13px] leading-5 text-slate-500">
+            {detail}
           </div>
         </div>
 
         <div
-          className={`w-9 h-9 rounded-lg border flex items-center justify-center ${
+          className={`w-10 h-10 rounded-xl flex flex-shrink-0 items-center justify-center ${
             tones[
               tone
             ] ||
@@ -101,10 +105,6 @@ function AnalyticsMetric({
             size={17}
           />
         </div>
-      </div>
-
-      <div className="mt-3 pt-3 border-t border-slate-100 text-[13px] leading-5 text-slate-500">
-        {detail}
       </div>
     </div>
   );
@@ -255,75 +255,48 @@ export default function Analytics({ selectedYear = "all" }) {
     );
   }
 
-  function ComparisonCard({
-    label,
-    current,
-    previous,
-    moneyValue = false,
-    percentValue = false,
-  }) {
+  function formatComparisonValue(value, type = "number") {
+    if (type === "money") return money(value);
+    if (type === "percent") return `${Number(value || 0)}%`;
+    return Number(value || 0).toLocaleString("en-IN");
+  }
+
+  function ComparisonChange({ current, previous }) {
     const change = percentChange(current, previous);
     const positive = change !== null && change > 0;
     const negative = change !== null && change < 0;
 
-    const formatValue = (value) => {
-      if (moneyValue) return money(value);
-      if (percentValue) return `${Number(value || 0)}%`;
-      return Number(value || 0).toLocaleString("en-IN");
-    };
+    if (change === null) {
+      return (
+        <span className="text-[12px] font-semibold text-slate-500">
+          New vs zero in {comparisonYear}
+        </span>
+      );
+    }
 
     return (
-      <div className="bg-white border border-slate-200 rounded-xl p-4">
-        <div className="text-[13px] font-semibold uppercase tracking-[0.09em] text-slate-400">
-          {label}
-        </div>
-
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <div>
-            <div className="text-[13px] text-slate-400">{primaryYear}</div>
-            <div className="mt-1 text-xl font-bold text-slate-950">
-              {formatValue(current)}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-[13px] text-slate-400">{comparisonYear}</div>
-            <div className="mt-1 text-xl font-bold text-slate-600">
-              {formatValue(previous)}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-3 pt-3 border-t border-slate-100">
-          {change === null ? (
-            <span className="text-xs font-semibold text-slate-500">
-              New vs zero in {comparisonYear}
-            </span>
-          ) : (
-            <span
-              className={`inline-flex items-center gap-1 text-xs font-semibold ${
-                positive
-                  ? "text-emerald-700"
-                  : negative
-                    ? "text-rose-700"
-                    : "text-slate-500"
-              }`}
-            >
-              {positive ? (
-                <ArrowUp size={12} />
-              ) : negative ? (
-                <ArrowDown size={12} />
-              ) : (
-                <Minus size={12} />
-              )}
-              {change > 0 ? "+" : ""}
-              {change}% vs {comparisonYear}
-            </span>
-          )}
-        </div>
-      </div>
+      <span
+        className={`inline-flex items-center gap-1 text-[12px] font-semibold ${
+          positive
+            ? "text-emerald-700"
+            : negative
+              ? "text-rose-700"
+              : "text-slate-500"
+        }`}
+      >
+        {positive ? (
+          <ArrowUp size={12} />
+        ) : negative ? (
+          <ArrowDown size={12} />
+        ) : (
+          <Minus size={12} />
+        )}
+        {change > 0 ? "+" : ""}
+        {change}% vs {comparisonYear}
+      </span>
     );
   }
+
 
   return (
     <div className="space-y-4">
@@ -536,46 +509,90 @@ export default function Analytics({ selectedYear = "all" }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                <ComparisonCard
-                  label="Total Leads"
-                  current={comparison.primary.totalLeads}
-                  previous={comparison.compare.totalLeads}
-                />
+              <div className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[600px]">
+                    <thead className="bg-slate-50/80">
+                      <tr>
+                        <th className="w-[36%] px-4 py-2 text-left text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                          Parameter
+                        </th>
+                        <th className="w-[32%] px-4 py-2 text-left text-[13px] font-bold text-slate-900">
+                          {primaryYear}
+                        </th>
+                        <th className="w-[32%] px-4 py-2 text-left text-[13px] font-bold text-slate-900">
+                          {comparisonYear}
+                        </th>
+                      </tr>
+                    </thead>
 
-                <ComparisonCard
-                  label="Admissions"
-                  current={comparison.primary.totalAdmissions}
-                  previous={comparison.compare.totalAdmissions}
-                />
+                    <tbody>
+                      {[
+                        {
+                          label: "Total Leads",
+                          current: comparison.primary.totalLeads,
+                          previous: comparison.compare.totalLeads,
+                          type: "number",
+                        },
+                        {
+                          label: "Admissions",
+                          current: comparison.primary.totalAdmissions,
+                          previous: comparison.compare.totalAdmissions,
+                          type: "number",
+                        },
+                        {
+                          label: "Conversion Rate",
+                          current: comparison.primary.conversionRate,
+                          previous: comparison.compare.conversionRate,
+                          type: "percent",
+                        },
+                        {
+                          label: "Potential Revenue",
+                          current: comparison.primary.potentialRevenue,
+                          previous: comparison.compare.potentialRevenue,
+                          type: "money",
+                        },
+                        {
+                          label: "Received Revenue",
+                          current: comparison.primary.receivedAmount,
+                          previous: comparison.compare.receivedAmount,
+                          type: "money",
+                        },
+                        {
+                          label: "Pending Revenue",
+                          current: comparison.primary.pendingAmount,
+                          previous: comparison.compare.pendingAmount,
+                          type: "money",
+                        },
+                      ].map((row) => (
+                        <tr
+                          key={row.label}
+                          className="border-t border-slate-100 hover:bg-slate-50/60 transition-colors"
+                        >
+                          <td className="px-4 py-2 text-[13px] font-semibold text-slate-700">
+                            {row.label}
+                          </td>
 
-                <ComparisonCard
-                  label="Conversion Rate"
-                  current={comparison.primary.conversionRate}
-                  previous={comparison.compare.conversionRate}
-                  percentValue
-                />
+                          <td className="px-4 py-2">
+                            <div className="text-[14px] font-bold tabular-nums text-slate-950">
+                              {formatComparisonValue(row.current, row.type)}
+                            </div>
+                            <div className="mt-0.5">
+                              <ComparisonChange
+                                current={row.current}
+                                previous={row.previous}
+                              />
+                            </div>
+                          </td>
 
-                <ComparisonCard
-                  label="Potential Revenue"
-                  current={comparison.primary.potentialRevenue}
-                  previous={comparison.compare.potentialRevenue}
-                  moneyValue
-                />
-
-                <ComparisonCard
-                  label="Received"
-                  current={comparison.primary.receivedAmount}
-                  previous={comparison.compare.receivedAmount}
-                  moneyValue
-                />
-
-                <ComparisonCard
-                  label="Pending"
-                  current={comparison.primary.pendingAmount}
-                  previous={comparison.compare.pendingAmount}
-                  moneyValue
-                />
+                          <td className="px-4 py-2 text-[14px] font-semibold tabular-nums text-slate-600">
+                            {formatComparisonValue(row.previous, row.type)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">

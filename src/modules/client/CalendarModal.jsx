@@ -173,6 +173,16 @@ export default function CalendarModal({ open, onClose, currentUser }) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNow(new Date());
+    }, 60 * 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
   // Where the visible range begins, based on the selected view.
   const rangeStart = useMemo(() => {
     if (viewMode === "day") return startOfDay(anchorDate);
@@ -401,15 +411,15 @@ export default function CalendarModal({ open, onClose, currentUser }) {
 
   return (
     <div className="fixed inset-0 z-[130] flex items-stretch justify-center bg-slate-950/35 p-0 backdrop-blur-[1px] sm:items-center sm:p-3">
-      <div className="flex h-full w-full max-w-[1500px] flex-col overflow-hidden border border-slate-200 bg-white shadow-[0_28px_80px_rgba(15,23,42,.22)] sm:h-[95vh] sm:rounded-[26px]">
+      <div className="flex h-full w-full max-w-[1500px] flex-col overflow-hidden border border-slate-200 bg-white shadow-[0_28px_80px_rgba(15,23,42,.22)] sm:h-[94vh] sm:rounded-[22px]">
         {/* HEADER */}
-        <div className="flex min-h-[74px] items-center justify-between gap-3 border-b border-slate-200 px-5 py-3 sm:px-7">
+        <div className="flex min-h-[62px] items-center justify-between gap-3 border-b border-slate-200 px-4 py-2.5 sm:px-5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-indigo-600 text-white shadow-sm">
-              <CalendarDays size={19} />
+            <span className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-indigo-600 text-white shadow-sm">
+              <CalendarDays size={17} />
             </span>
             <div>
-              <div className="text-[19px] font-extrabold tracking-[-0.025em] text-slate-950">Calendar</div>
+              <div className="text-[17px] font-extrabold tracking-[-0.02em] text-slate-950">Calendar</div>
               <div className="mt-0.5 text-[12px] font-medium text-slate-500">
                 Plan meetings, follow-ups and reminders.
               </div>
@@ -420,7 +430,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
             <button
               type="button"
               onClick={() => openCreate(selectedDate, 9)}
-              className="inline-flex h-10 items-center gap-2 rounded-[13px] bg-brand-600 px-4 text-[12px] font-bold text-white shadow-sm transition hover:bg-brand-700"
+              className="inline-flex h-9 items-center gap-2 rounded-[11px] bg-brand-600 px-3.5 text-[12px] font-bold text-white shadow-sm transition hover:bg-brand-700"
             >
               <Plus size={14} />
               New event
@@ -446,11 +456,11 @@ export default function CalendarModal({ open, onClose, currentUser }) {
         {/* BODY: left mini-month + agenda, right week grid */}
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           {/* LEFT PANEL */}
-          <div className="flex w-full flex-shrink-0 flex-col overflow-y-auto border-b border-slate-200 bg-white lg:w-[340px] lg:border-b-0 lg:border-r">
+          <div className="flex w-full flex-shrink-0 flex-col overflow-y-auto border-b border-slate-200 bg-white lg:w-[300px] lg:border-b-0 lg:border-r">
             {/* Mini-month */}
-            <div className="p-5">
+            <div className="p-4">
               <div className="mb-2 flex items-center justify-between">
-                <div className="text-[16px] font-extrabold tracking-[-0.015em] text-slate-900">
+                <div className="text-[14px] font-extrabold tracking-[-0.01em] text-slate-900">
                   {formatMonthYear(anchorDate)}
                 </div>
                 <div className="flex items-center gap-1">
@@ -530,7 +540,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
             </div>
 
             {/* AGENDA FOR SELECTED DAY */}
-            <div className="border-t border-slate-200 px-5 py-4">
+            <div className="border-t border-slate-200 px-4 py-3.5">
               <div className="mb-3 text-[12px] font-extrabold uppercase tracking-[0.08em] text-slate-400">
                 {selectedDate.toLocaleDateString("en-IN", {
                   weekday: "long",
@@ -585,7 +595,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
           {/* RIGHT: WEEK GRID */}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             {/* View toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 py-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-2.5">
               <div className="text-[16px] font-extrabold tracking-[-0.015em] text-slate-900">
                 {weekDays[0].toLocaleDateString("en-IN", {
                   day: "numeric",
@@ -623,7 +633,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                   <ChevronRight size={15} />
                 </button>
 
-                <div className="ml-2 flex items-center rounded-[14px] bg-slate-100 p-1">
+                <div className="ml-1.5 flex items-center rounded-[11px] bg-slate-100 p-1">
                   {[
                     ["day", "Day"],
                     ["workweek", "Work week"],
@@ -633,7 +643,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                       key={value}
                       type="button"
                       onClick={() => setViewMode(value)}
-                      className={`rounded-[10px] px-3.5 py-2 text-[12px] font-bold transition ${
+                      className={`rounded-[8px] px-3 py-1.5 text-[12px] font-bold transition ${
                         viewMode === value
                           ? "bg-white text-slate-950 shadow-sm"
                           : "text-slate-500 hover:text-slate-800"
@@ -660,15 +670,15 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                     key={day.toISOString()}
                     type="button"
                     onClick={() => setSelectedDate(startOfDay(day))}
-                    className={`flex min-h-[82px] flex-col items-center justify-center gap-1 py-2 text-center transition-colors ${
+                    className={`flex min-h-[58px] flex-col items-center justify-center gap-0.5 py-1.5 text-center transition-colors ${
                       isSelected ? "bg-brand-50" : "hover:bg-slate-50"
                     }`}
                   >
-                    <span className="text-[12px] font-bold uppercase tracking-[0.07em] text-slate-400">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-slate-400">
                       {WEEKDAYS[(day.getDay() + 6) % 7]}
                     </span>
                     <span
-                      className={`flex h-10 w-10 items-center justify-center rounded-full text-[15px] font-extrabold ${
+                      className={`flex h-8 w-8 items-center justify-center rounded-full text-[14px] font-extrabold ${
                         isToday
                           ? "bg-brand-600 text-white"
                           : "text-slate-800"
@@ -696,6 +706,8 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                     eventsForDay={eventsForDay}
                     onSlotClick={openCreate}
                     onEventClick={openEdit}
+                    now={now}
+                    showCurrentTimeLine={weekDays.some((day) => sameDay(day, now))}
                   />
                 ))}
               </div>
@@ -709,7 +721,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
         <div className="fixed inset-0 z-[140] flex items-end justify-center bg-slate-950/50 p-0 sm:items-center sm:p-4">
           <div className="w-full max-w-md overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:rounded-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5">
-              <div className="text-sm font-black text-slate-950">
+              <div className="text-[22px] font-extrabold tracking-[-0.025em] text-slate-950">
                 {editingEvent.id ? "Edit event" : "New event"}
               </div>
               <button
@@ -790,10 +802,15 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                 <input
                   type="date"
                   value={editingEvent.dateStr}
+                  onClick={(e) => {
+                    // Open the native date picker when the user clicks anywhere
+                    // inside the date field, not only the calendar icon.
+                    e.currentTarget.showPicker?.();
+                  }}
                   onChange={(e) =>
                     setEditingEvent((c) => ({ ...c, dateStr: e.target.value }))
                   }
-                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-brand-400"
+                  className="h-10 w-full cursor-pointer rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-brand-400"
                 />
               </label>
 
@@ -998,11 +1015,20 @@ function FragmentRow({
   eventsForDay,
   onSlotClick,
   onEventClick,
+  now,
+  showCurrentTimeLine,
 }) {
+  const isCurrentHour =
+    showCurrentTimeLine &&
+    hour === now.getHours();
+
+  const currentMinuteTop =
+    `${(now.getMinutes() / 60) * 100}%`;
+
   return (
     <>
       {/* Hour label */}
-      <div className="h-[76px] border-b border-r border-slate-100 pr-2 text-right text-[12px] font-semibold text-slate-400">
+      <div className="relative h-[64px] border-b border-r border-slate-100 pr-2 text-right text-[11px] font-semibold text-slate-400">
         <span className="relative -top-1.5">
           {hour === 0
             ? ""
@@ -1010,19 +1036,34 @@ function FragmentRow({
         </span>
       </div>
 
-      {/* 7 day cells */}
+      {/* Visible day cells */}
       {weekDays.map((day) => {
         const dayEvents = eventsForDay(day).filter((event) => {
           if (event.allDay) return hour === 0;
           return new Date(event.startAt).getHours() === hour;
         });
 
+        const isTodayCell =
+          sameDay(day, now);
+
         return (
           <div
             key={`${day.toISOString()}-${hour}`}
             onClick={() => onSlotClick(day, hour)}
-            className="relative h-[76px] cursor-pointer border-b border-r border-slate-100 px-2 py-1.5 transition hover:bg-slate-50/70"
+            className="relative h-[64px] cursor-pointer border-b border-r border-slate-100 px-1.5 py-1 transition hover:bg-slate-50/70"
           >
+            {isCurrentHour && (
+              <div
+                className="pointer-events-none absolute inset-x-0 z-20 border-t border-dashed border-brand-400"
+                style={{ top: currentMinuteTop }}
+                aria-hidden="true"
+              >
+                {isTodayCell && (
+                  <span className="absolute -left-1 -top-[4px] h-2 w-2 rounded-full bg-brand-600 shadow-[0_0_0_2px_white]" />
+                )}
+              </div>
+            )}
+
             {dayEvents.map((event) => (
               <button
                 key={event.id}
@@ -1031,14 +1072,16 @@ function FragmentRow({
                   e.stopPropagation();
                   onEventClick(event);
                 }}
-                className={`mx-auto mb-1 block min-h-[56px] w-[90%] rounded-[12px] border px-3 py-2.5 text-left text-[13px] font-bold leading-[1.28] shadow-[0_2px_8px_rgba(15,23,42,.05)] ${
+                className={`mx-auto mb-1 block min-h-[46px] w-[92%] rounded-[10px] border px-2.5 py-2 text-left text-[12px] font-bold leading-[1.22] shadow-[0_2px_8px_rgba(15,23,42,.05)] ${
                   eventStyle(event)
                 }`}
                 title={event.title}
               >
-                <span className="block line-clamp-2 text-[13px] font-bold">{event.title}</span>
-                <span className="mt-1.5 flex items-center gap-1.5 text-[13px] font-semibold opacity-75">
-                  <Clock size={10} />
+                <span className="block line-clamp-2 text-[12px] font-bold">
+                  {event.title}
+                </span>
+                <span className="mt-1 flex items-center gap-1 text-[11px] font-semibold opacity-75">
+                  <Clock size={9} />
                   {event.allDay ? "All day" : formatTimeLabel(event.startAt)}
                 </span>
               </button>

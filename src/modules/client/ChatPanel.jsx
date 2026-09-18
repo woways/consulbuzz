@@ -31,6 +31,9 @@ import {
   Mail,
   Reply,
   MoreVertical,
+  Copy,
+  Info,
+  Forward,
   Trash2,
   Eraser,
   ListChecks,
@@ -97,12 +100,107 @@ function formatDay(iso) {
   });
 }
 
-const EMOJIS = [
-  "😀","😁","😂","🤣","😊","😍","😘","😎","🤔","😴",
-  "👍","👎","👏","🙏","💪","🔥","✅","❌","⭐","🎉",
-  "❤️","💯","😢","😭","😅","😳","🥳","🤝","👀","💡",
-  "📌","📎","📅","⏰","☕","🍕","🚀","💰","📈","🎯",
-];
+function formatDateTime(iso) {
+  if (!iso) return "—";
+  const value = new Date(iso);
+  if (Number.isNaN(value.getTime())) return "—";
+  return value.toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+const EMOJI_CATEGORIES = {
+  Smileys: [
+    "😀","😃","😄","😁","😆","😅","😂","🤣","🥲","☺️","😊","😇","🙂","🙃","😉","😌",
+    "😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🥸",
+    "🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢",
+    "😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔",
+    "🫣","🤭","🫢","🫡","🤫","🫠","🤥","😶","🫥","😐","🫤","😑","😬","🙄","😯","😦",
+    "😧","😮","😲","🥱","😴","🤤","😪","😵","😵‍💫","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕",
+  ],
+  People: [
+    "👋","🤚","🖐️","✋","🖖","🫱","🫲","🫳","🫴","👌","🤌","🤏","✌️","🤞","🫰","🤟",
+    "🤘","🤙","👈","👉","👆","👇","☝️","🫵","👍","👎","✊","👊","🤛","🤜","👏","🙌",
+    "🫶","👐","🤲","🤝","🙏","✍️","💅","🤳","💪","🦾","🦿","🦵","🦶","👂","👃","🧠",
+    "🫀","🫁","🦷","🦴","👀","👁️","👅","👄","🫦","👶","🧒","👦","👧","🧑","👱","👨",
+    "👩","🧔","👴","👵","🙍","🙎","🙅","🙆","💁","🙋","🧏","🙇","🤦","🤷","👮","👷",
+    "💂","🕵️","👩‍⚕️","👨‍⚕️","👩‍🎓","👨‍🎓","👩‍💻","👨‍💻","👩‍💼","👨‍💼","👩‍🔧","👨‍🔧",
+  ],
+  Animals: [
+    "🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐻‍❄️","🐨","🐯","🦁","🐮","🐷","🐽","🐸",
+    "🐵","🙈","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆","🦅","🦉","🦇","🐺",
+    "🐗","🐴","🦄","🐝","🪱","🐛","🦋","🐌","🐞","🐜","🪰","🪲","🪳","🦟","🦗","🕷️",
+    "🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳",
+    "🐋","🦈","🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🦬",
+    "🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐕‍🦺","🐈","🐓",
+  ],
+  Food: [
+    "🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🍑","🥭","🍍","🥥",
+    "🥝","🍅","🍆","🥑","🥦","🥬","🥒","🌶️","🫑","🌽","🥕","🫒","🧄","🧅","🥔","🍠",
+    "🥐","🥯","🍞","🥖","🥨","🧀","🥚","🍳","🧈","🥞","🧇","🥓","🥩","🍗","🍖","🌭",
+    "🍔","🍟","🍕","🫓","🥪","🥙","🧆","🌮","🌯","🫔","🥗","🥘","🫕","🥫","🍝","🍜",
+    "🍲","🍛","🍣","🍱","🥟","🦪","🍤","🍙","🍚","🍘","🍥","🥠","🥮","🍢","🍡","🍧",
+    "🍨","🍦","🥧","🧁","🍰","🎂","🍮","🍭","🍬","🍫","🍿","🍩","🍪","🌰","🥜","☕",
+  ],
+  Activities: [
+    "⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🥏","🎱","🪀","🏓","🏸","🏒","🏑","🥍",
+    "🏏","🪃","🥅","⛳","🪁","🏹","🎣","🤿","🥊","🥋","🎽","🛹","🛼","🛷","⛸️","🥌",
+    "🎿","⛷️","🏂","🪂","🏋️","🤼","🤸","⛹️","🤺","🤾","🏌️","🏇","🧘","🏄","🏊","🤽",
+    "🚣","🧗","🚵","🚴","🏆","🥇","🥈","🥉","🏅","🎖️","🏵️","🎗️","🎫","🎟️","🎪","🤹",
+    "🎭","🩰","🎨","🎬","🎤","🎧","🎼","🎹","🥁","🪘","🎷","🎺","🪗","🎸","🪕","🎻",
+    "🎲","♟️","🎯","🎳","🎮","🎰","🧩",
+  ],
+  Travel: [
+    "🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🛻","🚚","🚛","🚜","🏍️","🛵",
+    "🚲","🛴","🛹","🛼","🚨","🚔","🚍","🚘","🚖","🚡","🚠","🚟","🚃","🚋","🚞","🚝",
+    "🚄","🚅","🚈","🚂","🚆","🚇","🚊","🚉","✈️","🛫","🛬","🛩️","💺","🛰️","🚀","🛸",
+    "🚁","🛶","⛵","🚤","🛥️","🛳️","⛴️","🚢","⚓","🛟","⛽","🚧","🚦","🚥","🗺️","🗿",
+    "🗽","🗼","🏰","🏯","🏟️","🎡","🎢","🎠","⛲","⛱️","🏖️","🏝️","🏜️","🌋","⛰️","🏕️",
+    "🏠","🏡","🏢","🏥","🏦","🏨","🏪","🏫","🏬","🏭","🏛️","⛪","🕌","🛕","🕍","🌃",
+  ],
+  Objects: [
+    "⌚","📱","📲","💻","⌨️","🖥️","🖨️","🖱️","🖲️","🕹️","🗜️","💽","💾","💿","📀","📼",
+    "📷","📸","📹","🎥","📽️","🎞️","📞","☎️","📟","📠","📺","📻","🎙️","🎚️","🎛️","🧭",
+    "⏱️","⏲️","⏰","🕰️","⌛","⏳","📡","🔋","🪫","🔌","💡","🔦","🕯️","🧯","🛢️","💸",
+    "💵","💴","💶","💷","🪙","💰","💳","💎","⚖️","🪜","🧰","🪛","🔧","🔨","⚒️","🛠️",
+    "⛏️","🪚","🔩","⚙️","🧱","⛓️","🧲","🔫","💣","🧨","🪓","🔪","🗡️","🛡️","🚬","⚰️",
+    "🔮","📿","🧿","💈","⚗️","🔭","🔬","🕳️","🩹","🩺","💊","💉","🩸","🧬","🦠","🧫",
+  ],
+  Symbols: [
+    "❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❤️‍🔥","❤️‍🩹","❣️","💕","💞","💓",
+    "💗","💖","💘","💝","💟","☮️","✝️","☪️","🕉️","☸️","✡️","🔯","🕎","☯️","☦️","🛐",
+    "⛎","♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓","🆔","⚛️","🉑",
+    "☢️","☣️","📴","📳","🈶","🈚","🈸","🈺","🈷️","✴️","🆚","💮","🉐","㊙️","㊗️","🈴",
+    "🈵","🈹","🈲","🅰️","🅱️","🆎","🆑","🅾️","🆘","❌","⭕","🛑","⛔","📛","🚫","💯",
+    "💢","♨️","🚷","🚯","🚳","🚱","🔞","📵","🚭","❗","❕","❓","❔","‼️","⁉️","🔅",
+    "🔆","〽️","⚠️","🚸","🔱","⚜️","🔰","♻️","✅","🈯","💹","❇️","✳️","❎","🌐","💠",
+  ],
+  Flags: [
+    "🏳️","🏴","🏁","🚩","🏳️‍🌈","🏳️‍⚧️","🇮🇳","🇺🇸","🇬🇧","🇨🇦","🇦🇺","🇩🇪","🇫🇷","🇮🇹","🇪🇸","🇵🇹",
+    "🇧🇷","🇦🇷","🇲🇽","🇯🇵","🇰🇷","🇨🇳","🇸🇬","🇦🇪","🇸🇦","🇶🇦","🇿🇦","🇳🇬","🇰🇪","🇪🇬","🇳🇵","🇧🇩",
+    "🇱🇰","🇵🇰","🇮🇩","🇲🇾","🇹🇭","🇻🇳","🇵🇭","🇳🇿","🇳🇱","🇧🇪","🇨🇭","🇦🇹","🇸🇪","🇳🇴","🇩🇰","🇫🇮",
+    "🇵🇱","🇨🇿","🇬🇷","🇹🇷","🇮🇪","🇮🇱","🇷🇺","🇺🇦",
+  ],
+};
+
+const EMOJI_CATEGORY_ORDER = Object.keys(EMOJI_CATEGORIES);
+
+const EMOJI_CATEGORY_ICONS = {
+  Smileys: "😀",
+  People: "👋",
+  Animals: "🐻",
+  Food: "🍔",
+  Activities: "⚽",
+  Travel: "🚗",
+  Objects: "💡",
+  Symbols: "❤️",
+  Flags: "🚩",
+};
 
 const MEETING_PREFIX = "\uD83D\uDCF9 Meeting started \u2014 join: ";
 const JITSI_BASE = "https://meet.jit.si/";
@@ -153,13 +251,23 @@ export default function ChatPanel({ currentUser }) {
   const [error, setError] = useState("");
   const [draft, setDraft] = useState("");
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [composerEmojiCategory, setComposerEmojiCategory] = useState("Smileys");
   const [meetingOpen, setMeetingOpen] = useState(false);
   const [meetingRoom, setMeetingRoom] = useState("");
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState("");
   const [replyTo, setReplyTo] = useState(null);
-  const [reactionOpenId, setReactionOpenId] = useState(null);
   const [messageMenuId, setMessageMenuId] = useState(null);
+  const [messageReactionMoreId, setMessageReactionMoreId] = useState(null);
+  const [reactionCategory, setReactionCategory] = useState("Smileys");
+  const [messageMenuPosition, setMessageMenuPosition] = useState({ top: 12, left: 12 });
+  const [messageInfoOpen, setMessageInfoOpen] = useState(false);
+  const [messageInfoLoading, setMessageInfoLoading] = useState(false);
+  const [messageInfoData, setMessageInfoData] = useState(null);
+  const [forwardingMessageItem, setForwardingMessageItem] = useState(null);
+  const [forwardSelectedIds, setForwardSelectedIds] = useState([]);
+  const [forwardSearch, setForwardSearch] = useState("");
+  const [forwarding, setForwarding] = useState(false);
   const [threadSearchOpen, setThreadSearchOpen] = useState(false);
   const [threadSearch, setThreadSearch] = useState("");
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
@@ -170,6 +278,90 @@ export default function ChatPanel({ currentUser }) {
   const [myAvatar, setMyAvatar] = useState(currentUser?.avatarUrl || null);
   const avatarInputRef = useRef(null);
   const groupAvatarInputRef = useRef(null);
+  const messageMenuAnchorRef = useRef(null);
+  const messageMenuPopoverRef = useRef(null);
+
+  function closeMessageMenu() {
+    setMessageMenuId(null);
+    setMessageReactionMoreId(null);
+    setReactionCategory("Smileys");
+    messageMenuAnchorRef.current = null;
+  }
+
+  function openMessageMenu(message, event, mine) {
+    if (messageMenuId === message.id) {
+      closeMessageMenu();
+      return;
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const viewportPadding = 12;
+    const gap = 8;
+    const popoverWidth = 300;
+    const estimatedHeight = message.deletedForEveryone ? 90 : mine ? 430 : 390;
+    const openBelow = rect.top < window.innerHeight * 0.5;
+
+    let top = openBelow ? rect.bottom + gap : rect.top - estimatedHeight - gap;
+    let left = mine ? rect.right - popoverWidth : rect.left;
+
+    top = Math.max(
+      viewportPadding,
+      Math.min(top, window.innerHeight - estimatedHeight - viewportPadding)
+    );
+    left = Math.max(
+      viewportPadding,
+      Math.min(left, window.innerWidth - popoverWidth - viewportPadding)
+    );
+
+    messageMenuAnchorRef.current = { rect, mine };
+    setMessageReactionMoreId(null);
+    setReactionCategory("Smileys");
+    setMessageMenuPosition({ top, left });
+    setMessageMenuId(message.id);
+  }
+
+  useEffect(() => {
+    if (!messageMenuId) return undefined;
+
+    const frame = window.requestAnimationFrame(() => {
+      const popover = messageMenuPopoverRef.current;
+      const anchorData = messageMenuAnchorRef.current;
+      if (!popover || !anchorData) return;
+
+      const menuRect = popover.getBoundingClientRect();
+      const { rect, mine } = anchorData;
+      const viewportPadding = 12;
+      const gap = 8;
+      const openBelow = rect.top < window.innerHeight * 0.5;
+
+      let top = openBelow ? rect.bottom + gap : rect.top - menuRect.height - gap;
+      let left = mine ? rect.right - menuRect.width : rect.left;
+
+      top = Math.max(
+        viewportPadding,
+        Math.min(top, window.innerHeight - menuRect.height - viewportPadding)
+      );
+      left = Math.max(
+        viewportPadding,
+        Math.min(left, window.innerWidth - menuRect.width - viewportPadding)
+      );
+
+      setMessageMenuPosition((current) => {
+        if (Math.abs(current.top - top) < 1 && Math.abs(current.left - left) < 1) {
+          return current;
+        }
+        return { top, left };
+      });
+    });
+
+    const closeOnResize = () => closeMessageMenu();
+    window.addEventListener("resize", closeOnResize);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", closeOnResize);
+    };
+  }, [messageMenuId, messageReactionMoreId]);
 
   async function onPickAvatar(e) {
     const file = e.target.files?.[0];
@@ -364,6 +556,7 @@ export default function ChatPanel({ currentUser }) {
                 body: "",
                 deletedForEveryone: true,
                 pinned: false,
+                starred: false,
                 reactions: [],
                 attachments: [],
           }
@@ -524,6 +717,100 @@ export default function ChatPanel({ currentUser }) {
     }
   }
 
+  async function toggleMessageStar(message) {
+    if (message.deletedForEveryone) return;
+
+    const next = !message.starred;
+    setMessages((current) =>
+      current.map((item) =>
+        item.id === message.id ? { ...item, starred: next } : item
+      )
+    );
+
+    try {
+      await apiRequest(`/api/client/chat/messages/${message.id}/star`, {
+        method: "PATCH",
+        body: JSON.stringify({ starred: next }),
+      });
+    } catch (err) {
+      setMessages((current) =>
+        current.map((item) =>
+          item.id === message.id ? { ...item, starred: !next } : item
+        )
+      );
+      setError(err?.data?.message || "Unable to update star");
+    }
+  }
+
+  async function openMessageInfo(message) {
+    if (!message?.id) return;
+
+    closeMessageMenu();
+    setMessageInfoData(null);
+    setMessageInfoOpen(true);
+    setMessageInfoLoading(true);
+    setError("");
+
+    try {
+      const data = await apiRequest(`/api/client/chat/messages/${message.id}/info`);
+      setMessageInfoData(data);
+    } catch (err) {
+      setMessageInfoOpen(false);
+      setError(err?.data?.message || "Unable to load message info");
+    } finally {
+      setMessageInfoLoading(false);
+    }
+  }
+
+  function openForwardModal(message) {
+    if (!message?.id || message.deletedForEveryone) return;
+    closeMessageMenu();
+    setForwardingMessageItem(message);
+    setForwardSelectedIds([]);
+    setForwardSearch("");
+  }
+
+  function toggleForwardConversation(conversationId) {
+    setForwardSelectedIds((current) => {
+      if (current.includes(conversationId)) {
+        return current.filter((id) => id !== conversationId);
+      }
+
+      if (current.length >= 5) {
+        setError("You can forward to up to 5 chats at once");
+        return current;
+      }
+
+      return [...current, conversationId];
+    });
+  }
+
+  async function submitForward() {
+    if (!forwardingMessageItem?.id || !forwardSelectedIds.length || forwarding) return;
+
+    setForwarding(true);
+    setError("");
+
+    try {
+      await apiRequest(
+        `/api/client/chat/messages/${forwardingMessageItem.id}/forward`,
+        {
+          method: "POST",
+          body: JSON.stringify({ conversationIds: forwardSelectedIds }),
+        }
+      );
+
+      setForwardingMessageItem(null);
+      setForwardSelectedIds([]);
+      setForwardSearch("");
+      await loadConversations();
+    } catch (err) {
+      setError(err?.data?.message || "Unable to forward message");
+    } finally {
+      setForwarding(false);
+    }
+  }
+
   async function deleteMessage(message, scope) {
     if (!message?.id || deleting) return;
     setDeleting(true);
@@ -541,6 +828,7 @@ export default function ChatPanel({ currentUser }) {
                   body: "",
                   deletedForEveryone: true,
                   pinned: false,
+                  starred: false,
                   reactions: [],
                   attachments: [],
                 }
@@ -691,7 +979,6 @@ export default function ChatPanel({ currentUser }) {
             : message
         )
       );
-      setReactionOpenId(null);
     });
   }
 
@@ -764,6 +1051,19 @@ export default function ChatPanel({ currentUser }) {
   }, [users, userSearch]);
 
   const pinnedMessages = useMemo(() => messages.filter((m) => m.pinned), [messages]);
+
+  const forwardTargets = useMemo(() => {
+    const query = forwardSearch.trim().toLowerCase();
+
+    return conversations
+      .filter((conversation) => !conversation.isArchived)
+      .filter((conversation) => {
+        if (!query) return true;
+        return String(conversation.title || "")
+          .toLowerCase()
+          .includes(query);
+      });
+  }, [conversations, forwardSearch]);
 
   const visibleMessages = useMemo(() => {
     const q = threadSearch.trim().toLowerCase();
@@ -1077,7 +1377,14 @@ export default function ChatPanel({ currentUser }) {
                                 <div className="whitespace-pre-wrap break-words">{m.body}</div>
                               )}
 
-                              <div className="mt-1.5 text-right text-[11px] text-neutral-400">
+                              <div className="mt-1.5 flex items-center justify-end gap-1 text-right text-[11px] text-neutral-400">
+                                {m.starred && (
+                                  <Star
+                                    size={10}
+                                    className="fill-amber-400 text-amber-400"
+                                    aria-label="Starred message"
+                                  />
+                                )}
                                 {formatTime(m.createdAt)}
                               </div>
                             </div>
@@ -1117,67 +1424,233 @@ export default function ChatPanel({ currentUser }) {
                               </div>
                             )}
 
-                            <div className={`relative mt-1 flex items-center gap-1 ${mine ? "justify-end" : "justify-start"}`}>
-                              {!m.deletedForEveryone && <div className="relative">
-                                <button
-                                  type="button"
-                                  onClick={() => setReactionOpenId((current) => current === m.id ? null : m.id)}
-                                  title="React"
-                                  className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
-                                >
-                                  <Smile size={13} />
-                                </button>
-
-                                {reactionOpenId === m.id && (
-                                  <div className={`absolute bottom-9 z-30 flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1.5 shadow-xl ${mine ? "right-0" : "left-0"}`}>
-                                    {["👍","❤️","😂","😮","😢","🙏"].map((emoji) => (
-                                      <button
-                                        key={emoji}
-                                        type="button"
-                                        onClick={() => reactToMessage(m.id, emoji)}
-                                        className="flex h-8 w-8 items-center justify-center rounded-full text-base hover:bg-slate-100"
-                                      >
-                                        {emoji}
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>}
-
-                              {!m.deletedForEveryone && <button
-                                type="button"
-                                onClick={() => setReplyTo(m)}
-                                title="Reply"
-                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
-                              >
-                                <Reply size={13} />
-                              </button>}
-
-                              {!m.deletedForEveryone && <button
-                                type="button"
-                                onClick={() => togglePin(m)}
-                                title={m.pinned ? "Unpin" : "Pin"}
-                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
-                              >
-                                {m.pinned ? <PinOff size={13} /> : <Pin size={13} />}
-                              </button>}
-
+                            <div className={`relative mt-1 flex items-center ${mine ? "justify-end" : "justify-start"}`}>
                               <div className="relative">
                                 <button
                                   type="button"
-                                  onClick={() => setMessageMenuId((current) => current === m.id ? null : m.id)}
+                                  onClick={(event) => openMessageMenu(m, event, mine)}
                                   title="Message options"
-                                  className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                                  aria-label="Message options"
+                                  className={`flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 ${
+                                    messageMenuId === m.id
+                                      ? "bg-slate-100 text-slate-700 opacity-100"
+                                      : "opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                                  }`}
                                 >
                                   <MoreVertical size={13} />
                                 </button>
+
                                 {messageMenuId === m.id && (
-                                  <div className={`absolute bottom-8 z-40 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl ${mine ? "right-0" : "left-0"}`}>
-                                    <button type="button" onClick={() => deleteMessage(m, "me")} disabled={deleting} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"><Trash2 size={14} />Delete for me</button>
-                                    {mine && !m.deletedForEveryone && (
-                                      <button type="button" onClick={() => deleteMessage(m, "everyone")} disabled={deleting} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-50"><Trash2 size={14} />Delete for everyone</button>
-                                    )}
-                                  </div>
+                                  <>
+                                    <button
+                                      type="button"
+                                      aria-label="Close message menu"
+                                      onClick={closeMessageMenu}
+                                      className="fixed inset-0 z-[9990] cursor-default bg-transparent"
+                                    />
+
+                                    <div
+                                      ref={messageMenuPopoverRef}
+                                      className="fixed z-[9999] w-[300px] max-h-[calc(100vh-24px)] overflow-y-auto overscroll-contain"
+                                      style={{
+                                        top: `${messageMenuPosition.top}px`,
+                                        left: `${messageMenuPosition.left}px`,
+                                      }}
+                                    >
+                                      {!m.deletedForEveryone && (
+                                        <>
+                                          <div className="mb-2 flex items-center justify-between gap-1 rounded-full border border-slate-200 bg-white p-1.5 shadow-xl">
+                                            {["👍", "❤️", "😂", "😮", "😢", "🙏"].map((emoji) => (
+                                              <button
+                                                key={emoji}
+                                                type="button"
+                                                onClick={() => {
+                                                  reactToMessage(m.id, emoji);
+                                                  closeMessageMenu();
+                                                }}
+                                                className="flex h-8 w-8 items-center justify-center rounded-full text-base transition hover:bg-slate-100 hover:scale-110"
+                                                title={`React ${emoji}`}
+                                              >
+                                                {emoji}
+                                              </button>
+                                            ))}
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                setMessageReactionMoreId((current) =>
+                                                  current === m.id ? null : m.id
+                                                )
+                                              }
+                                              className={`flex h-8 w-8 items-center justify-center rounded-full transition ${
+                                                messageReactionMoreId === m.id
+                                                  ? "bg-slate-100 text-slate-900"
+                                                  : "text-slate-700 hover:bg-slate-100"
+                                              }`}
+                                              title="More reactions"
+                                              aria-label="More reactions"
+                                            >
+                                              <Plus size={18} strokeWidth={2.2} />
+                                            </button>
+                                          </div>
+
+                                          {messageReactionMoreId === m.id && (
+                                            <div className="mb-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                                              <div className="border-b border-slate-100 px-2 pt-2">
+                                                <div className="mb-1 px-1 text-[11px] font-semibold text-slate-500">
+                                                  Reactions
+                                                </div>
+                                                <div className="flex gap-0.5 overflow-x-auto pb-1">
+                                                  {EMOJI_CATEGORY_ORDER.map((category) => (
+                                                    <button
+                                                      key={category}
+                                                      type="button"
+                                                      onClick={() => setReactionCategory(category)}
+                                                      className={`flex h-8 min-w-8 items-center justify-center rounded-lg text-base transition ${
+                                                        reactionCategory === category
+                                                          ? "bg-indigo-50 ring-1 ring-indigo-100"
+                                                          : "hover:bg-slate-100"
+                                                      }`}
+                                                      title={category}
+                                                    >
+                                                      {EMOJI_CATEGORY_ICONS[category]}
+                                                    </button>
+                                                  ))}
+                                                </div>
+                                              </div>
+
+                                              <div className="grid max-h-[220px] grid-cols-8 gap-1 overflow-y-auto p-2">
+                                                {EMOJI_CATEGORIES[reactionCategory].map((emoji, index) => (
+                                                  <button
+                                                    key={`message-reaction-${reactionCategory}-${emoji}-${index}`}
+                                                    type="button"
+                                                    onClick={() => {
+                                                      reactToMessage(m.id, emoji);
+                                                      closeMessageMenu();
+                                                    }}
+                                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-lg transition hover:bg-slate-100 hover:scale-110"
+                                                    title={`React ${emoji}`}
+                                                  >
+                                                    {emoji}
+                                                  </button>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
+
+                                      <div className={`w-[236px] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl ${mine ? "ml-auto" : "mr-auto"}`}>
+                                        {!m.deletedForEveryone && (
+                                          <>
+                                            {mine && (
+                                              <button
+                                                type="button"
+                                                onClick={() => openMessageInfo(m)}
+                                                className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
+                                              >
+                                                <Info size={15} />Message info
+                                              </button>
+                                            )}
+
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setReplyTo(m);
+                                                closeMessageMenu();
+                                              }}
+                                              className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
+                                            >
+                                              <Reply size={15} />Reply
+                                            </button>
+
+                                            <button
+                                              type="button"
+                                              onClick={async () => {
+                                                try {
+                                                  await navigator.clipboard?.writeText(String(m.body || ""));
+                                                } catch {
+                                                  setError("Unable to copy message");
+                                                }
+                                                closeMessageMenu();
+                                              }}
+                                              className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
+                                            >
+                                              <Copy size={15} />Copy
+                                            </button>
+
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                setMessageReactionMoreId((current) =>
+                                                  current === m.id ? null : m.id
+                                                )
+                                              }
+                                              className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
+                                            >
+                                              <Smile size={15} />React
+                                            </button>
+
+                                            <button
+                                              type="button"
+                                              onClick={() => openForwardModal(m)}
+                                              className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
+                                            >
+                                              <Forward size={15} />Forward
+                                            </button>
+
+                                            <button
+                                              type="button"
+                                              onClick={async () => {
+                                                await togglePin(m);
+                                                closeMessageMenu();
+                                              }}
+                                              className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
+                                            >
+                                              {m.pinned ? <PinOff size={15} /> : <Pin size={15} />}
+                                              {m.pinned ? "Unpin" : "Pin"}
+                                            </button>
+
+                                            <button
+                                              type="button"
+                                              onClick={async () => {
+                                                await toggleMessageStar(m);
+                                                closeMessageMenu();
+                                              }}
+                                              className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"
+                                            >
+                                              <Star
+                                                size={15}
+                                                className={m.starred ? "fill-amber-400 text-amber-400" : ""}
+                                              />
+                                              {m.starred ? "Unstar" : "Star"}
+                                            </button>
+
+                                            <div className="my-1 border-t border-slate-100" />
+                                          </>
+                                        )}
+
+                                        <button
+                                          type="button"
+                                          onClick={() => deleteMessage(m, "me")}
+                                          disabled={deleting}
+                                          className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                        >
+                                          <Trash2 size={15} />Delete for me
+                                        </button>
+
+                                        {mine && !m.deletedForEveryone && (
+                                          <button
+                                            type="button"
+                                            onClick={() => deleteMessage(m, "everyone")}
+                                            disabled={deleting}
+                                            className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left text-[13px] font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+                                          >
+                                            <Trash2 size={15} />Delete for everyone
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </>
                                 )}
                               </div>
                             </div>
@@ -1215,9 +1688,46 @@ export default function ChatPanel({ currentUser }) {
                     <button type="button" onClick={() => setEmojiOpen((o) => !o)} className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-indigo-50 hover:text-indigo-600" aria-label="Emoji"><Smile size={17} /></button>
                     {emojiOpen && (
                       <>
-                        <button type="button" aria-label="Close emoji picker" onClick={() => setEmojiOpen(false)} className="fixed inset-0 z-[10] cursor-default" />
-                        <div className="absolute bottom-12 left-0 z-[20] w-[280px] rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
-                          <div className="grid grid-cols-8 gap-1">{EMOJIS.map((emoji) => <button key={emoji} type="button" onClick={() => insertEmoji(emoji)} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg hover:bg-slate-100">{emoji}</button>)}</div>
+                        <button
+                          type="button"
+                          aria-label="Close emoji picker"
+                          onClick={() => setEmojiOpen(false)}
+                          className="fixed inset-0 z-[10] cursor-default"
+                        />
+                        <div className="absolute bottom-12 left-0 z-[20] w-[304px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+                          <div className="border-b border-slate-100 px-2 pt-2">
+                            <div className="flex gap-0.5 overflow-x-auto pb-1">
+                              {EMOJI_CATEGORY_ORDER.map((category) => (
+                                <button
+                                  key={`composer-${category}`}
+                                  type="button"
+                                  onClick={() => setComposerEmojiCategory(category)}
+                                  className={`flex h-8 min-w-8 items-center justify-center rounded-lg text-base transition ${
+                                    composerEmojiCategory === category
+                                      ? "bg-indigo-50 ring-1 ring-indigo-100"
+                                      : "hover:bg-slate-100"
+                                  }`}
+                                  title={category}
+                                >
+                                  {EMOJI_CATEGORY_ICONS[category]}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="grid max-h-[240px] grid-cols-8 gap-1 overflow-y-auto p-2">
+                            {EMOJI_CATEGORIES[composerEmojiCategory].map((emoji, index) => (
+                              <button
+                                key={`composer-${composerEmojiCategory}-${emoji}-${index}`}
+                                type="button"
+                                onClick={() => insertEmoji(emoji)}
+                                className="flex h-8 w-8 items-center justify-center rounded-lg text-lg transition hover:bg-slate-100 hover:scale-110"
+                                title={emoji}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </>
                     )}
@@ -1288,6 +1798,283 @@ export default function ChatPanel({ currentUser }) {
             <div className="flex items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/70 px-5 py-3.5">
               <span className="text-[13px] font-semibold text-slate-500">{selectedIds.length === 0 ? "Select people" : selectedIds.length === 1 ? "1-to-1 chat" : `Group of ${selectedIds.length}`}</span>
               <button type="button" onClick={createConversation} disabled={selectedIds.length === 0 || creating} className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-50">{creating && <Loader2 size={14} className="animate-spin" />} Start chat</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {messageInfoOpen && (
+        <div className="fixed inset-0 z-[10040] flex items-end justify-center bg-slate-950/40 p-0 sm:items-center sm:p-4">
+          <button
+            type="button"
+            aria-label="Close message info"
+            onClick={() => {
+              setMessageInfoOpen(false);
+              setMessageInfoData(null);
+            }}
+            className="absolute inset-0 cursor-default"
+          />
+
+          <div className="relative z-10 w-full max-w-md overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:rounded-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <div>
+                <div className="text-[15px] font-bold text-slate-950">Message info</div>
+                <div className="mt-0.5 text-[12px] text-slate-500">
+                  Sent and read details for this message
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMessageInfoOpen(false);
+                  setMessageInfoData(null);
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {messageInfoLoading ? (
+              <div className="flex items-center justify-center gap-2 px-5 py-12 text-[13px] text-slate-500">
+                <Loader2 size={15} className="animate-spin" />
+                Loading message info...
+              </div>
+            ) : messageInfoData?.message ? (
+              <div className="max-h-[70vh] overflow-y-auto">
+                <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4">
+                  <div className="line-clamp-3 whitespace-pre-wrap text-[13px] font-medium leading-5 text-slate-700">
+                    {messageInfoData.message.body || "This message was deleted"}
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-[12px]">
+                    <div>
+                      <div className="font-semibold uppercase tracking-wide text-slate-400">Sent</div>
+                      <div className="mt-1 font-semibold text-slate-700">
+                        {formatDateTime(messageInfoData.message.createdAt)}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="font-semibold uppercase tracking-wide text-slate-400">Starred</div>
+                      <div className="mt-1 font-semibold text-slate-700">
+                        {messageInfoData.message.starred ? "Yes" : "No"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-5 py-4">
+                  <div className="mb-2 flex items-center gap-2 text-[13px] font-bold text-slate-800">
+                    <Check size={14} className="text-emerald-600" />
+                    Read by
+                  </div>
+
+                  {messageInfoData.readBy?.length ? (
+                    <div className="space-y-2">
+                      {messageInfoData.readBy.map((person) => (
+                        <div
+                          key={person.id}
+                          className="flex items-center gap-3 rounded-xl border border-slate-100 px-3 py-2.5"
+                        >
+                          <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br text-[11px] font-bold text-white ${avatarGradient(person.name)}`}>
+                            {person.avatarUrl ? (
+                              <img src={person.avatarUrl} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              initialsOf(person.name)
+                            )}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-[13px] font-semibold text-slate-800">
+                              {person.name}
+                            </div>
+                            <div className="truncate text-[11px] text-slate-500">
+                              {formatDateTime(person.readAt)}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl bg-slate-50 px-3 py-3 text-[12px] text-slate-500">
+                      Nobody else has read this message yet.
+                    </div>
+                  )}
+
+                  {messageInfoData.notReadBy?.length > 0 && (
+                    <>
+                      <div className="mb-2 mt-5 flex items-center gap-2 text-[13px] font-bold text-slate-800">
+                        <Users size={14} className="text-slate-500" />
+                        Not read yet
+                      </div>
+
+                      <div className="space-y-2">
+                        {messageInfoData.notReadBy.map((person) => (
+                          <div
+                            key={person.id}
+                            className="flex items-center gap-3 rounded-xl border border-slate-100 px-3 py-2.5"
+                          >
+                            <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br text-[11px] font-bold text-white ${avatarGradient(person.name)}`}>
+                              {person.avatarUrl ? (
+                                <img src={person.avatarUrl} alt="" className="h-full w-full object-cover" />
+                              ) : (
+                                initialsOf(person.name)
+                              )}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-[13px] font-semibold text-slate-800">
+                                {person.name}
+                              </div>
+                              <div className="truncate text-[11px] text-slate-500">
+                                {person.email || "Member"}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2.5 text-[11px] leading-4 text-amber-800">
+                    Bispun currently tracks message read status using each member's last-read time. Delivery receipts are not stored separately yet.
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+
+      {forwardingMessageItem && (
+        <div className="fixed inset-0 z-[10030] flex items-end justify-center bg-slate-950/40 p-0 sm:items-center sm:p-4">
+          <button
+            type="button"
+            aria-label="Close forward dialog"
+            onClick={() => {
+              if (forwarding) return;
+              setForwardingMessageItem(null);
+              setForwardSelectedIds([]);
+              setForwardSearch("");
+            }}
+            className="absolute inset-0 cursor-default"
+          />
+
+          <div className="relative z-10 flex max-h-[78vh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:rounded-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <div>
+                <div className="text-[15px] font-bold text-slate-950">Forward message</div>
+                <div className="mt-0.5 text-[12px] text-slate-500">
+                  Select up to 5 chats
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={forwarding}
+                onClick={() => {
+                  setForwardingMessageItem(null);
+                  setForwardSelectedIds([]);
+                  setForwardSearch("");
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-50"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="border-b border-slate-100 p-3">
+              <div className="relative">
+                <Search
+                  size={14}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  autoFocus
+                  value={forwardSearch}
+                  onChange={(event) => setForwardSearch(event.target.value)}
+                  placeholder="Search chats"
+                  className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-[13px] font-medium text-slate-700 outline-none focus:border-indigo-400"
+                />
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto p-2">
+              {forwardTargets.length ? (
+                forwardTargets.map((conversation) => {
+                  const selected = forwardSelectedIds.includes(conversation.id);
+
+                  return (
+                    <button
+                      key={conversation.id}
+                      type="button"
+                      onClick={() => toggleForwardConversation(conversation.id)}
+                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
+                        selected ? "bg-indigo-50" : "hover:bg-slate-50"
+                      }`}
+                    >
+                      <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br text-[12px] font-bold text-white ${
+                        conversation.isGroup
+                          ? "from-violet-500 to-purple-600"
+                          : avatarGradient(conversation.title)
+                      }`}>
+                        {conversation.avatarUrl ? (
+                          <img src={conversation.avatarUrl} alt="" className="h-full w-full object-cover" />
+                        ) : conversation.isGroup ? (
+                          <Users size={15} />
+                        ) : (
+                          initialsOf(conversation.title)
+                        )}
+                      </span>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[13px] font-semibold text-slate-900">
+                          {conversation.title}
+                        </div>
+                        <div className="truncate text-[11px] text-slate-500">
+                          {conversation.isGroup
+                            ? `${conversation.members?.length || 0} members`
+                            : conversation.otherMembers?.[0]?.email || "Direct chat"}
+                        </div>
+                      </div>
+
+                      <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border ${
+                        selected
+                          ? "border-indigo-600 bg-indigo-600 text-white"
+                          : "border-slate-300"
+                      }`}>
+                        {selected && <Check size={12} />}
+                      </span>
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="px-3 py-10 text-center text-[12px] text-slate-500">
+                  No chats found.
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-3.5">
+              <span className="text-[12px] font-semibold text-slate-500">
+                {forwardSelectedIds.length
+                  ? `${forwardSelectedIds.length} selected`
+                  : "Select chats"}
+              </span>
+
+              <button
+                type="button"
+                onClick={submitForward}
+                disabled={!forwardSelectedIds.length || forwarding}
+                className="inline-flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-[12px] font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {forwarding ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Forward size={14} />
+                )}
+                {forwarding ? "Forwarding..." : "Forward"}
+              </button>
             </div>
           </div>
         </div>

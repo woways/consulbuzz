@@ -53,7 +53,9 @@ import {
   GitFork,
   ShoppingBag,
   CircleDollarSign,
+  Wallet,
   BarChart3,
+  Activity,
   CircleHelp,
   Menu,
 } from "lucide-react";
@@ -206,6 +208,14 @@ const NAV_GROUPS = [
   },
 
   {
+    key: "lead-store",
+    label: "Lead Store",
+    icon: ShoppingBag,
+    items: ["lead-store"],
+    direct: true,
+  },
+
+  {
     key: "utm-leads",
     label: "UTM Leads",
     icon: GitFork,
@@ -214,10 +224,18 @@ const NAV_GROUPS = [
   },
 
   {
-    key: "lead-store",
-    label: "Lead Store",
-    icon: ShoppingBag,
-    items: ["lead-store"],
+    key: "team-target",
+    label: "Team Target",
+    icon: Target,
+    items: ["team-target"],
+    direct: true,
+  },
+
+  {
+    key: "chats",
+    label: "Chats",
+    icon: MessageSquare,
+    items: ["chats"],
     direct: true,
   },
 
@@ -231,7 +249,7 @@ const NAV_GROUPS = [
   {
     key: "finance",
     label: "Finance",
-    icon: CircleDollarSign,
+    icon: Wallet,
     items: ["revenue"],
   },
 
@@ -240,6 +258,22 @@ const NAV_GROUPS = [
     label: "Insights",
     icon: BarChart3,
     items: ["analytics"],
+  },
+
+  {
+    key: "my-store",
+    label: "My Store",
+    icon: Store,
+    items: ["my-store"],
+    direct: true,
+  },
+
+  {
+    key: "my-referrals",
+    label: "My Referrals",
+    icon: Gift,
+    items: ["my-referrals"],
+    direct: true,
   },
 
   {
@@ -257,55 +291,8 @@ const NAV_GROUPS = [
     items: ["settings"],
     direct: true,
   },
-
-  {
-    key: "chats",
-    label: "Chats",
-    icon: MessageSquare,
-    items: ["chats"],
-    direct: true,
-  },
-
-  {
-    key: "my-referrals",
-    label: "My Referrals",
-    icon: Gift,
-    items: ["my-referrals"],
-    direct: true,
-  },
-
-  {
-    key: "team-target",
-    label: "Team Target",
-    icon: Target,
-    items: ["team-target"],
-    direct: true,
-  },
-
-  {
-    key: "my-store",
-    label: "My Store",
-    icon: Store,
-    items: ["my-store"],
-    direct: true,
-  },
-
 ];
 
-function placeMyReferralsBelowChats(groups) {
-  const next = Array.isArray(groups) ? groups.slice() : [];
-  const referralsIndex = next.findIndex((group) => group.key === "my-referrals");
-  const chatsIndex = next.findIndex((group) => group.key === "chats");
-
-  if (referralsIndex === -1 || chatsIndex === -1 || referralsIndex === chatsIndex + 1) {
-    return next;
-  }
-
-  const [referralsGroup] = next.splice(referralsIndex, 1);
-  const updatedChatsIndex = next.findIndex((group) => group.key === "chats");
-  next.splice(updatedChatsIndex + 1, 0, referralsGroup);
-  return next;
-}
 
 const PAGE_META = {
   dashboard: { label: "Dashboard" },
@@ -342,6 +329,15 @@ const PAGE_META = {
   settings: { label: "Settings" },
   profile: { label: "My Profile" },
 };
+
+const MODULE_ICON_OVERRIDES = {
+  revenue: CircleDollarSign,
+  analytics: Activity,
+};
+
+function getModuleIcon(key, fallbackIcon) {
+  return MODULE_ICON_OVERRIDES[key] || fallbackIcon;
+}
 
 const MODULE_PERMISSION_MAP = {
   dashboard:
@@ -738,25 +734,57 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
   // ---- Sidebar drag-and-drop ordering (persisted per user) ----------------
   const savedSidebarOrder = clientSession?.user?.sidebarOrder;
+  const sidebarOrderStorageKey =
+    `cb_sidebar_order_${clientSession?.user?.id || "default"}`;
 
   const orderedNavGroups = useMemo(() => {
     const base = NAV_GROUPS;
-    if (!Array.isArray(savedSidebarOrder) || savedSidebarOrder.length === 0) {
+
+    let preferredOrder =
+      Array.isArray(savedSidebarOrder) && savedSidebarOrder.length > 0
+        ? savedSidebarOrder
+        : [];
+
+    // Same-browser fallback. The server value remains the primary source,
+    // so a user's custom order also follows them across devices when saved.
+    if (preferredOrder.length === 0) {
+      try {
+        const localOrder = JSON.parse(
+          window.localStorage.getItem(sidebarOrderStorageKey) || "[]"
+        );
+
+        if (Array.isArray(localOrder) && localOrder.length > 0) {
+          preferredOrder = localOrder;
+        }
+      } catch (error) {
+        console.error("Unable to load saved sidebar order:", error);
+      }
+    }
+
+    if (preferredOrder.length === 0) {
       return base;
     }
-    const byKey = new Map(base.map((g) => [g.key, g]));
+
+    const byKey = new Map(base.map((group) => [group.key, group]));
     const ordered = [];
-    savedSidebarOrder.forEach((key) => {
+
+    preferredOrder.forEach((key) => {
       if (byKey.has(key)) {
         ordered.push(byKey.get(key));
         byKey.delete(key);
       }
     });
-    base.forEach((g) => {
-      if (byKey.has(g.key)) ordered.push(g);
+
+    // Any future/new menu items are appended using the product default order
+    // without disturbing the user's existing custom order.
+    base.forEach((group) => {
+      if (byKey.has(group.key)) {
+        ordered.push(group);
+      }
     });
+
     return ordered;
-  }, [savedSidebarOrder]);
+  }, [savedSidebarOrder, sidebarOrderStorageKey]);
 
   const [navGroups, setNavGroups] = useState(orderedNavGroups);
 
@@ -764,38 +792,20 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     setNavGroups(orderedNavGroups);
   }, [orderedNavGroups]);
 
-  useEffect(() => {
-    const userId = clientSession?.user?.id || "default";
-    const migrationKey = `cb_sidebar_referrals_below_chats_v1_${userId}`;
-
-    try {
-      if (window.localStorage.getItem(migrationKey) === "done") return;
-    } catch (error) {
-      console.error("Unable to read sidebar order migration state:", error);
-    }
-
-    setNavGroups((current) => {
-      const next = placeMyReferralsBelowChats(current);
-      const changed = next.some((group, index) => group.key !== current[index]?.key);
-
-      if (changed) {
-        persistSidebarOrder(next.map((group) => group.key));
-      }
-
-      return changed ? next : current;
-    });
-
-    try {
-      window.localStorage.setItem(migrationKey, "done");
-    } catch (error) {
-      console.error("Unable to save sidebar order migration state:", error);
-    }
-  }, [clientSession?.user?.id]);
 
   const dragIndexRef = useRef(null);
   const [dragOverKey, setDragOverKey] = useState(null);
 
   async function persistSidebarOrder(order) {
+    try {
+      window.localStorage.setItem(
+        sidebarOrderStorageKey,
+        JSON.stringify(order)
+      );
+    } catch (error) {
+      console.error("Unable to save sidebar order locally:", error);
+    }
+
     try {
       await apiRequest("/api/client/settings/sidebar-order", {
         method: "PATCH",
@@ -964,6 +974,9 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
 
   const user =
     clientSession?.user;
+
+  const isClientAdmin =
+    user?.role === "CLIENT_ADMIN";
 
   const permissions =
     user?.permissions ||
@@ -1421,6 +1434,10 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
   }
 
   async function openBilling() {
+    if (!isClientAdmin) {
+      return;
+    }
+
     setProfileMenuOpen(false);
     setBillingOpen(true);
     await loadBillingData();
@@ -3386,7 +3403,10 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     }
 
     const Icon =
-      meta.icon;
+      getModuleIcon(
+        key,
+        meta.icon
+      );
 
     const active =
       module === key;
@@ -3885,7 +3905,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                               const meta = MODULE_META[key];
                               if (!meta) return null;
 
-                              const ChildIcon = meta.icon;
+                              const ChildIcon = getModuleIcon(key, meta.icon);
                               const active = module === key;
                               const locked =
                                 !enabledFeatures.includes(key.includes("walkins") ? "walkins" : key.includes("counselling") ? "counselling" : key.includes("admissions") ? "admissions" : key) ||
@@ -3977,7 +3997,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                                 const meta = MODULE_META[key];
                                 if (!meta) return null;
 
-                                const ChildIcon = meta.icon;
+                                const ChildIcon = getModuleIcon(key, meta.icon);
                                 const active = module === key;
                                 const locked =
                                   !enabledFeatures.includes(key.includes("walkins") ? "walkins" : key.includes("counselling") ? "counselling" : key.includes("admissions") ? "admissions" : key) ||
@@ -4106,15 +4126,17 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     <>
                       <div className="fixed inset-0 z-[75]" onClick={() => setAccountActionsOpen(false)} />
                       <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-[80] overflow-hidden rounded-xl border border-white/10 bg-[#111a2e] py-1 shadow-[0_18px_40px_rgba(2,8,23,0.5)]">
-                        <button type="button" onClick={() => { setAccountActionsOpen(false); openBilling(); }} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left hover:bg-white/[0.06]">
-                          <Rocket size={15} strokeWidth={2} className="flex-shrink-0 text-slate-400" />
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-[13px] font-semibold text-slate-200">Upgrade plan</span>
-                            {sidebarNextAnnualRenewalLabel && (
-                              <span className="block text-[10px] text-slate-500">Valid till {sidebarNextAnnualRenewalLabel}</span>
-                            )}
-                          </span>
-                        </button>
+                        {isClientAdmin && (
+                          <button type="button" onClick={() => { setAccountActionsOpen(false); openBilling(); }} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left hover:bg-white/[0.06]">
+                            <Rocket size={15} strokeWidth={2} className="flex-shrink-0 text-slate-400" />
+                            <span className="min-w-0 flex-1">
+                              <span className="block text-[13px] font-semibold text-slate-200">Upgrade plan</span>
+                              {sidebarNextAnnualRenewalLabel && (
+                                <span className="block text-[10px] text-slate-500">Valid till {sidebarNextAnnualRenewalLabel}</span>
+                              )}
+                            </span>
+                          </button>
+                        )}
                         <button type="button" onClick={() => { setAccountActionsOpen(false); setProfileTab("profile"); setModule("profile"); }} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-200 hover:bg-white/[0.06]">
                           <UserRound size={15} strokeWidth={2} className="flex-shrink-0 text-slate-400" />Profile
                         </button>
@@ -4129,9 +4151,16 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               ) : (
                 <button
                   type="button"
-                  onClick={openBilling}
+                  onClick={
+                    isClientAdmin
+                      ? openBilling
+                      : () => {
+                          setProfileTab("profile");
+                          setModule("profile");
+                        }
+                  }
                   className="mx-auto flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-[11px] font-black text-white transition hover:brightness-110"
-                  title={`${planLabel} plan`}
+                  title={isClientAdmin ? `${planLabel} plan` : "Profile"}
                 >
                   BI
                 </button>

@@ -1806,7 +1806,21 @@ function AdmissionsManager({
     setSearch("");
     setAllSearch("");
     setDateFilter("all");
+
+    // Do not carry success/error feedback from one admissions market to another.
+    setSuccess("");
+    setError("");
   }, [activeMarket]);
+
+  useEffect(() => {
+    if (!success) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setSuccess("");
+    }, 5000);
+
+    return () => window.clearTimeout(timer);
+  }, [success]);
 
   const STREAM_GRADIENTS = {
     blue: {
@@ -1902,7 +1916,7 @@ function AdmissionsManager({
           : group.secondary,
       soft: "bg-white/16",
       button:
-        "bg-white/14 hover:bg-white/20 text-white",
+        "bg-white/20 hover:bg-white/30 text-white",
     };
   }
 
@@ -2528,9 +2542,9 @@ function AdmissionsManager({
 
     return (
       <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-          <div className="rounded-xl bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 px-4 py-4 text-white">
-            <div className="text-xs font-semibold text-white/70">
+        <div className="flex flex-wrap gap-3">
+          <div className="w-full rounded-xl bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 px-4 py-4 text-white sm:w-[210px] lg:w-[220px]">
+            <div className="text-[13px] font-semibold text-white/70">
               Total Admissions
             </div>
 
@@ -2554,9 +2568,9 @@ function AdmissionsManager({
             return (
               <div
                 key={stream.id}
-                className={`rounded-xl px-4 py-4 text-white ${gradient.bg}`}
+                className={`w-full rounded-xl px-4 py-4 text-white sm:w-[210px] lg:w-[220px] ${gradient.bg}`}
               >
-                <div className="text-xs font-semibold text-white/75">
+                <div className="text-[13px] font-semibold text-white/75">
                   {stream.name}
                 </div>
 
@@ -2944,8 +2958,28 @@ function AdmissionsManager({
           </div>
         </div>
 
-        <OverviewStrip />
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-[17px] font-bold tracking-[-0.02em] text-slate-900">
+              Admissions Overview
+            </h2>
+            <p className="mt-0.5 text-[13px] text-slate-500">
+              Overall admissions and stream-level counts.
+            </p>
+          </div>
+          <OverviewStrip />
+        </section>
+
         <PageMessage />
+
+        <div>
+          <h2 className="text-[17px] font-bold tracking-[-0.02em] text-slate-900">
+            Stream-wise Breakdown
+          </h2>
+          <p className="mt-0.5 text-[13px] text-slate-500">
+            Open a stream to view its colleges, branches and admissions.
+          </p>
+        </div>
 
         {loading ? (
           <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-20 text-[15px] text-slate-500">

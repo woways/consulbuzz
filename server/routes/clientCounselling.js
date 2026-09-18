@@ -79,10 +79,10 @@ function startOfWeek(date) {
 function formatSession(session) {
   return {
     id: session.id,
-    leadId: session.leadId,
     student: session.studentName,
     studentName: session.studentName,
     phone: session.studentPhone,
+    alternatePhone: session.studentAltPhone,
     email: session.studentEmail,
     course: session.course || "—",
     counsellor: session.counsellorName || "Unassigned",
@@ -96,6 +96,7 @@ function formatSession(session) {
     status: STATUS_LABELS[session.status] || session.status,
     statusKey: session.status,
     remarks: session.remarks || "—",
+    notes: session.remarks || "—",
     followUpAt: session.followUpAt,
     followUp: session.followUpAt || "—",
     converted: session.converted,
@@ -157,6 +158,7 @@ router.get("/", async (req, res) => {
       where.OR = [
         { studentName: { contains: search, mode: "insensitive" } },
         { studentPhone: { contains: search, mode: "insensitive" } },
+        { studentAltPhone: { contains: search, mode: "insensitive" } },
         { studentEmail: { contains: search, mode: "insensitive" } },
         { course: { contains: search, mode: "insensitive" } },
         { counsellorName: { contains: search, mode: "insensitive" } },
@@ -194,58 +196,75 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/eligible-leads", async (req, res) => {
+router.get("/options", async (req, res) => {
   try {
     const companyId = req.clientUser.companyId;
+    const market = parseMarket(req.query.market, "DOMESTIC");
 
-    const leads = await prisma.lead.findMany({
-      where: {
-        companyId,
-        stage: { notIn: ["LOST"] },
-      },
-      select: {
-        id: true,
-        name: true,
-        phone: true,
-        email: true,
-        course: true,
-        assignedToName: true,
-        stage: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 250,
+    const [streams, counsellors, walkIns] = await Promise.all([
+      prisma.admissionStream.findMany({
+        where: { companyId, market, active: true },
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        select: { id: true, name: true, color: true },
+      }),
+      prisma.user.findMany({
+        where: { companyId, active: true },
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          role: true,
+          jobTitle: true,
+          department: true,
+        },
+      }),
+      prisma.walkIn.findMany({
+        where: { companyId, market },
+        orderBy: { arrivedAt: "desc" },
+        take: 300,
+        select: {
+          id: true,
+          visitorName: true,
+          studentName: true,
+          phone: true,
+          alternatePhone: true,
+          email: true,
+          course: true,
+          accompaniedBy: true,
+          counsellorName: true,
+          arrivedAt: true,
+        },
+      }),
+    ]);
+
+    const walkInStudents = walkIns
+      .map((item) => ({
+        ...item,
+        studentName: item.studentName || item.visitorName,
+      }))
+      .filter((item) => String(item.studentName || "").trim());
+
+    return res.json({
+      success: true,
+      market,
+      streams,
+      counsellors,
+      walkInStudents,
     });
-
-    return res.json({ success: true, leads });
   } catch (error) {
-    console.error("Failed to load counselling leads:", error);
-    return res.status(500).json({ success: false, message: "Unable to load leads" });
+    console.error("Failed to load counselling options:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to load counselling form options",
+    });
   }
 });
 
 router.post("/", async (req, res) => {
   try {
     const companyId = req.clientUser.companyId;
-    const leadId = cleanOptional(req.body?.leadId);
     const market = parseMarket(req.body?.market, "DOMESTIC");
-    let selectedLead = null;
-
-    if (leadId) {
-      selectedLead = await prisma.lead.findFirst({
-        where: { id: leadId, companyId },
-      });
-
-      if (!selectedLead) {
-        return res.status(400).json({
-          success: false,
-          message: "Selected lead was not found for this company",
-        });
-      }
-    }
-
-    const studentName = String(
-      req.body?.studentName || selectedLead?.name || ""
-    ).trim();
+    const studentName = String(req.body?.studentName || "").trim();
     const scheduledAt = parseDate(req.body?.scheduledAt);
     const status = String(req.body?.status || "SCHEDULED").trim().toUpperCase();
 
@@ -270,39 +289,25 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid follow-up date" });
     }
 
-    const session = await prisma.$transaction(async (tx) => {
-      const created = await tx.counsellingSession.create({
-        data: {
-          companyId,
-          market,
-          leadId: selectedLead?.id || null,
-          studentName,
-          studentPhone: cleanOptional(req.body?.studentPhone) || selectedLead?.phone || null,
-          studentEmail: (
-            cleanOptional(req.body?.studentEmail) || selectedLead?.email || null
-          )?.toLowerCase() || null,
-          course: cleanOptional(req.body?.course) || selectedLead?.course || null,
-          counsellorName:
-            cleanOptional(req.body?.counsellorName) || selectedLead?.assignedToName || null,
-          mode: String(req.body?.mode || "IN_PERSON").trim().toUpperCase(),
-          meetingLink: cleanOptional(req.body?.meetingLink),
-          accompaniedBy: cleanOptional(req.body?.accompaniedBy),
-          scheduledAt,
-          status,
-          remarks: cleanOptional(req.body?.remarks),
-          followUpAt,
-          converted: req.body?.converted === true,
-        },
-      });
-
-      if (selectedLead && !["ADMITTED", "LOST"].includes(selectedLead.stage)) {
-        await tx.lead.update({
-          where: { id: selectedLead.id },
-          data: { stage: "COUNSELLING" },
-        });
-      }
-
-      return created;
+    const session = await prisma.counsellingSession.create({
+      data: {
+        companyId,
+        market,
+        studentName,
+        studentPhone: cleanOptional(req.body?.studentPhone),
+        studentAltPhone: cleanOptional(req.body?.alternatePhone ?? req.body?.studentAltPhone),
+        studentEmail: cleanOptional(req.body?.studentEmail)?.toLowerCase() || null,
+        course: cleanOptional(req.body?.course),
+        counsellorName: cleanOptional(req.body?.counsellorName),
+        mode: String(req.body?.mode || "IN_PERSON").trim().toUpperCase(),
+        meetingLink: cleanOptional(req.body?.meetingLink),
+        accompaniedBy: cleanOptional(req.body?.accompaniedBy),
+        scheduledAt,
+        status,
+        remarks: cleanOptional(req.body?.notes ?? req.body?.remarks),
+        followUpAt,
+        converted: req.body?.converted === true,
+      },
     });
 
     return res.status(201).json({
@@ -337,29 +342,22 @@ router.patch("/:id", async (req, res) => {
       data.market = market;
     }
 
-    if (req.body?.leadId !== undefined) {
-      if (!req.body.leadId) {
-        data.leadId = null;
-      } else {
-        const lead = await prisma.lead.findFirst({
-          where: { id: String(req.body.leadId), companyId },
-        });
-        if (!lead) {
-          return res.status(400).json({
-            success: false,
-            message: "Selected lead was not found for this company",
-          });
-        }
-        data.leadId = lead.id;
-      }
-    }
-
     if (req.body?.studentName !== undefined) {
       const studentName = String(req.body.studentName || "").trim();
       if (!studentName) {
         return res.status(400).json({ success: false, message: "Student name is required" });
       }
       data.studentName = studentName;
+    }
+
+    if (req.body?.alternatePhone !== undefined || req.body?.studentAltPhone !== undefined) {
+      data.studentAltPhone = cleanOptional(
+        req.body?.alternatePhone ?? req.body?.studentAltPhone
+      );
+    }
+
+    if (req.body?.notes !== undefined) {
+      data.remarks = cleanOptional(req.body.notes);
     }
 
     for (const field of [
@@ -369,9 +367,12 @@ router.patch("/:id", async (req, res) => {
       "counsellorName",
       "meetingLink",
       "accompaniedBy",
-      "remarks",
     ]) {
       if (req.body?.[field] !== undefined) data[field] = cleanOptional(req.body[field]);
+    }
+
+    if (req.body?.remarks !== undefined && req.body?.notes === undefined) {
+      data.remarks = cleanOptional(req.body.remarks);
     }
 
     if (data.studentEmail) data.studentEmail = data.studentEmail.toLowerCase();

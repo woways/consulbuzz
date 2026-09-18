@@ -30,15 +30,47 @@ import {
 } from "../../lib/api";
 import { formatUiDateTime } from "../../lib/uiPreferences";
 
+const OTHER_OPTION = "__OTHER__";
+
+const PURPOSE_OPTIONS = [
+  "General Enquiry",
+  "Know More About Programs",
+  "College Enquiry",
+  "Admission Enquiry",
+  "Stream / Course Enquiry",
+  "Fees & Payment Enquiry",
+  "Scholarship / Financial Aid",
+  "Counselling",
+  "Eligibility / Documentation",
+  "Follow-up Visit",
+];
+
+const CAME_WITH_OPTIONS = [
+  "Alone",
+  "Parent",
+  "Both Parents",
+  "Brother",
+  "Sister",
+  "Guardian",
+  "Parent + Sibling",
+  "Family / Relative",
+  "Friend(s)",
+];
+
 const EMPTY_FORM = {
   visitorName: "",
+  studentName: "",
   phone: "",
+  alternatePhone: "",
   email: "",
   course: "",
+  courseOther: "",
   purpose: "",
+  purposeOther: "",
   accompaniedBy: "",
+  accompaniedByOther: "",
   counsellorName: "",
-  outcome: "",
+  notes: "",
   status: "NEW",
   arrivedAt: "",
 };
@@ -131,6 +163,37 @@ export default function Walkins({ selectedYear = "all", market = "DOMESTIC" }) {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [actionId, setActionId] = useState("");
+  const [streamOptions, setStreamOptions] = useState([]);
+  const [counsellorOptions, setCounsellorOptions] = useState([]);
+  const [optionsLoading, setOptionsLoading] = useState(false);
+
+  async function loadFormOptions(showError = false) {
+    setOptionsLoading(true);
+
+    try {
+      const activeMarket =
+        market === "INTERNATIONAL" ? "INTERNATIONAL" : "DOMESTIC";
+
+      const data = await apiRequest(
+        `/api/client/walkins/options?market=${encodeURIComponent(activeMarket)}`
+      );
+
+      setStreamOptions(data.streams || []);
+      setCounsellorOptions(data.counsellors || []);
+    } catch (error) {
+      setStreamOptions([]);
+      setCounsellorOptions([]);
+
+      if (showError) {
+        setFormError(
+          error?.data?.message ||
+            "Unable to load stream and counsellor options"
+        );
+      }
+    } finally {
+      setOptionsLoading(false);
+    }
+  }
 
   async function loadData() {
     setLoading(true);
@@ -169,6 +232,10 @@ export default function Walkins({ selectedYear = "all", market = "DOMESTIC" }) {
     return () => window.clearTimeout(timer);
   }, [search, statusFilter, selectedYear, market]);
 
+  useEffect(() => {
+    loadFormOptions();
+  }, [market]);
+
   function updateForm(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
   }
@@ -181,24 +248,43 @@ export default function Walkins({ selectedYear = "all", market = "DOMESTIC" }) {
       arrivedAt: toLocalInput(new Date()),
     });
     setModalOpen(true);
+    loadFormOptions(true);
   }
 
   function openEdit(walkIn) {
+    const existingPurpose = walkIn.purpose || "";
+    const existingAccompaniedBy =
+      walkIn.accompaniedBy === "—" ? "" : walkIn.accompaniedBy || "";
+    const existingCourse = walkIn.course || "";
+
     setEditing(walkIn);
     setFormError("");
     setForm({
       visitorName: walkIn.visitorName || "",
+      studentName: walkIn.studentName || "",
       phone: walkIn.phone || "",
+      alternatePhone: walkIn.alternatePhone || "",
       email: walkIn.email || "",
-      course: walkIn.course || "",
-      purpose: walkIn.purpose || "",
-      accompaniedBy: walkIn.accompaniedBy === "—" ? "" : walkIn.accompaniedBy || "",
+      course: existingCourse,
+      courseOther: existingCourse,
+      purpose: existingPurpose,
+      purposeOther: PURPOSE_OPTIONS.includes(existingPurpose)
+        ? ""
+        : existingPurpose,
+      accompaniedBy: existingAccompaniedBy,
+      accompaniedByOther: CAME_WITH_OPTIONS.includes(existingAccompaniedBy)
+        ? ""
+        : existingAccompaniedBy,
       counsellorName: walkIn.counsellorName || "",
-      outcome: walkIn.outcome === "—" ? "" : walkIn.outcome || "",
+      notes:
+        (walkIn.notes === "—" ? "" : walkIn.notes) ||
+        (walkIn.outcome === "—" ? "" : walkIn.outcome) ||
+        "",
       status: walkIn.statusKey || "NEW",
       arrivedAt: toLocalInput(walkIn.arrivedAt),
     });
     setModalOpen(true);
+    loadFormOptions(true);
   }
 
   async function submit(event) {
@@ -207,8 +293,39 @@ export default function Walkins({ selectedYear = "all", market = "DOMESTIC" }) {
     setFormError("");
 
     try {
+      const resolvedCourse =
+        form.course === OTHER_OPTION
+          ? form.courseOther.trim()
+          : String(form.course || "").trim();
+
+      const resolvedPurpose =
+        form.purpose === OTHER_OPTION
+          ? form.purposeOther.trim()
+          : String(form.purpose || "").trim();
+
+      const resolvedAccompaniedBy =
+        form.accompaniedBy === OTHER_OPTION
+          ? form.accompaniedByOther.trim()
+          : String(form.accompaniedBy || "").trim();
+
+      if (!resolvedPurpose) {
+        setFormError("Purpose is required");
+        setSaving(false);
+        return;
+      }
+
       const payload = {
-        ...form,
+        visitorName: form.visitorName,
+        studentName: form.studentName,
+        phone: form.phone,
+        alternatePhone: form.alternatePhone,
+        email: form.email,
+        course: resolvedCourse,
+        purpose: resolvedPurpose,
+        accompaniedBy: resolvedAccompaniedBy,
+        counsellorName: form.counsellorName,
+        notes: form.notes,
+        status: form.status,
         market,
         arrivedAt: form.arrivedAt
           ? new Date(form.arrivedAt).toISOString()
@@ -300,7 +417,7 @@ export default function Walkins({ selectedYear = "all", market = "DOMESTIC" }) {
           tone="indigo"
         />
         <WalkinMetric
-          label="Converted to Lead"
+          label="Walk-ins Converted"
           value={summary.converted}
           icon={ArrowUpRight}
           detail="Visitors converted into CRM leads"
@@ -381,12 +498,12 @@ export default function Walkins({ selectedYear = "all", market = "DOMESTIC" }) {
           <Table
             columns={[
               "Arrived",
-              "Visitor",
+              "Visitor / Student",
               "Phone",
               "Purpose",
               "Came With",
               "Counsellor",
-              "Outcome",
+              "Notes",
               "Status",
               "Actions",
             ]}
@@ -399,6 +516,11 @@ export default function Walkins({ selectedYear = "all", market = "DOMESTIC" }) {
                   <div className="text-[15px] font-semibold text-slate-900">
                     {walkIn.visitorName}
                   </div>
+                  {walkIn.studentName ? (
+                    <div className="text-[12px] text-slate-500 mt-0.5">
+                      Student: {walkIn.studentName}
+                    </div>
+                  ) : null}
                   {walkIn.course ? (
                     <div className="text-xs text-slate-400 mt-0.5">
                       {walkIn.course}
@@ -406,7 +528,12 @@ export default function Walkins({ selectedYear = "all", market = "DOMESTIC" }) {
                   ) : null}
                 </td>
                 <td className="px-4 py-3 text-[15px] text-slate-600 whitespace-nowrap">
-                  {walkIn.phone}
+                  <div>{walkIn.phone}</div>
+                  {walkIn.alternatePhone ? (
+                    <div className="mt-0.5 text-xs text-slate-400">
+                      Alt: {walkIn.alternatePhone}
+                    </div>
+                  ) : null}
                 </td>
                 <td className="px-4 py-3 text-[15px] text-slate-700">
                   {walkIn.purpose}
@@ -418,7 +545,7 @@ export default function Walkins({ selectedYear = "all", market = "DOMESTIC" }) {
                   {walkIn.counsellor}
                 </td>
                 <td className="px-4 py-3 text-[15px] text-slate-600">
-                  {walkIn.outcome}
+                  {walkIn.notes || walkIn.outcome}
                 </td>
                 <td className="px-4 py-3">
                   <Badge tone={statusTone(walkIn.status)}>{walkIn.status}</Badge>
@@ -496,14 +623,36 @@ export default function Walkins({ selectedYear = "all", market = "DOMESTIC" }) {
                     className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
+                <Field label="Student Name">
+                  <input
+                    value={form.studentName}
+                    onChange={(event) => updateForm("studentName", event.target.value)}
+                    placeholder="If different from the visitor"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
+                  />
+                </Field>
                 <Field label="Phone" required>
                   <input
+                    type="tel"
                     required
                     value={form.phone}
                     onChange={(event) => updateForm("phone", event.target.value)}
                     className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
+
+                <Field label="Alternate Phone">
+                  <input
+                    type="tel"
+                    value={form.alternatePhone}
+                    onChange={(event) =>
+                      updateForm("alternatePhone", event.target.value)
+                    }
+                    placeholder="Optional alternate number"
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
+                  />
+                </Field>
+
                 <Field label="Email">
                   <input
                     type="email"
@@ -512,34 +661,225 @@ export default function Walkins({ selectedYear = "all", market = "DOMESTIC" }) {
                     className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>
+
                 <Field label="Course / Interest">
-                  <input
-                    value={form.course}
-                    onChange={(event) => updateForm("course", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
-                  />
+                  <div className="space-y-2">
+                    <select
+                      value={
+                        form.course === OTHER_OPTION
+                          ? OTHER_OPTION
+                          : streamOptions.some(
+                              (stream) => stream.name === form.course
+                            )
+                            ? form.course
+                            : form.course
+                              ? OTHER_OPTION
+                              : ""
+                      }
+                      onChange={(event) => {
+                        const value = event.target.value;
+
+                        if (value === OTHER_OPTION) {
+                          setForm((current) => ({
+                            ...current,
+                            course: OTHER_OPTION,
+                            courseOther:
+                              current.course === OTHER_OPTION
+                                ? current.courseOther
+                                : "",
+                          }));
+                        } else {
+                          setForm((current) => ({
+                            ...current,
+                            course: value,
+                            courseOther: "",
+                          }));
+                        }
+                      }}
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
+                    >
+                      <option value="">
+                        {optionsLoading ? "Loading streams..." : "Select stream"}
+                      </option>
+                      {streamOptions.map((stream) => (
+                        <option key={stream.id} value={stream.name}>
+                          {stream.name}
+                        </option>
+                      ))}
+                      <option value={OTHER_OPTION}>Other</option>
+                    </select>
+
+                    {(form.course === OTHER_OPTION ||
+                      (form.course &&
+                        !streamOptions.some(
+                          (stream) => stream.name === form.course
+                        ))) ? (
+                      <input
+                        value={
+                          form.course === OTHER_OPTION
+                            ? form.courseOther
+                            : form.courseOther || form.course
+                        }
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            course: OTHER_OPTION,
+                            courseOther: event.target.value,
+                          }))
+                        }
+                        placeholder="Type course / interest"
+                        className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
+                      />
+                    ) : null}
+                  </div>
                 </Field>
+
                 <Field label="Purpose" required>
-                  <input
-                    required
-                    value={form.purpose}
-                    onChange={(event) => updateForm("purpose", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
-                  />
+                  <div className="space-y-2">
+                    <select
+                      required
+                      value={
+                        form.purpose === OTHER_OPTION
+                          ? OTHER_OPTION
+                          : PURPOSE_OPTIONS.includes(form.purpose)
+                            ? form.purpose
+                            : form.purpose
+                              ? OTHER_OPTION
+                              : ""
+                      }
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setForm((current) => ({
+                          ...current,
+                          purpose: value,
+                          purposeOther:
+                            value === OTHER_OPTION
+                              ? current.purposeOther
+                              : "",
+                        }));
+                      }}
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
+                    >
+                      <option value="">Select purpose</option>
+                      {PURPOSE_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                      <option value={OTHER_OPTION}>Other</option>
+                    </select>
+
+                    {(form.purpose === OTHER_OPTION ||
+                      (form.purpose &&
+                        !PURPOSE_OPTIONS.includes(form.purpose))) ? (
+                      <input
+                        required
+                        value={
+                          form.purpose === OTHER_OPTION
+                            ? form.purposeOther
+                            : form.purposeOther || form.purpose
+                        }
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            purpose: OTHER_OPTION,
+                            purposeOther: event.target.value,
+                          }))
+                        }
+                        placeholder="Specify purpose"
+                        className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
+                      />
+                    ) : null}
+                  </div>
                 </Field>
+
                 <Field label="Came With">
-                  <input
-                    value={form.accompaniedBy}
-                    onChange={(event) => updateForm("accompaniedBy", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
-                  />
+                  <div className="space-y-2">
+                    <select
+                      value={
+                        form.accompaniedBy === OTHER_OPTION
+                          ? OTHER_OPTION
+                          : CAME_WITH_OPTIONS.includes(form.accompaniedBy)
+                            ? form.accompaniedBy
+                            : form.accompaniedBy
+                              ? OTHER_OPTION
+                              : ""
+                      }
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setForm((current) => ({
+                          ...current,
+                          accompaniedBy: value,
+                          accompaniedByOther:
+                            value === OTHER_OPTION
+                              ? current.accompaniedByOther
+                              : "",
+                        }));
+                      }}
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
+                    >
+                      <option value="">Select</option>
+                      {CAME_WITH_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                      <option value={OTHER_OPTION}>Other</option>
+                    </select>
+
+                    {(form.accompaniedBy === OTHER_OPTION ||
+                      (form.accompaniedBy &&
+                        !CAME_WITH_OPTIONS.includes(form.accompaniedBy))) ? (
+                      <input
+                        value={
+                          form.accompaniedBy === OTHER_OPTION
+                            ? form.accompaniedByOther
+                            : form.accompaniedByOther || form.accompaniedBy
+                        }
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            accompaniedBy: OTHER_OPTION,
+                            accompaniedByOther: event.target.value,
+                          }))
+                        }
+                        placeholder="Specify who came with the visitor"
+                        className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
+                      />
+                    ) : null}
+                  </div>
                 </Field>
+
                 <Field label="Counsellor">
-                  <input
+                  <select
                     value={form.counsellorName}
-                    onChange={(event) => updateForm("counsellorName", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
-                  />
+                    onChange={(event) =>
+                      updateForm("counsellorName", event.target.value)
+                    }
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
+                  >
+                    <option value="">
+                      {optionsLoading ? "Loading employees..." : "Unassigned"}
+                    </option>
+                    {form.counsellorName &&
+                    !counsellorOptions.some(
+                      (user) => user.name === form.counsellorName
+                    ) ? (
+                      <option value={form.counsellorName}>
+                        {form.counsellorName} (current)
+                      </option>
+                    ) : null}
+                    {counsellorOptions.map((user) => (
+                      <option key={user.id} value={user.name}>
+                        {user.name}
+                        {user.jobTitle
+                          ? ` · ${user.jobTitle}`
+                          : user.role
+                            ? ` · ${String(user.role).replaceAll("_", " ")}`
+                            : ""}
+                      </option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="Status">
                   <select
@@ -557,14 +897,15 @@ export default function Walkins({ selectedYear = "all", market = "DOMESTIC" }) {
                     type="datetime-local"
                     value={form.arrivedAt}
                     onChange={(event) => updateForm("arrivedAt", event.target.value)}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px]"
+                    onClick={(event) => event.currentTarget.showPicker?.()}
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] cursor-pointer"
                   />
                 </Field>
-                <Field label="Outcome / Notes" full>
+                <Field label="Notes" full>
                   <textarea
                     rows={3}
-                    value={form.outcome}
-                    onChange={(event) => updateForm("outcome", event.target.value)}
+                    value={form.notes}
+                    onChange={(event) => updateForm("notes", event.target.value)}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[15px]"
                   />
                 </Field>

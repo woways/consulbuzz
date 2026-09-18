@@ -62,7 +62,9 @@ function formatWalkIn(walkIn) {
     id: walkIn.id,
     name: walkIn.visitorName,
     visitorName: walkIn.visitorName,
+    studentName: walkIn.studentName,
     phone: walkIn.phone,
+    alternatePhone: walkIn.alternatePhone,
     email: walkIn.email,
     course: walkIn.course,
     purpose: walkIn.purpose,
@@ -70,6 +72,7 @@ function formatWalkIn(walkIn) {
     counsellor: walkIn.counsellorName || "Unassigned",
     counsellorName: walkIn.counsellorName,
     outcome: walkIn.outcome || "—",
+    notes: walkIn.outcome || "—",
     status: STATUS_LABELS[walkIn.status] || walkIn.status,
     statusKey: walkIn.status,
     arrivedAt: walkIn.arrivedAt,
@@ -95,6 +98,62 @@ function buildSummary(rows) {
   };
 }
 
+router.get("/options", async (req, res) => {
+  try {
+    const companyId = req.clientUser.companyId;
+    const market = parseMarket(req.query.market, "DOMESTIC");
+
+    const [streams, counsellors] = await Promise.all([
+      prisma.admissionStream.findMany({
+        where: {
+          companyId,
+          market,
+          active: true,
+        },
+        orderBy: [
+          { sortOrder: "asc" },
+          { name: "asc" },
+        ],
+        select: {
+          id: true,
+          name: true,
+          color: true,
+        },
+      }),
+      prisma.user.findMany({
+        where: {
+          companyId,
+          active: true,
+        },
+        orderBy: {
+          name: "asc",
+        },
+        select: {
+          id: true,
+          name: true,
+          role: true,
+          jobTitle: true,
+          department: true,
+        },
+      }),
+    ]);
+
+    return res.json({
+      success: true,
+      market,
+      streams,
+      counsellors,
+    });
+  } catch (error) {
+    console.error("Failed to fetch walk-in options:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to load walk-in form options",
+    });
+  }
+});
+
+
 router.get("/", async (req, res) => {
   try {
     const companyId = req.clientUser.companyId;
@@ -113,7 +172,9 @@ router.get("/", async (req, res) => {
     if (search) {
       where.OR = [
         { visitorName: { contains: search, mode: "insensitive" } },
+        { studentName: { contains: search, mode: "insensitive" } },
         { phone: { contains: search, mode: "insensitive" } },
+        { alternatePhone: { contains: search, mode: "insensitive" } },
         { email: { contains: search, mode: "insensitive" } },
         { course: { contains: search, mode: "insensitive" } },
         { purpose: { contains: search, mode: "insensitive" } },
@@ -161,13 +222,15 @@ router.post("/", async (req, res) => {
         companyId,
         market,
         visitorName,
+        studentName: cleanOptional(req.body?.studentName),
         phone,
+        alternatePhone: cleanOptional(req.body?.alternatePhone),
         email: cleanOptional(req.body?.email)?.toLowerCase() || null,
         course: cleanOptional(req.body?.course),
         purpose,
         accompaniedBy: cleanOptional(req.body?.accompaniedBy),
         counsellorName: cleanOptional(req.body?.counsellorName),
-        outcome: cleanOptional(req.body?.outcome),
+        outcome: cleanOptional(req.body?.notes ?? req.body?.outcome),
         status,
         arrivedAt,
       },
@@ -200,6 +263,10 @@ router.patch("/:id", async (req, res) => {
       data.visitorName = visitorName;
     }
 
+    if (req.body?.studentName !== undefined) {
+      data.studentName = cleanOptional(req.body.studentName);
+    }
+
     if (req.body?.phone !== undefined) {
       const phone = String(req.body.phone || "").trim();
       if (!phone) return res.status(400).json({ success: false, message: "Phone number is required" });
@@ -212,8 +279,20 @@ router.patch("/:id", async (req, res) => {
       data.purpose = purpose;
     }
 
-    for (const field of ["email", "course", "accompaniedBy", "counsellorName", "outcome"]) {
-      if (req.body?.[field] !== undefined) data[field] = cleanOptional(req.body[field]);
+    for (const field of [
+      "email",
+      "alternatePhone",
+      "course",
+      "accompaniedBy",
+      "counsellorName",
+    ]) {
+      if (req.body?.[field] !== undefined) {
+        data[field] = cleanOptional(req.body[field]);
+      }
+    }
+
+    if (req.body?.notes !== undefined || req.body?.outcome !== undefined) {
+      data.outcome = cleanOptional(req.body?.notes ?? req.body?.outcome);
     }
 
     if (data.email) data.email = data.email.toLowerCase();
@@ -265,7 +344,7 @@ router.post("/:id/convert-to-lead", async (req, res) => {
       const createdLead = await tx.lead.create({
         data: {
           companyId,
-          name: walkIn.visitorName,
+          name: walkIn.studentName || walkIn.visitorName,
           phone: walkIn.phone,
           email: walkIn.email,
           course: walkIn.course,
@@ -274,7 +353,13 @@ router.post("/:id/convert-to-lead", async (req, res) => {
           assignedToName: walkIn.counsellorName,
           notes: [
             `Converted from walk-in: ${walkIn.purpose}`,
-            walkIn.outcome ? `Outcome: ${walkIn.outcome}` : null,
+            walkIn.studentName && walkIn.studentName !== walkIn.visitorName
+              ? `Visitor: ${walkIn.visitorName}`
+              : null,
+            walkIn.alternatePhone
+              ? `Alternate phone: ${walkIn.alternatePhone}`
+              : null,
+            walkIn.outcome ? `Notes: ${walkIn.outcome}` : null,
           ].filter(Boolean).join("\n"),
         },
       });

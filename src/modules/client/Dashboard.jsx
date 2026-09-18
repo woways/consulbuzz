@@ -934,7 +934,7 @@ export default function Dashboard({
     {
       label: "Received Revenue",
       value: money(summary.receivedAmount),
-      icon: DollarSign,
+      icon: CheckCircle2,
       detail: "Revenue received",
       accent: "emerald",
     },
