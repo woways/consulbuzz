@@ -6,8 +6,6 @@ import {
   ChevronRight,
   AlertCircle,
   Target as TargetIcon,
-  Minus,
-  Plus,
   Search,
   X,
   Filter,
@@ -395,25 +393,27 @@ export default function TeamTarget({ currentUser }) {
                         {/* Achieved */}
                         <td className="px-2 py-4">
                           {mode === "achieved" ? (
-                            <div className="inline-flex items-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => setAchieved(m.month, wnum, w.achieved - 1)}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200"
-                              >
-                                <Minus size={12} />
-                              </button>
-                              <span className="w-7 text-center text-[14px] font-bold text-slate-900">
-                                {w.achieved}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => setAchieved(m.month, wnum, w.achieved + 1)}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 text-white hover:bg-brand-700"
-                              >
-                                <Plus size={12} />
-                              </button>
-                            </div>
+                            <input
+                              key={`ach-${year}-${m.month}-${wnum}-${w.achieved}`}
+                              type="text"
+                              inputMode="numeric"
+                              defaultValue={w.achieved}
+                              onInput={(e) => {
+                                e.target.value = e.target.value.replace(/[^0-9]/g, "");
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") e.currentTarget.blur();
+                              }}
+                              onBlur={(e) => {
+                                const next = Number(e.target.value) || 0;
+                                if (next !== Number(w.achieved || 0)) {
+                                  setAchieved(m.month, wnum, next);
+                                } else {
+                                  e.target.value = String(w.achieved);
+                                }
+                              }}
+                              className="w-14 rounded-lg border border-slate-200 bg-white px-2 py-1 text-center text-[14px] font-bold text-slate-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                            />
                           ) : (
                             <span className="text-[14px] font-bold text-slate-900">{w.achieved}</span>
                           )}
@@ -485,7 +485,7 @@ export default function TeamTarget({ currentUser }) {
           </div>
           <h1 className="flex items-center gap-2 text-[24px] font-semibold tracking-[-0.02em] text-slate-900">
             <TargetIcon size={20} className="text-brand-600" />
-            Team Target
+            My Targets
           </h1>
         </div>
 
@@ -546,7 +546,7 @@ export default function TeamTarget({ currentUser }) {
           <>
             {AnalysisCard(months, null)}
             <div className="rounded-xl border border-brand-100 bg-brand-50/60 px-4 py-2.5 text-[12px] font-semibold text-brand-700">
-              Use − / + to record what you achieved each week. Targets and percentages are automatic.
+              Type what you achieved each week, then press Enter or click away to save. Targets and percentages are automatic.
             </div>
             {TargetTable(months, "achieved", currentUser?.id)}
           </>
