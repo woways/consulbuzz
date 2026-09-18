@@ -3716,6 +3716,12 @@ function AdmissionsOverall({ selectedYear = "all" }) {
   const [data, setData] = useState({ all: [], domestic: [], international: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [studentSearch, setStudentSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [streamFilter, setStreamFilter] = useState("");
+  const [collegeFilter, setCollegeFilter] = useState("");
+  const [branchFilter, setBranchFilter] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -3747,6 +3753,87 @@ function AdmissionsOverall({ selectedYear = "all" }) {
   }, [selectedYear]);
 
   const rows = filter === "DOMESTIC" ? data.domestic : filter === "INTERNATIONAL" ? data.international : data.all;
+
+  const filterValue = {
+    stream: (admission) => admission.partner?.stream?.id || admission.partner?.stream?.name || "",
+    college: (admission) => admission.partner?.id || admission.college || admission.partner?.name || "",
+    branch: (admission) => admission.branch?.id || admission.branch?.name || admission.course || "",
+  };
+
+  const filterOptions = useMemo(() => {
+    const optionsFor = (kind, labelFor) => Array.from(
+      data.all.reduce((items, admission) => {
+        const value = filterValue[kind](admission);
+        if (value && !items.has(value)) items.set(value, labelFor(admission));
+        return items;
+      }, new Map()).entries()
+    )
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+
+    return {
+      streams: optionsFor("stream", (admission) => admission.partner?.stream?.name || ""),
+      colleges: optionsFor("college", (admission) => admission.college || admission.partner?.name || ""),
+      branches: optionsFor("branch", (admission) => admission.branch?.name || admission.course || ""),
+    };
+  }, [data.all]);
+
+  const filteredRows = useMemo(() => {
+    const search = studentSearch.trim().toLowerCase();
+    const localDate = (value) => {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${date.getFullYear()}-${month}-${day}`;
+    };
+
+    return rows.filter((admission) => {
+      const admissionDate = localDate(admission.admissionDate);
+
+      return (
+        (!search || String(admission.name || "").toLowerCase().includes(search)) &&
+        (!startDate || admissionDate >= startDate) &&
+        (!endDate || admissionDate <= endDate) &&
+        (!streamFilter || filterValue.stream(admission) === streamFilter) &&
+        (!collegeFilter || filterValue.college(admission) === collegeFilter) &&
+        (!branchFilter || filterValue.branch(admission) === branchFilter)
+      );
+    });
+  }, [rows, studentSearch, startDate, endDate, streamFilter, collegeFilter, branchFilter]);
+
+  const exportAdmissions = () => {
+    const escape = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const csv = [
+      ["Student", "Type", "Stream", "College", "Branch", "Admission Date"],
+      ...filteredRows.map((admission) => [
+        admission.name,
+        admission.market === "INTERNATIONAL" ? "International" : "Domestic",
+        admission.partner?.stream?.name,
+        admission.college || admission.partner?.name,
+        admission.branch?.name || admission.course,
+        formatDate(admission.admissionDate),
+      ]),
+    ].map((row) => row.map(escape).join(",")).join("\n");
+
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "overall-admissions.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const clearFilters = () => {
+    setStudentSearch("");
+    setStartDate("");
+    setEndDate("");
+    setStreamFilter("");
+    setCollegeFilter("");
+    setBranchFilter("");
+  };
 
   return (
     <div className="space-y-5">
@@ -3806,12 +3893,64 @@ function AdmissionsOverall({ selectedYear = "all" }) {
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div>
             <h2 className="text-[16px] font-bold text-slate-950">All Admissions</h2>
-            <p className="mt-0.5 text-[12px] text-slate-500">{rows.length} admission{rows.length === 1 ? '' : 's'} shown</p>
+            <p className="mt-0.5 text-[12px] text-slate-500">{filteredRows.length} admission{filteredRows.length === 1 ? '' : 's'} shown</p>
           </div>
+          <button
+            type="button"
+            onClick={exportAdmissions}
+            disabled={!filteredRows.length}
+            className="inline-flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-3 text-[13px] font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Download size={14} />
+            Export
+          </button>
+        </div>
+        <div className="grid grid-cols-[minmax(180px,1fr)_150px_150px_130px_130px_130px_auto] items-start gap-2 border-b border-slate-100 bg-slate-50/70 p-3">
+          <label className="relative min-w-0">
+            <span className="sr-only">Search by student name</span>
+            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              value={studentSearch}
+              onChange={(event) => setStudentSearch(event.target.value)}
+              placeholder="Search student name"
+              className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-[13px] text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            />
+          </label>
+          <label className="min-w-0">
+            <input type="date" aria-label="From date" value={startDate} onChange={(event) => setStartDate(event.target.value)} max={endDate || undefined} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[13px] text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+            <span className="mt-1 block px-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">From date</span>
+          </label>
+          <label className="min-w-0">
+            <input type="date" aria-label="To date" value={endDate} onChange={(event) => setEndDate(event.target.value)} min={startDate || undefined} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[13px] text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
+            <span className="mt-1 block px-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">To date</span>
+          </label>
+          <label>
+            <span className="sr-only">Stream</span>
+            <select aria-label="Stream" value={streamFilter} onChange={(event) => setStreamFilter(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[13px] text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+              <option value="">All streams</option>
+              {filterOptions.streams.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+          </label>
+          <label>
+            <span className="sr-only">College</span>
+            <select aria-label="College" value={collegeFilter} onChange={(event) => setCollegeFilter(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[13px] text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+              <option value="">All colleges</option>
+              {filterOptions.colleges.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+          </label>
+          <label>
+            <span className="sr-only">Branch</span>
+            <select aria-label="Branch" value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[13px] text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
+              <option value="">All branches</option>
+              {filterOptions.branches.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+          </label>
+          <button type="button" onClick={clearFilters} className="h-10 px-1 text-[13px] font-semibold text-indigo-700 transition hover:text-indigo-900">Clear</button>
         </div>
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-slate-500"><Loader2 size={16} className="animate-spin" />Loading admissions...</div>
-        ) : rows.length === 0 ? (
+        ) : filteredRows.length === 0 ? (
           <div className="py-16 text-center text-sm text-slate-500">No admissions found.</div>
         ) : (
           <div className="overflow-x-auto">
@@ -3820,7 +3959,7 @@ function AdmissionsOverall({ selectedYear = "all" }) {
                 <tr><th className="px-5 py-3">Student</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Stream</th><th className="px-5 py-3">College</th><th className="px-5 py-3">Branch</th><th className="px-5 py-3">Admission Date</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {rows.map((admission) => (
+                {filteredRows.map((admission) => (
                   <tr key={admission.id} className="text-[13px] text-slate-700 hover:bg-slate-50/60">
                     <td className="px-5 py-3"><div className="font-semibold text-slate-900">{admission.name || '—'}</div><div className="mt-0.5 text-xs text-slate-500">{admission.phone || '—'}</div></td>
                     <td className="px-5 py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-[13px] font-semibold text-slate-700">{admission.market === 'INTERNATIONAL' ? 'International' : 'Domestic'}</span></td>

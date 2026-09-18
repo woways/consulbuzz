@@ -225,7 +225,7 @@ const NAV_GROUPS = [
 
   {
     key: "team-target",
-    label: "Team Target",
+    label: "Goals and Targets",
     icon: Target,
     items: ["team-target"],
     direct: true,
@@ -297,7 +297,7 @@ const NAV_GROUPS = [
 const PAGE_META = {
   dashboard: { label: "Dashboard" },
   chats: { label: "Chats" },
-  "team-target": { label: "Team Target" },
+  "team-target": { label: "Goals and Targets" },
   "my-referrals": { label: "My Referrals" },
   "my-store": { label: "My Store" },
   "utm-leads": { label: "UTM Leads" },
