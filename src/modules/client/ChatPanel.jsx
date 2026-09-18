@@ -169,6 +169,7 @@ export default function ChatPanel({ currentUser }) {
 
   const [myAvatar, setMyAvatar] = useState(currentUser?.avatarUrl || null);
   const avatarInputRef = useRef(null);
+  const groupAvatarInputRef = useRef(null);
 
   async function onPickAvatar(e) {
     const file = e.target.files?.[0];
@@ -193,6 +194,36 @@ export default function ChatPanel({ currentUser }) {
         setMyAvatar(res.avatarUrl || dataUrl);
       } catch (err) {
         setError(err?.data?.message || "Unable to update photo");
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function onPickGroupAvatar(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !activeId) return;
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      setError("Please choose a PNG, JPG or WEBP image");
+      return;
+    }
+    if (file.size > 500 * 1024) {
+      setError("Image must be under 500 KB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = String(reader.result || "");
+      try {
+        const res = await apiRequest(`/api/client/chat/${activeId}/avatar`, {
+          method: "PATCH",
+          body: JSON.stringify({ avatarUrl: dataUrl }),
+        });
+        setConversations((prev) =>
+          prev.map((c) => (c.id === activeId ? { ...c, avatarUrl: res.avatarUrl || dataUrl } : c))
+        );
+      } catch (err) {
+        setError(err?.data?.message || "Unable to update group photo");
       }
     };
     reader.readAsDataURL(file);
@@ -314,6 +345,12 @@ export default function ChatPanel({ currentUser }) {
         prev.map((c) =>
           c.id === conversationId ? { ...c, name, title: c.nickname || name } : c
         )
+      );
+    });
+
+    socket.on("conversation:avatar", ({ conversationId, avatarUrl }) => {
+      setConversations((prev) =>
+        prev.map((c) => (c.id === conversationId ? { ...c, avatarUrl } : c))
       );
     });
 
@@ -797,6 +834,13 @@ export default function ChatPanel({ currentUser }) {
                 onChange={onPickAvatar}
                 className="hidden"
               />
+              <input
+                ref={groupAvatarInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={onPickGroupAvatar}
+                className="hidden"
+              />
               <div>
                 <div className="text-[18px] font-semibold tracking-[-0.015em] text-neutral-950">
                   {selectionMode ? `${selectedConversationIds.length} selected` : "Chats"}
@@ -851,7 +895,7 @@ export default function ChatPanel({ currentUser }) {
                     className={`mx-2 flex w-[calc(100%-16px)] items-center gap-3 rounded-[11px] border px-3 py-2.5 text-left transition ${active ? "border-indigo-200 bg-indigo-50/90 shadow-[inset_3px_0_0_#4f46e5]" : "border-transparent hover:bg-neutral-50"}`}
                   >
                     <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-bold shadow-sm ${selectedConversationIds.includes(c.id) ? "bg-indigo-600 text-white" : c.isGroup ? "bg-neutral-100 text-neutral-600" : "bg-indigo-100 text-indigo-600"}`}>
-                      {selectionMode ? (selectedConversationIds.includes(c.id) ? <CheckSquare size={17} /> : <Square size={17} />) : c.isGroup ? <Users size={16} /> : c.avatarUrl ? <img src={c.avatarUrl} alt="" className="h-full w-full object-cover" /> : initialsOf(c.title)}
+                      {selectionMode ? (selectedConversationIds.includes(c.id) ? <CheckSquare size={17} /> : <Square size={17} />) : c.isGroup ? (c.avatarUrl ? <img src={c.avatarUrl} alt="" className="h-full w-full object-cover" /> : <Users size={16} />) : c.avatarUrl ? <img src={c.avatarUrl} alt="" className="h-full w-full object-cover" /> : initialsOf(c.title)}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
@@ -889,7 +933,7 @@ export default function ChatPanel({ currentUser }) {
                   <ChevronLeft size={17} />
                 </button>
                 <span className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-full text-sm font-bold text-white shadow-sm ${activeConversation.isGroup ? "bg-gradient-to-br from-violet-500 to-purple-600" : `bg-gradient-to-br ${avatarGradient(activeConversation.title)}`}`}>
-                  {activeConversation.isGroup ? <Users size={16} /> : activeConversation.avatarUrl ? <img src={activeConversation.avatarUrl} alt="" className="h-full w-full object-cover" /> : initialsOf(activeConversation.title)}
+                  {activeConversation.isGroup ? (activeConversation.avatarUrl ? <img src={activeConversation.avatarUrl} alt="" className="h-full w-full object-cover" /> : <Users size={16} />) : activeConversation.avatarUrl ? <img src={activeConversation.avatarUrl} alt="" className="h-full w-full object-cover" /> : initialsOf(activeConversation.title)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[16px] font-semibold tracking-[-0.01em] text-slate-900">{activeConversation.title}</div>
@@ -934,6 +978,9 @@ export default function ChatPanel({ currentUser }) {
                         <button type="button" onClick={renameGroup} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"><Pencil size={14} />Rename group</button>
                       ) : (
                         <button type="button" onClick={setChatNickname} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"><Pencil size={14} />Rename (only you)</button>
+                      )}
+                      {activeConversation.isGroup && (
+                        <button type="button" onClick={() => { setHeaderMenuOpen(false); groupAvatarInputRef.current?.click(); }} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"><Camera size={14} />Change group photo</button>
                       )}
                       <button type="button" onClick={clearActiveChat} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50"><Eraser size={14} />Clear chat for me</button>
                     </div>

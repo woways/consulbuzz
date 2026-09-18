@@ -56,7 +56,7 @@ function formatConversation(conversation, currentUserId, unreadCount = 0) {
     name: conversation.name,
     title,
     nickname: myMembership?.nickname || null,
-    avatarUrl: conversation.isGroup ? null : others[0]?.avatarUrl || null,
+    avatarUrl: conversation.isGroup ? conversation.avatarUrl || null : others[0]?.avatarUrl || null,
     otherUserId: conversation.isGroup ? null : others[0]?.id || null,
     members: conversation.members.map((m) => userMini(m.user)),
     otherMembers: others.map(userMini),
@@ -862,6 +862,59 @@ router.patch("/:id/nickname", async (req, res) => {
   } catch (error) {
     console.error("Set nickname failed:", error);
     return res.status(500).json({ success: false, message: "Unable to rename chat" });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/* PATCH /:id/avatar — set or remove a group's photo (shared with all)  */
+/* ------------------------------------------------------------------ */
+
+router.patch("/:id/avatar", async (req, res) => {
+  try {
+    const conversationId = req.params.id;
+    const me = req.clientUser.userId;
+    let avatarUrl = req.body?.avatarUrl ?? null;
+
+    if (avatarUrl) {
+      avatarUrl = String(avatarUrl);
+      if (!/^data:image\/(png|jpe?g|webp);base64,/.test(avatarUrl)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Please upload a PNG, JPG or WEBP image" });
+      }
+      if (avatarUrl.length > 700 * 1024) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Image must be under 500 KB" });
+      }
+    }
+
+    const member = await prisma.conversationMember.findUnique({
+      where: { conversationId_userId: { conversationId, userId: me } },
+      include: { conversation: true },
+    });
+    if (!member || member.conversation.companyId !== req.clientUser.companyId) {
+      return res.status(404).json({ success: false, message: "Conversation not found" });
+    }
+    if (!member.conversation.isGroup) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Only group chats have a group photo" });
+    }
+
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: { avatarUrl },
+    });
+    req.app
+      .get("io")
+      ?.to(`conversation:${conversationId}`)
+      .emit("conversation:avatar", { conversationId, avatarUrl });
+
+    return res.json({ success: true, conversationId, avatarUrl });
+  } catch (error) {
+    console.error("Group avatar update failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to update group photo" });
   }
 });
 

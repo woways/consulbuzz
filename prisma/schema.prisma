@@ -1187,6 +1187,7 @@ model Conversation {
   id        String  @id @default(cuid())
   isGroup   Boolean @default(false)
   name      String? // group name; null for 1-to-1
+  avatarUrl String? // group photo; null for 1-to-1
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
