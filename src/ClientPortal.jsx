@@ -722,9 +722,9 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     setOpenGroups,
   ] = useState({
     leads: true,
-    admissions: true,
-    finance: true,
-    insights: true,
+    admissions: false,
+    finance: false,
+    insights: false,
     support: true,
   });
 
