@@ -30,7 +30,7 @@ function initialsOf(name) {
     .map((p) => p[0]).join("").toUpperCase();
 }
 
-export default function TeamTargetAll({ onBack }) {
+export default function GoalsAndTargetsAll({ onBack }) {
   const currentYear = new Date().getFullYear();
 
   const [years, setYears] = useState([Math.max(LAUNCH_YEAR, currentYear)]);

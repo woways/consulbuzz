@@ -85,7 +85,7 @@ import Help from "./modules/client/Help";
 import SettingsView from "./modules/client/Settings";
 import CalendarModal from "./modules/client/CalendarModal";
 import ChatPanel from "./modules/client/ChatPanel";
-import TeamTarget from "./modules/client/TeamTarget";
+import GoalsAndTargets from "./modules/client/GoalsAndTargets";
 import Referrals from "./modules/client/Referrals";
 import MyStore from "./modules/client/MyStore";
 import { applyBrandTheme } from "./lib/brandTheme";
@@ -224,10 +224,10 @@ const NAV_GROUPS = [
   },
 
   {
-    key: "team-target",
+    key: "goals-and-targets",
     label: "Goals and Targets",
     icon: Target,
-    items: ["team-target"],
+    items: ["goals-and-targets"],
     direct: true,
   },
 
@@ -297,7 +297,7 @@ const NAV_GROUPS = [
 const PAGE_META = {
   dashboard: { label: "Dashboard" },
   chats: { label: "Chats" },
-  "team-target": { label: "Goals and Targets" },
+  "goals-and-targets": { label: "Goals and Targets" },
   "my-referrals": { label: "My Referrals" },
   "my-store": { label: "My Store" },
   "utm-leads": { label: "UTM Leads" },
@@ -3065,8 +3065,8 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
       return <ChatPanel currentUser={user} />;
     }
 
-    if (module === "team-target") {
-      return <TeamTarget currentUser={user} />;
+    if (module === "goals-and-targets") {
+      return <GoalsAndTargets currentUser={user} selectedYear={selectedYear} />;
     }
 
     if (module === "my-referrals") {
@@ -3817,7 +3817,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     const key = group.items[0];
                     const active = module === key;
                     const locked =
-                      group.key === "chats" || group.key === "team-target" || group.key === "my-referrals" || group.key === "my-store"
+                      group.key === "chats" || group.key === "goals-and-targets" || group.key === "my-referrals" || group.key === "my-store"
                         ? false
                         : !enabledFeatures.includes(key) ||
                           !hasModulePermission(key);

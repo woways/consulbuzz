@@ -11,7 +11,7 @@ import {
   Filter,
 } from "lucide-react";
 
-import TeamTargetAll from "./TeamTargetAll";
+import GoalsAndTargetsAll from "./GoalsAndTargetsAll";
 
 import { apiRequest } from "../../lib/api";
 
@@ -34,16 +34,15 @@ const LAUNCH_YEAR = 2026;
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
 
-export default function TeamTarget({ currentUser }) {
+export default function GoalsAndTargets({ currentUser, selectedYear }) {
   const isAdmin =
     currentUser?.role === "CLIENT_ADMIN" ||
     currentUser?.permissions?.canViewTeamTargets === true;
 
-  const currentYear = new Date().getFullYear();
+  const year = selectedYear === "all" ? new Date().getFullYear() : Number(selectedYear) || new Date().getFullYear();
 
   const [view, setView] = useState("me"); // "me" | "team"
   const [showAll, setShowAll] = useState(false);
-  const [year, setYear] = useState(Math.max(LAUNCH_YEAR, currentYear));
 
   const [months, setMonths] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -58,13 +57,6 @@ export default function TeamTarget({ currentUser }) {
   const [teamAverage, setTeamAverage] = useState(0);
   const [teamLoading, setTeamLoading] = useState(false);
   const [drill, setDrill] = useState(null);
-
-  const yearOptions = useMemo(() => {
-    const start = Math.max(LAUNCH_YEAR, currentYear);
-    const arr = [];
-    for (let y = start + 2; y >= LAUNCH_YEAR; y -= 1) arr.push(y);
-    return arr;
-  }, [currentYear]);
 
   /* ---- Load ------------------------------------------------------ */
   async function loadMe() {
@@ -217,7 +209,7 @@ export default function TeamTarget({ currentUser }) {
         ? "bg-indigo-50 text-indigo-600"
         : "bg-slate-100 text-slate-400";
     return (
-      <span className={`rounded-full px-2.5 py-1 text-[13px] font-bold ${cls}`}>
+      <span className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold ${cls}`}>
         {p}%
       </span>
     );
@@ -295,30 +287,30 @@ export default function TeamTarget({ currentUser }) {
     return (
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(16,24,40,.04),0_8px_24px_rgba(16,24,40,.05)]">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-center text-[12px]">
+          <table className="w-full border-collapse text-center text-[11px]">
             <thead>
               <tr className="text-slate-500">
-                <th className="bg-slate-50/80 px-4 py-3.5 text-left text-[13px] font-semibold uppercase tracking-wider" rowSpan={2}>
+                <th className="bg-slate-50/80 px-2 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider" rowSpan={2}>
                   Month
                 </th>
-                <th className="bg-slate-50/80 px-3 py-3.5 text-[13px] font-semibold uppercase tracking-wider" rowSpan={2}>
-                  Monthly<br />Target
+                <th className="bg-slate-50/80 px-1.5 py-2.5 text-[11px] font-semibold uppercase tracking-wider" rowSpan={2}>
+                  Mth<br />Tgt
                 </th>
                 {weekIdx.map((w) => (
-                  <th key={`w${w}`} className="border-l border-slate-100 bg-slate-50/80 px-2 py-3 text-[13px] font-semibold uppercase tracking-wider text-slate-600" colSpan={3}>
-                    Week {w}
+                  <th key={`w${w}`} className="border-l border-slate-100 bg-slate-50/80 px-1 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600" colSpan={3}>
+                    W{w}
                   </th>
                 ))}
-                <th className="border-l border-slate-100 bg-brand-50/70 px-3 py-3.5 text-[13px] font-semibold uppercase tracking-wider text-brand-600" rowSpan={2}>
+                <th className="border-l border-slate-100 bg-brand-50/70 px-1.5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-brand-600" rowSpan={2}>
                   Overall<br />Conv%
                 </th>
               </tr>
-              <tr className="text-[13px] uppercase tracking-wide text-slate-400">
+              <tr className="text-[10px] uppercase tracking-wide text-slate-400">
                 {weekIdx.map((w) => (
                   <Fragment key={`h${w}`}>
-                    <th className="border-l border-slate-100 bg-slate-50/50 px-2 py-2 font-semibold">Target</th>
-                    <th className="bg-slate-50/50 px-2 py-2 font-semibold">Achieved</th>
-                    <th className="bg-slate-50/50 px-2 py-2 font-semibold">Conv%</th>
+                    <th className="border-l border-slate-100 bg-slate-50/50 px-1 py-1.5 font-semibold">Tgt</th>
+                    <th className="bg-slate-50/50 px-1 py-1.5 font-semibold">Ach</th>
+                    <th className="bg-slate-50/50 px-1 py-1.5 font-semibold">%</th>
                   </Fragment>
                 ))}
               </tr>
@@ -327,20 +319,19 @@ export default function TeamTarget({ currentUser }) {
               {monthRows.map((m) => (
                 <tr key={m.month} className="transition-colors hover:bg-[#fafbff]">
                   {/* Month */}
-                  <td className="px-4 py-4 text-left">
-                    <div className="flex items-center gap-2.5">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-[13px] font-bold text-brand-600">
+                  <td className="px-2 py-2.5 text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-[10px] font-bold text-brand-600">
                         {MONTH_ABBR[m.month - 1]}
                       </span>
                       <div>
-                        <div className="font-bold text-slate-800">{MONTH_NAMES[m.month - 1]}</div>
-                        <div className="text-[12px] font-medium text-slate-400">{year}</div>
+                        <div className="text-[11px] font-bold text-slate-800">{MONTH_NAMES[m.month - 1]}</div>
                       </div>
                     </div>
                   </td>
 
                   {/* Monthly target — admin types it directly */}
-                  <td className="px-3 py-4">
+                  <td className="px-1.5 py-2.5">
                     {mode === "target" ? (
                       <input
                         type="text"
@@ -352,10 +343,10 @@ export default function TeamTarget({ currentUser }) {
                         onBlur={(e) =>
                           setTargetValue(ownerId, m.month, "monthly", null, e.target.value)
                         }
-                        className="w-16 rounded-lg border border-slate-200 bg-white px-2 py-1 text-center text-[14px] font-bold text-slate-800 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                        className="w-12 rounded-lg border border-slate-200 bg-white px-1 py-0.5 text-center text-[12px] font-bold text-slate-800 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
                       />
                     ) : (
-                      <span className="text-[15px] font-bold text-slate-800">{m.monthlyTarget}</span>
+                      <span className="text-[13px] font-bold text-slate-800">{m.monthlyTarget}</span>
                     )}
                   </td>
 
@@ -374,7 +365,7 @@ export default function TeamTarget({ currentUser }) {
                     return (
                       <Fragment key={`c${wnum}`}>
                         {/* Target */}
-                        <td className="border-l border-slate-50 px-2 py-4">
+                        <td className="border-l border-slate-50 px-1 py-2.5">
                           {mode === "target" ? (
                             <input
                               type="text"
@@ -384,14 +375,14 @@ export default function TeamTarget({ currentUser }) {
                                 e.target.value = e.target.value.replace(/[^0-9]/g, "");
                               }}
                               onBlur={(e) => setTargetValue(ownerId, m.month, "week", wnum, e.target.value)}
-                              className="w-14 rounded-lg border border-slate-200 bg-white px-2 py-1 text-center text-[13px] font-bold text-slate-800 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                              className="w-10 rounded-md border border-slate-200 bg-white px-1 py-0.5 text-center text-[11px] font-bold text-slate-800 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
                             />
                           ) : (
                             <span className="font-semibold text-slate-500">{w.target}</span>
                           )}
                         </td>
                         {/* Achieved */}
-                        <td className="px-2 py-4">
+                        <td className="px-1 py-2.5">
                           {mode === "achieved" ? (
                             <input
                               key={`ach-${year}-${m.month}-${wnum}-${w.achieved}`}
@@ -412,22 +403,22 @@ export default function TeamTarget({ currentUser }) {
                                   e.target.value = String(w.achieved);
                                 }
                               }}
-                              className="w-14 rounded-lg border border-slate-200 bg-white px-2 py-1 text-center text-[14px] font-bold text-slate-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                              className="w-10 rounded-md border border-slate-200 bg-white px-1 py-0.5 text-center text-[12px] font-bold text-slate-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
                             />
                           ) : (
-                            <span className="text-[14px] font-bold text-slate-900">{w.achieved}</span>
+                            <span className="text-[12px] font-bold text-slate-900">{w.achieved}</span>
                           )}
                         </td>
                         {/* Conv% */}
-                        <td className="px-2 py-4">{pctPill(w.percent)}</td>
+                        <td className="px-1 py-2.5">{pctPill(w.percent)}</td>
                       </Fragment>
                     );
                   })}
 
                   {/* Overall */}
-                  <td className="border-l border-slate-50 bg-brand-50/40 px-3 py-4">
+                  <td className="border-l border-slate-50 bg-brand-50/40 px-1.5 py-2.5">
                     <span
-                      className={`text-[15px] font-bold ${
+                      className={`text-[13px] font-bold ${
                         m.overallPercent >= 100 ? "text-emerald-600" : "text-brand-700"
                       }`}
                     >
@@ -443,10 +434,10 @@ export default function TeamTarget({ currentUser }) {
                 const totalPct = totalMonthly > 0 ? Math.round((totalAchieved / totalMonthly) * 100) : 0;
                 return (
                   <tr className="border-t-2 border-slate-200 bg-slate-50/70">
-                    <td className="px-4 py-4 text-left text-[13px] font-bold uppercase tracking-wide text-slate-700">
+                    <td className="px-2 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-slate-700">
                       Total year
                     </td>
-                    <td className="px-3 py-4 text-[15px] font-bold text-slate-900">{totalMonthly}</td>
+                    <td className="px-1.5 py-2.5 text-[13px] font-bold text-slate-900">{totalMonthly}</td>
                     {weekIdx.map((w) => (
                       <Fragment key={`tf${w}`}>
                         <td className="border-l border-slate-100 bg-slate-50/70" />
@@ -454,8 +445,8 @@ export default function TeamTarget({ currentUser }) {
                         <td className="bg-slate-50/70" />
                       </Fragment>
                     ))}
-                    <td className="border-l border-slate-100 bg-brand-100/50 px-3 py-4">
-                      <span className={`text-[16px] font-bold ${totalPct >= 100 ? "text-emerald-600" : "text-brand-700"}`}>
+                    <td className="border-l border-slate-100 bg-brand-100/50 px-1.5 py-2.5">
+                      <span className={`text-[13px] font-bold ${totalPct >= 100 ? "text-emerald-600" : "text-brand-700"}`}>
                         {totalPct}%
                       </span>
                     </td>
@@ -472,7 +463,7 @@ export default function TeamTarget({ currentUser }) {
   /* ---- Render ---------------------------------------------------- */
 
   if (showAll) {
-    return <TeamTargetAll onBack={() => setShowAll(false)} />;
+    return <GoalsAndTargetsAll onBack={() => setShowAll(false)} />;
   }
 
   return (
@@ -489,44 +480,28 @@ export default function TeamTarget({ currentUser }) {
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setView("me")}
-                className={`rounded-lg px-4 py-2 text-[13px] font-semibold ${
-                  view === "me" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
-                }`}
-              >
-                My Page
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("team")}
-                className={`rounded-lg px-4 py-2 text-[13px] font-semibold ${
-                  view === "team" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
-                }`}
-              >
-                Team View
-              </button>
-            </div>
-          )}
-          <div className="flex h-10 items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <span className="border-r border-slate-100 px-3 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
-              Year
-            </span>
-            <select
-              value={year}
-              onChange={(e) => setYear(Number(e.target.value))}
-              className="h-full bg-transparent px-3 text-[13px] font-semibold text-slate-700 outline-none"
+        {isAdmin && (
+          <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setView("me")}
+              className={`rounded-lg px-4 py-2 text-[13px] font-semibold ${
+                view === "me" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
+              }`}
             >
-              {yearOptions.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
+              My Page
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("team")}
+              className={`rounded-lg px-4 py-2 text-[13px] font-semibold ${
+                view === "team" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
+              }`}
+            >
+              Team View
+            </button>
           </div>
-        </div>
+        )}
       </div>
 
       {error && (
