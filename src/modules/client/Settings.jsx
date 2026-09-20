@@ -412,6 +412,7 @@ export default function SettingsView({
     phone: "",
     jobTitle: "",
     department: "",
+    managerId: "",
     active: true,
     permissions: {
       canManageUsers: false,
@@ -987,6 +988,7 @@ export default function SettingsView({
       jobTitle: user.jobTitle || "",
       department:
         user.department || "",
+      managerId: user.managerId || "",
       active: user.active,
       permissions: {
         ...emptyUserForm.permissions,
@@ -1053,6 +1055,8 @@ export default function SettingsView({
           userForm.jobTitle,
         department:
           userForm.department,
+        managerId:
+          userForm.role === "EMPLOYEE" ? (userForm.managerId || null) : null,
         active: userForm.active,
         permissions:
           userForm.permissions,
@@ -3972,6 +3976,39 @@ export default function SettingsView({
                     )}
                   </select>
                 </div>
+
+                {userForm.role === "EMPLOYEE" && (
+                  <div>
+                    <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                      Reports to (Manager)
+                    </label>
+                    <select
+                      value={userForm.managerId || ""}
+                      onChange={(event) =>
+                        setUserForm((current) => ({
+                          ...current,
+                          managerId: event.target.value,
+                        }))
+                      }
+                      className="w-full h-10 px-3 border border-slate-200 rounded-lg text-[15px] bg-white"
+                    >
+                      <option value="">— Select a manager —</option>
+                      {users
+                        .filter((u) => u.role === "MANAGER" && u.active)
+                        .map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.name}
+                            {m.department ? ` · ${m.department}` : ""}
+                          </option>
+                        ))}
+                    </select>
+                    {users.filter((u) => u.role === "MANAGER" && u.active).length === 0 && (
+                      <p className="mt-1 text-[12px] text-amber-600">
+                        No managers yet — create a Manager first, then assign employees to them.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>

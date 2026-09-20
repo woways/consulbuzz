@@ -15,8 +15,7 @@ const LAUNCH_YEAR = 2026;
 const LAUNCH_MONTH = 9; // September
 
 function startMonthFor(year) {
-  // All years (including the 2026 launch year) show the full Jan–Dec range.
-  return 1;
+  return year === LAUNCH_YEAR ? LAUNCH_MONTH : 1;
 }
 
 // Business weeks: ceil(daysInMonth / 7) → always 4 or 5.
@@ -73,18 +72,23 @@ function formatRow(row, year, month) {
   };
 }
 
-async function canViewTeam(req) {
-  if (req.clientUser.role === "CLIENT_ADMIN") return true;
+// Team access + scope.
+//   CLIENT_ADMIN                -> allowed, sees everyone (managerScope = null)
+//   MANAGER                     -> allowed, sees only their own reports (managerScope = their id)
+//   canViewTeamTargets granted  -> allowed, sees everyone (managerScope = null)
+//   otherwise                   -> not allowed
+async function getTeamAccess(req) {
   const actor = await prisma.user.findUnique({
     where: { id: req.clientUser.userId },
-    select: { canViewTeamTargets: true, active: true, companyId: true },
+    select: { id: true, role: true, active: true, companyId: true, canViewTeamTargets: true },
   });
-  return Boolean(
-    actor &&
-      actor.active &&
-      actor.companyId === req.clientUser.companyId &&
-      actor.canViewTeamTargets
-  );
+  if (!actor || !actor.active || actor.companyId !== req.clientUser.companyId) {
+    return { allowed: false, managerScope: null };
+  }
+  if (actor.role === "CLIENT_ADMIN") return { allowed: true, managerScope: null };
+  if (actor.role === "MANAGER") return { allowed: true, managerScope: actor.id };
+  if (actor.canViewTeamTargets) return { allowed: true, managerScope: null };
+  return { allowed: false, managerScope: null };
 }
 
 /* ------------------------------------------------------------------ */
@@ -188,8 +192,8 @@ router.patch("/me/achieved", async (req, res) => {
 
 router.patch("/target", async (req, res) => {
   try {
-    const allowed = await canViewTeam(req);
-    if (!allowed) {
+    const access = await getTeamAccess(req);
+    if (!access.allowed) {
       return res.status(403).json({
         success: false,
         message: "You do not have permission to set targets",
@@ -230,6 +234,7 @@ router.patch("/target", async (req, res) => {
         id: ownerId,
         companyId: req.clientUser.companyId,
         active: true,
+        ...(access.managerScope ? { managerId: access.managerScope } : {}),
       },
       select: { id: true },
     });
@@ -293,8 +298,8 @@ router.patch("/target", async (req, res) => {
 
 router.get("/team", async (req, res) => {
   try {
-    const allowed = await canViewTeam(req);
-    if (!allowed) {
+    const access = await getTeamAccess(req);
+    if (!access.allowed) {
       return res.status(403).json({
         success: false,
         message: "You do not have permission to view team targets",
@@ -304,7 +309,11 @@ router.get("/team", async (req, res) => {
     const year = Number(req.query.year) || new Date().getFullYear();
 
     const users = await prisma.user.findMany({
-      where: { companyId: req.clientUser.companyId, active: true },
+      where: {
+        companyId: req.clientUser.companyId,
+        active: true,
+        ...(access.managerScope ? { managerId: access.managerScope } : {}),
+      },
       select: { id: true, name: true, email: true, jobTitle: true, department: true, role: true },
       orderBy: { name: "asc" },
     });
@@ -366,8 +375,8 @@ router.get("/team", async (req, res) => {
 
 router.get("/user/:userId", async (req, res) => {
   try {
-    const allowed = await canViewTeam(req);
-    if (!allowed) {
+    const access = await getTeamAccess(req);
+    if (!access.allowed) {
       return res.status(403).json({
         success: false,
         message: "You do not have permission to view this",
@@ -378,6 +387,7 @@ router.get("/user/:userId", async (req, res) => {
       where: {
         id: req.params.userId,
         companyId: req.clientUser.companyId,
+        ...(access.managerScope ? { managerId: access.managerScope } : {}),
       },
       select: { id: true, name: true, email: true, jobTitle: true },
     });
@@ -418,8 +428,8 @@ router.get("/user/:userId", async (req, res) => {
 
 router.get("/all", async (req, res) => {
   try {
-    const allowed = await canViewTeam(req);
-    if (!allowed) {
+    const access = await getTeamAccess(req);
+    if (!access.allowed) {
       return res.status(403).json({
         success: false,
         message: "You do not have permission to view this",
@@ -437,7 +447,11 @@ router.get("/all", async (req, res) => {
     }
 
     const users = await prisma.user.findMany({
-      where: { companyId: req.clientUser.companyId, active: true },
+      where: {
+        companyId: req.clientUser.companyId,
+        active: true,
+        ...(access.managerScope ? { managerId: access.managerScope } : {}),
+      },
       select: { id: true, name: true, email: true, jobTitle: true, department: true, role: true },
       orderBy: { name: "asc" },
     });

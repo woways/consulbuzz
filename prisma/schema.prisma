@@ -244,6 +244,11 @@ model User {
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  // Reporting hierarchy: an employee reports to a manager (self-relation).
+  managerId String?
+  manager   User?    @relation("TeamManager", fields: [managerId], references: [id], onDelete: SetNull)
+  reports   User[]   @relation("TeamManager")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -271,6 +276,7 @@ model User {
   @@index([companyId])
   @@index([companyId, role])
   @@index([companyId, active])
+  @@index([companyId, managerId])
 }
 
 model ClientSession {

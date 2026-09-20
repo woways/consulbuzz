@@ -208,6 +208,8 @@ function formatUser(user) {
     employeeId: user.employeeId,
     customRoleId: user.customRoleId,
     customRoleName: user.customRoleName,
+    managerId: user.managerId ?? null,
+    managerName: user.manager?.name ?? null,
     permissions: {
       canManageUsers:
         user.role === "CLIENT_ADMIN" ||
@@ -422,6 +424,9 @@ router.get("/", async (req, res) => {
             not: "SUPER_ADMIN",
           },
         },
+        include: {
+          manager: { select: { name: true } },
+        },
         orderBy: [
           { active: "desc" },
           { createdAt: "asc" },
@@ -509,6 +514,28 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ success: false, message: "Department is required and must be selected from the configured departments" });
     }
 
+    // Employees report to a manager. Validate the assignment against the
+    // company's active managers. (Managers/admins are not assigned upward.)
+    let managerId = null;
+    if (role === "EMPLOYEE") {
+      const requestedManagerId = String(req.body?.managerId || "").trim();
+      if (requestedManagerId) {
+        const manager = await prisma.user.findFirst({
+          where: {
+            id: requestedManagerId,
+            companyId: req.clientUser.companyId,
+            role: "MANAGER",
+            active: true,
+          },
+          select: { id: true },
+        });
+        if (!manager) {
+          return res.status(400).json({ success: false, message: "Selected manager is invalid or no longer a manager" });
+        }
+        managerId = manager.id;
+      }
+    }
+
     if (
       password.length < 8 ||
       !/[A-Z]/.test(password) ||
@@ -591,6 +618,7 @@ router.post("/", async (req, res) => {
           employeeId,
           customRoleId: customRole?.id || null,
           customRoleName: customRole?.name || null,
+          managerId,
           ...permissions,
         },
       });

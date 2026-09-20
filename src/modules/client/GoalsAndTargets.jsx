@@ -50,8 +50,11 @@ const LAUNCH_YEAR = 2026;
 /* ------------------------------------------------------------------ */
 
 export default function GoalsAndTargets({ currentUser, selectedYear }) {
+  // Who can see the Team tab: admins, anyone granted the permission, and
+  // managers (the backend scopes a manager's Team view to their own reports).
   const isAdmin =
     currentUser?.role === "CLIENT_ADMIN" ||
+    currentUser?.role === "MANAGER" ||
     currentUser?.permissions?.canViewTeamTargets === true;
 
   const year = selectedYear === "all" ? new Date().getFullYear() : Number(selectedYear) || new Date().getFullYear();
