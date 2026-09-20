@@ -224,18 +224,18 @@ const NAV_GROUPS = [
   },
 
   {
-    key: "goals-and-targets",
-    label: "Goals and Targets",
-    icon: Target,
-    items: ["goals-and-targets"],
-    direct: true,
-  },
-
-  {
     key: "chats",
     label: "Chats",
     icon: MessageSquare,
     items: ["chats"],
+    direct: true,
+  },
+
+  {
+    key: "goals-and-targets",
+    label: "Goals and Targets",
+    icon: Target,
+    items: ["goals-and-targets"],
     direct: true,
   },
 
@@ -766,19 +766,21 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
     }
 
     const byKey = new Map(base.map((group) => [group.key, group]));
+
+    // The user's saved order, limited to groups that still exist.
+    const savedKnown = preferredOrder.filter((key) => byKey.has(key));
+    const savedSet = new Set(savedKnown);
+
+    // Walk the default order. Slots for saved keys are filled in the user's
+    // saved sequence; any new/renamed group the saved order never knew about
+    // keeps its DEFAULT position instead of being pushed to the very end.
     const ordered = [];
-
-    preferredOrder.forEach((key) => {
-      if (byKey.has(key)) {
-        ordered.push(byKey.get(key));
-        byKey.delete(key);
-      }
-    });
-
-    // Any future/new menu items are appended using the product default order
-    // without disturbing the user's existing custom order.
+    let si = 0;
     base.forEach((group) => {
-      if (byKey.has(group.key)) {
+      if (savedSet.has(group.key)) {
+        ordered.push(byKey.get(savedKnown[si]));
+        si += 1;
+      } else {
         ordered.push(group);
       }
     });
@@ -4240,7 +4242,6 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     onChange={(event) => {
                       if (event.target.value === "__add_year__") { setYearError(""); setNewWorkspaceYear(""); setAddYearOpen(true); return; }
                       setSelectedYear(event.target.value);
-                      setModule("dashboard");
                     }}
                     className="h-full min-w-[108px] bg-transparent px-3 text-xs font-semibold text-slate-700 outline-none cursor-pointer"
                     aria-label="Global CRM workspace year"

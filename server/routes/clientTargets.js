@@ -15,7 +15,8 @@ const LAUNCH_YEAR = 2026;
 const LAUNCH_MONTH = 9; // September
 
 function startMonthFor(year) {
-  return year === LAUNCH_YEAR ? LAUNCH_MONTH : 1;
+  // All years (including the 2026 launch year) show the full Jan–Dec range.
+  return 1;
 }
 
 // Business weeks: ceil(daysInMonth / 7) → always 4 or 5.

@@ -9,6 +9,7 @@ import {
   Search,
   X,
   Filter,
+  Download,
 } from "lucide-react";
 
 import GoalsAndTargetsAll from "./GoalsAndTargetsAll";
@@ -21,6 +22,20 @@ const MONTH_NAMES = [
 ];
 const MONTH_ABBR = [
   "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec",
+];
+// Quarter → months it covers. "all" shows the full year.
+const QUARTERS = {
+  q1: [1, 2, 3],
+  q2: [4, 5, 6],
+  q3: [7, 8, 9],
+  q4: [10, 11, 12],
+};
+const QUARTER_TABS = [
+  ["all", "Full year"],
+  ["q1", "Q1 · Jan–Mar"],
+  ["q2", "Q2 · Apr–Jun"],
+  ["q3", "Q3 · Jul–Sep"],
+  ["q4", "Q4 · Oct–Dec"],
 ];
 
 function initialsOf(name) {
@@ -57,6 +72,7 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
   const [teamAverage, setTeamAverage] = useState(0);
   const [teamLoading, setTeamLoading] = useState(false);
   const [drill, setDrill] = useState(null);
+  const [quarter, setQuarter] = useState("all"); // all | q1 | q2 | q3 | q4
 
   /* ---- Load ------------------------------------------------------ */
   async function loadMe() {
@@ -215,6 +231,88 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
     );
   }
 
+  // ---- CSV export for one person's months (respects the quarter filter) ----
+  function csvCell(v) {
+    const s = String(v ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+
+  function exportMonthsCsv(monthRows, ownerName) {
+    if (!monthRows || monthRows.length === 0) return;
+    const maxW = monthRows.reduce((mx, m) => Math.max(mx, m.weeks.length), 4);
+    const wIdx = Array.from({ length: maxW }, (_, i) => i + 1);
+
+    const header = ["Month", "Year", "Monthly Target"];
+    wIdx.forEach((w) => header.push(`W${w} Target`, `W${w} Achieved`, `W${w} Conv%`));
+    header.push("Overall Achieved", "Overall %");
+
+    const rows = [header];
+    monthRows.forEach((m) => {
+      const row = [MONTH_NAMES[m.month - 1], year, m.monthlyTarget ?? ""];
+      wIdx.forEach((wnum) => {
+        const w = m.weeks.find((x) => x.week === wnum);
+        if (w) row.push(w.target ?? "", w.achieved ?? "", w.percent ?? "");
+        else row.push("", "", "");
+      });
+      row.push(m.totalAchieved ?? "", m.overallPercent ?? "");
+      rows.push(row);
+    });
+
+    const csv = rows.map((r) => r.map(csvCell).join(",")).join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${String(ownerName || "targets").replace(/\s+/g, "-").toLowerCase()}-${year}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // Quarter toolbar (filter tabs on the left, export on the right).
+  function QuarterToolbar({ monthRows, ownerName }) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[12px] font-semibold uppercase tracking-wide text-slate-400">Quarter</span>
+          <div className="flex flex-wrap rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+            {QUARTER_TABS.map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setQuarter(key)}
+                className={`rounded-lg px-3 py-1.5 text-[12px] font-semibold ${
+                  quarter === key
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => exportMonthsCsv(monthRows, ownerName)}
+          disabled={!monthRows || monthRows.length === 0}
+          className="inline-flex h-9 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-[13px] font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Download size={15} />
+          Export CSV
+        </button>
+      </div>
+    );
+  }
+
+  // Apply the current quarter filter to a set of month rows.
+  function applyQuarter(monthRows) {
+    return quarter === "all"
+      ? monthRows
+      : monthRows.filter((m) => QUARTERS[quarter].includes(m.month));
+  }
+
   // Glassy analysis ring card.
   function AnalysisCard(monthRows, name) {
     const avg = yearAverage(monthRows);
@@ -225,17 +323,17 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
     const offset = circ - (circ * shown) / 100;
 
     return (
-      <div className="overflow-hidden rounded-3xl border border-indigo-200 bg-white p-6 text-slate-900 shadow-[0_2px_4px_rgba(16,24,40,.04),0_10px_28px_rgba(79,70,229,.08)]">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 text-slate-900 shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="text-[13px] font-bold uppercase tracking-[0.16em] text-indigo-600">
+          <div className="text-[12px] font-bold uppercase tracking-[0.14em] text-slate-500">
             {name ? `${name} · ` : ""}{year} year average
           </div>
-          <div className="rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-[13px] font-semibold text-indigo-700">
-            {year === LAUNCH_YEAR ? "Sept–Dec active" : "Full year"}
+          <div className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[12px] font-semibold text-slate-500">
+            Full year
           </div>
         </div>
-        <div className="mt-5 flex flex-col items-center gap-8 sm:flex-row sm:justify-between">
-          <div className="relative h-44 w-44 flex-shrink-0">
+        <div className="mt-3 flex flex-col items-center gap-5 sm:flex-row sm:justify-start">
+          <div className="relative h-32 w-32 flex-shrink-0">
             <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
               <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" strokeWidth="14" className="text-brand-100" />
               <circle
@@ -246,29 +344,29 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="text-[38px] font-extrabold leading-none tracking-tight">{avg}%</div>
-              <div className="text-[13px] font-semibold text-slate-500">year avg</div>
+              <div className="text-[26px] font-extrabold leading-none tracking-tight">{avg}%</div>
+              <div className="text-[11px] font-semibold text-slate-500">year avg</div>
             </div>
           </div>
-          <div className="grid w-full grid-cols-2 gap-3 sm:max-w-[360px]">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="text-[13px] font-bold uppercase tracking-wide text-slate-500">Months tracked</div>
-              <div className="mt-1 text-[22px] font-bold">{tracked}</div>
+          <div className="grid w-full grid-cols-2 gap-2.5 sm:flex-1">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="text-[12px] font-bold uppercase tracking-wide text-slate-500">Months tracked</div>
+              <div className="mt-0.5 text-[20px] font-bold">{tracked}</div>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="text-[13px] font-bold uppercase tracking-wide text-slate-500">Best month</div>
-              <div className="mt-1 text-[16px] font-bold">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="text-[12px] font-bold uppercase tracking-wide text-slate-500">Best month</div>
+              <div className="mt-0.5 text-[15px] font-bold">
                 {best ? `${MONTH_ABBR[best.month - 1]} · ${best.overallPercent}%` : "—"}
               </div>
             </div>
-            <div className="col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div className="col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
               <div className="mb-1.5 flex items-center justify-between text-[12px] font-semibold text-slate-500">
                 <span>Progress</span>
                 <span className="font-bold">{avg}%</span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-indigo-100">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
                 <div
-                  className="h-2 rounded-full bg-indigo-500"
+                  className="h-2 rounded-full bg-brand-500"
                   style={{ width: `${Math.min(100, avg)}%` }}
                 />
               </div>
@@ -489,7 +587,7 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
                 view === "me" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
               }`}
             >
-              My Page
+              My Target
             </button>
             <button
               type="button"
@@ -498,7 +596,7 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
                 view === "team" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
               }`}
             >
-              Team View
+              Team Target
             </button>
           </div>
         )}
@@ -523,7 +621,9 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
             <div className="rounded-xl border border-brand-100 bg-brand-50/60 px-4 py-2.5 text-[12px] font-semibold text-brand-700">
               Type what you achieved each week, then press Enter or click away to save. Targets and percentages are automatic.
             </div>
-            {TargetTable(months, "achieved", currentUser?.id)}
+            {/* Quarter filter (Q1–Q4) + export */}
+            <QuarterToolbar monthRows={applyQuarter(months)} ownerName={currentUser?.name} />
+            {TargetTable(applyQuarter(months), "achieved", currentUser?.id)}
           </>
         )
       )}
@@ -552,7 +652,8 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
             <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-[12px] font-semibold text-indigo-700">
               Type each <b>Week Target</b> (numbers only). Monthly Target = sum of week targets. Achieved is entered by the employee.
             </div>
-            {TargetTable(drill.months, "target", drill.owner?.id)}
+            <QuarterToolbar monthRows={applyQuarter(drill.months)} ownerName={drill.owner?.name} />
+            {TargetTable(applyQuarter(drill.months), "target", drill.owner?.id)}
           </>
         ) : teamLoading ? (
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-slate-500">
@@ -560,17 +661,7 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between">
-              <div className="text-[13px] font-medium text-slate-500">Company-wide performance overview</div>
-              <button
-                type="button"
-                onClick={() => setShowAll(true)}
-                className="inline-flex h-9 items-center gap-2 rounded-xl bg-slate-900 px-4 text-[13px] font-semibold text-white hover:bg-slate-800"
-              >
-                View all
-                <ChevronRight size={14} />
-              </button>
-            </div>
+            <div className="text-[13px] font-medium text-slate-500">Company-wide performance overview</div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-900 p-5 text-white shadow-[0_8px_24px_rgba(79,70,229,.18)]">
                 <div className="text-[13px] font-semibold uppercase tracking-wide text-brand-200">Team average · {year}</div>
@@ -588,6 +679,18 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
                     : "—"}
                 </div>
               </div>
+            </div>
+
+            {/* View all — full company breakdown */}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-5 text-[13px] font-semibold text-white shadow-md shadow-indigo-600/25 ring-1 ring-indigo-500 transition hover:bg-indigo-700"
+              >
+                View all
+                <ChevronRight size={16} />
+              </button>
             </div>
 
             {/* Search + department filter */}

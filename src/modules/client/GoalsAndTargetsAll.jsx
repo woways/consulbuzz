@@ -7,6 +7,7 @@ import {
   Search,
   X,
   Filter,
+  Download,
 } from "lucide-react";
 
 import { apiRequest } from "../../lib/api";
@@ -138,6 +139,63 @@ export default function GoalsAndTargetsAll({ onBack }) {
     arrSetter(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
   }
 
+  // ---- CSV export (respects current filters) ------------------------------
+  function csvCell(v) {
+    const s = String(v ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+
+  function exportCsv() {
+    if (filtered.length === 0) return;
+
+    const header = ["Employee", "Department / Role", "Month", "Year", "Monthly Target"];
+    weekIdx.forEach((w) => header.push(`W${w} Target`, `W${w} Achieved`, `W${w} Conv%`));
+    header.push("Overall Achieved", "Overall %");
+
+    const rows = [header];
+
+    filtered.forEach((emp) => {
+      emp.months.forEach((m) => {
+        const row = [
+          emp.name,
+          emp.department || ROLE_LABELS[emp.role] || "",
+          MONTH_NAMES[m.month - 1],
+          m.year,
+          m.monthlyTarget ?? "",
+        ];
+        weekIdx.forEach((wnum) => {
+          const w = m.weeks.find((x) => x.week === wnum);
+          if (w) row.push(w.target ?? "", w.achieved ?? "", w.percent ?? "");
+          else row.push("", "", "");
+        });
+        row.push(m.totalAchieved ?? "", m.overallPercent ?? "");
+        rows.push(row);
+      });
+    });
+
+    rows.push([
+      `All (${totals.empCount})`,
+      "All months",
+      "",
+      "",
+      totals.totalTarget,
+      ...Array(weekIdx.length * 3).fill(""),
+      totals.totalAchieved,
+      totals.pct,
+    ]);
+
+    const csv = rows.map((r) => r.map(csvCell).join(",")).join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `team-targets-${years.join("-")}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
   function pctPill(p) {
     const cls =
       p >= 100 ? "bg-emerald-50 text-emerald-600"
@@ -208,6 +266,15 @@ export default function GoalsAndTargetsAll({ onBack }) {
           </button>
           <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-slate-900">All employees · full year</h1>
         </div>
+        <button
+          type="button"
+          onClick={exportCsv}
+          disabled={filtered.length === 0}
+          className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-5 text-[13px] font-semibold text-white shadow-md shadow-indigo-600/25 ring-1 ring-indigo-500 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Download size={16} />
+          Export CSV
+        </button>
       </div>
 
       {/* Filter bar */}
