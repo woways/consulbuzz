@@ -20,7 +20,6 @@ import {
   Video,
 } from "lucide-react";
 
-import MeetingRoom from "./MeetingRoom";
 
 import { apiRequest } from "../../lib/api";
 
@@ -168,8 +167,6 @@ export default function CalendarModal({ open, onClose, currentUser }) {
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
-  const [meetingOpen, setMeetingOpen] = useState(false);
-  const [meetingRoom, setMeetingRoom] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -310,6 +307,45 @@ export default function CalendarModal({ open, onClose, currentUser }) {
     setSaving(true);
     setError("");
 
+    // If a video meeting is requested and we don't already have a Google Meet
+    // link, create one on the organiser's Google Calendar.
+    let meetingRoomValue = editingEvent.hasMeeting
+      ? String(editingEvent.meetingRoom || "").trim()
+      : "";
+    if (editingEvent.hasMeeting && !/^https?:\/\//i.test(meetingRoomValue)) {
+      try {
+        const startForMeet = combineDateTime(
+          editingEvent.dateStr,
+          editingEvent.allDay ? "09:00" : editingEvent.startTime
+        );
+        const endForMeet = combineDateTime(
+          editingEvent.dateStr,
+          editingEvent.allDay ? "10:00" : editingEvent.endTime
+        );
+        const meet = await apiRequest("/api/client/google/meet", {
+          method: "POST",
+          body: JSON.stringify({
+            summary: editingEvent.title.trim() || "Meeting",
+            startISO: new Date(startForMeet).toISOString(),
+            endISO: new Date(endForMeet).toISOString(),
+          }),
+        });
+        meetingRoomValue = meet?.meetLink || "";
+        if (!meetingRoomValue) {
+          setError("Couldn't create a Google Meet link. Try again.");
+          setSaving(false);
+          return;
+        }
+      } catch (error) {
+        setError(
+          error?.data?.message ||
+            "Couldn't create a Google Meet link. Connect Google in Settings → Integrations."
+        );
+        setSaving(false);
+        return;
+      }
+    }
+
     const payload = {
       title: editingEvent.title.trim(),
       description: editingEvent.description.trim() || null,
@@ -325,10 +361,7 @@ export default function CalendarModal({ open, onClose, currentUser }) {
         ? null
         : combineDateTime(editingEvent.dateStr, editingEvent.endTime),
       assignedToUserId: editingEvent.assignedToUserId || null,
-      meetingRoom: editingEvent.hasMeeting
-        ? editingEvent.meetingRoom ||
-          `consulbuzz-evt-${Date.now().toString(36)}`
-        : null,
+      meetingRoom: editingEvent.hasMeeting ? meetingRoomValue || null : null,
     };
 
     try {
@@ -576,13 +609,12 @@ export default function CalendarModal({ open, onClose, currentUser }) {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setMeetingRoom(event.meetingRoom);
-                            setMeetingOpen(true);
+                            window.open(event.meetingRoom, "_blank", "noopener");
                           }}
                           className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[12px] font-bold text-white hover:bg-emerald-700"
                         >
                           <Video size={11} />
-                          Join meeting
+                          Join Google Meet
                         </button>
                       )}
                     </button>
@@ -991,16 +1023,6 @@ export default function CalendarModal({ open, onClose, currentUser }) {
         </div>
       )}
 
-      <MeetingRoom
-        open={meetingOpen}
-        roomName={meetingRoom}
-        displayName={currentUser?.name}
-        subject="ConsulBuzz Meeting"
-        onClose={() => {
-          setMeetingOpen(false);
-          setMeetingRoom("");
-        }}
-      />
     </div>
   );
 }

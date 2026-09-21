@@ -249,6 +249,11 @@ model User {
   manager   User?    @relation("TeamManager", fields: [managerId], references: [id], onDelete: SetNull)
   reports   User[]   @relation("TeamManager")
 
+  // Google Calendar / Meet integration (per-user OAuth).
+  googleRefreshToken String?
+  googleEmail        String?
+  googleConnectedAt  DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

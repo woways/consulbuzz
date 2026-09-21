@@ -45,6 +45,7 @@ import clientAuditLogsRoutes from "./routes/clientAuditLogs.js";
 import clientWalkinsRoutes from "./routes/clientWalkins.js";
 import clientCounsellingRoutes from "./routes/clientCounselling.js";
 import clientCalendarRoutes from "./routes/clientCalendar.js";
+import clientGoogleRoutes from "./routes/clientGoogle.js";
 import clientYearsRoutes from "./routes/clientYears.js";
 import clientChatRoutes from "./routes/clientChat.js";
 
@@ -163,6 +164,7 @@ app.use("/api/client/analytics", clientAnalyticsRoutes);
 app.use("/api/client/lead-store", clientLeadStoreRoutes);
 app.use("/api/client/support", clientSupportRoutes);
 app.use("/api/client/notifications", clientNotificationsRoutes);
+app.use("/api/client/google", clientGoogleRoutes);
 app.use("/api/client/billing", clientBillingRoutes);
 app.use("/api/client/users", clientUsersRoutes);
 app.use("/api/client/lead-sources", clientLeadSourcesRoutes);

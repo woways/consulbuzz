@@ -41,7 +41,6 @@ import {
   CheckSquare,
 } from "lucide-react";
 
-import MeetingRoom from "./MeetingRoom";
 import { apiRequest, API_URL } from "../../lib/api";
 
 /* ------------------------------------------------------------------ */
@@ -203,7 +202,6 @@ const EMOJI_CATEGORY_ICONS = {
 };
 
 const MEETING_PREFIX = "\uD83D\uDCF9 Meeting started \u2014 join: ";
-const JITSI_BASE = "https://meet.jit.si/";
 
 function groupMessageReactions(reactions, myId) {
   const groups = new Map();
@@ -252,8 +250,6 @@ export default function ChatPanel({ currentUser }) {
   const [draft, setDraft] = useState("");
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [composerEmojiCategory, setComposerEmojiCategory] = useState("Smileys");
-  const [meetingOpen, setMeetingOpen] = useState(false);
-  const [meetingRoom, setMeetingRoom] = useState("");
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState("");
   const [replyTo, setReplyTo] = useState(null);
@@ -902,37 +898,54 @@ export default function ChatPanel({ currentUser }) {
     }
   }
 
-  function startMeeting() {
+  async function startMeeting() {
     if (!activeId) return;
-    const socket = socketRef.current;
-    if (!socket) return;
+    try {
+      const now = Date.now();
+      const data = await apiRequest("/api/client/google/meet", {
+        method: "POST",
+        body: JSON.stringify({
+          summary: "ConsulBuzz call",
+          startISO: new Date(now).toISOString(),
+          endISO: new Date(now + 60 * 60 * 1000).toISOString(),
+        }),
+      });
+      const link = data?.meetLink;
+      if (!link) return;
 
-    const room = `consulbuzz-${activeId.slice(0, 8)}-${Date.now().toString(36)}`;
-    socket.emit(
-      "message:send",
-      { conversationId: activeId, body: `${MEETING_PREFIX}${JITSI_BASE}${room}` },
-      (resp) => {
-        if (resp?.ok) {
-          setMessages((current) => {
-            if (current.some((m) => m.id === resp.message.id)) return current;
-            return [...current, resp.message];
-          });
-        }
+      const socket = socketRef.current;
+      if (socket) {
+        socket.emit(
+          "message:send",
+          { conversationId: activeId, body: `${MEETING_PREFIX}${link}` },
+          (resp) => {
+            if (resp?.ok) {
+              setMessages((current) => {
+                if (current.some((m) => m.id === resp.message.id)) return current;
+                return [...current, resp.message];
+              });
+            }
+          }
+        );
       }
-    );
-    setMeetingRoom(room);
-    setMeetingOpen(true);
+      window.open(link, "_blank", "noopener");
+    } catch (error) {
+      window.alert(
+        error?.data?.message ||
+          "Unable to start a Google Meet. Connect Google in Settings → Integrations."
+      );
+    }
   }
 
-  function joinMeeting(room) {
-    setMeetingRoom(room);
-    setMeetingOpen(true);
+  function joinMeeting(url) {
+    if (url) window.open(url, "_blank", "noopener");
   }
 
   function meetingRoomFromBody(body) {
-    const idx = String(body).indexOf(JITSI_BASE);
+    const s = String(body || "");
+    const idx = s.indexOf("https://meet.google.com/");
     if (idx === -1) return null;
-    const url = String(body).slice(idx + JITSI_BASE.length).trim();
+    const url = s.slice(idx).split(/\s/)[0].trim();
     return url.split(/\s/)[0] || null;
   }
 
@@ -2080,13 +2093,6 @@ export default function ChatPanel({ currentUser }) {
         </div>
       )}
 
-      <MeetingRoom
-        open={meetingOpen}
-        roomName={meetingRoom}
-        displayName={currentUser?.name}
-        subject="ConsulBuzz Meeting"
-        onClose={() => { setMeetingOpen(false); setMeetingRoom(""); }}
-      />
     </div>
   );
 }

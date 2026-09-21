@@ -83,6 +83,11 @@ const TABS = [
     i: Bell,
   },
   {
+    k: "integrations",
+    l: "Integrations",
+    i: Globe2,
+  },
+  {
     k: "activity",
     l: "Activity Log",
     i: History,
@@ -196,6 +201,87 @@ export default function SettingsView({
   ] = useState(
     "company"
   );
+
+  // ---- Google (Meet) integration state ----
+  const [googleStatus, setGoogleStatus] = useState({
+    configured: false,
+    connected: false,
+    email: null,
+  });
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const [googleNotice, setGoogleNotice] = useState("");
+
+  async function loadGoogleStatus() {
+    try {
+      const data = await apiRequest("/api/client/google/status");
+      setGoogleStatus({
+        configured: !!data?.configured,
+        connected: !!data?.connected,
+        email: data?.email || null,
+      });
+    } catch (error) {
+      console.error("Unable to load Google status:", error);
+    }
+  }
+
+  async function connectGoogle() {
+    setGoogleBusy(true);
+    setGoogleNotice("");
+    try {
+      const data = await apiRequest("/api/client/google/connect");
+      if (data?.url) {
+        window.location.href = data.url; // go to Google consent
+        return;
+      }
+      setGoogleNotice("Google is not configured on the server yet.");
+    } catch (error) {
+      setGoogleNotice(error?.data?.message || "Unable to start Google connect.");
+    } finally {
+      setGoogleBusy(false);
+    }
+  }
+
+  async function disconnectGoogle() {
+    setGoogleBusy(true);
+    try {
+      await apiRequest("/api/client/google/disconnect", { method: "POST" });
+      await loadGoogleStatus();
+    } catch (error) {
+      setGoogleNotice(error?.data?.message || "Unable to disconnect.");
+    } finally {
+      setGoogleBusy(false);
+    }
+  }
+
+  // Load status when opening the Integrations tab, and show the result of a
+  // just-completed OAuth redirect (?google=connected|error|norefresh).
+  useEffect(() => {
+    if (tab !== "integrations") return;
+    loadGoogleStatus();
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const g = params.get("google");
+      if (g === "connected") setGoogleNotice("Google account connected.");
+      else if (g === "norefresh")
+        setGoogleNotice(
+          "Almost there — remove Bispun from your Google account's connected apps, then connect again."
+        );
+      else if (g === "error")
+        setGoogleNotice("Something went wrong connecting Google. Try again.");
+      if (g) {
+        params.delete("google");
+        const q = params.toString();
+        window.history.replaceState(
+          {},
+          "",
+          window.location.pathname + (q ? `?${q}` : "")
+        );
+      }
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
 
   const [
     selectedColor,
@@ -3792,6 +3878,70 @@ export default function SettingsView({
 
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-[13px] text-slate-500 leading-5">
                 Audit entries are company-isolated and read-only. Password values and logo image data are never written into the activity log.
+              </div>
+            </div>
+          )}
+
+          {tab === "integrations" && (
+            <div className="p-6 space-y-5">
+              <div>
+                <h3 className="text-[15px] font-bold text-slate-900">Integrations</h3>
+                <p className="text-[13px] text-slate-500 mt-1">
+                  Connect your own accounts to unlock features across the CRM. Each person connects their own account.
+                </p>
+              </div>
+
+              {googleNotice && (
+                <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-[13px] font-semibold text-indigo-700">
+                  {googleNotice}
+                </div>
+              )}
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white">
+                      <Globe2 size={20} />
+                    </span>
+                    <div>
+                      <div className="text-[15px] font-bold text-slate-900">Google Meet</div>
+                      <div className="text-[13px] text-slate-500">
+                        Connect your Google account so scheduled meetings get a real Google Meet link on your calendar.
+                      </div>
+                      {googleStatus.connected && (
+                        <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[12px] font-semibold text-emerald-600">
+                          Connected{googleStatus.email ? ` · ${googleStatus.email}` : ""}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-shrink-0">
+                    {!googleStatus.configured ? (
+                      <span className="text-[12px] font-semibold text-amber-600">
+                        Not set up on the server yet
+                      </span>
+                    ) : googleStatus.connected ? (
+                      <button
+                        type="button"
+                        onClick={disconnectGoogle}
+                        disabled={googleBusy}
+                        className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        {googleBusy ? "Working..." : "Disconnect"}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={connectGoogle}
+                        disabled={googleBusy}
+                        className="inline-flex h-10 items-center gap-2 rounded-xl bg-indigo-600 px-5 text-[13px] font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50"
+                      >
+                        {googleBusy ? "Opening Google..." : "Connect Google"}
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
