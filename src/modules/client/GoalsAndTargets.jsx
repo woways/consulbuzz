@@ -204,6 +204,31 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
     );
   }
 
+  // Group the (filtered) roster by role → Admin, each Manager with their
+  // assigned employees nested, then any employees without a manager.
+  const grouped = useMemo(() => {
+    const admins = [];
+    const managers = [];
+    const empByMgr = new Map();
+    const unassigned = [];
+    const mgrIds = new Set(
+      filteredRoster.filter((r) => r.role === "MANAGER").map((r) => r.id)
+    );
+    filteredRoster.forEach((r) => {
+      if (r.role === "CLIENT_ADMIN") {
+        admins.push(r);
+      } else if (r.role === "MANAGER") {
+        managers.push(r);
+      } else if (r.managerId && mgrIds.has(r.managerId)) {
+        if (!empByMgr.has(r.managerId)) empByMgr.set(r.managerId, []);
+        empByMgr.get(r.managerId).push(r);
+      } else {
+        unassigned.push(r);
+      }
+    });
+    return { admins, managers, empByMgr, unassigned };
+  }, [filteredRoster]);
+
   /* ---- Derived: year average for the ring ------------------------ */
   function yearAverage(monthRows) {
     const vals = monthRows
@@ -561,6 +586,80 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
     );
   }
 
+  // One person row in the grouped Team view. Clicking your own row opens your
+  // "My Target" page; clicking anyone else opens their target drill-down.
+  function PersonRow({ person, you = false, nested = false, isManager = false }) {
+    return (
+      <button
+        type="button"
+        onClick={() =>
+          person.id === currentUser?.id ? setView("me") : loadDrill(person.id)
+        }
+        className={`flex w-full items-center gap-3 rounded-xl px-3 text-left transition-colors hover:bg-slate-50 ${
+          nested ? "py-2.5" : "py-3"
+        }`}
+      >
+        <span
+          className={`flex items-center justify-center rounded-full font-semibold text-white ${
+            nested ? "h-8 w-8 text-[11px]" : "h-10 w-10 text-[13px]"
+          } ${isManager ? "bg-brand-700" : you ? "bg-emerald-600" : "bg-brand-500"}`}
+        >
+          {initialsOf(person.name)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className={`${nested ? "text-[13px]" : "text-sm"} font-bold text-slate-900`}>
+              {person.name}
+            </span>
+            {you && (
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                You
+              </span>
+            )}
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+              {ROLE_LABELS[person.role] || person.role}
+            </span>
+          </div>
+          <div className="truncate text-[12px] text-slate-500">
+            {person.jobTitle || person.email}
+          </div>
+        </div>
+        <div className="hidden w-28 sm:block">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-2 rounded-full bg-gradient-to-r from-brand-500 to-brand-600"
+              style={{ width: `${Math.min(100, person.yearAveragePercent)}%` }}
+            />
+          </div>
+        </div>
+        <span className="w-12 text-right text-sm font-bold text-brand-600">
+          {person.yearAveragePercent}%
+        </span>
+        <ChevronRight size={16} className="text-slate-300" />
+      </button>
+    );
+  }
+
+  function GroupBlock({ title, count, children }) {
+    return (
+      <div>
+        <div className="mb-1.5 flex items-center gap-2 px-1">
+          <span className="text-[12px] font-bold uppercase tracking-wide text-slate-400">
+            {title}
+          </span>
+          {typeof count === "number" && (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-500">
+              {count}
+            </span>
+          )}
+        </div>
+        <div className="space-y-1 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+          {children}
+        </div>
+      </div>
+    );
+  }
+
   /* ---- Render ---------------------------------------------------- */
 
   if (showAll) {
@@ -824,37 +923,55 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
               </span>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-              {filteredRoster.map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => loadDrill(r.id)}
-                  className="flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-left transition-colors hover:bg-slate-50"
-                >
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-600 text-[13px] font-semibold text-white">
-                    {initialsOf(r.name)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-bold text-slate-900">{r.name}</div>
-                    <div className="text-[13px] text-slate-500">{r.jobTitle || r.email}</div>
-                  </div>
-                  <div className="hidden w-40 sm:block">
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-2 rounded-full bg-gradient-to-r from-brand-500 to-brand-600"
-                        style={{ width: `${Math.min(100, r.yearAveragePercent)}%` }}
-                      />
-                    </div>
-                  </div>
-                  <span className="w-14 text-right text-sm font-bold text-brand-600">
-                    {r.yearAveragePercent}%
-                  </span>
-                  <ChevronRight size={16} className="text-slate-300" />
-                </button>
-              ))}
+            {/* Grouped: Admin → Managers (with their employees) → Unassigned */}
+            <div className="space-y-4">
+              {grouped.admins.length > 0 && (
+                <GroupBlock title="Admin" count={grouped.admins.length}>
+                  {grouped.admins.map((r) => (
+                    <PersonRow key={r.id} person={r} you={r.id === currentUser?.id} />
+                  ))}
+                </GroupBlock>
+              )}
+
+              {grouped.managers.length > 0 && (
+                <GroupBlock title="Managers & Teams" count={grouped.managers.length}>
+                  {grouped.managers.map((mgr) => {
+                    const team = grouped.empByMgr.get(mgr.id) || [];
+                    return (
+                      <div key={mgr.id} className="rounded-xl bg-slate-50/50 p-1">
+                        <PersonRow
+                          person={mgr}
+                          you={mgr.id === currentUser?.id}
+                          isManager
+                        />
+                        <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-brand-100 pl-2">
+                          {team.map((emp) => (
+                            <PersonRow key={emp.id} person={emp} nested />
+                          ))}
+                          {team.length === 0 && (
+                            <div className="px-3 py-2 text-[12px] text-slate-400">
+                              No employees assigned yet.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </GroupBlock>
+              )}
+
+              {grouped.unassigned.length > 0 && (
+                <GroupBlock title="Unassigned employees" count={grouped.unassigned.length}>
+                  {grouped.unassigned.map((r) => (
+                    <PersonRow key={r.id} person={r} you={r.id === currentUser?.id} />
+                  ))}
+                </GroupBlock>
+              )}
+
               {filteredRoster.length === 0 && (
-                <div className="px-4 py-8 text-center text-xs text-slate-500">No employees match.</div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-8 text-center text-xs text-slate-500 shadow-sm">
+                  No employees match.
+                </div>
               )}
             </div>
           </>

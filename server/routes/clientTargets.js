@@ -312,9 +312,22 @@ router.get("/team", async (req, res) => {
       where: {
         companyId: req.clientUser.companyId,
         active: true,
-        ...(access.managerScope ? { managerId: access.managerScope } : {}),
+        // A manager sees their own reports AND their own row (so their name
+        // shows first in the grouped Team view). Admin/permitted sees everyone.
+        ...(access.managerScope
+          ? { OR: [{ managerId: access.managerScope }, { id: access.managerScope }] }
+          : {}),
       },
-      select: { id: true, name: true, email: true, jobTitle: true, department: true, role: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        jobTitle: true,
+        department: true,
+        role: true,
+        managerId: true,
+        manager: { select: { name: true } },
+      },
       orderBy: { name: "asc" },
     });
 
@@ -347,6 +360,8 @@ router.get("/team", async (req, res) => {
         jobTitle: u.jobTitle,
         department: u.department,
         role: u.role,
+        managerId: u.managerId || null,
+        managerName: u.manager?.name || null,
         yearAveragePercent: avg,
         monthsWithData: monthOveralls.length,
       };
