@@ -229,12 +229,18 @@ router.patch("/target", async (req, res) => {
       }
     }
 
+    if (access.managerScope && ownerId !== access.managerScope) {
+      return res.status(403).json({
+        success: false,
+        message: "Managers can only update their own target until reporting-manager mapping is configured",
+      });
+    }
+
     const owner = await prisma.user.findFirst({
       where: {
         id: ownerId,
         companyId: req.clientUser.companyId,
         active: true,
-        ...(access.managerScope ? { managerId: access.managerScope } : {}),
       },
       select: { id: true },
     });
@@ -312,11 +318,10 @@ router.get("/team", async (req, res) => {
       where: {
         companyId: req.clientUser.companyId,
         active: true,
-        // A manager sees their own reports AND their own row (so their name
-        // shows first in the grouped Team view). Admin/permitted sees everyone.
-        ...(access.managerScope
-          ? { OR: [{ managerId: access.managerScope }, { id: access.managerScope }] }
-          : {}),
+        // Current User schema does not contain managerId/reporting relations.
+        // Admin/permitted users see the company. Managers are safely scoped
+        // to their own row until reporting-manager mapping is added to Prisma.
+        ...(access.managerScope ? { id: access.managerScope } : {}),
       },
       select: {
         id: true,
@@ -325,8 +330,6 @@ router.get("/team", async (req, res) => {
         jobTitle: true,
         department: true,
         role: true,
-        managerId: true,
-        manager: { select: { name: true } },
       },
       orderBy: { name: "asc" },
     });
@@ -360,8 +363,8 @@ router.get("/team", async (req, res) => {
         jobTitle: u.jobTitle,
         department: u.department,
         role: u.role,
-        managerId: u.managerId || null,
-        managerName: u.manager?.name || null,
+        managerId: null,
+        managerName: null,
         yearAveragePercent: avg,
         monthsWithData: monthOveralls.length,
       };
@@ -398,11 +401,17 @@ router.get("/user/:userId", async (req, res) => {
       });
     }
 
+    if (access.managerScope && req.params.userId !== access.managerScope) {
+      return res.status(403).json({
+        success: false,
+        message: "Managers can only view their own target until reporting-manager mapping is configured",
+      });
+    }
+
     const owner = await prisma.user.findFirst({
       where: {
         id: req.params.userId,
         companyId: req.clientUser.companyId,
-        ...(access.managerScope ? { managerId: access.managerScope } : {}),
       },
       select: { id: true, name: true, email: true, jobTitle: true },
     });
@@ -465,7 +474,7 @@ router.get("/all", async (req, res) => {
       where: {
         companyId: req.clientUser.companyId,
         active: true,
-        ...(access.managerScope ? { managerId: access.managerScope } : {}),
+        ...(access.managerScope ? { id: access.managerScope } : {}),
       },
       select: { id: true, name: true, email: true, jobTitle: true, department: true, role: true },
       orderBy: { name: "asc" },

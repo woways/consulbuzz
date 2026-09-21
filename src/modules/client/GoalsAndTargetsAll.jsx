@@ -198,7 +198,7 @@ export default function GoalsAndTargetsAll({ onBack }) {
 
   function pctPill(p) {
     const cls =
-      p >= 100 ? "bg-emerald-50 text-emerald-600"
+      p >= 100 ? "bg-brand-50 text-brand-700"
       : p > 0 ? "bg-indigo-50 text-indigo-600"
       : "bg-slate-100 text-slate-400";
     return <span className={`rounded-full px-2 py-0.5 text-[12px] font-bold ${cls}`}>{p}%</span>;
@@ -391,7 +391,7 @@ export default function GoalsAndTargetsAll({ onBack }) {
                       <td className="border-l border-slate-50 px-2 py-3 font-bold text-slate-800">{m.totalAchieved}</td>
                       {/* Overall % */}
                       <td className="border-l border-slate-50 bg-brand-50/40 px-2 py-3">
-                        <span className={`text-[13px] font-bold ${m.overallPercent >= 100 ? "text-emerald-600" : "text-brand-700"}`}>{m.overallPercent}%</span>
+                        <span className={`text-[13px] font-bold ${m.overallPercent >= 100 ? "text-brand-700" : "text-brand-700"}`}>{m.overallPercent}%</span>
                       </td>
                     </tr>
                   ))
@@ -414,7 +414,7 @@ export default function GoalsAndTargetsAll({ onBack }) {
                     ))}
                     <td className="border-l border-slate-100 px-2 py-3.5 text-[13px] text-slate-900">{totals.totalAchieved}</td>
                     <td className="border-l border-slate-100 bg-brand-100/50 px-2 py-3.5">
-                      <span className={`text-[15px] ${totals.pct >= 100 ? "text-emerald-600" : "text-brand-700"}`}>{totals.pct}%</span>
+                      <span className={`text-[15px] ${totals.pct >= 100 ? "text-brand-700" : "text-brand-700"}`}>{totals.pct}%</span>
                     </td>
                   </tr>
                 </tfoot>

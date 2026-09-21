@@ -10,11 +10,16 @@ import {
   X,
   Filter,
   Download,
+  CalendarDays,
+  Trophy,
+  Gauge,
 } from "lucide-react";
 
 import GoalsAndTargetsAll from "./GoalsAndTargetsAll";
 
 import { apiRequest } from "../../lib/api";
+
+import sharedGoalsIllustration from "../../assets/Shared goals-amico.svg";
 
 const MONTH_NAMES = [
   "January","February","March","April","May","June",
@@ -248,7 +253,7 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
   function pctPill(p) {
     const cls =
       p >= 100
-        ? "bg-emerald-50 text-emerald-600"
+        ? "bg-brand-50 text-brand-700"
         : p > 0
         ? "bg-indigo-50 text-indigo-600"
         : "bg-slate-100 text-slate-400";
@@ -341,14 +346,54 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
       : monthRows.filter((m) => QUARTERS[quarter].includes(m.month));
   }
 
-  // Glassy analysis ring card.
+  // Compact year summary: one ring + four business-useful KPI cards.
   function AnalysisCard(monthRows, name) {
     const avg = yearAverage(monthRows);
     const best = bestMonth(monthRows);
     const tracked = monthRows.filter((m) => m.monthlyTarget > 0).length;
+    const targetHit = monthRows.filter(
+      (m) => m.monthlyTarget > 0 && Number(m.overallPercent || 0) >= 100
+    ).length;
+    const targetHitRate = tracked > 0 ? Math.round((targetHit / tracked) * 100) : 0;
+    const performanceStatus =
+      tracked === 0
+        ? "No data"
+        : avg >= 100
+        ? "Ahead"
+        : avg >= 80
+        ? "On track"
+        : "Needs focus";
+
     const circ = 326.7;
     const shown = Math.min(100, avg);
     const offset = circ - (circ * shown) / 100;
+
+    const cards = [
+      {
+        label: "Months tracked",
+        value: tracked,
+        note: "of 12 months",
+        icon: CalendarDays,
+      },
+      {
+        label: "Best month",
+        value: best ? `${MONTH_ABBR[best.month - 1]} · ${best.overallPercent}%` : "—",
+        note: best ? "Highest achievement" : "No target data yet",
+        icon: Trophy,
+      },
+      {
+        label: "Target hit",
+        value: `${targetHit} / ${tracked || 0}`,
+        note: tracked ? `${targetHitRate}% of tracked months` : "No tracked months",
+        icon: TargetIcon,
+      },
+      {
+        label: "Performance status",
+        value: performanceStatus,
+        note: "Based on year average",
+        icon: Gauge,
+      },
+    ];
 
     return (
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 text-slate-900 shadow-sm">
@@ -360,45 +405,81 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
             Full year
           </div>
         </div>
-        <div className="mt-3 flex flex-col items-center gap-5 sm:flex-row sm:justify-start">
-          <div className="relative h-32 w-32 flex-shrink-0">
-            <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" strokeWidth="14" className="text-brand-100" />
-              <circle
-                cx="60" cy="60" r="52" fill="none" stroke="currentColor" strokeWidth="14"
-                strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-                className="text-brand-600"
-                style={{ transition: "stroke-dashoffset 1s ease", filter: "drop-shadow(0 2px 6px rgb(var(--brand-600) / 0.35))" }}
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="text-[26px] font-extrabold leading-none tracking-tight">{avg}%</div>
-              <div className="text-[11px] font-semibold text-slate-500">year avg</div>
+
+        <div className="mt-4 grid gap-3 lg:grid-cols-[150px_minmax(0,1fr)] lg:items-center xl:grid-cols-[150px_minmax(0,1fr)_145px]">
+          <div className="flex items-center justify-center">
+            <div className="relative h-28 w-28 flex-shrink-0">
+              <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="14"
+                  className="text-brand-100"
+                />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="14"
+                  strokeLinecap="round"
+                  strokeDasharray={circ}
+                  strokeDashoffset={offset}
+                  className="text-brand-600"
+                  style={{ transition: "stroke-dashoffset 1s ease" }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="text-[24px] font-extrabold leading-none tracking-tight">
+                  {avg}%
+                </div>
+                <div className="text-[11px] font-semibold text-slate-500">year avg</div>
+              </div>
             </div>
           </div>
-          <div className="grid w-full grid-cols-2 gap-2.5 sm:flex-1">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <div className="text-[12px] font-bold uppercase tracking-wide text-slate-500">Months tracked</div>
-              <div className="mt-0.5 text-[20px] font-bold">{tracked}</div>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <div className="text-[12px] font-bold uppercase tracking-wide text-slate-500">Best month</div>
-              <div className="mt-0.5 text-[15px] font-bold">
-                {best ? `${MONTH_ABBR[best.month - 1]} · ${best.overallPercent}%` : "—"}
-              </div>
-            </div>
-            <div className="col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <div className="mb-1.5 flex items-center justify-between text-[12px] font-semibold text-slate-500">
-                <span>Progress</span>
-                <span className="font-bold">{avg}%</span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+
+          <div className="grid min-w-0 grid-cols-1 gap-2.5 sm:grid-cols-2 2xl:grid-cols-4">
+            {cards.map((card) => {
+              const Icon = card.icon;
+
+              return (
                 <div
-                  className="h-2 rounded-full bg-brand-500"
-                  style={{ width: `${Math.min(100, avg)}%` }}
-                />
-              </div>
-            </div>
+                  key={card.label}
+                  className="min-w-0 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-brand-100 bg-brand-50 text-brand-600">
+                      <Icon size={15} />
+                    </span>
+
+                    <div className="min-w-0">
+                      <div className="truncate text-[10px] font-bold uppercase tracking-[0.04em] text-slate-500">
+                        {card.label}
+                      </div>
+                      <div className="mt-0.5 truncate text-[16px] font-bold tracking-tight text-slate-900">
+                        {card.value}
+                      </div>
+                      <div className="mt-0.5 truncate text-[10px] font-medium text-slate-400">
+                        {card.note}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="hidden xl:flex items-end justify-center self-stretch">
+            <img
+              src={sharedGoalsIllustration}
+              alt=""
+              aria-hidden="true"
+              className="h-[118px] w-auto max-w-[140px] object-contain"
+            />
           </div>
         </div>
       </div>
@@ -545,7 +626,7 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
                   <td className="border-l border-slate-50 bg-brand-50/40 px-1.5 py-2.5">
                     <span
                       className={`text-[13px] font-bold ${
-                        m.overallPercent >= 100 ? "text-emerald-600" : "text-brand-700"
+                        m.overallPercent >= 100 ? "text-brand-700" : "text-brand-700"
                       }`}
                     >
                       {m.overallPercent}%
@@ -572,7 +653,7 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
                       </Fragment>
                     ))}
                     <td className="border-l border-slate-100 bg-brand-100/50 px-1.5 py-2.5">
-                      <span className={`text-[13px] font-bold ${totalPct >= 100 ? "text-emerald-600" : "text-brand-700"}`}>
+                      <span className={`text-[13px] font-bold ${totalPct >= 100 ? "text-brand-700" : "text-brand-700"}`}>
                         {totalPct}%
                       </span>
                     </td>
@@ -602,7 +683,7 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
         <span
           className={`flex items-center justify-center rounded-full font-semibold text-white ${
             nested ? "h-8 w-8 text-[11px]" : "h-10 w-10 text-[13px]"
-          } ${isManager ? "bg-brand-700" : you ? "bg-emerald-600" : "bg-brand-500"}`}
+          } ${isManager ? "bg-brand-700" : you ? "bg-brand-600" : "bg-brand-500"}`}
         >
           {initialsOf(person.name)}
         </span>
@@ -612,7 +693,7 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
               {person.name}
             </span>
             {you && (
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+              <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-700">
                 You
               </span>
             )}
@@ -765,9 +846,9 @@ export default function GoalsAndTargets({ currentUser, selectedYear }) {
           <>
             <div className="text-[13px] font-medium text-slate-500">Company-wide performance overview</div>
             <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-900 p-5 text-white shadow-[0_8px_24px_rgba(79,70,229,.18)]">
-                <div className="text-[13px] font-semibold uppercase tracking-wide text-brand-200">Team average · {year}</div>
-                <div className="mt-1 text-[30px] font-bold">{teamAverage}%</div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">Team average · {year}</div>
+                <div className="mt-1 text-[30px] font-bold text-slate-900">{teamAverage}%</div>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">Members</div>
