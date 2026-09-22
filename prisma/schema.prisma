@@ -158,6 +158,15 @@ enum CalendarEventStatus {
   CANCELLED
 }
 
+enum WebsiteLeadStatus {
+  NEW
+  CONTACTED
+  FOLLOW_UP
+  DEMO_SCHEDULED
+  WON
+  LOST
+}
+
 model Company {
   id           String  @id @default(cuid())
   name         String
@@ -1420,4 +1429,35 @@ model StoreAsset {
 
   @@index([companyId, createdAt])
   @@index([companyId, type, createdAt])
+}
+
+model WebsiteLead {
+  id        String @id @default(cuid())
+  sessionId String @unique
+
+  fullName   String
+  email      String
+  phone      String
+  companyName String?
+  teamSize    String?
+
+  preferredDate DateTime?
+  preferredTime String?
+  note          String?
+  adminNote     String?
+
+  lastStep       Int     @default(1)
+  demoRequested  Boolean @default(false)
+  demoRequestedAt DateTime?
+
+  status      WebsiteLeadStatus @default(NEW)
+  contactedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, updatedAt])
+  @@index([email])
+  @@index([phone])
+  @@index([demoRequested, updatedAt])
 }

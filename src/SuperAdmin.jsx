@@ -31,6 +31,7 @@ import {
   X,
   Save,
   Loader2,
+  UserPlus,
 } from "lucide-react";
 
 import {
@@ -52,6 +53,7 @@ import Support from "./modules/admin/Support";
 import Analytics from "./modules/admin/Analytics";
 import SystemSettings from "./modules/admin/SystemSettings";
 import ActivityLog from "./modules/admin/ActivityLog";
+import WebsiteLeads from "./modules/admin/WebsiteLeads";
 
 const MENU = [
   {
@@ -63,6 +65,11 @@ const MENU = [
     key: "clients",
     label: "Clients",
     icon: Building2,
+  },
+  {
+    key: "website-leads",
+    label: "Website Leads",
+    icon: UserPlus,
   },
   {
     key: "plans",
@@ -382,6 +389,9 @@ export default function SuperAdmin() {
             }
           />
         );
+
+      case "website-leads":
+        return <WebsiteLeads />;
 
       case "plans":
         return <Plans />;
