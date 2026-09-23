@@ -15,8 +15,18 @@ function nullable(value, max = 300) {
   return cleaned || null;
 }
 
-function validPhone(value) {
-  return String(value || "").replace(/\D/g, "").length >= 7;
+function normalizeIndianPhone(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+
+  if (/^[6-9]\d{9}$/.test(digits)) {
+    return `+91${digits}`;
+  }
+
+  if (/^91[6-9]\d{9}$/.test(digits)) {
+    return `+${digits}`;
+  }
+
+  return "";
 }
 
 function parsePreferredDate(value) {
@@ -31,7 +41,7 @@ router.post("/", async (req, res) => {
     const sessionId = text(body.sessionId, 160);
     const fullName = text(body.fullName, 120);
     const email = text(body.email, 180).toLowerCase();
-    const phone = text(body.phone, 40);
+    const phone = normalizeIndianPhone(text(body.phone, 40));
     const lastStep = Math.min(3, Math.max(1, Number(body.lastStep) || 1));
     const wantsDemo = body.demoRequested === true;
 
@@ -39,7 +49,7 @@ router.post("/", async (req, res) => {
     if (sessionId.length < 8) fields.sessionId = "Invalid lead session";
     if (fullName.length < 2) fields.fullName = "Enter your name";
     if (!EMAIL_RE.test(email)) fields.email = "Enter a valid email";
-    if (!validPhone(phone)) fields.phone = "Enter a valid phone number";
+    if (!phone) fields.phone = "Enter a valid 10-digit Indian mobile number";
 
     if (Object.keys(fields).length) {
       return res.status(400).json({
