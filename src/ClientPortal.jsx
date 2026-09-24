@@ -4116,7 +4116,9 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
               {!sidebarCompact ? (
                 <div className="relative">
                   <button type="button" onClick={() => setAccountActionsOpen((v) => !v)} className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition hover:bg-white/[0.06]">
-                    <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-[11px] font-black text-white">BI</span>
+                    <span className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-white">
+                      <img src="/brand/bispun-icon.svg" alt="Bispun" className="h-full w-full object-contain" />
+                    </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13px] font-bold leading-tight text-white">Bis<span className="text-[#4f8cff]">pun</span></span>
                       <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">{planLabel} plan</span>
@@ -4164,7 +4166,7 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                   className="mx-auto flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-[11px] font-black text-white transition hover:brightness-110"
                   title={isClientAdmin ? `${planLabel} plan` : "Profile"}
                 >
-                  BI
+                  <img src="/brand/bispun-icon.svg" alt="Bispun" className="h-full w-full rounded-[10px] object-contain" />
                 </button>
               )}
             </div>
@@ -4834,17 +4836,14 @@ const [accountActionsOpen, setAccountActionsOpen] = useState(false);
                     <div className="flex items-start justify-between gap-6">
                       <div>
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-2xl bg-[#071321] text-white flex items-center justify-center text-[13px] font-black">
-                            BI
-                          </div>
+                          <img
+                            src="/brand/bispun-logo.svg"
+                            alt="Bispun"
+                            className="h-11 w-auto object-contain"
+                          />
 
-                          <div>
-                            <div className="text-[16px] font-black tracking-[-0.03em] text-slate-950">
-                              Bispun
-                            </div>
-                            <div className="mt-0.5 text-[12px] uppercase tracking-[0.12em] font-semibold text-slate-400">
-                              CRM Subscription
-                            </div>
+                          <div className="text-[12px] uppercase tracking-[0.12em] font-semibold text-slate-400">
+                            CRM Subscription
                           </div>
                         </div>
 

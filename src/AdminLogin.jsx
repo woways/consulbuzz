@@ -43,11 +43,16 @@ export default function AdminLogin() {
       <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at 50% -10%, rgba(99,102,241,.18), transparent 34%), linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px)", backgroundSize: "auto, 48px 48px, 48px 48px" }} />
 
       <div className="relative w-full max-w-[430px]">
-        <div className="flex items-center justify-center gap-3 mb-10">
-          <div className="w-10 h-10 rounded-xl border border-white/10 bg-white/[0.06] flex items-center justify-center text-[11px] font-bold tracking-[0.08em]">BI</div>
-          <div>
-            <div className="text-sm font-bold tracking-[-0.02em]">Bispun</div>
-            <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Platform Administration</div>
+        <div className="mb-10 flex flex-col items-center justify-center">
+          <div className="rounded-xl bg-white px-3 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+            <img
+              src="/brand/bispun-logo.jpg"
+              alt="Bispun"
+              className="h-10 w-auto object-contain"
+            />
+          </div>
+          <div className="mt-2 text-[10px] uppercase tracking-[0.16em] text-slate-500">
+            Platform Administration
           </div>
         </div>
 

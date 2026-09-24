@@ -518,16 +518,14 @@ export default function SuperAdmin() {
         <div className="h-full px-5 flex items-center justify-between gap-4">
 
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-slate-950 text-white text-sm font-bold flex items-center justify-center shadow-sm">
-              BI
-            </div>
+            <img
+              src="/brand/bispun-logo.jpg"
+              alt="Bispun"
+              className="h-10 w-auto shrink-0 object-contain"
+            />
 
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <div className="text-[15px] font-bold text-slate-950">
-                  Bispun
-                </div>
-
                 <Badge tone="rose">
                   Super Admin
                 </Badge>

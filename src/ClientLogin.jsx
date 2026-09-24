@@ -197,23 +197,16 @@ export default function ClientLogin() {
             {/* BRAND */}
 
             <div className="flex items-center gap-3">
-              <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-[12px] border border-blue-400/30 bg-white/[0.06] shadow-[0_8px_30px_rgba(37,99,235,0.15)]">
-                <span className="text-[12px] font-black tracking-[0.08em] text-white">
-                  BI
-                </span>
+              <div className="rounded-xl bg-white px-3 py-2 shadow-[0_8px_30px_rgba(37,99,235,0.15)]">
+                <img
+                  src="/brand/bispun-logo.svg"
+                  alt="Bispun"
+                  className="h-10 w-auto object-contain"
+                />
               </div>
 
-              <div>
-                <div className="text-[24px] font-bold tracking-[-0.035em]">
-                  Bis
-                  <span className="text-blue-500">
-                    pun
-                  </span>
-                </div>
-
-                <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                  CRM made simple
-                </div>
+              <div className="text-[9px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                CRM made simple
               </div>
             </div>
 
@@ -300,17 +293,12 @@ export default function ClientLogin() {
 
             {/* MOBILE BRAND */}
 
-            <div className="mb-12 flex items-center gap-3 lg:hidden">
-              <div className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#061124] text-[11px] font-black tracking-[0.08em] text-white">
-                BI
-              </div>
-
-              <div className="text-[19px] font-bold tracking-[-0.03em] text-slate-950">
-                Bis
-                <span className="text-blue-600">
-                  pun
-                </span>
-              </div>
+            <div className="mb-12 flex items-center lg:hidden">
+              <img
+                src="/brand/bispun-logo.svg"
+                alt="Bispun"
+                className="h-11 w-auto object-contain"
+              />
             </div>
 
             {/* SECURITY ICON */}
