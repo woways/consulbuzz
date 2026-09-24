@@ -523,11 +523,21 @@ export default function App() {
         />
 
         <Route
-          path="/"
+          path="/app/*"
           element={
             <ClientRoute>
               <ClientPortal />
             </ClientRoute>
+          }
+        />
+
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to="/app"
+              replace
+            />
           }
         />
 
@@ -551,7 +561,7 @@ export default function App() {
           path="*"
           element={
             <Navigate
-              to="/"
+              to="/app"
               replace
             />
           }

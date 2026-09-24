@@ -44,7 +44,7 @@ export default function ClientLogin() {
         await apiRequest("/api/client/auth/me");
 
         if (active) {
-          nav("/", { replace: true });
+          nav("/app", { replace: true });
         }
       } catch {
         // No active client session.
@@ -108,7 +108,7 @@ export default function ClientLogin() {
         localStorage.removeItem("cb_remembered_email");
       }
 
-      nav("/", { replace: true });
+      nav("/app", { replace: true });
     } catch (error) {
       setError(
         error?.data?.message ||
