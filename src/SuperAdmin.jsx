@@ -114,6 +114,7 @@ const MENU = [
     icon: Settings,
   },
 ];
+import bispunLogo from "./assets/bispun-logo.svg";
 
 export default function SuperAdmin() {
   const nav =
@@ -519,7 +520,7 @@ export default function SuperAdmin() {
 
           <div className="flex items-center gap-3 min-w-0">
             <img
-              src="/brand/bispun-logo.jpg"
+              src={bispunLogo}
               alt="Bispun"
               className="h-10 w-auto shrink-0 object-contain"
             />

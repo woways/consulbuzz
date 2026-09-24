@@ -18,6 +18,7 @@ import {
 
 
 import { apiRequest } from "./lib/api";
+import bispunLogo from "./assets/bispun-logo.svg";
 
 export default function ClientLogin() {
   const nav = useNavigate();
@@ -199,7 +200,7 @@ export default function ClientLogin() {
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-white px-3 py-2 shadow-[0_8px_30px_rgba(37,99,235,0.15)]">
                 <img
-                  src="/brand/bispun-logo.svg"
+                  src={bispunLogo}
                   alt="Bispun"
                   className="h-10 w-auto object-contain"
                 />
@@ -295,7 +296,7 @@ export default function ClientLogin() {
 
             <div className="mb-12 flex items-center lg:hidden">
               <img
-                src="/brand/bispun-logo.svg"
+                src={bispunLogo}
                 alt="Bispun"
                 className="h-11 w-auto object-contain"
               />

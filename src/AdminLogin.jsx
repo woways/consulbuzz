@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { apiRequest } from "./lib/api";
+import bispunLogo from "./assets/bispun-logo.svg";
 
 export default function AdminLogin() {
   const nav = useNavigate();
@@ -46,7 +47,7 @@ export default function AdminLogin() {
         <div className="mb-10 flex flex-col items-center justify-center">
           <div className="rounded-xl bg-white px-3 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
             <img
-              src="/brand/bispun-logo.jpg"
+              src={bispunLogo}
               alt="Bispun"
               className="h-10 w-auto object-contain"
             />
